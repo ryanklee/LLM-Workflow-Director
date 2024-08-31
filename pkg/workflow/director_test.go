@@ -2,17 +2,9 @@ package workflow
 
 import (
 	"testing"
-
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/aider"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/constraint"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/direction"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/priority"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/progress"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/state"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/user"
 )
 
-// MockStateManager implements state.StateManager interface
+// MockStateManager implements StateManager interface
 type MockStateManager struct{}
 
 func (m *MockStateManager) GetCurrentState() (interface{}, error) { return nil, nil }
