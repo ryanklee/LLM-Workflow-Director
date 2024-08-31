@@ -21,11 +21,12 @@ The LLM-Workflow Director is a Go-based system designed to guide AI-assisted sof
 1. **State Assessment**: Analyze current project state and determine active stage/step.
 2. **Constraint Validation**: Apply and validate constraints for the current stage.
 3. **Priority Determination**: Set priorities based on the current stage, adhering to DDD and TDD.
-4. **Direction Generation**: Create actionable directions for Aider, emphasizing current priorities.
-5. **Aider Execution**: Send directions to Aider and await task completion.
-6. **Result Processing**: Analyze Aider's output and update project state.
-7. **User Interaction**: Handle user input when required.
-8. **Progress Evaluation**: Assess step/stage completion and manage transitions.
+4. **Context Header Generation**: Create a clear context header for the LLM interaction.
+5. **Direction Generation**: Create actionable directions for Claude-Sonnet 3.5 via Aider, emphasizing current priorities.
+6. **Aider Execution**: Send context header and directions to Aider and await task completion.
+7. **Result Processing**: Analyze Claude-Sonnet 3.5's output and update project state.
+8. **User Interaction**: Handle user input when required.
+9. **Progress Evaluation**: Assess step/stage completion and manage transitions.
 
 ## 4. Key Components
 
