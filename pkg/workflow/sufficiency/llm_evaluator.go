@@ -27,9 +27,15 @@ func (e *LLMEvaluator) Evaluate(state interface{}) (bool, string, error) {
 		Reason     string `json:"reason"`
 	}
 
-	err = json.Unmarshal([]byte(result.(string)), &response)
+	resultStr, ok := result.(string)
+	if !ok {
+		return false, "", fmt.Errorf("unexpected result type: %T", result)
+	}
+
+	err = json.Unmarshal([]byte(resultStr), &response)
 	if err != nil {
-		return false, "", fmt.Errorf("error parsing LLM response: %w", err)
+		// If JSON parsing fails, try to return the raw string
+		return false, resultStr, fmt.Errorf("error parsing LLM response: %w", err)
 	}
 
 	return response.Sufficient, response.Reason, nil
