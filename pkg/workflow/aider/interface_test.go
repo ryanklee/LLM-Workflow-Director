@@ -35,7 +35,7 @@ func TestAiderInterface(t *testing.T) {
 	t.Run("Execute error", func(t *testing.T) {
 		input := "test input"
 		expectedError := errors.New("execution failed")
-		mockAider.On("Execute", input).Return(nil, expectedError)
+		mockAider.On("Execute", input).Return(nil, expectedError).Once()
 
 		output, err := mockAider.Execute(input)
 

@@ -38,7 +38,7 @@ func TestStateManager(t *testing.T) {
 
 	t.Run("GetCurrentState error", func(t *testing.T) {
 		expectedError := errors.New("state retrieval failed")
-		mockManager.On("GetCurrentState").Return(nil, expectedError)
+		mockManager.On("GetCurrentState").Return(nil, expectedError).Once()
 
 		state, err := mockManager.GetCurrentState()
 
