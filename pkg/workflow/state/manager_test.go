@@ -23,11 +23,10 @@ func (m *MockStateManager) UpdateState(state interface{}) error {
 }
 
 func TestStateManager(t *testing.T) {
-	mockManager := new(MockStateManager)
-
 	t.Run("GetCurrentState success", func(t *testing.T) {
+		mockManager := new(MockStateManager)
 		expectedState := map[string]string{"key": "value"}
-		mockManager.On("GetCurrentState").Return(expectedState, nil)
+		mockManager.On("GetCurrentState").Return(expectedState, nil).Once()
 
 		state, err := mockManager.GetCurrentState()
 
@@ -37,6 +36,7 @@ func TestStateManager(t *testing.T) {
 	})
 
 	t.Run("GetCurrentState error", func(t *testing.T) {
+		mockManager := new(MockStateManager)
 		expectedError := errors.New("state retrieval failed")
 		mockManager.On("GetCurrentState").Return(nil, expectedError).Once()
 
@@ -49,8 +49,9 @@ func TestStateManager(t *testing.T) {
 	})
 
 	t.Run("UpdateState success", func(t *testing.T) {
+		mockManager := new(MockStateManager)
 		newState := map[string]string{"key": "new value"}
-		mockManager.On("UpdateState", newState).Return(nil)
+		mockManager.On("UpdateState", newState).Return(nil).Once()
 
 		err := mockManager.UpdateState(newState)
 
@@ -59,9 +60,10 @@ func TestStateManager(t *testing.T) {
 	})
 
 	t.Run("UpdateState error", func(t *testing.T) {
+		mockManager := new(MockStateManager)
 		newState := map[string]string{"key": "invalid"}
 		expectedError := errors.New("state update failed")
-		mockManager.On("UpdateState", newState).Return(expectedError)
+		mockManager.On("UpdateState", newState).Return(expectedError).Once()
 
 		err := mockManager.UpdateState(newState)
 

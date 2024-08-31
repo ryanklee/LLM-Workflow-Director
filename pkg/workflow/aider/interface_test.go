@@ -44,4 +44,7 @@ func TestAiderInterface(t *testing.T) {
 		assert.Nil(t, output)
 		mockAider.AssertExpectations(t)
 	})
+
+	// Reset mock for the next test
+	mockAider = new(MockAider)
 }
