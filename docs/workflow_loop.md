@@ -259,11 +259,12 @@ The LLM-Workflow Director is a Go-based system designed to guide AI-assisted sof
 1. **State Assessment**: Analyze current project state and determine active stage/step.
 2. **Constraint Validation**: Apply and validate constraints for the current stage.
 3. **Priority Determination**: Set priorities based on the current stage, adhering to DDD and TDD.
-4. **Direction Generation**: Create actionable directions for Aider, emphasizing current priorities.
-5. **Aider Execution**: Send directions to Aider and await task completion.
-6. **Result Processing**: Analyze Aider's output and update project state.
-7. **User Interaction**: Handle user input when required.
-8. **Progress Evaluation**: Assess step/stage completion and manage transitions.
+4. **Sufficiency Evaluation**: Use LLM to evaluate the sufficiency of the current stage.
+5. **Direction Generation**: Create actionable directions for Aider, emphasizing current priorities or addressing insufficiencies.
+6. **Aider Execution**: Send directions to Aider and await task completion.
+7. **Result Processing**: Analyze Aider's output and update project state.
+8. **User Interaction**: Handle user input when required.
+9. **Progress Evaluation**: Assess step/stage completion and manage transitions based on sufficiency evaluation.
 
 ## 4. Key Components
 
@@ -285,11 +286,13 @@ The LLM-Workflow Director is a Go-based system designed to guide AI-assisted sof
 - Generates Aider-specific directions
 - Incorporates current state, priorities, and validation results
 - Emphasizes DDD and TDD practices
+- Addresses insufficiencies identified by the LLM
 
 ### 4.5 AiderInterface
 - Manages Aider communication
 - Handles command sending and result receiving
 - Processes errors and unexpected responses
+- Facilitates LLM-based sufficiency evaluation
 
 ### 4.6 UserInteractionHandler
 - Manages user prompts and input
@@ -297,8 +300,13 @@ The LLM-Workflow Director is a Go-based system designed to guide AI-assisted sof
 
 ### 4.7 ProgressTracker
 - Evaluates completion criteria
-- Manages stage transitions
+- Manages stage transitions based on LLM sufficiency evaluation
 - Ensures artifact completeness before progression
+
+### 4.8 SufficiencyEvaluator
+- Utilizes LLM to perform qualitative sufficiency checks for each stage
+- Provides context-aware evaluation of project state
+- Generates structured responses for programmatic decision-making
 
 ## 5. Stage-Specific Workflows
 

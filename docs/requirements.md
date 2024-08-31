@@ -160,8 +160,8 @@
 2. Workflow Management
    2.1. The system shall define and manage workflow stages and steps, emphasizing Domain-Driven Design (DDD) and Test-Driven Development (TDD) principles.
    2.2. The system shall track the status of each workflow stage and step.
-   2.3. The system shall determine the next appropriate workflow step based on current state, validation results, and DDD/TDD priorities.
-   2.4. The system shall enforce strict transition rules between stages, requiring approval or completion of key artifacts before progressing.
+   2.3. The system shall determine the next appropriate workflow step based on current state, validation results, sufficiency evaluation, and DDD/TDD priorities.
+   2.4. The system shall enforce strict transition rules between stages, requiring LLM-evaluated sufficiency and completion of key artifacts before progressing.
 
 3. Constraint Management
    3.1. The system shall define and enforce constraints for each workflow step.
@@ -170,14 +170,18 @@
    3.4. The system shall ensure adherence to DDD and TDD principles through specific constraints.
 
 4. Priority Management
-   4.1. The system shall determine and enforce priorities based on the current project stage.
+   4.1. The system shall determine and enforce priorities based on the current project stage and sufficiency evaluation results.
    4.2. The system shall focus on requirements elaboration, research gathering, and domain modeling before design and implementation.
+   4.3. The system shall adjust priorities based on identified insufficiencies in the current stage.
 
-5. LLM Direction
-   5.1. The system shall generate clear, actionable directions for Aider based on the current workflow step, project state, and priorities.
-   5.2. The system shall format its output in a way that is easily consumable by Aider.
+5. LLM Direction and Evaluation
+   5.1. The system shall generate clear, actionable directions for Aider based on the current workflow step, project state, priorities, and sufficiency evaluation results.
+   5.2. The system shall format its output in a way that is easily consumable by Aider and the LLM.
    5.3. The system shall provide context and rationale for each direction given to Aider.
    5.4. The system shall emphasize DDD and TDD practices in the generated directions.
+   5.5. The system shall utilize the LLM to perform qualitative sufficiency evaluations for each stage of the workflow.
+   5.6. The system shall provide comprehensive context to the LLM for sufficiency evaluations, including project history, goals, and current state.
+   5.7. The system shall interpret and act upon structured sufficiency evaluation responses from the LLM.
 
 6. User Interaction
    6.1. The system shall allow for user input at predefined points in the workflow.

@@ -301,43 +301,55 @@ Throughout the implementation process, maintain regular communication with stake
     19.3. Integrate all components (StateManager, ConstraintEngine, PriorityManager, etc.)
     19.4. Write integration tests for WorkflowDirector
 
-20. Implement main CLI application
-    20.1. Set up command-line interface
-    20.2. Integrate WorkflowDirector into CLI
-    20.3. Implement basic logging and error handling
-    20.4. Write end-to-end tests for CLI application
+20. Implement SufficiencyEvaluator
+    20.1. Define SufficiencyEvaluator interface
+    20.2. Implement LLMEvaluator that uses Aider/LLM for sufficiency checks
+    20.3. Integrate SufficiencyEvaluator into WorkflowDirector
+    20.4. Write unit and integration tests for SufficiencyEvaluator
+
+21. Implement main CLI application
+    21.1. Set up command-line interface
+    21.2. Integrate WorkflowDirector into CLI
+    21.3. Implement basic logging and error handling
+    21.4. Write end-to-end tests for CLI application
 
 ## Phase 5: LLM-Specific Enhancements
 
-21. Implement LLMOutputFormatter
-    21.1. Define LLMOutputFormatter interface
-    21.2. Implement basic LLMOutputFormatter
-    21.3. Write unit tests for LLMOutputFormatter
+22. Implement LLMOutputFormatter
+    22.1. Define LLMOutputFormatter interface
+    22.2. Implement basic LLMOutputFormatter
+    22.3. Write unit tests for LLMOutputFormatter
 
-22. Implement LLMInteractionManager
-    22.1. Define LLMInteractionManager interface
-    22.2. Implement basic LLMInteractionManager
-    22.3. Write unit tests for LLMInteractionManager
+23. Implement LLMInteractionManager
+    23.1. Define LLMInteractionManager interface
+    23.2. Implement basic LLMInteractionManager
+    23.3. Write unit tests for LLMInteractionManager
 
-23. Implement LLMContextProvider
-    23.1. Define LLMContextProvider interface
-    23.2. Implement basic LLMContextProvider
-    23.3. Write unit tests for LLMContextProvider
+24. Implement LLMContextProvider
+    24.1. Define LLMContextProvider interface
+    24.2. Implement basic LLMContextProvider
+    24.3. Write unit tests for LLMContextProvider
 
-24. Implement LLMTaskBreakdown
-    24.1. Define LLMTaskBreakdown interface
-    24.2. Implement basic LLMTaskBreakdown
-    24.3. Write unit tests for LLMTaskBreakdown
+25. Implement LLMTaskBreakdown
+    25.1. Define LLMTaskBreakdown interface
+    25.2. Implement basic LLMTaskBreakdown
+    25.3. Write unit tests for LLMTaskBreakdown
 
-25. Implement LLMReasoningPrompter
-    25.1. Define LLMReasoningPrompter interface
-    25.2. Implement basic LLMReasoningPrompter
-    25.3. Write unit tests for LLMReasoningPrompter
+26. Implement LLMReasoningPrompter
+    26.1. Define LLMReasoningPrompter interface
+    26.2. Implement basic LLMReasoningPrompter
+    26.3. Write unit tests for LLMReasoningPrompter
 
-26. Integrate LLM-specific components into WorkflowDirector
-    26.1. Update WorkflowDirector to use LLM-specific components
-    26.2. Adjust core workflow loop to incorporate LLM-specific steps
-    26.3. Update integration tests for WorkflowDirector
+27. Integrate LLM-specific components into WorkflowDirector
+    27.1. Update WorkflowDirector to use LLM-specific components
+    27.2. Adjust core workflow loop to incorporate LLM-specific steps
+    27.3. Update integration tests for WorkflowDirector
+
+28. Enhance SufficiencyEvaluator with LLM components
+    28.1. Integrate LLMContextProvider for generating evaluation context
+    28.2. Use LLMOutputFormatter for structuring sufficiency prompts
+    28.3. Incorporate LLMReasoningPrompter for detailed sufficiency explanations
+    28.4. Update tests to reflect enhanced LLM-driven sufficiency evaluation
 
 ## Phase 6: Documentation and Refinement
 
