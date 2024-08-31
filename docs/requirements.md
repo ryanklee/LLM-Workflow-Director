@@ -119,6 +119,11 @@
     19.3. The system shall implement a feedback loop to improve prompt effectiveness based on Claude-Sonnet 3.5's responses and task outcomes.
     19.4. The system shall provide clear instructions on how Claude-Sonnet 3.5 should format its responses for easy parsing and integration into the workflow.
     19.5. The system shall implement error handling and retry mechanisms for cases where Claude-Sonnet 3.5's responses are unclear or off-topic.
+
+20. LLM Context Awareness
+    20.1. The system shall provide a clear context header at the beginning of each interaction with Claude-Sonnet 3.5.
+    20.2. The context header shall inform Claude-Sonnet 3.5 about its role, the nature of the interaction, and the fact that it's being directed by an automated workflow system.
+    20.3. The system shall ensure that the context header is formatted in a way that Claude-Sonnet 3.5 recognizes and prioritizes.
 # LLM-Workflow Director Requirements (Golang Implementation)
 
 1. Project Initialization

@@ -72,6 +72,11 @@ The LLM-Workflow Director is a Go-based system designed to guide AI-assisted sof
 - Manages the decomposition and assignment of tasks to Claude-Sonnet 3.5
 - Facilitates the reasoning and explanation process for complex decisions
 
+### 4.10 LLMContextHeaderGenerator
+- Generates a clear and concise context header for each LLM interaction
+- Ensures the LLM understands its role and the nature of the interaction
+- Formats the header in a way that the LLM recognizes as high-priority information
+
 ## 5. Stage-Specific Workflows
 
 (Detailed workflows for each stage, similar to the original document)
@@ -170,6 +175,29 @@ This Golang-based LLM-Workflow Director design maintains the structured approach
     a. Provide periodic summaries of project state and progress.
     b. Use checkpoints to allow Claude-Sonnet 3.5 to resume work efficiently.
     c. Implement strategies to maintain context across multiple interactions.
+
+## 12. LLM Context Header Implementation
+
+12.1. Implement the LLMContextHeaderGenerator to create a context header for each interaction:
+    a. Clearly state that the directions are for Claude-Sonnet 3.5.
+    b. Explain that the directions are being issued by an automated workflow director.
+    c. Briefly describe the current stage of the project and the task at hand.
+    d. Use a consistent and recognizable format for the header.
+
+12.2. Format the context header for maximum recognition:
+    a. Use XML tags to clearly delineate the context header.
+    b. Place the context header at the very beginning of each interaction.
+    c. Use clear and direct language that the LLM is likely to understand and prioritize.
+
+12.3. Example context header format:
+    <context>
+    You are Claude-Sonnet 3.5, an AI language model. You are currently being directed by an automated LLM-Workflow Director as part of an AI-assisted software development process. The project is currently in the [CURRENT_STAGE] stage. Your task is to [BRIEF_TASK_DESCRIPTION]. Please process the following directions with this context in mind.
+    </context>
+
+12.4. Integrate the context header generation into the DirectionGenerator:
+    a. Generate the context header first.
+    b. Prepend the context header to the generated directions.
+    c. Ensure that all communication with Claude-Sonnet 3.5 includes this context header.
 # LLM-Workflow Director: Workflow Loop Design (Golang Implementation)
 
 ## 1. Overview
