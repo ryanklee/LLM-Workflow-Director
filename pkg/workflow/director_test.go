@@ -46,8 +46,8 @@ func (m *MockUserInteractionHandler) IsInteractionRequired(interface{}) bool { r
 // MockProgressTracker implements progress.ProgressTracker interface
 type MockProgressTracker struct{}
 
-func (m *MockProgressTracker) IsComplete(interface{}) bool        { return false }
-func (m *MockProgressTracker) UpdateProgress(interface{}) error   { return nil }
+func (m *MockProgressTracker) IsComplete(interface{}) bool      { return false }
+func (m *MockProgressTracker) UpdateProgress(interface{}) error { return nil }
 
 func TestNewDirector(t *testing.T) {
 	director := NewDirector(
