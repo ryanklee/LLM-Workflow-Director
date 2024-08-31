@@ -239,11 +239,11 @@ Throughout the implementation process, maintain regular communication with stake
     20.3. Integrate SufficiencyEvaluator into WorkflowDirector (Completed)
     20.4. Write unit and integration tests for SufficiencyEvaluator (Completed)
 
-21. Implement main CLI application (Not Started)
-    21.1. Set up command-line interface
-    21.2. Integrate WorkflowDirector into CLI
-    21.3. Implement basic logging and error handling
-    21.4. Write end-to-end tests for CLI application
+21. Implement main CLI application (In Progress)
+    21.1. Set up command-line interface (Completed)
+    21.2. Integrate WorkflowDirector into CLI (Completed)
+    21.3. Implement basic logging and error handling (Completed)
+    21.4. Write end-to-end tests for CLI application (Not Started)
 
 ## Phase 5: LLM-Specific Enhancements (Not Started)
 

@@ -256,15 +256,17 @@ The LLM-Workflow Director is a Go-based system designed to guide AI-assisted sof
 
 ## 3. Core Workflow Loop
 
-1. **State Assessment**: Analyze current project state and determine active stage/step.
-2. **Constraint Validation**: Apply and validate constraints for the current stage.
-3. **Priority Determination**: Set priorities based on the current stage, adhering to DDD and TDD.
-4. **Sufficiency Evaluation**: Use LLM to evaluate the sufficiency of the current stage.
-5. **Direction Generation**: Create actionable directions for Aider, emphasizing current priorities or addressing insufficiencies.
-6. **Aider Execution**: Send directions to Aider and await task completion.
-7. **Result Processing**: Analyze Aider's output and update project state.
-8. **User Interaction**: Handle user input when required.
-9. **Progress Evaluation**: Assess step/stage completion and manage transitions based on sufficiency evaluation.
+1. **CLI Initialization**: Parse command-line arguments and set up the project environment.
+2. **State Assessment**: Analyze current project state and determine active stage/step.
+3. **Constraint Validation**: Apply and validate constraints for the current stage.
+4. **Priority Determination**: Set priorities based on the current stage, adhering to DDD and TDD.
+5. **Sufficiency Evaluation**: Use LLM to evaluate the sufficiency of the current stage.
+6. **Direction Generation**: Create actionable directions for Aider, emphasizing current priorities or addressing insufficiencies.
+7. **Aider Execution**: Send directions to Aider and await task completion.
+8. **Result Processing**: Analyze Aider's output and update project state.
+9. **User Interaction**: Handle user input when required.
+10. **Progress Evaluation**: Assess step/stage completion and manage transitions based on sufficiency evaluation.
+11. **Loop or Exit**: Continue the loop if there are more steps, or exit if the workflow is complete.
 
 ## 4. Key Components
 
