@@ -10,6 +10,7 @@ import (
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/priority"
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/progress"
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/state"
+	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/sufficiency"
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/user"
 )
 
@@ -22,6 +23,7 @@ type Director struct {
 	aiderInterface         aider.AiderInterface
 	userInteractionHandler user.UserInteractionHandler
 	progressTracker        progress.ProgressTracker
+	sufficiencyEvaluator   sufficiency.Evaluator
 }
 
 // NewDirector creates a new Director instance
@@ -33,15 +35,17 @@ func NewDirector(
 	ai aider.AiderInterface,
 	uih user.UserInteractionHandler,
 	pt progress.ProgressTracker,
+	se sufficiency.Evaluator,
 ) *Director {
 	return &Director{
-		stateManager:        sm,
-		constraintEngine:    ce,
-		priorityManager:     pm,
-		directionGenerator:  dg,
-		aiderInterface:      ai,
+		stateManager:           sm,
+		constraintEngine:       ce,
+		priorityManager:        pm,
+		directionGenerator:     dg,
+		aiderInterface:         ai,
 		userInteractionHandler: uih,
-		progressTracker:     pt,
+		progressTracker:        pt,
+		sufficiencyEvaluator:   se,
 	}
 }
 
@@ -61,9 +65,19 @@ func (d *Director) Run() error {
 			return err
 		}
 
+		sufficient, reason, err := d.sufficiencyEvaluator.Evaluate(state)
+		if err != nil {
+			return err
+		}
+
 		priorities := d.priorityManager.DeterminePriorities(state)
 
-		directions, err := d.directionGenerator.Generate(state, priorities)
+		var directions interface{}
+		if sufficient {
+			directions, err = d.directionGenerator.Generate(state, priorities)
+		} else {
+			directions, err = d.directionGenerator.GenerateForInsufficiency(state, priorities, reason)
+		}
 		if err != nil {
 			return err
 		}

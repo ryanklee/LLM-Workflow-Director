@@ -17,6 +17,11 @@ func (m *MockDirectionGenerator) Generate(state interface{}, priorities interfac
 	return args.Get(0), args.Error(1)
 }
 
+func (m *MockDirectionGenerator) GenerateForInsufficiency(state interface{}, priorities interface{}, reason string) (interface{}, error) {
+	args := m.Called(state, priorities, reason)
+	return args.Get(0), args.Error(1)
+}
+
 func TestDirectionGenerator(t *testing.T) {
 	mockGenerator := new(MockDirectionGenerator)
 
