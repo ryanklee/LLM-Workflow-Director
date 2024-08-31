@@ -124,6 +124,32 @@
     20.1. The system shall provide a clear context header at the beginning of each interaction with Claude-Sonnet 3.5.
     20.2. The context header shall inform Claude-Sonnet 3.5 about its role, the nature of the interaction, and the fact that it's being directed by an automated workflow system.
     20.3. The system shall ensure that the context header is formatted in a way that Claude-Sonnet 3.5 recognizes and prioritizes.
+
+21. Information Richness and Internal Documentation Integration
+    21.1. The system shall extensively reference and quote from its own documentation in communications with the LLM.
+    21.2. The system shall maintain an up-to-date index of all internal documentation for quick retrieval and reference.
+    21.3. The system shall provide detailed information about the current state of the workflow process to the LLM.
+    21.4. The system shall include references to relevant sections of the workflow documentation for each stage or task.
+    21.5. The system shall generate comprehensive project state reports for the LLM, including:
+        a. Current stage in the workflow
+        b. Completed and pending tasks
+        c. Recent changes and their impacts
+        d. Known issues or challenges
+    21.6. The system shall link project state information to relevant sections of the project documentation.
+    21.7. The system shall provide relevant snippets from internal documentation based on the current context of the LLM's task.
+    21.8. The system shall ensure that provided snippets are accompanied by their source and context within the larger documentation.
+
+22. Cross-Referencing and Version Control
+    22.1. The system shall implement a robust cross-referencing system within its documentation.
+    22.2. The system shall provide the LLM with related information from different sections of the documentation, highlighting connections and dependencies.
+    22.3. The system shall provide version-specific documentation and project state information to the LLM.
+    22.4. The system shall highlight changes in documentation or project state between versions when relevant.
+
+23. LLM Interaction Enhancement
+    23.1. The system shall generate prompts and questions for the LLM based on the content of the internal documentation.
+    23.2. The system shall encourage the LLM to refer back to specific sections of the documentation in its responses.
+    23.3. The system shall enrich all information provided to the LLM with relevant metadata, such as last update time, author, and relevance score.
+    23.4. The system shall use metadata to help the LLM understand the reliability and context of the information provided.
 # LLM-Workflow Director Requirements (Golang Implementation)
 
 1. Project Initialization
