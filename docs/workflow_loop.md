@@ -1,0 +1,178 @@
+# LLM-Workflow Director: Workflow Loop Design (Golang Implementation)
+
+## 1. Overview
+
+The LLM-Workflow Director is a Go-based system designed to guide AI-assisted software development processes. It emphasizes Domain-Driven Design (DDD) and Test-Driven Development (TDD) principles, ensuring systematic progression through crucial development stages.
+
+## 2. Workflow Stages
+
+1. Project Initialization
+2. Requirements Elaboration
+3. Research Gathering and Analysis
+4. Domain Modeling
+5. Design
+6. Test Design
+7. Implementation
+8. Testing
+9. Review and Refinement
+
+## 3. Core Workflow Loop
+
+1. **State Assessment**: Analyze current project state and determine active stage/step.
+2. **Constraint Validation**: Apply and validate constraints for the current stage.
+3. **Priority Determination**: Set priorities based on the current stage, adhering to DDD and TDD.
+4. **Direction Generation**: Create actionable directions for Aider, emphasizing current priorities.
+5. **Aider Execution**: Send directions to Aider and await task completion.
+6. **Result Processing**: Analyze Aider's output and update project state.
+7. **User Interaction**: Handle user input when required.
+8. **Progress Evaluation**: Assess step/stage completion and manage transitions.
+
+## 4. Key Components
+
+### 4.1 StateManager
+- Maintains project state
+- Tracks workflow progress
+- Provides state update and query interfaces
+
+### 4.2 ConstraintEngine
+- Manages stage-specific constraints
+- Validates project state
+- Ensures DDD and TDD adherence
+
+### 4.3 PriorityManager
+- Determines stage-based priorities
+- Focuses on requirements, research, and modeling before design/implementation
+
+### 4.4 DirectionGenerator
+- Generates Aider-specific directions
+- Incorporates current state, priorities, and validation results
+- Emphasizes DDD and TDD practices
+
+### 4.5 AiderInterface
+- Manages Aider communication
+- Handles command sending and result receiving
+- Processes errors and unexpected responses
+
+### 4.6 UserInteractionHandler
+- Manages user prompts and input
+- Integrates user decisions into the workflow
+
+### 4.7 ProgressTracker
+- Evaluates completion criteria
+- Manages stage transitions
+- Ensures artifact completeness before progression
+
+## 5. Stage-Specific Workflows
+
+(Detailed workflows for each stage, similar to the original document)
+
+## 6. Transition Constraints
+
+- Implement strict transition rules between stages
+- Require artifact completion/approval before progression
+- Example: Prevent Implementation start until Design approval and Test Design completion
+
+## 7. Reporting and Logging
+
+- Generate detailed stage progress reports
+- Maintain comprehensive decision and action logs
+- Provide clear project evolution visibility
+
+## 8. Golang-Specific Considerations
+
+- Utilize Go's concurrency features for parallel processing where applicable
+- Implement robust error handling using Go's error model
+- Use Go's strong typing to ensure data integrity throughout the workflow
+- Leverage Go's standard library for HTTP communication, file I/O, and other system interactions
+- Implement efficient data structures for state management and constraint checking
+
+This Golang-based LLM-Workflow Director design maintains the structured approach to AI-assisted software development, emphasizing DDD and TDD principles while leveraging Go's strengths in performance, concurrency, and type safety.
+# LLM-Workflow Director: Workflow Loop Design (Golang Implementation)
+
+## 1. Overview
+
+The LLM-Workflow Director is a Go-based system designed to guide AI-assisted software development processes. It emphasizes Domain-Driven Design (DDD) and Test-Driven Development (TDD) principles, ensuring systematic progression through crucial development stages.
+
+## 2. Workflow Stages
+
+1. Project Initialization
+2. Requirements Elaboration
+3. Research Gathering and Analysis
+4. Domain Modeling
+5. Design
+6. Test Design
+7. Implementation
+8. Testing
+9. Review and Refinement
+
+## 3. Core Workflow Loop
+
+1. **State Assessment**: Analyze current project state and determine active stage/step.
+2. **Constraint Validation**: Apply and validate constraints for the current stage.
+3. **Priority Determination**: Set priorities based on the current stage, adhering to DDD and TDD.
+4. **Direction Generation**: Create actionable directions for Aider, emphasizing current priorities.
+5. **Aider Execution**: Send directions to Aider and await task completion.
+6. **Result Processing**: Analyze Aider's output and update project state.
+7. **User Interaction**: Handle user input when required.
+8. **Progress Evaluation**: Assess step/stage completion and manage transitions.
+
+## 4. Key Components
+
+### 4.1 StateManager
+- Maintains project state
+- Tracks workflow progress
+- Provides state update and query interfaces
+
+### 4.2 ConstraintEngine
+- Manages stage-specific constraints
+- Validates project state
+- Ensures DDD and TDD adherence
+
+### 4.3 PriorityManager
+- Determines stage-based priorities
+- Focuses on requirements, research, and modeling before design/implementation
+
+### 4.4 DirectionGenerator
+- Generates Aider-specific directions
+- Incorporates current state, priorities, and validation results
+- Emphasizes DDD and TDD practices
+
+### 4.5 AiderInterface
+- Manages Aider communication
+- Handles command sending and result receiving
+- Processes errors and unexpected responses
+
+### 4.6 UserInteractionHandler
+- Manages user prompts and input
+- Integrates user decisions into the workflow
+
+### 4.7 ProgressTracker
+- Evaluates completion criteria
+- Manages stage transitions
+- Ensures artifact completeness before progression
+
+## 5. Stage-Specific Workflows
+
+(Detailed workflows for each stage, similar to the original document)
+
+## 6. Transition Constraints
+
+- Implement strict transition rules between stages
+- Require artifact completion/approval before progression
+- Example: Prevent Implementation start until Design approval and Test Design completion
+
+## 7. Reporting and Logging
+
+- Generate detailed stage progress reports
+- Maintain comprehensive decision and action logs
+- Provide clear project evolution visibility
+
+## 8. Golang-Specific Considerations
+
+- Utilize Go's concurrency features for parallel processing where applicable
+- Implement robust error handling using Go's error model
+- Use Go's strong typing to ensure data integrity throughout the workflow
+- Leverage Go's standard library for HTTP communication, file I/O, and other system interactions
+- Implement efficient data structures for state management and constraint checking
+
+This Golang-based LLM-Workflow Director design maintains the structured approach to AI-assisted software development, emphasizing DDD and TDD principles while leveraging Go's strengths in performance, concurrency, and type safety.
