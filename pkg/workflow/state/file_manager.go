@@ -41,6 +41,13 @@ func (f *FileStateManager) UpdateState(state interface{}) error {
 	}
 
 	statePath := filepath.Join(f.projectPath, "state.json")
+	
+	// Ensure the directory exists
+	err = os.MkdirAll(filepath.Dir(statePath), 0755)
+	if err != nil {
+		return fmt.Errorf("error creating directory: %w", err)
+	}
+
 	err = os.WriteFile(statePath, data, 0644)
 	if err != nil {
 		return fmt.Errorf("error writing state file: %w", err)

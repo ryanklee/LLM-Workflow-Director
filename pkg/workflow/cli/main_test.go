@@ -10,8 +10,15 @@ func TestRun(t *testing.T) {
 	originalArgs := os.Args
 	defer func() { os.Args = originalArgs }()
 
+	// Create a temporary directory for the test project
+	tempDir, err := os.MkdirTemp("", "test-project")
+	if err != nil {
+		t.Fatalf("Failed to create temp directory: %v", err)
+	}
+	defer os.RemoveAll(tempDir) // Clean up after the test
+
 	// Set up test args
-	os.Args = []string{"cmd", "-project", "/tmp/test-project"}
+	os.Args = []string{"cmd", "-project", tempDir}
 
 	// TODO: Mock dependencies and add more detailed tests
 
