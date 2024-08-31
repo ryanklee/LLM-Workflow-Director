@@ -85,6 +85,9 @@ func (d *Director) Run() error {
 		if err := d.progressTracker.UpdateProgress(state); err != nil {
 			return err
 		}
+
+		// Add a small delay to prevent tight looping
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 

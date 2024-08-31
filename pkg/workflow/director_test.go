@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"testing"
+	"time"
 )
 
 // MockStateManager implements StateManager interface
@@ -36,9 +37,13 @@ type MockUserInteractionHandler struct{}
 func (m *MockUserInteractionHandler) IsInteractionRequired(interface{}) bool { return false }
 
 // MockProgressTracker implements progress.ProgressTracker interface
-type MockProgressTracker struct{}
+type MockProgressTracker struct {
+	completeAfter time.Time
+}
 
-func (m *MockProgressTracker) IsComplete(interface{}) bool      { return false }
+func (m *MockProgressTracker) IsComplete(interface{}) bool {
+	return time.Now().After(m.completeAfter)
+}
 func (m *MockProgressTracker) UpdateProgress(interface{}) error { return nil }
 
 func TestNewDirector(t *testing.T) {
@@ -49,7 +54,7 @@ func TestNewDirector(t *testing.T) {
 		&MockDirectionGenerator{},
 		&MockAiderInterface{},
 		&MockUserInteractionHandler{},
-		&MockProgressTracker{},
+		&MockProgressTracker{completeAfter: time.Now().Add(100 * time.Millisecond)},
 	)
 	if director == nil {
 		t.Error("NewDirector() returned nil")
@@ -64,7 +69,7 @@ func TestDirectorRun(t *testing.T) {
 		&MockDirectionGenerator{},
 		&MockAiderInterface{},
 		&MockUserInteractionHandler{},
-		&MockProgressTracker{},
+		&MockProgressTracker{completeAfter: time.Now().Add(100 * time.Millisecond)},
 	)
 	err := director.Run()
 	if err != nil {
