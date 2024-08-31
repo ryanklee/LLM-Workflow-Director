@@ -18,12 +18,11 @@ func (m *MockAider) Execute(input interface{}) (interface{}, error) {
 }
 
 func TestAiderInterface(t *testing.T) {
-	mockAider := new(MockAider)
-
 	t.Run("Execute success", func(t *testing.T) {
+		mockAider := new(MockAider)
 		input := "test input"
 		expectedOutput := "test output"
-		mockAider.On("Execute", input).Return(expectedOutput, nil)
+		mockAider.On("Execute", input).Return(expectedOutput, nil).Once()
 
 		output, err := mockAider.Execute(input)
 
@@ -33,6 +32,7 @@ func TestAiderInterface(t *testing.T) {
 	})
 
 	t.Run("Execute error", func(t *testing.T) {
+		mockAider := new(MockAider)
 		input := "test input"
 		expectedError := errors.New("execution failed")
 		mockAider.On("Execute", input).Return(nil, expectedError).Once()
@@ -44,7 +44,4 @@ func TestAiderInterface(t *testing.T) {
 		assert.Nil(t, output)
 		mockAider.AssertExpectations(t)
 	})
-
-	// Reset mock for the next test
-	mockAider = new(MockAider)
 }
