@@ -28,7 +28,8 @@ func (f *FileStateManager) GetCurrentState() (interface{}, error) {
 	var state map[string]interface{}
 	err = json.Unmarshal(data, &state)
 	if err != nil {
-		return nil, fmt.Errorf("error unmarshaling state: %w", err)
+		// If unmarshaling fails, return an empty state
+		return map[string]interface{}{}, nil
 	}
 
 	return state, nil

@@ -17,6 +17,13 @@ func TestRun(t *testing.T) {
 	}
 	defer os.RemoveAll(tempDir) // Clean up after the test
 
+	// Create an initial state file with valid JSON
+	initialState := []byte(`{"stage": "initialization"}`)
+	err = os.WriteFile(filepath.Join(tempDir, "state.json"), initialState, 0644)
+	if err != nil {
+		t.Fatalf("Failed to create initial state file: %v", err)
+	}
+
 	// Set up test args
 	os.Args = []string{"cmd", "-project", tempDir}
 
