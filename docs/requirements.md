@@ -22,10 +22,12 @@
    4.2. The system shall focus on requirements elaboration, research gathering, and domain modeling before design and implementation.
 
 5. LLM Direction
-   5.1. The system shall generate clear, actionable directions for Aider based on the current workflow step, project state, and priorities.
-   5.2. The system shall format its output in a way that is easily consumable by Aider.
-   5.3. The system shall provide context and rationale for each direction given to Aider.
-   5.4. The system shall emphasize DDD and TDD practices in the generated directions.
+   5.1. The system shall generate clear, actionable directions for Claude-Sonnet 3.5 via Aider based on the current workflow step, project state, and priorities.
+   5.2. The system shall format its output in a way that is optimized for Claude-Sonnet 3.5's comprehension and processing capabilities.
+   5.3. The system shall provide context and rationale for each direction given to Claude-Sonnet 3.5, including relevant project history and decision-making factors.
+   5.4. The system shall emphasize DDD and TDD practices in the generated directions, explaining their importance in the current context.
+   5.5. The system shall generate output that leverages Claude-Sonnet 3.5's strengths in natural language understanding and generation.
+   5.6. The system shall include prompts and questions in its output to encourage Claude-Sonnet 3.5 to think critically about the task at hand.
 
 6. User Interaction
    6.1. The system shall allow for user input at predefined points in the workflow.
@@ -36,10 +38,13 @@
    7.2. The system shall provide a method to view the current project state.
    7.3. The system shall track changes to the project state over time.
 
-8. Integration with Aider
+8. Integration with Aider and Claude-Sonnet 3.5
    8.1. The system shall be executable from the command line by Aider.
    8.2. The system shall accept input parameters from Aider, including the current project state.
    8.3. The system shall return output in a format that Aider can parse and act upon.
+   8.4. The system shall tailor its output to Claude-Sonnet 3.5's specific capabilities and limitations.
+   8.5. The system shall include mechanisms to clarify ambiguities or request additional information from Claude-Sonnet 3.5 when necessary.
+   8.6. The system shall provide clear instructions on how to format responses for easy parsing and integration back into the workflow.
 
 9. Extensibility
    9.1. The system shall allow for easy addition of new workflow stages and steps.
@@ -89,6 +94,13 @@
     17.5. The system shall implement efficient data structures for state management and constraint checking.
     17.6. The system shall compile to a single binary for easy distribution and deployment.
     17.7. The system shall support cross-compilation for different target platforms.
+
+18. LLM-Specific Output Enhancements
+    18.1. The system shall generate comprehensive project context summaries for Claude-Sonnet 3.5 at the beginning of each interaction.
+    18.2. The system shall provide step-by-step guidance for complex tasks, breaking them down into manageable sub-tasks for Claude-Sonnet 3.5.
+    18.3. The system shall include relevant code snippets, documentation references, and examples in its output to aid Claude-Sonnet 3.5's understanding and task completion.
+    18.4. The system shall generate output that encourages Claude-Sonnet 3.5 to explain its reasoning and decision-making process.
+    18.5. The system shall adapt its language complexity and technical depth based on the current project stage and task requirements.
 # LLM-Workflow Director Requirements (Golang Implementation)
 
 1. Project Initialization

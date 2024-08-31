@@ -44,7 +44,7 @@ The LLM-Workflow Director is a Go-based system designed to guide AI-assisted sof
 - Focuses on requirements, research, and modeling before design/implementation
 
 ### 4.4 DirectionGenerator
-- Generates Aider-specific directions
+- Generates Claude-Sonnet 3.5-specific directions via Aider
 - Incorporates current state, priorities, and validation results
 - Emphasizes DDD and TDD practices
 
@@ -61,6 +61,16 @@ The LLM-Workflow Director is a Go-based system designed to guide AI-assisted sof
 - Evaluates completion criteria
 - Manages stage transitions
 - Ensures artifact completeness before progression
+
+### 4.8 LLMOutputManager
+- Integrates LLMOutputFormatter, LLMInteractionManager, and LLMContextProvider
+- Coordinates the generation of LLM-optimized output
+- Ensures consistency and coherence in communication with Claude-Sonnet 3.5
+
+### 4.9 LLMTaskManager
+- Combines LLMTaskBreakdown and LLMReasoningPrompter functionalities
+- Manages the decomposition and assignment of tasks to Claude-Sonnet 3.5
+- Facilitates the reasoning and explanation process for complex decisions
 
 ## 5. Stage-Specific Workflows
 
@@ -87,6 +97,42 @@ The LLM-Workflow Director is a Go-based system designed to guide AI-assisted sof
 - Implement efficient data structures for state management and constraint checking
 
 This Golang-based LLM-Workflow Director design maintains the structured approach to AI-assisted software development, emphasizing DDD and TDD principles while leveraging Go's strengths in performance, concurrency, and type safety.
+
+## 9. LLM-Oriented Domain Model
+
+### 9.1 LLMOutputFormatter
+- Responsible for structuring and formatting output for Claude-Sonnet 3.5
+- Adapts output complexity based on project stage and task
+- Incorporates project context, history, and decision-making factors
+
+### 9.2 LLMInteractionManager
+- Manages the flow of information between the system and Claude-Sonnet 3.5
+- Handles clarification requests and ambiguity resolution
+- Processes and interprets Claude-Sonnet 3.5's responses
+
+### 9.3 LLMContextProvider
+- Generates comprehensive project context summaries
+- Maintains a history of important decisions and their rationales
+- Provides relevant documentation and code snippets as needed
+
+### 9.4 LLMTaskBreakdown
+- Decomposes complex tasks into manageable sub-tasks for Claude-Sonnet 3.5
+- Generates step-by-step guidance for task completion
+- Ensures each sub-task aligns with DDD and TDD principles
+
+### 9.5 LLMReasoningPrompter
+- Generates prompts and questions to encourage critical thinking
+- Requests explanations for decisions and approaches from Claude-Sonnet 3.5
+- Validates the reasoning provided by Claude-Sonnet 3.5 against project requirements and constraints
+
+## 10. LLM-Oriented Workflow Enhancements
+
+10.1. Before each interaction with Claude-Sonnet 3.5, generate a comprehensive context summary using LLMContextProvider.
+10.2. Use LLMOutputFormatter to structure all output for optimal comprehension by Claude-Sonnet 3.5.
+10.3. Employ LLMTaskBreakdown to decompose complex tasks before sending them to Claude-Sonnet 3.5.
+10.4. Utilize LLMReasoningPrompter to encourage explanations and critical thinking from Claude-Sonnet 3.5.
+10.5. Process Claude-Sonnet 3.5's responses using LLMInteractionManager, handling any necessary clarifications or follow-ups.
+10.6. Continuously adapt the complexity and depth of interactions based on the project's progress and Claude-Sonnet 3.5's demonstrated understanding.
 # LLM-Workflow Director: Workflow Loop Design (Golang Implementation)
 
 ## 1. Overview
