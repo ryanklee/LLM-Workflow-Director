@@ -46,6 +46,11 @@ func (m *MockProgressTracker) IsComplete(interface{}) bool {
 }
 func (m *MockProgressTracker) UpdateProgress(interface{}) error { return nil }
 
+// MockSufficiencyEvaluator implements sufficiency.Evaluator interface
+type MockSufficiencyEvaluator struct{}
+
+func (m *MockSufficiencyEvaluator) Evaluate(interface{}) (bool, string, error) { return true, "", nil }
+
 func TestNewDirector(t *testing.T) {
 	director := NewDirector(
 		&MockStateManager{},
@@ -55,6 +60,7 @@ func TestNewDirector(t *testing.T) {
 		&MockAiderInterface{},
 		&MockUserInteractionHandler{},
 		&MockProgressTracker{completeAfter: time.Now().Add(100 * time.Millisecond)},
+		&MockSufficiencyEvaluator{},
 	)
 	if director == nil {
 		t.Error("NewDirector() returned nil")
@@ -70,6 +76,7 @@ func TestDirectorRun(t *testing.T) {
 		&MockAiderInterface{},
 		&MockUserInteractionHandler{},
 		&MockProgressTracker{completeAfter: time.Now().Add(100 * time.Millisecond)},
+		&MockSufficiencyEvaluator{},
 	)
 	err := director.Run()
 	if err != nil {
