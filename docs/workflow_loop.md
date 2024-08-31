@@ -133,6 +133,43 @@ This Golang-based LLM-Workflow Director design maintains the structured approach
 10.4. Utilize LLMReasoningPrompter to encourage explanations and critical thinking from Claude-Sonnet 3.5.
 10.5. Process Claude-Sonnet 3.5's responses using LLMInteractionManager, handling any necessary clarifications or follow-ups.
 10.6. Continuously adapt the complexity and depth of interactions based on the project's progress and Claude-Sonnet 3.5's demonstrated understanding.
+10.7. Implement best practices for prompt engineering:
+    a. Use clear and direct language in prompts.
+    b. Provide examples (multishot prompting) when introducing new concepts or tasks.
+    c. Encourage step-by-step thinking using chain-of-thought prompts.
+    d. Utilize XML tags to structure complex prompts and desired response formats.
+    e. Assign specific roles to Claude-Sonnet 3.5 using system prompts when appropriate.
+    f. Prefill responses to guide output format and content when necessary.
+    g. Chain complex prompts for multi-step tasks or reasoning.
+10.8. Utilize a prompt generator to create effective prompts for various scenarios.
+10.9. Implement techniques for handling long contexts:
+    a. Summarize previous interactions and project state.
+    b. Extract and highlight relevant information for the current task.
+    c. Use efficient prompting techniques to maximize context utilization.
+
+## 11. Prompt Engineering and LLM Interaction
+
+11.1. Maintain a library of effective prompt templates for common development tasks.
+11.2. Dynamically generate and refine prompts based on:
+    a. Current project state and requirements.
+    b. Task complexity and domain.
+    c. Previous interaction history with Claude-Sonnet 3.5.
+11.3. Implement a feedback loop to improve prompt effectiveness:
+    a. Analyze Claude-Sonnet 3.5's responses for relevance and quality.
+    b. Adjust prompting strategies based on successful interactions.
+    c. Refine prompt templates and generation algorithms over time.
+11.4. Provide clear instructions for response formatting:
+    a. Use XML tags or other structured formats for complex outputs.
+    b. Specify desired output length, style, and level of detail.
+    c. Request specific sections or components in the response when necessary.
+11.5. Implement error handling and retry mechanisms:
+    a. Detect off-topic or unclear responses from Claude-Sonnet 3.5.
+    b. Rephrase prompts or provide additional context for clarification.
+    c. Break down complex tasks into smaller, more manageable prompts if initial attempts fail.
+11.6. Optimize prompts for long-running development tasks:
+    a. Provide periodic summaries of project state and progress.
+    b. Use checkpoints to allow Claude-Sonnet 3.5 to resume work efficiently.
+    c. Implement strategies to maintain context across multiple interactions.
 # LLM-Workflow Director: Workflow Loop Design (Golang Implementation)
 
 ## 1. Overview

@@ -101,6 +101,24 @@
     18.3. The system shall include relevant code snippets, documentation references, and examples in its output to aid Claude-Sonnet 3.5's understanding and task completion.
     18.4. The system shall generate output that encourages Claude-Sonnet 3.5 to explain its reasoning and decision-making process.
     18.5. The system shall adapt its language complexity and technical depth based on the current project stage and task requirements.
+    18.6. The system shall implement best practices for prompt engineering with Claude-Sonnet 3.5, including:
+        a. Being clear and direct in instructions and queries.
+        b. Using examples (multishot prompting) when appropriate.
+        c. Encouraging step-by-step thinking (chain of thought).
+        d. Using XML tags to structure prompts and responses.
+        e. Assigning specific roles to Claude-Sonnet 3.5 using system prompts.
+        f. Prefilling responses when appropriate to guide output format.
+        g. Chaining complex prompts for multi-step tasks.
+        h. Optimizing prompts for long context windows when necessary.
+    18.7. The system shall utilize a prompt generator to create effective prompts for various tasks and scenarios.
+    18.8. The system shall implement techniques for handling long contexts, including summarization and relevant information extraction.
+
+19. Prompt Engineering and LLM Interaction
+    19.1. The system shall maintain a library of effective prompt templates for common tasks and scenarios.
+    19.2. The system shall dynamically generate and refine prompts based on the current project state, task requirements, and previous interactions.
+    19.3. The system shall implement a feedback loop to improve prompt effectiveness based on Claude-Sonnet 3.5's responses and task outcomes.
+    19.4. The system shall provide clear instructions on how Claude-Sonnet 3.5 should format its responses for easy parsing and integration into the workflow.
+    19.5. The system shall implement error handling and retry mechanisms for cases where Claude-Sonnet 3.5's responses are unclear or off-topic.
 # LLM-Workflow Director Requirements (Golang Implementation)
 
 1. Project Initialization
