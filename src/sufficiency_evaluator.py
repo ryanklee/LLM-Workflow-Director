@@ -46,11 +46,18 @@ class SufficiencyEvaluator:
         return '\n'.join(f"{key}: {value}" for key, value in project_state.items())
 
     def _parse_sufficiency_response(self, response: str) -> Tuple[bool, str]:
+        if not response or not response.strip():
+            self.logger.error("Empty or invalid sufficiency response")
+            return False, "Empty or invalid response from LLM"
+
         try:
             lines = response.split('\n')
-            evaluation_line = next(line for line in lines if line.startswith('Evaluation:'))
-            reasoning_line = next(line for line in lines if line.startswith('Reasoning:'))
+            evaluation_line = next((line for line in lines if line.startswith('Evaluation:')), None)
+            reasoning_line = next((line for line in lines if line.startswith('Reasoning:')), None)
             next_steps_line = next((line for line in lines if line.startswith('Next Steps:')), None)
+
+            if not evaluation_line or not reasoning_line:
+                raise ValueError("Missing required Evaluation or Reasoning in response")
 
             evaluation = evaluation_line.split(':')[1].strip().upper()
             reasoning = reasoning_line.split(':')[1].strip()
