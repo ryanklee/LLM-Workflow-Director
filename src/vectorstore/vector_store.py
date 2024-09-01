@@ -1,44 +1,26 @@
-package vectorstore
+from threading import Lock
 
-import (
-	"errors"
-	"sync"
-)
+class VectorStore:
+    """Represents an in-memory vector database"""
 
-// VectorStore represents an in-memory vector database
-type VectorStore struct {
-	vectors map[string][]float64
-	mu      sync.RWMutex
-}
+    def __init__(self):
+        self.vectors = {}
+        self.lock = Lock()
 
-// NewVectorStore creates a new instance of VectorStore
-func NewVectorStore() *VectorStore {
-	return &VectorStore{
-		vectors: make(map[string][]float64),
-	}
-}
+    def Store(self, key: str, vector: list[float]):
+        """Adds or updates a vector in the store"""
+        with self.lock:
+            self.vectors[key] = vector
 
-// Store adds or updates a vector in the store
-func (vs *VectorStore) Store(key string, vector []float64) {
-	vs.mu.Lock()
-	defer vs.mu.Unlock()
-	vs.vectors[key] = vector
-}
+    def Retrieve(self, key: str) -> list[float]:
+        """Gets a vector from the store"""
+        with self.lock:
+            vector = self.vectors.get(key)
+            if vector is None:
+                raise KeyError("Vector not found")
+            return vector
 
-// Retrieve gets a vector from the store
-func (vs *VectorStore) Retrieve(key string) ([]float64, error) {
-	vs.mu.RLock()
-	defer vs.mu.RUnlock()
-	vector, ok := vs.vectors[key]
-	if !ok {
-		return nil, errors.New("vector not found")
-	}
-	return vector, nil
-}
-
-// Delete removes a vector from the store
-func (vs *VectorStore) Delete(key string) {
-	vs.mu.Lock()
-	defer vs.mu.Unlock()
-	delete(vs.vectors, key)
-}
+    def Delete(self, key: str):
+        """Removes a vector from the store"""
+        with self.lock:
+            self.vectors.pop(key, None)
