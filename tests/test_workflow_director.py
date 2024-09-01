@@ -209,3 +209,8 @@ def test_workflow_director_llm_integration(mock_llm_manager):
 
     # Check that the move_to_next_stage method was called
     assert mock_user_interaction_handler.display_message.call_count >= 2, "Expected at least two display_message calls"
+
+    # Add more detailed logging
+    print("Mock LLMManager query call count:", mock_llm_manager.return_value.query.call_count)
+    print("Mock user interaction handler display_message call count:", mock_user_interaction_handler.display_message.call_count)
+    print("Mock user interaction handler prompt_user call count:", mock_user_interaction_handler.prompt_user.call_count)

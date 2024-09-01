@@ -90,9 +90,12 @@ class WorkflowDirector:
                 tier = self.determine_query_tier(user_input)
                 context = self._prepare_llm_context()
                 query = f"Process this command: {user_input}"
-                response = self.llm_manager.query(query, context=context, tier=tier)
-                self.user_interaction_handler.display_message(f"LLM response: {response}")
-                self._process_llm_response(response)
+                if self.llm_manager:
+                    response = self.llm_manager.query(query, context=context, tier=tier)
+                    self.user_interaction_handler.display_message(f"LLM response: {response}")
+                    self._process_llm_response(response)
+                else:
+                    self.logger.warning("LLMManager not available. Skipping LLM query.")
                 
                 if user_input.lower() == 'next':
                     self.move_to_next_stage()
