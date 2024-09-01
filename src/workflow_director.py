@@ -23,17 +23,7 @@ from src.user_interaction_handler import UserInteractionHandler
 
 class WorkflowDirector:
     def __init__(self, config_path='src/workflow_config.yaml', user_interaction_handler=None, llm_manager=None):
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
-        
-        # Add a file handler for persistent logging
-        file_handler = logging.FileHandler('workflow_director.log')
-        file_handler.setFormatter(formatter)
-        self.logger.addHandler(file_handler)
+        self._setup_logging()
         self.state_manager = StateManager()
         self.vector_store = VectorStore()
         self.constraint_engine = ConstraintEngine()
@@ -94,7 +84,22 @@ class WorkflowDirector:
                 # Process all commands using LLM
                 tier = self.determine_query_tier(user_input)
                 context = self._prepare_llm_context()
-                prompt_template = "Process this command: {command}\nCurrent stage: {stage}\nContext: {context}"
+                prompt_template = """
+                Process this command: {command}
+                Current stage: {stage}
+                Stage description: {stage_description}
+                Stage tasks:
+                {stage_tasks}
+                
+                Project structure:
+                {project_structure}
+                
+                Coding conventions:
+                {formatted_conventions}
+                
+                Additional context:
+                {context}
+                """
                 prompt = self.llm_manager.generate_prompt(prompt_template, {
                     "command": user_input,
                     "stage": current_stage['name'],
@@ -571,3 +576,24 @@ class WorkflowDirector:
             priorities = stage_data.get('priorities', [])
             self.priority_manager.set_priorities(stage_name, priorities)
         self.logger.debug("Priorities initialized for all stages")
+    def _setup_logging(self):
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        
+        # Create a StreamHandler for console output
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        console_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        console_handler.setFormatter(console_formatter)
+        
+        # Create a FileHandler for persistent logging
+        file_handler = logging.FileHandler('workflow_director.log')
+        file_handler.setLevel(logging.DEBUG)
+        file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(file_formatter)
+        
+        # Add both handlers to the logger
+        self.logger.addHandler(console_handler)
+        self.logger.addHandler(file_handler)
+        
+        self.logger.info("Logging setup completed for WorkflowDirector")

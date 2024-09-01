@@ -71,7 +71,9 @@ class LLMManager:
     def generate_prompt(self, template: str, context: Dict[str, Any]) -> str:
         self.logger.debug(f"Generating prompt with template: {template[:50]}...")
         try:
-            prompt = template.format(**context)
+            # Enhance the context with workflow-specific information
+            enhanced_context = self._enhance_context(context)
+            prompt = template.format(**enhanced_context)
             self.logger.debug(f"Generated prompt: {prompt[:50]}...")
             return prompt
         except KeyError as e:
@@ -80,3 +82,40 @@ class LLMManager:
         except Exception as e:
             self.logger.error(f"Unexpected error generating prompt: {str(e)}")
             return f"Unexpected error generating prompt: {str(e)}"
+
+    def _enhance_context(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        enhanced_context = context.copy()
+        
+        # Add workflow stage information
+        if 'workflow_stage' in context:
+            stage = context['workflow_stage']
+            enhanced_context['stage_description'] = self._get_stage_description(stage)
+            enhanced_context['stage_tasks'] = self._get_stage_tasks(stage)
+        
+        # Add project structure information
+        if 'project_structure_instructions' in context:
+            enhanced_context['project_structure'] = self._format_project_structure(context['project_structure_instructions'])
+        
+        # Add coding conventions
+        if 'coding_conventions' in context:
+            enhanced_context['formatted_conventions'] = self._format_coding_conventions(context['coding_conventions'])
+        
+        return enhanced_context
+
+    def _get_stage_description(self, stage: str) -> str:
+        # This method should retrieve the description of the given stage from the workflow configuration
+        # For now, we'll return a placeholder
+        return f"Description for stage: {stage}"
+
+    def _get_stage_tasks(self, stage: str) -> List[str]:
+        # This method should retrieve the tasks for the given stage from the workflow configuration
+        # For now, we'll return a placeholder
+        return [f"Task 1 for {stage}", f"Task 2 for {stage}"]
+
+    def _format_project_structure(self, instructions: str) -> str:
+        # Format the project structure instructions for better readability in the prompt
+        return f"Project Structure:\n{instructions}"
+
+    def _format_coding_conventions(self, conventions: str) -> str:
+        # Format the coding conventions for better readability in the prompt
+        return f"Coding Conventions:\n{conventions}"
