@@ -313,6 +313,11 @@ class WorkflowDirector:
         self.logger.info(f"No valid transition found from {self.current_stage} to {next_stage}")
         return False
 
+    def is_stage_completed(self, stage_name):
+        completed = stage_name in self.completed_stages
+        self.logger.debug(f"Checking if stage {stage_name} is completed: {completed}")
+        return completed
+
     def get_next_stage(self):
         valid_transitions = [t for t in self.transitions if t['from'] == self.current_stage]
         if valid_transitions:
@@ -359,34 +364,37 @@ class WorkflowDirector:
         project_state = self.state_manager.get_all()
         
         if self.sufficiency_evaluator:
-            is_sufficient, reasoning = self.sufficiency_evaluator.evaluate_stage_sufficiency(
-                self.current_stage, current_stage_data, project_state
-            )
+            try:
+                is_sufficient, reasoning = self.sufficiency_evaluator.evaluate_stage_sufficiency(
+                    self.current_stage, current_stage_data, project_state
+                )
+                self.logger.debug(f"SufficiencyEvaluator result: is_sufficient={is_sufficient}, reasoning={reasoning}")
+            except Exception as e:
+                self.logger.error(f"Error in SufficiencyEvaluator: {str(e)}")
+                is_sufficient, reasoning = True, f"SufficiencyEvaluator error: {str(e)}. Stage assumed to be sufficient."
         else:
+            self.logger.warning("SufficiencyEvaluator not available. Stage assumed to be sufficient.")
             is_sufficient, reasoning = True, "SufficiencyEvaluator not available. Stage assumed to be sufficient."
         
-        # Mark the stage as completed regardless of sufficiency
         self.stage_progress[self.current_stage] = 1.0
         self.completed_stages.add(self.current_stage)
         
         if not is_sufficient:
-            self.logger.warning(f"Stage {self.current_stage} is not sufficient for completion, but marked as completed")
+            self.logger.warning(f"Stage {self.current_stage} is not sufficient for completion, but marked as completed. Reason: {reasoning}")
             self.user_interaction_handler.display_message(f"Stage {self.current_stage} is marked as complete, but may need further attention. Reason: {reasoning}")
         else:
-            self.logger.info(f"Stage {self.current_stage} is sufficient for completion")
-            self.print_func(f"Completed stage: {self.current_stage}")
-            self.print_func(f"Completion reasoning: {reasoning}")
+            self.logger.info(f"Stage {self.current_stage} is sufficient for completion. Reason: {reasoning}")
+            self.user_interaction_handler.display_message(f"Completed stage: {self.current_stage}")
+            self.user_interaction_handler.display_message(f"Completion reasoning: {reasoning}")
         
         next_stage = self.get_next_stage()
         if next_stage:
-            if self.transition_to(next_stage):
-                self.logger.info(f"Moved to next stage: {self.current_stage}")
-            else:
-                self.logger.warning(f"Failed to transition to next stage: {next_stage}")
+            transition_result = self.transition_to(next_stage)
+            self.logger.info(f"Transition to next stage {'successful' if transition_result else 'failed'}: {next_stage}")
         else:
             self.logger.info("No next stage available")
         
-        return True  # Always return True when the stage is completed
+        return True
 
     def transition_to(self, next_stage):
         self.logger.info(f"Attempting to transition from {self.current_stage} to {next_stage}")

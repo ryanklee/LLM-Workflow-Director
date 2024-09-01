@@ -53,46 +53,36 @@ def test_workflow_director_move_to_next_stage():
 def test_workflow_director_complete_current_stage():
     director = WorkflowDirector()
     initial_stage = director.current_stage
-    print(f"Initial stage: {initial_stage}")
-    print(f"All stages: {[stage['name'] for stage in director.config['stages']]}")
-    print(f"Initial completed stages: {director.completed_stages}")
-
-    result = director.complete_current_stage()
-    print(f"Result of completing initial stage: {result}")
-    print(f"Current stage after completion: {director.current_stage}")
-    print(f"Completed stages after initial completion: {director.completed_stages}")
-
-    assert result == True, f"Expected True, got {result}"
-    assert director.is_stage_completed(initial_stage), f"Stage {initial_stage} should be marked as completed"
-    assert director.current_stage != initial_stage, f"Expected to move to a new stage, but still in {initial_stage}"
-
-    # Check if the new current stage is a valid transition from the initial stage
-    valid_transitions = [t['to'] for t in director.transitions if t['from'] == initial_stage]
-    print(f"Valid transitions from {initial_stage}: {valid_transitions}")
-    assert director.current_stage in valid_transitions, \
-        f"Current stage {director.current_stage} is not a valid transition from {initial_stage}"
-
-    # Test completing all stages
     all_stages = [stage['name'] for stage in director.config['stages']]
-    for i, stage in enumerate(all_stages[1:-1], start=1):  # Start from the second stage, end before the last
-        print(f"Completing stage {i}: {stage}")
-        result = director.complete_current_stage()
-        print(f"Result of completing stage {stage}: {result}")
-        print(f"Current stage after completion: {director.current_stage}")
-        print(f"Completed stages: {director.completed_stages}")
-        assert result == True, f"Expected True for stage {stage}, got {result}"
-
-    # Check if we're in the final stage
-    print(f"Final check - Current stage: {director.current_stage}, Expected final stage: {all_stages[-1]}")
-    assert director.current_stage == all_stages[-1], f"Expected to be in the final stage {all_stages[-1]}, but in {director.current_stage}"
     
+    director.logger.info(f"Initial stage: {initial_stage}")
+    director.logger.info(f"All stages: {all_stages}")
+    director.logger.info(f"Initial completed stages: {director.completed_stages}")
+
+    for i, stage in enumerate(all_stages):
+        result = director.complete_current_stage()
+        director.logger.info(f"Completed stage {i}: {stage}")
+        director.logger.info(f"Result of completing stage: {result}")
+        director.logger.info(f"Current stage after completion: {director.current_stage}")
+        director.logger.info(f"Completed stages: {director.completed_stages}")
+        
+        assert result == True, f"Expected True for stage {stage}, got {result}"
+        assert director.is_stage_completed(stage), f"Stage {stage} should be marked as completed"
+        
+        if i < len(all_stages) - 1:
+            assert director.current_stage == all_stages[i+1], f"Expected to move to stage {all_stages[i+1]}, but in {director.current_stage}"
+        else:
+            assert director.current_stage == stage, f"Expected to stay in the final stage {stage}, but in {director.current_stage}"
+
     # Test attempting to complete after the final stage
     post_final_result = director.complete_current_stage()
-    print(f"Result of completing after final stage: {post_final_result}")
-    print(f"Final current stage: {director.current_stage}")
-    print(f"Final completed stages: {director.completed_stages}")
+    director.logger.info(f"Result of completing after final stage: {post_final_result}")
+    director.logger.info(f"Final current stage: {director.current_stage}")
+    director.logger.info(f"Final completed stages: {director.completed_stages}")
+    
     assert post_final_result == True, "Expected True when attempting to complete after the final stage"
     assert director.current_stage == all_stages[-1], f"Expected to stay in the final stage {all_stages[-1]}, but in {director.current_stage}"
+    assert len(director.completed_stages) == len(all_stages), f"Expected all stages to be completed, but only {len(director.completed_stages)} are completed"
 
 def test_main_script_execution():
     result = subprocess.run(['python', 'src/main.py', 'report', '--format', 'markdown'], 
