@@ -48,7 +48,7 @@ func NewBasicProgressTracker() component.WorkflowComponent {
 }
 
 func NewLLMEvaluator(ai component.WorkflowComponent) component.WorkflowComponent {
-	se := sufficiency.NewLLMEvaluator(ai.(*componentWrapper).component.(*aider.BasicAiderInterface))
+	se := sufficiency.NewLLMEvaluator(ai.(*componentWrapper).component.(aider.AiderInterface))
 	return &componentWrapper{se, "LLMEvaluator"}
 }
 
@@ -62,23 +62,23 @@ func (cw *componentWrapper) Name() string {
 }
 
 func (cw *componentWrapper) Execute(state interface{}) (interface{}, error) {
-	switch c := cw.component.(type) {
-	case *state.FileStateManager:
-		return state, c.UpdateState(state)
-	case *constraint.BasicConstraintEngine:
-		return state, c.Validate(state)
-	case *priority.BasicPriorityManager:
-		return c.DeterminePriorities(state), nil
-	case *direction.BasicDirectionGenerator:
-		return c.Generate(state, nil)
-	case *aider.BasicAiderInterface:
-		return c.Execute(state)
-	case *user.BasicUserInteractionHandler:
+	switch cw.name {
+	case "FileStateManager":
+		return state, cw.component.(state.StateManager).UpdateState(state)
+	case "BasicConstraintEngine":
+		return state, cw.component.(constraint.ConstraintEngine).Validate(state)
+	case "BasicPriorityManager":
+		return cw.component.(priority.PriorityManager).DeterminePriorities(state), nil
+	case "BasicDirectionGenerator":
+		return cw.component.(direction.DirectionGenerator).Generate(state, nil)
+	case "BasicAiderInterface":
+		return cw.component.(aider.AiderInterface).Execute(state)
+	case "BasicUserInteractionHandler":
 		return state, nil // Implement user interaction logic
-	case *progress.BasicProgressTracker:
-		return state, c.UpdateProgress(state)
-	case *sufficiency.LLMEvaluator:
-		sufficient, reason, err := c.Evaluate(state)
+	case "BasicProgressTracker":
+		return state, cw.component.(progress.ProgressTracker).UpdateProgress(state)
+	case "LLMEvaluator":
+		sufficient, reason, err := cw.component.(sufficiency.Evaluator).Evaluate(state)
 		if err != nil {
 			return state, err
 		}
