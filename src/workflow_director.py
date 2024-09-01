@@ -258,9 +258,9 @@ class WorkflowDirector:
             return False
 
     def get_next_stage(self):
-        current_index = next((i for i, stage in enumerate(self.config['stages']) if stage['name'] == self.current_stage), None)
-        if current_index is not None and current_index < len(self.config['stages']) - 1:
-            return self.config['stages'][current_index + 1]['name']
+        valid_transitions = [t['to'] for t in self.transitions if t['from'] == self.current_stage]
+        if valid_transitions:
+            return valid_transitions[0]
         return None
 
     def can_transition_to(self, next_stage):
@@ -280,6 +280,22 @@ class WorkflowDirector:
         # If there's a valid transition, allow it
         self.logger.info(f"Valid transition found from {self.current_stage} to {next_stage}")
         return True
+
+    def transition_to(self, next_stage):
+        self.logger.info(f"Attempting to transition from {self.current_stage} to {next_stage}")
+        if self.can_transition_to(next_stage):
+            previous_stage = self.current_stage
+            self.current_stage = next_stage
+            self.completed_stages.add(previous_stage)
+            self.print_func(f"Transitioned to stage: {next_stage}")
+            self.logger.info(f"Successfully transitioned to stage: {next_stage}")
+            self.logger.debug(f"Updated completed stages: {self.completed_stages}")
+            return True
+        else:
+            self.print_func(f"Cannot transition to stage: {next_stage}")
+            self.logger.warning(f"Transition to {next_stage} not allowed")
+            self.logger.debug(f"Current completed stages: {self.completed_stages}")
+            return False
 
     def get_next_stage(self):
         current_index = next((i for i, stage in enumerate(self.config['stages']) if stage['name'] == self.current_stage), None)

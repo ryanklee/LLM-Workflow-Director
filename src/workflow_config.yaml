@@ -62,6 +62,10 @@ transitions:
     to: Domain Modeling
     condition: Coding conventions defined and integrated
 
+  - from: Project Initialization
+    to: Coding Conventions Setup
+    condition: All initial setup tasks completed
+
   - from: Requirements Gathering
     to: Domain Modeling
     condition: All requirements documented and approved
