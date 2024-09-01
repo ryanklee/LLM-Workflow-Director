@@ -90,7 +90,7 @@ func Run() error {
 
 		fmt.Println("Running workflow director")
 		start = time.Now()
-		err := director.Run()
+		err = director.Run()
 		fmt.Printf("Director.Run() took %v\n", time.Since(start))
 		if err != nil {
 			fmt.Printf("Workflow director encountered an error: %v\n", err)
@@ -129,7 +129,8 @@ func createComponent(compConfig config.ComponentConfig, projectPath string) (com
 	case "progressTracker":
 		return progress.NewBasicProgressTracker(), nil
 	case "sufficiencyEvaluator":
-		return sufficiency.NewLLMEvaluator(aider.NewBasicAiderInterface()), nil
+		ai := aider.NewBasicAiderInterface()
+		return sufficiency.NewLLMEvaluator(ai), nil
 	default:
 		return nil, fmt.Errorf("unknown component type: %s", compConfig.Type)
 	}
