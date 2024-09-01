@@ -92,7 +92,9 @@ class WorkflowDirector:
                 query = f"Process this command: {user_input}"
                 if self.llm_manager:
                     try:
+                        self.logger.debug(f"Querying LLM with: {query}")
                         response = self.llm_manager.query(query, context=context, tier=tier)
+                        self.logger.debug(f"LLM response received: {response}")
                         self.user_interaction_handler.display_message(f"LLM response: {response}")
                         self._process_llm_response(response)
                     except Exception as e:
