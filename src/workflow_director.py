@@ -138,10 +138,15 @@ class WorkflowDirector:
             return False
 
         current_state = self.state_manager.get_all()
-        is_valid, violations = self.constraint_engine.ValidateAll(current_state)
+        validation_result = self.constraint_engine.ValidateAll(current_state)
 
-        if not is_valid:
-            self.logger.warning(f"Cannot transition to {next_stage}. Constraint violations: {', '.join(violations)}")
+        if isinstance(validation_result, tuple) and len(validation_result) == 2:
+            is_valid, violations = validation_result
+            if not is_valid:
+                self.logger.warning(f"Cannot transition to {next_stage}. Constraint violations: {', '.join(violations)}")
+                return False
+        else:
+            self.logger.warning(f"Unexpected result from constraint validation: {validation_result}")
             return False
 
         return True

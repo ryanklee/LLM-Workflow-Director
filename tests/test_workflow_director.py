@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 # Mock the ConstraintEngine
 mock_constraint_engine = MagicMock()
+mock_constraint_engine.Engine.return_value.ValidateAll.return_value = (True, [])
 sys.modules['pkg.workflow.constraint.engine'] = mock_constraint_engine
 
 from src.workflow_director import WorkflowDirector
