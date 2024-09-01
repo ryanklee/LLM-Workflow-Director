@@ -105,7 +105,8 @@ class LLMManager:
         return f"{prompt}|{context_str}|{tier}"
 
     def _add_unique_id(self, response: Dict[str, Any]) -> Dict[str, Any]:
-        response['id'] = str(hash(str(response) + str(time.time())))
+        unique_id = str(hash(str(response) + str(time.time())))
+        response['id'] = f"(ID: {unique_id})"
         return response
 
     def clear_cache(self):
