@@ -23,7 +23,7 @@ func Run() error {
 	fmt.Println("Starting Run function")
 	
 	// Create a context with a timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// Create a channel to receive the result of the run
@@ -75,7 +75,7 @@ func Run() error {
 		err := director.Run()
 		if err != nil {
 			fmt.Printf("Workflow director encountered an error: %v\n", err)
-			done <- fmt.Errorf("Workflow director encountered an error: %v", err)
+			done <- fmt.Errorf("workflow director encountered an error: %w", err)
 			return
 		}
 
@@ -87,7 +87,7 @@ func Run() error {
 	select {
 	case <-ctx.Done():
 		fmt.Println("Context deadline exceeded")
-		return fmt.Errorf("Run function timed out after 4 seconds")
+		return fmt.Errorf("run function timed out after 10 seconds")
 	case err := <-done:
 		fmt.Println("Goroutine completed")
 		return err
