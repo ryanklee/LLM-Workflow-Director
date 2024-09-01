@@ -35,9 +35,9 @@ The `transitions` section defines how the workflow can progress from one stage t
 
 - `from`: The name of the starting stage
 - `to`: The name of the destination stage
-- `condition`: (Optional) A description of the condition that must be met to allow this transition
+- `condition`: (Optional) A Python expression that must evaluate to True to allow this transition
 
-If no condition is specified, the transition will be allowed as soon as the 'from' stage is completed.
+If no condition is specified, the transition will be allowed as soon as the 'from' stage is completed and all constraints are satisfied.
 
 Example:
 
@@ -45,12 +45,15 @@ Example:
 transitions:
   - from: Project Initialization
     to: Requirements Gathering
-    condition: All initial setup tasks completed
+    condition: "'project_directory' in state and state['project_directory']"
   - from: Requirements Gathering
     to: Domain Modeling
+    condition: "'requirements_documented' in state and state['requirements_documented']"
 ```
 
-The WorkflowDirector will evaluate these conditions when determining if a transition is allowed. If a stage is marked as completed, transitions from that stage will be allowed regardless of the condition.
+The WorkflowDirector will evaluate these conditions when determining if a transition is allowed. The condition is a Python expression that has access to the current `state` dictionary. If a stage is marked as completed, transitions from that stage will be allowed regardless of the condition.
+
+Note: Be cautious when writing condition expressions, as they are evaluated using Python's `eval()` function. Ensure that only trusted input is used in these expressions.
 
 ## Best Practices
 
