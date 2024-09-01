@@ -209,6 +209,18 @@
     23.12. The system shall provide recommendations for refactoring or reorganizing code structures to align with the target architecture and best practices.
     23.13. The system shall generate a comprehensive project health report before and after the alignment process to measure improvements and identify areas needing further attention.
 
+24. Help System
+    24.1. The system shall provide a comprehensive help system that gives a good overview of how to use the workflow director in the Aider developer workflow.
+    24.2. The help system shall be callable from the command line.
+    24.3. The help content shall be programmatically generated from the code and tied to the implementation.
+    24.4. The output of the help system shall be in a familiar form and easily understood by users.
+    24.5. The help system shall cover all major features and workflows of the LLM-Workflow Director.
+    24.6. The help system shall provide context-sensitive help for specific commands or stages of the workflow.
+    24.7. The help system shall include examples and use cases to illustrate proper usage of the workflow director.
+    24.8. The help system shall be easily maintainable and automatically updated when changes are made to the codebase.
+    24.9. The help system shall support different levels of detail, from high-level overviews to detailed explanations of specific features.
+    24.10. The help system shall include a search functionality to allow users to quickly find relevant information.
+
 12. Coding Conventions Management
     12.1. The system shall provide functionality to generate and manage coding conventions.
     12.2. The system shall allow for the specification of coding conventions to be respected by the LLMs.
