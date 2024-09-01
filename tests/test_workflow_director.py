@@ -173,6 +173,28 @@ def test_workflow_director_run(mock_llm_manager):
     # Check that the LLM query was called twice (for 'test command' and 'next')
     assert mock_llm_manager.return_value.query.call_count == 2
 
+def test_process_llm_response(caplog):
+    director = WorkflowDirector()
+    response = "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: update_workflow"
+    
+    with caplog.at_level(logging.INFO):
+        director._process_llm_response(response)
+    
+    assert "Updated stage progress to 0.5" in caplog.text
+    assert "Updated project state: key = value" in caplog.text
+    assert "Handling LLM action: update_workflow" in caplog.text
+
+def test_parse_llm_response():
+    director = WorkflowDirector()
+    response = "Key1: Value1\nKey2: Value2\nKey3: Value3 with: colon"
+    parsed = director._parse_llm_response(response)
+    
+    assert parsed == {
+        'key1': 'Value1',
+        'key2': 'Value2',
+        'key3': 'Value3 with: colon'
+    }
+
 @patch('src.workflow_director.LLMManager')
 @patch('src.workflow_director.ConventionManager')
 def test_workflow_director_llm_integration(mock_convention_manager, mock_llm_manager, caplog):

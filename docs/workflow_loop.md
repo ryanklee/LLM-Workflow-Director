@@ -180,7 +180,7 @@ This Python-based LLM-Workflow Director design maintains the structured approach
     b. Provide examples (multishot prompting) when introducing new concepts or tasks.
     c. Encourage step-by-step thinking using chain-of-thought prompts.
     d. Utilize XML tags to structure complex prompts and desired response formats.
-    e. Assign specific roles to Claude-Sonnet 3.5 using system prompts when appropriate.
+    e. Assign specific roles to the LLM using system prompts when appropriate.
     f. Prefill responses to guide output format and content when necessary.
     g. Chain complex prompts for multi-step tasks or reasoning.
 10.8. Utilize a prompt generator to create effective prompts for various scenarios.
@@ -188,6 +188,11 @@ This Python-based LLM-Workflow Director design maintains the structured approach
     a. Summarize previous interactions and project state.
     b. Extract and highlight relevant information for the current task.
     c. Use efficient prompting techniques to maximize context utilization.
+10.10. Process LLM responses:
+    a. Parse structured responses into actionable data.
+    b. Update project state based on LLM recommendations.
+    c. Handle LLM-suggested actions within the workflow.
+    d. Provide detailed logging of LLM interactions and their effects on the project.
 
 ## 11. Prompt Engineering and LLM Interaction
 

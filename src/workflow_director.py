@@ -138,8 +138,45 @@ class WorkflowDirector:
 
     def _process_llm_response(self, response: str):
         self.logger.info("Processing LLM response")
-        # TODO: Implement logic to process LLM response and update workflow state
-        # This could include updating task progress, modifying project state, etc.
+        try:
+            # Parse the response
+            parsed_response = self._parse_llm_response(response)
+            
+            # Update task progress
+            if 'task_progress' in parsed_response:
+                self.update_stage_progress(parsed_response['task_progress'])
+                self.logger.info(f"Updated stage progress to {parsed_response['task_progress']}")
+            
+            # Update project state
+            if 'state_updates' in parsed_response:
+                for key, value in parsed_response['state_updates'].items():
+                    self.state_manager.set(key, value)
+                    self.logger.info(f"Updated project state: {key} = {value}")
+            
+            # Handle any actions or recommendations
+            if 'actions' in parsed_response:
+                for action in parsed_response['actions']:
+                    self._handle_llm_action(action)
+            
+            self.logger.info("LLM response processed successfully")
+        except Exception as e:
+            self.logger.error(f"Error processing LLM response: {str(e)}")
+            self.error_handler.handle_error(e)
+
+    def _parse_llm_response(self, response: str) -> dict:
+        # TODO: Implement more sophisticated parsing logic
+        # For now, we'll use a simple key-value parsing
+        parsed = {}
+        for line in response.split('\n'):
+            if ':' in line:
+                key, value = line.split(':', 1)
+                parsed[key.strip().lower()] = value.strip()
+        return parsed
+
+    def _handle_llm_action(self, action: str):
+        self.logger.info(f"Handling LLM action: {action}")
+        # TODO: Implement logic to handle different types of actions
+        # This could include updating the workflow, triggering specific processes, etc.
         pass
 
     def determine_query_tier(self, query: str) -> str:
