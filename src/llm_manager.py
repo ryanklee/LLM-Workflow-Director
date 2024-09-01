@@ -7,6 +7,7 @@ from .error_handler import ErrorHandler
 from .llm_microservice_client import LLMMicroserviceClient
 from pydantic import Field, validator
 from llm import Claude
+from pydantic import Field, validator
 
 class LLMCostOptimizer:
     def __init__(self):
