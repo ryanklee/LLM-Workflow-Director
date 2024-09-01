@@ -213,7 +213,7 @@ These revised requirements address the identified issues by:
 6. Adding sections on performance, scalability, deployment, and customization.
 
 This structure provides a more comprehensive and organized set of requirements for the LLM-Workflow Director system.
-# LLM-Workflow Director Requirements (Golang Implementation)
+# LLM-Workflow Director Requirements (Python Implementation)
 
 1. Project Initialization
    1.1. The system shall bootstrap a project from initial requirements.
@@ -255,7 +255,7 @@ This structure provides a more comprehensive and organized set of requirements f
    7.1. The system shall maintain a current state of the project, including all documents and their versions.
    7.2. The system shall provide a method to view the current project state.
    7.3. The system shall track changes to the project state over time.
-   7.4. The system shall utilize an embedded vector database for efficient storage and retrieval of project-related information.
+   7.4. The system shall utilize a vector database for efficient storage and retrieval of project-related information.
 
 8. Integration with Aider
    8.1. The system shall be executable from the command line by Aider.
@@ -281,7 +281,7 @@ This structure provides a more comprehensive and organized set of requirements f
 12. Security
     12.1. The system shall not store or transmit sensitive project information outside the local environment.
     12.2. The system shall validate and sanitize all inputs from Aider to prevent injection attacks.
-    12.3. The system shall implement secure practices for storing and accessing the embedded vector database.
+    12.3. The system shall implement secure practices for storing and accessing the vector database.
 
 13. Documentation
     13.1. The system shall provide comprehensive documentation on the workflow stages and steps.
@@ -309,25 +309,24 @@ This structure provides a more comprehensive and organized set of requirements f
     16.3. The system shall direct Aider to run and report on test results regularly throughout the development process.
     16.4. The system shall use the tiered LLM approach to assist in generating and refining test cases.
 
-17. Golang-Specific Requirements
-    17.1. The system shall utilize Go's concurrency features for parallel processing where applicable.
-    17.2. The system shall implement robust error handling using Go's error model.
-    17.3. The system shall use Go's strong typing to ensure data integrity throughout the workflow.
-    17.4. The system shall leverage Go's standard library for HTTP communication, file I/O, and other system interactions.
+17. Python-Specific Requirements
+    17.1. The system shall utilize Python's asyncio for concurrent processing where applicable.
+    17.2. The system shall implement robust error handling using Python's exception handling mechanisms.
+    17.3. The system shall use Python's type hinting to improve code readability and maintainability.
+    17.4. The system shall leverage Python's standard library and ecosystem for HTTP communication, file I/O, and other system interactions.
     17.5. The system shall implement efficient data structures for state management and constraint checking.
-    17.6. The system shall compile to a single binary for easy distribution and deployment.
-    17.7. The system shall support cross-compilation for different target platforms.
-    17.8. The system shall use Go's embedding feature to include the vector database in the binary if possible.
+    17.6. The system shall be packaged as a Python module for easy distribution and deployment.
+    17.7. The system shall support cross-platform compatibility (Windows, macOS, Linux).
 
 18. Vector Database Integration
-    18.1. The system shall implement an embedded vector database for efficient storage and retrieval of project-related information.
+    18.1. The system shall integrate with a vector database for efficient storage and retrieval of project-related information.
     18.2. The system shall provide interfaces for storing, updating, and querying vector embeddings.
     18.3. The system shall use the vector database to enhance context retrieval for LLM interactions.
     18.4. The system shall implement efficient indexing and search algorithms for the vector database.
 
 19. LLM Integration
     19.1. The system shall integrate with the LLM CLI utility as a microservice for LLM interactions.
-    19.2. The system shall implement a Go-based wrapper or client to communicate with the LLM microservice via HTTP.
+    19.2. The system shall implement a Python-based client to communicate with the LLM microservice via HTTP.
     19.3. The system shall support multiple LLM models through the LLM CLI utility, including but not limited to OpenAI, Anthropic, and PaLM.
     19.4. The system shall utilize the LLM CLI's templating system for generating consistent prompts.
     19.5. The system shall leverage the LLM CLI's built-in caching capabilities to optimize performance and reduce API costs.
@@ -337,7 +336,7 @@ This structure provides a more comprehensive and organized set of requirements f
 
 20. LLM Microservice Architecture
     20.1. The system shall run the LLM CLI utility as a separate microservice.
-    20.2. The system shall implement a RESTful API for communication between the Go application and the LLM microservice.
+    20.2. The system shall implement a RESTful API for communication between the Python application and the LLM microservice.
     20.3. The system shall ensure proper error handling and logging for the LLM microservice.
     20.4. The system shall implement health checks and monitoring for the LLM microservice.
     20.5. The system shall provide configuration options for the LLM microservice, including model selection and API keys.
