@@ -1,11 +1,13 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow"
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/aider"
@@ -20,49 +22,68 @@ import (
 
 func Run() error {
 	fmt.Println("Starting Run function")
-	// Create a new flag set
-	fs := flag.NewFlagSet("workflow", flag.ExitOnError)
+	
+	// Create a context with a timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+	defer cancel()
 
-	// Define command-line flags
-	projectPath := fs.String("project", "", "Path to the project directory")
+	// Create a channel to receive the result of the run
+	done := make(chan error)
 
-	// Parse command-line flags
-	fs.Parse(os.Args[1:])
+	go func() {
+		// Create a new flag set
+		fs := flag.NewFlagSet("workflow", flag.ExitOnError)
 
-	if *projectPath == "" {
-		return errors.New("project path is required. Use -project flag to specify the project directory")
+		// Define command-line flags
+		projectPath := fs.String("project", "", "Path to the project directory")
+
+		// Parse command-line flags
+		fs.Parse(os.Args[1:])
+
+		if *projectPath == "" {
+			done <- errors.New("project path is required. Use -project flag to specify the project directory")
+			return
+		}
+
+		fmt.Println("Initializing components")
+		// Initialize components
+		stateManager := state.NewFileStateManager(*projectPath)
+		constraintEngine := constraint.NewBasicConstraintEngine()
+		priorityManager := priority.NewBasicPriorityManager()
+		directionGenerator := direction.NewBasicDirectionGenerator()
+		aiderInterface := aider.NewBasicAiderInterface()
+		userInteractionHandler := user.NewBasicUserInteractionHandler()
+		progressTracker := progress.NewBasicProgressTracker()
+		sufficiencyEvaluator := sufficiency.NewLLMEvaluator(aiderInterface)
+
+		fmt.Println("Creating workflow director")
+		// Create and run the workflow director
+		director := workflow.NewDirector(
+			stateManager,
+			constraintEngine,
+			priorityManager,
+			directionGenerator,
+			aiderInterface,
+			userInteractionHandler,
+			progressTracker,
+			sufficiencyEvaluator,
+		)
+
+		fmt.Println("Running workflow director")
+		err := director.Run()
+		if err != nil {
+			done <- fmt.Errorf("Workflow director encountered an error: %v", err)
+			return
+		}
+
+		fmt.Println("Workflow completed successfully.")
+		done <- nil
+	}()
+
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("Run function timed out after 4 seconds")
+	case err := <-done:
+		return err
 	}
-
-	fmt.Println("Initializing components")
-	// Initialize components
-	stateManager := state.NewFileStateManager(*projectPath)
-	constraintEngine := constraint.NewBasicConstraintEngine()
-	priorityManager := priority.NewBasicPriorityManager()
-	directionGenerator := direction.NewBasicDirectionGenerator()
-	aiderInterface := aider.NewBasicAiderInterface()
-	userInteractionHandler := user.NewBasicUserInteractionHandler()
-	progressTracker := progress.NewBasicProgressTracker()
-	sufficiencyEvaluator := sufficiency.NewLLMEvaluator(aiderInterface)
-
-	fmt.Println("Creating workflow director")
-	// Create and run the workflow director
-	director := workflow.NewDirector(
-		stateManager,
-		constraintEngine,
-		priorityManager,
-		directionGenerator,
-		aiderInterface,
-		userInteractionHandler,
-		progressTracker,
-		sufficiencyEvaluator,
-	)
-
-	fmt.Println("Running workflow director")
-	err := director.Run()
-	if err != nil {
-		log.Fatalf("Workflow director encountered an error: %v", err)
-	}
-
-	fmt.Println("Workflow completed successfully.")
-	return nil
 }
