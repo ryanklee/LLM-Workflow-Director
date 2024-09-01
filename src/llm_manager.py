@@ -1,5 +1,6 @@
 import importlib.util
 import logging
+from typing import Dict, Any
 from .error_handler import ErrorHandler
 
 llm_spec = importlib.util.find_spec("llm")
@@ -33,13 +34,25 @@ class LLMManager:
         if self.mock_mode:
             self.logger.info("LLMManager is operating in mock mode.")
 
-    def query(self, prompt):
+    def query(self, prompt: str, context: Dict[str, Any] = None) -> str:
         if self.mock_mode:
             return f"Mock response to: {prompt}"
         try:
-            response = self.model.prompt(prompt)
+            formatted_prompt = self._format_prompt(prompt, context)
+            self.logger.debug(f"Sending prompt to LLM: {formatted_prompt}")
+            response = self.model.prompt(formatted_prompt)
             return response.text()
         except Exception as e:
             error_message = str(e)
             self.logger.error(f"Error querying LLM: {error_message}")
             return f"Error querying LLM: {error_message}"
+
+    def _format_prompt(self, prompt: str, context: Dict[str, Any] = None) -> str:
+        if context is None:
+            return prompt
+
+        formatted_prompt = f"Context:\n"
+        for key, value in context.items():
+            formatted_prompt += f"{key}: {value}\n"
+        formatted_prompt += f"\nPrompt: {prompt}"
+        return formatted_prompt
