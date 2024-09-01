@@ -59,6 +59,11 @@ class LLMManager:
             'balanced': {'model': 'gpt-3.5-turbo', 'max_tokens': 500},
             'powerful': {'model': 'gpt-4', 'max_tokens': 1000}
         }
+        self.tiers = {
+            'fast': {'model': 'gpt-3.5-turbo', 'max_tokens': 100},
+            'balanced': {'model': 'gpt-3.5-turbo', 'max_tokens': 500},
+            'powerful': {'model': 'gpt-4', 'max_tokens': 1000}
+        }
 
     def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: str = 'balanced') -> Dict[str, Any]:
         self.logger.debug(f"Querying LLM with prompt: {prompt[:50]}... (tier: {tier})")
@@ -107,6 +112,14 @@ class LLMManager:
 
     def get_optimization_suggestion(self) -> str:
         return self.cost_optimizer.suggest_optimization()
+
+    def determine_query_tier(self, query: str) -> str:
+        if len(query.split()) < 5:
+            return 'fast'
+        elif len(query.split()) > 50 or any(keyword in query.lower() for keyword in ['complex', 'detailed', 'analyze', 'summarize']):
+            return 'powerful'
+        else:
+            return 'balanced'
 
     def get_usage_report(self) -> Dict[str, Any]:
         return self.cost_optimizer.get_usage_report()

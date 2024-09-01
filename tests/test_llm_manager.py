@@ -42,6 +42,31 @@ def test_llm_manager_get_optimization_suggestion():
     assert isinstance(suggestion, str)
     assert len(suggestion) > 0
 
+def test_llm_manager_query_with_tiers():
+    mock_client = MagicMock()
+    mock_client.query.side_effect = ["Fast response", "Balanced response", "Powerful response"]
+    manager = LLMManager()
+    manager.client = mock_client
+    
+    fast_result = manager.query("Short prompt", tier='fast')
+    balanced_result = manager.query("Medium length prompt", tier='balanced')
+    powerful_result = manager.query("Complex prompt", tier='powerful')
+    
+    assert isinstance(fast_result, dict) and fast_result.get("response") == "Fast response"
+    assert isinstance(balanced_result, dict) and balanced_result.get("response") == "Balanced response"
+    assert isinstance(powerful_result, dict) and powerful_result.get("response") == "Powerful response"
+    
+    assert mock_client.query.call_count == 3
+    mock_client.query.assert_any_call(ANY, ANY, 'gpt-3.5-turbo', 100)
+    mock_client.query.assert_any_call(ANY, ANY, 'gpt-3.5-turbo', 500)
+    mock_client.query.assert_any_call(ANY, ANY, 'gpt-4', 1000)
+
+def test_determine_query_tier():
+    manager = LLMManager()
+    assert manager.determine_query_tier("Short query") == 'fast'
+    assert manager.determine_query_tier("Medium length query with some details about the project") == 'balanced'
+    assert manager.determine_query_tier("Complex query that requires detailed analysis of the project structure and implementation of new features") == 'powerful'
+
 def test_evaluate_sufficiency():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
         mock_client.return_value.evaluate_sufficiency.return_value = {
