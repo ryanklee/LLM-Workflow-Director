@@ -40,6 +40,6 @@ class LLMManager:
             response = self.model.prompt(prompt)
             return response.text()
         except Exception as e:
-            error_message = self.error_handler.handle_error(e)
+            error_message = str(e)
             self.logger.error(f"Error querying LLM: {error_message}")
             return f"Error querying LLM: {error_message}"

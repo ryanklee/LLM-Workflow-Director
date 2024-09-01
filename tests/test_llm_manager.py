@@ -38,4 +38,4 @@ def test_llm_manager_query_error(mock_import):
     manager = LLMManager()
     manager.mock_mode = False  # Force non-mock mode for this test
     result = manager.query("Test prompt")
-    assert "Error querying LLM: Test error" in result
+    assert result == "Error querying LLM: Test error"
