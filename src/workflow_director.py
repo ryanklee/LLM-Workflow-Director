@@ -103,6 +103,9 @@ class WorkflowDirector:
                 elif user_input.lower() == 'optimize':
                     optimization_suggestion = self.llm_manager.get_optimization_suggestion()
                     self.user_interaction_handler.display_message(f"Optimization Suggestion: {optimization_suggestion}")
+                elif user_input.lower() == 'status':
+                    status_report = self.get_workflow_status()
+                    self.user_interaction_handler.display_message(status_report)
                 
                 # Process all commands using LLM
                 tier = self.determine_query_tier(user_input)
