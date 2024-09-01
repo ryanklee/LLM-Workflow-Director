@@ -452,14 +452,10 @@ class WorkflowDirector:
         project_state = self.state_manager.get_all()
         
         if self.sufficiency_evaluator:
-            try:
-                is_sufficient, reasoning = self.sufficiency_evaluator.evaluate_stage_sufficiency(
-                    self.current_stage, current_stage_data, project_state
-                )
-                self.logger.debug(f"SufficiencyEvaluator result: is_sufficient={is_sufficient}, reasoning={reasoning}")
-            except Exception as e:
-                self.logger.error(f"Error in SufficiencyEvaluator: {str(e)}")
-                is_sufficient, reasoning = True, f"SufficiencyEvaluator error: {str(e)}. Stage assumed to be sufficient."
+            is_sufficient, reasoning = self.sufficiency_evaluator.evaluate_stage_sufficiency(
+                self.current_stage, current_stage_data, project_state
+            )
+            self.logger.debug(f"SufficiencyEvaluator result: is_sufficient={is_sufficient}, reasoning={reasoning}")
         else:
             self.logger.warning("SufficiencyEvaluator not available. Stage assumed to be sufficient.")
             is_sufficient, reasoning = True, "SufficiencyEvaluator not available. Stage assumed to be sufficient."

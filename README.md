@@ -19,12 +19,14 @@ The LLM-Workflow Director has reached a significant milestone:
 ## Key Features
 
 - Configurable workflow stages and transitions
-- Integration with various LLM models with enhanced context-aware prompts
+- Integration with LLM microservice for enhanced context-aware prompts and sufficiency evaluation
 - State management for tracking project progress
 - Command-line interface for easy interaction
 - Extensible architecture for custom plugins and LLM models
 - Coding conventions management and integration with Aider
 - Improved error handling and retry mechanism for LLM queries
+- Efficient caching system for LLM responses
+- Tiered LLM approach for optimized performance and cost management
 
 ## Installation
 
