@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from src.state_manager import StateManager
 from src.llm_manager import LLMManager
+from src.sufficiency_evaluator import SufficiencyEvaluator
 from src.error_handler import ErrorHandler
 from src.vectorstore.vector_store import VectorStore
 from pkg.workflow.constraint.engine import Engine as ConstraintEngine
@@ -52,6 +53,7 @@ class WorkflowDirector:
         self.documentation_health_checker = DocumentationHealthChecker()
         self.project_structure_manager = ProjectStructureManager()
         self.convention_manager = ConventionManager()
+        self.sufficiency_evaluator = SufficiencyEvaluator(self.llm_manager)
 
     def load_config(self, config_path):
         try:
@@ -333,11 +335,23 @@ class WorkflowDirector:
         return None
 
     def complete_current_stage(self):
-        self.logger.info(f"Completing stage: {self.current_stage}")
+        self.logger.info(f"Attempting to complete stage: {self.current_stage}")
+        current_stage_data = self.stages[self.current_stage]
+        project_state = self.state_manager.get_all()
+        
+        is_sufficient = self.sufficiency_evaluator.evaluate_stage_sufficiency(
+            self.current_stage, current_stage_data, project_state
+        )
+        
+        if not is_sufficient:
+            self.logger.warning(f"Stage {self.current_stage} is not sufficient for completion")
+            self.print_func(f"Stage {self.current_stage} is not yet complete. Please address any remaining tasks or issues.")
+            return False
+        
+        self.logger.info(f"Stage {self.current_stage} is sufficient for completion")
         self.stage_progress[self.current_stage] = 1.0
         self.completed_stages.add(self.current_stage)
         self.print_func(f"Completed stage: {self.current_stage}")
-        self.logger.info(f"Stage {self.current_stage} marked as completed")
         
         next_stage = self.get_next_stage()
         if next_stage:

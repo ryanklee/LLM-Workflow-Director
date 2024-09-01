@@ -56,3 +56,26 @@ def test_llm_manager_format_prompt():
     assert "key1: value1" in formatted_prompt
     assert "key2: value2" in formatted_prompt
     assert "Prompt: Test prompt" in formatted_prompt
+
+def test_llm_manager_caching():
+    manager = LLMManager()
+    prompt = "Test prompt"
+    context = {"key": "value"}
+    
+    # First query should not be cached
+    result1 = manager.query(prompt, context)
+    assert result1 == "Mock response to: Test prompt"
+    
+    # Second query with same prompt and context should return cached result
+    result2 = manager.query(prompt, context)
+    assert result2 == result1
+    
+    # Query with different prompt should not be cached
+    result3 = manager.query("Different prompt", context)
+    assert result3 != result1
+    
+    # Clear cache and verify that the original query is not cached anymore
+    manager.clear_cache()
+    result4 = manager.query(prompt, context)
+    assert result4 == "Mock response to: Test prompt"
+    assert result4 != result1  # Because it's a new mock response after cache clear

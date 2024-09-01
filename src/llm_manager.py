@@ -1,6 +1,6 @@
 import importlib.util
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from .error_handler import ErrorHandler
 
 llm_spec = importlib.util.find_spec("llm")
@@ -13,6 +13,7 @@ class LLMManager:
         self.error_handler = ErrorHandler()
         self.logger = logging.getLogger(__name__)
         self.llm = None
+        self.cache = {}
 
         if llm_spec is not None:
             try:
@@ -34,20 +35,29 @@ class LLMManager:
         if self.mock_mode:
             self.logger.info("LLMManager is operating in mock mode.")
 
-    def query(self, prompt: str, context: Dict[str, Any] = None) -> str:
-        if self.mock_mode:
-            return f"Mock response to: {prompt}"
-        try:
-            formatted_prompt = self._format_prompt(prompt, context)
-            self.logger.debug(f"Sending prompt to LLM: {formatted_prompt}")
-            response = self.model.prompt(formatted_prompt)
-            return response.text()
-        except Exception as e:
-            error_message = str(e)
-            self.logger.error(f"Error querying LLM: {error_message}")
-            return f"Error querying LLM: {error_message}"
+    def query(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> str:
+        cache_key = self._generate_cache_key(prompt, context)
+        if cache_key in self.cache:
+            self.logger.info(f"Using cached response for prompt: {prompt[:50]}...")
+            return self.cache[cache_key]
 
-    def _format_prompt(self, prompt: str, context: Dict[str, Any] = None) -> str:
+        if self.mock_mode:
+            response = f"Mock response to: {prompt}"
+        else:
+            try:
+                formatted_prompt = self._format_prompt(prompt, context)
+                self.logger.debug(f"Sending prompt to LLM: {formatted_prompt}")
+                response = self.model.prompt(formatted_prompt)
+                response = response.text()
+            except Exception as e:
+                error_message = str(e)
+                self.logger.error(f"Error querying LLM: {error_message}")
+                response = f"Error querying LLM: {error_message}"
+
+        self.cache[cache_key] = response
+        return response
+
+    def _format_prompt(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> str:
         if context is None:
             context = {}
 
@@ -65,3 +75,13 @@ class LLMManager:
         formatted_prompt += "\n\nPlease ensure that your response adheres to the project structure guidelines and coding conventions provided above."
         
         return formatted_prompt
+
+    def _generate_cache_key(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> str:
+        if context is None:
+            context = {}
+        context_str = ','.join(f"{k}:{v}" for k, v in sorted(context.items()))
+        return f"{prompt}|{context_str}"
+
+    def clear_cache(self):
+        self.cache.clear()
+        self.logger.info("LLM response cache cleared.")
