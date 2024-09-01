@@ -87,7 +87,7 @@ class WorkflowDirector:
                     'stage_name': current_stage['name'],
                     'stage_progress': stage_progress
                 })
-                user_input = self.user_interaction_handler.prompt_user("Enter a command ('next' for next stage, 'complete' to finish current stage, 'exit' to quit):")
+                user_input = self.user_interaction_handler.prompt_user("Enter a command ('next' for next stage, 'complete' to finish current stage, 'report' for usage report, 'optimize' for optimization suggestions, 'exit' to quit):")
                 
                 self.logger.debug(f"Received user input: {user_input}", extra={
                     'action': 'user_input',
@@ -97,6 +97,12 @@ class WorkflowDirector:
                 if user_input.lower() == 'exit':
                     self.logger.info("Exit command received. Ending run loop.")
                     break
+                elif user_input.lower() == 'report':
+                    usage_report = self.llm_manager.get_usage_report()
+                    self.user_interaction_handler.display_message(f"LLM Usage Report: {usage_report}")
+                elif user_input.lower() == 'optimize':
+                    optimization_suggestion = self.llm_manager.get_optimization_suggestion()
+                    self.user_interaction_handler.display_message(f"Optimization Suggestion: {optimization_suggestion}")
                 
                 # Process all commands using LLM
                 tier = self.determine_query_tier(user_input)

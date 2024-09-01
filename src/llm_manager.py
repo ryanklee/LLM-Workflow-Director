@@ -28,6 +28,11 @@ class LLMManager:
                 structured_response = self._parse_structured_response(response)
                 response_with_id = self._add_unique_id(structured_response)
                 self.cache[cache_key] = response_with_id
+
+                # Update usage statistics
+                tokens = len(prompt.split()) + len(response.split())  # Simple token count estimation
+                self.cost_optimizer.update_usage(tier, tokens)
+
                 return response_with_id
             except Exception as e:
                 retry_count += 1
@@ -38,6 +43,12 @@ class LLMManager:
         
         # This line should never be reached, but we'll add it for completeness
         return {"error": "Unexpected error in LLM query"}
+
+    def get_usage_report(self) -> Dict[str, Any]:
+        return self.cost_optimizer.get_usage_report()
+
+    def get_optimization_suggestion(self) -> str:
+        return self.cost_optimizer.suggest_optimization()
 
     def _structure_response(self, response: str) -> str:
         # This is a placeholder implementation. In a real-world scenario,
