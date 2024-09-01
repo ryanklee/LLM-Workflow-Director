@@ -174,13 +174,14 @@ class WorkflowDirector:
         current_value = []
 
         for line in response.split('\n'):
+            line = line.strip()
             if ':' in line and not line.startswith(' '):
                 if current_key:
                     parsed[current_key] = self._process_value(current_key, current_value)
                 current_key = line.split(':', 1)[0].strip().lower()
                 current_value = [line.split(':', 1)[1].strip()]
             elif current_key:
-                current_value.append(line.strip())
+                current_value.append(line)
 
         if current_key:
             parsed[current_key] = self._process_value(current_key, current_value)
