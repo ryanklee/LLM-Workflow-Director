@@ -1,4 +1,5 @@
 import logging
+from pythonjsonlogger import jsonlogger
 import yaml
 import sys
 import os
