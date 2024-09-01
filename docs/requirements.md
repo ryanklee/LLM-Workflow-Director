@@ -1,4 +1,4 @@
-# LLM-Workflow Director Requirements (Golang Implementation)
+# LLM-Workflow Director Requirements (Python Implementation)
 
 1. Project Initialization
    1.1. The system shall bootstrap a project from initial requirements.
@@ -165,6 +165,49 @@
     25.1. The system shall implement parsers to extract structured information from LLM responses.
     25.2. The system shall validate LLM responses against expected formats and schemas.
     25.3. The system shall handle and process both synchronous and asynchronous LLM responses as supported by the LLM Python API.
+
+26. Project Structure and Documentation
+    26.1. The system shall impose a sane, reasonable, transparent, well-documented, and simple directory, document, and project structure on the user.
+    26.2. The system shall provide clear documentation on the imposed project structure, including the purpose and contents of each directory and file type.
+    26.3. The system shall programmatically generate and maintain documentation about the project structure.
+    26.4. The system shall include a mechanism to automatically update the documentation when changes are made to the project structure.
+    26.5. The system shall provide a command to generate a visual representation (e.g., tree diagram) of the project structure.
+    26.6. The system shall include explanations and best practices for each component of the project structure in the auto-generated documentation.
+    26.7. The system shall ensure that the project structure is consistent across different projects created with the LLM-Workflow Director.
+    26.8. The system shall provide a mechanism for users to customize the project structure within predefined limits to maintain consistency and best practices.
+    26.9. The system shall include version control integration in the project structure, with clear guidelines on what should be tracked and what should be ignored.
+    26.10. The system shall generate a README file for each project, including an overview of the project structure and how to navigate it.
+
+27. Auto-Documentation Features
+    27.1. The system shall implement auto-documentation features for code, configuration files, and other project artifacts.
+    27.2. The system shall use docstring conventions and type hints in Python code to generate API documentation automatically.
+    27.3. The system shall provide a mechanism to generate documentation from comments in configuration files.
+    27.4. The system shall maintain a changelog that is automatically updated with significant changes to the project structure or workflow.
+    27.5. The system shall generate user guides and developer documentation based on the current state of the project and its configuration.
+    27.6. The system shall provide a mechanism to preview generated documentation before finalizing it.
+    27.7. The system shall include tools to check the quality and completeness of the generated documentation.
+    27.8. The system shall support multiple output formats for generated documentation, including HTML, PDF, and Markdown.
+    27.9. The system shall provide a search functionality within the generated documentation for easy navigation.
+    27.10. The system shall include mechanisms to keep the generated documentation in sync with the actual project state and code.
+
+28. Project Structure Validation
+    28.1. The system shall include validation checks to ensure that the project structure remains consistent with the defined standards.
+    28.2. The system shall provide warnings or errors when files are placed in incorrect locations within the project structure.
+    28.3. The system shall include a linting tool to check for adherence to project structure conventions.
+    28.4. The system shall provide suggestions for correcting structural issues detected during validation.
+    28.5. The system shall allow for project-specific exceptions to structural rules, with proper documentation of these exceptions.
+
+29. Project Structure Evolution
+    29.1. The system shall provide mechanisms for safely evolving the project structure as the project grows or requirements change.
+    29.2. The system shall include tools for refactoring the project structure while maintaining consistency and updating all relevant documentation.
+    29.3. The system shall track and document structural changes over time, providing a history of how the project structure has evolved.
+    29.4. The system shall provide guidance on when and how to scale the project structure for larger projects.
+
+30. Integration with Development Workflows
+    30.1. The system shall ensure that the project structure and auto-documentation features integrate seamlessly with common development workflows and tools.
+    30.2. The system shall provide hooks for continuous integration systems to validate project structure and update documentation.
+    30.3. The system shall generate appropriate configuration files for common development tools (e.g., linters, formatters) based on the project structure.
+    30.4. The system shall include best practices for working with the project structure in team environments, including guidelines for code reviews and pull requests.
 # LLM-Workflow Director Requirements (Golang Implementation)
 
 1. Project Initialization
