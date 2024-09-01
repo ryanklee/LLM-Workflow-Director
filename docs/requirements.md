@@ -182,6 +182,7 @@
    5.5. The system shall utilize the LLM to perform qualitative sufficiency evaluations for each stage of the workflow.
    5.6. The system shall provide comprehensive context to the LLM for sufficiency evaluations, including project history, goals, and current state.
    5.7. The system shall interpret and act upon structured sufficiency evaluation responses from the LLM.
+   5.8. The system shall implement a tiered LLM approach, using faster, cheaper models for initial processing and more powerful models for complex tasks.
 
 6. User Interaction
    6.1. The system shall allow for user input at predefined points in the workflow.
@@ -191,6 +192,7 @@
    7.1. The system shall maintain a current state of the project, including all documents and their versions.
    7.2. The system shall provide a method to view the current project state.
    7.3. The system shall track changes to the project state over time.
+   7.4. The system shall utilize an embedded vector database for efficient storage and retrieval of project-related information.
 
 8. Integration with Aider
    8.1. The system shall be executable from the command line by Aider.
@@ -200,6 +202,7 @@
 9. Extensibility
    9.1. The system shall allow for easy addition of new workflow stages and steps.
    9.2. The system shall support the definition of custom constraints.
+   9.3. The system shall provide interfaces for integrating additional LLM models and vector databases.
 
 10. Reporting and Logging
     10.1. The system shall generate detailed progress reports at the end of each workflow stage.
@@ -210,32 +213,38 @@
 11. Performance
     11.1. The system shall process and respond to Aider commands in under 1 second for most operations.
     11.2. The system shall handle projects with up to 100,000 files and 10,000,000 lines of code.
+    11.3. The system shall optimize LLM usage by leveraging the vector database for quick retrieval of relevant information.
 
 12. Security
     12.1. The system shall not store or transmit sensitive project information outside the local environment.
     12.2. The system shall validate and sanitize all inputs from Aider to prevent injection attacks.
+    12.3. The system shall implement secure practices for storing and accessing the embedded vector database.
 
 13. Documentation
     13.1. The system shall provide comprehensive documentation on the workflow stages and steps.
     13.2. The system shall include detailed explanations of all constraints and their rationales.
     13.3. The system shall offer examples of correctly formatted Aider commands and system responses.
     13.4. The system shall provide documentation on DDD and TDD principles and how they are applied in the workflow.
+    13.5. The system shall document the tiered LLM approach and vector database usage.
 
 14. Testing
     14.1. The system shall include a comprehensive test suite covering all major components and workflows.
     14.2. The system shall support automated testing of new workflow stages and constraints.
     14.3. The system shall provide mechanisms for simulating various project states and user inputs for testing purposes.
     14.4. The system shall include tests to verify adherence to DDD and TDD principles throughout the workflow.
+    14.5. The system shall include performance tests for the vector database and tiered LLM approach.
 
 15. Domain-Driven Design Support
     15.1. The system shall guide the creation and refinement of a comprehensive domain model.
     15.2. The system shall facilitate the development of a ubiquitous language for the project.
     15.3. The system shall ensure that design decisions are based on the domain model and requirements.
+    15.4. The system shall use the vector database to store and retrieve domain-related information efficiently.
 
 16. Test-Driven Development Support
     16.1. The system shall guide the creation of test cases based on requirements and design before implementation.
     16.2. The system shall ensure comprehensive test coverage for all implemented features.
     16.3. The system shall direct Aider to run and report on test results regularly throughout the development process.
+    16.4. The system shall use the tiered LLM approach to assist in generating and refining test cases.
 
 17. Golang-Specific Requirements
     17.1. The system shall utilize Go's concurrency features for parallel processing where applicable.
@@ -245,3 +254,22 @@
     17.5. The system shall implement efficient data structures for state management and constraint checking.
     17.6. The system shall compile to a single binary for easy distribution and deployment.
     17.7. The system shall support cross-compilation for different target platforms.
+    17.8. The system shall use Go's embedding feature to include the vector database in the binary if possible.
+
+18. Vector Database Integration
+    18.1. The system shall implement an embedded vector database for efficient storage and retrieval of project-related information.
+    18.2. The system shall provide interfaces for storing, updating, and querying vector embeddings.
+    18.3. The system shall use the vector database to enhance context retrieval for LLM interactions.
+    18.4. The system shall implement efficient indexing and search algorithms for the vector database.
+
+19. Tiered LLM Approach
+    19.1. The system shall implement a multi-tier LLM strategy with at least two tiers: a fast, cheap tier for initial processing and a more powerful tier for complex tasks.
+    19.2. The system shall provide interfaces for integrating different LLM models into each tier.
+    19.3. The system shall implement logic to determine which LLM tier to use based on task complexity and requirements.
+    19.4. The system shall optimize LLM usage by leveraging the vector database for context and the appropriate LLM tier for processing.
+
+20. Caching and Optimization
+    20.1. The system shall implement caching mechanisms to store and reuse expensive LLM computations when appropriate.
+    20.2. The system shall use the vector database to cache and retrieve relevant project information quickly.
+    20.3. The system shall implement strategies to balance the use of cached information and fresh LLM computations.
+    20.4. The system shall provide mechanisms to invalidate and update cached information when project state changes.
