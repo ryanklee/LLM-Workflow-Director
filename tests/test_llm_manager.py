@@ -42,7 +42,7 @@ def test_llm_manager_query_with_context():
         assert "response" in result
         assert result["response"] == "Test response"
         assert "id" in result
-        assert "(ID:" in result
+        assert result["id"].startswith("(ID:")
         mock_client.return_value.query.assert_called_once()
         call_args = mock_client.return_value.query.call_args[0]
         assert "Current Workflow Stage: Test Stage" in call_args[0]
