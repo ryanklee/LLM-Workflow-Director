@@ -135,6 +135,9 @@ def test_workflow_director_can_transition_to():
     director.transition_to(next_stage)
     print(f"Current stage after transition: {director.current_stage}")
     
+    # Check if we can transition to the current stage
+    assert director.can_transition_to(director.current_stage), f"Should be able to transition to the current stage {director.current_stage}"
+    
     if len(director.transitions) > 1:
         next_next_stage = director.transitions[1]['to']
         print(f"Next next stage: {next_next_stage}")

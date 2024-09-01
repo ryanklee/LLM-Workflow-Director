@@ -178,15 +178,15 @@ class WorkflowDirector:
             self.logger.info(f"Stage {self.current_stage} is already completed, transition allowed")
             return True
 
+        # Allow transition to the current stage
+        if self.current_stage == next_stage:
+            self.logger.info(f"Transition to current stage {next_stage} is allowed")
+            return True
+
         available_transitions = [t for t in self.transitions if t['from'] == self.current_stage and t['to'] == next_stage]
         if not available_transitions:
             self.logger.info(f"No transition defined from {self.current_stage} to {next_stage}")
             return False
-
-        # If the current stage is completed, we don't need to check constraints or conditions
-        if self.current_stage in self.completed_stages:
-            self.logger.info(f"Current stage {self.current_stage} is completed, transition allowed")
-            return True
 
         current_state = self.state_manager.get_all()
         self.logger.debug(f"Current state: {current_state}")
