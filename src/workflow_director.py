@@ -22,7 +22,7 @@ from src.user_interaction_handler import UserInteractionHandler
 
 
 class WorkflowDirector:
-    def __init__(self, config_path='src/workflow_config.yaml', user_interaction_handler=None):
+    def __init__(self, config_path='src/workflow_config.yaml', user_interaction_handler=None, llm_manager=None):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
@@ -38,7 +38,7 @@ class WorkflowDirector:
         self.vector_store = VectorStore()
         self.constraint_engine = ConstraintEngine()
         self.logger.info("ConstraintEngine initialized")
-        self.llm_manager = LLMManager()
+        self.llm_manager = llm_manager or LLMManager()
         self.error_handler = ErrorHandler()
         self.user_interaction_handler = user_interaction_handler or UserInteractionHandler()
         self.config = self.load_config(config_path)
@@ -55,6 +55,7 @@ class WorkflowDirector:
         self.sufficiency_evaluator = SufficiencyEvaluator(self.llm_manager) if self.llm_manager else None
         self.priority_manager = PriorityManager()
         self.initialize_priorities()
+        self.logger.debug(f"WorkflowDirector initialized with LLMManager: {self.llm_manager}")
 
     def load_config(self, config_path):
         try:
@@ -72,8 +73,9 @@ class WorkflowDirector:
     def run(self):
         self.logger.info("Starting LLM Workflow Director")
         self.user_interaction_handler.display_message("Starting LLM Workflow Director")
-        while True:
-            try:
+        try:
+            while True:
+                self.logger.debug("Starting new iteration of run loop")
                 current_stage = self.get_current_stage()
                 self.user_interaction_handler.display_message(f"Current stage: {current_stage['name']}")
                 self.user_interaction_handler.display_message(f"Description: {current_stage['description']}")
@@ -83,13 +85,19 @@ class WorkflowDirector:
                 self.user_interaction_handler.display_message(f"Stage progress: {self.get_stage_progress():.2%}")
                 user_input = self.user_interaction_handler.prompt_user("Enter a command ('next' for next stage, 'complete' to finish current stage, 'exit' to quit):")
                 
+                self.logger.debug(f"Received user input: {user_input}")
+                
                 if user_input.lower() == 'exit':
+                    self.logger.info("Exit command received. Ending run loop.")
                     break
                 
                 # Process all commands using LLM
                 tier = self.determine_query_tier(user_input)
                 context = self._prepare_llm_context()
                 query = f"Process this command: {user_input}"
+                
+                self.logger.debug(f"Preparing to query LLM. Test mode: {getattr(self, '_test_mode', False)}")
+                
                 if self.llm_manager:
                     try:
                         self.logger.debug(f"Querying LLM with: {query}")
@@ -103,17 +111,22 @@ class WorkflowDirector:
                     self.logger.warning("LLMManager not available. Skipping LLM query.")
                 
                 # Always call LLM query for testing purposes
-                if hasattr(self, '_test_mode') and self._test_mode:
+                if getattr(self, '_test_mode', False):
+                    self.logger.debug("Test mode active. Forcing LLM query.")
                     self.llm_manager.query(query, context=context, tier=tier)
                 
                 if user_input.lower() == 'next':
                     self.move_to_next_stage()
                 elif user_input.lower() == 'complete':
                     self.complete_current_stage()
-            except Exception as e:
-                self.user_interaction_handler.handle_error(e)
-        self.logger.info("Exiting LLM Workflow Director")
-        self.user_interaction_handler.display_message("Exiting LLM Workflow Director")
+                
+                self.logger.debug("Finished processing user input")
+        except Exception as e:
+            self.logger.error(f"Unexpected error in run method: {str(e)}")
+            self.user_interaction_handler.handle_error(e)
+        finally:
+            self.logger.info("Exiting LLM Workflow Director")
+            self.user_interaction_handler.display_message("Exiting LLM Workflow Director")
 
     def _prepare_llm_context(self) -> Dict[str, Any]:
         return {
