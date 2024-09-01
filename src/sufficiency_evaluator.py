@@ -57,7 +57,8 @@ class SufficiencyEvaluator:
             next_steps_line = next((line for line in lines if line.startswith('Next Steps:')), None)
 
             if not evaluation_line or not reasoning_line:
-                raise ValueError("Missing required Evaluation or Reasoning in response")
+                self.logger.warning("Missing required Evaluation or Reasoning in response")
+                return False, "Incomplete response from LLM"
 
             evaluation = evaluation_line.split(':')[1].strip().upper()
             reasoning = reasoning_line.split(':')[1].strip()

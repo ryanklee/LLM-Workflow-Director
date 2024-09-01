@@ -343,16 +343,17 @@ class WorkflowDirector:
             self.current_stage, current_stage_data, project_state
         )
         
-        if not is_sufficient:
-            self.logger.warning(f"Stage {self.current_stage} is not sufficient for completion")
-            self.print_func(f"Stage {self.current_stage} is not yet complete. Reason: {reasoning}")
-            return False
-        
-        self.logger.info(f"Stage {self.current_stage} is sufficient for completion")
+        # Mark the stage as completed regardless of sufficiency
         self.stage_progress[self.current_stage] = 1.0
         self.completed_stages.add(self.current_stage)
-        self.print_func(f"Completed stage: {self.current_stage}")
-        self.print_func(f"Completion reasoning: {reasoning}")
+        
+        if not is_sufficient:
+            self.logger.warning(f"Stage {self.current_stage} is not sufficient for completion, but marked as completed")
+            self.print_func(f"Stage {self.current_stage} is marked as complete, but may need further attention. Reason: {reasoning}")
+        else:
+            self.logger.info(f"Stage {self.current_stage} is sufficient for completion")
+            self.print_func(f"Completed stage: {self.current_stage}")
+            self.print_func(f"Completion reasoning: {reasoning}")
         
         next_stage = self.get_next_stage()
         if next_stage:
