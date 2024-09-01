@@ -11,13 +11,15 @@ class LLMManager:
         self.model = None
         self.error_handler = ErrorHandler()
         self.logger = logging.getLogger(__name__)
+        self.llm = None
 
         if llm_spec is not None:
             try:
                 import llm
+                self.llm = llm
                 self.mock_mode = False
                 try:
-                    models = llm.models
+                    models = self.llm.models
                     if models:
                         self.model = models[0]  # Use the first available model
                         self.logger.info(f"Using LLM model: {self.model.name}")
