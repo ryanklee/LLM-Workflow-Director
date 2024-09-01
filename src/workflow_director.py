@@ -98,7 +98,7 @@ class WorkflowDirector:
                     else:
                         self.user_interaction_handler.display_message("Stage completion cancelled.")
                 else:
-                    # Always attempt to use the LLM manager, even in tests
+                    # Process the command using LLM
                     tier = self.determine_query_tier(user_input)
                     context = self._prepare_llm_context()
                     response = self.llm_manager.query(user_input, context=context, tier=tier)
