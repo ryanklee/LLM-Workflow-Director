@@ -405,8 +405,14 @@ This structure provides a more comprehensive and organized set of requirements f
     19.7. The system shall provide an abstraction layer for LLM interactions, allowing for easy swapping of the underlying LLM service in the future.
     19.8. The system shall implement error handling and retry mechanisms for LLM service communication.
     19.9. The system shall implement a tiered LLM approach, using faster, cheaper models (e.g., Claude 3 Haiku) for initial processing and more powerful models (e.g., Claude 3 Opus) for complex tasks.
-    19.10. The system shall implement prompt engineering techniques specific to Claude models, including clear and direct prompts, multi-shot learning, chain-of-thought prompting, and the use of XML tags for structured outputs.
+    19.10. The system shall implement prompt engineering techniques optimized for Claude models, including:
+        a. Clear and direct language in prompts.
+        b. Multi-shot learning with examples.
+        c. Chain-of-thought prompting for complex reasoning tasks.
+        d. Use of XML tags for structured outputs.
+        e. Assigning specific roles to the LLM using system prompts.
     19.11. The system shall utilize Claude's 200k context window capability for handling large amounts of context in prompts.
+    19.12. The system shall implement a mechanism to dynamically select the appropriate Claude model based on task complexity and performance requirements.
 
 20. LLM Microservice Architecture
     20.1. The system shall run the LLM CLI utility as a separate microservice.
