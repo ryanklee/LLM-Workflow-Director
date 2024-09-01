@@ -198,130 +198,113 @@ Throughout the implementation process, maintain regular communication with stake
 Throughout the implementation process, maintain regular communication with stakeholders and conduct progress reviews. Adjust the plan as necessary based on feedback and any unforeseen challenges.
 # LLM-Workflow Director Implementation Plan (Python Version)
 
-## Phase 1: Minimal Working CLI
+## Phase 1: Minimal Working CLI (Completed)
 
-1. Set up Python project structure
-   1.1. Create a new Python virtual environment
-   1.2. Set up project directory structure
-   1.3. Initialize Git repository
-   1.4. Create requirements.txt file
-
-2. Implement basic CLI structure
-   2.1. Create main.py file
-   2.2. Set up command-line interface using Click or argparse
-   2.3. Implement a simple "hello world" command
-
-3. Implement minimal WorkflowDirector
-   3.1. Create workflow_director.py file
-   3.2. Implement basic WorkflowDirector class with a run method
-   3.3. Integrate WorkflowDirector into CLI
-
-4. Implement minimal StateManager
-   4.1. Create state_manager.py file
-   4.2. Implement basic StateManager class with in-memory state storage
-   4.3. Integrate StateManager into WorkflowDirector
-
-5. Implement minimal LLM integration
-   5.1. Install the LLM Python package
-   5.2. Create llm_manager.py file
-   5.3. Implement basic LLMManager class with a simple query method
-   5.4. Integrate LLMManager into WorkflowDirector
-
-6. Implement basic workflow loop
-   6.1. Update WorkflowDirector to include a simple workflow loop
-   6.2. Implement basic user input and output in the loop
-   6.3. Use LLMManager to generate simple responses
-
-7. Write basic tests
-   7.1. Set up pytest
-   7.2. Write unit tests for WorkflowDirector, StateManager, and LLMManager
-   7.3. Write a simple integration test for the CLI
-
-8. Documentation
-   8.1. Update README.md with project description and setup instructions
-   8.2. Add inline comments and docstrings to the code
+(Previous steps 1-8 remain unchanged)
 
 ## Phase 2: Core Functionality Expansion
 
-9. Expand WorkflowDirector
-   9.1. Implement basic workflow stages
-   9.2. Add logic for transitioning between stages
+9. Implement Configurable Workflow
+   9.1. Create a YAML-based workflow configuration file
+   9.2. Implement a configuration loader in WorkflowDirector
+   9.3. Update WorkflowDirector to use the loaded configuration
+   9.4. Add tests for configuration loading and usage
 
-10. Enhance StateManager
-    10.1. Implement state persistence using JSON or YAML
-    10.2. Add methods for updating and querying specific state elements
+10. Expand WorkflowDirector
+    10.1. Implement workflow stages based on configuration
+    10.2. Add logic for transitioning between stages
+    10.3. Implement task management within stages
 
-11. Improve LLM integration
-    11.1. Implement more sophisticated prompts
-    11.2. Add basic error handling for LLM queries
+11. Enhance StateManager
+    11.1. Implement state persistence using JSON or YAML
+    11.2. Add methods for updating and querying specific state elements
+    11.3. Integrate state management with configurable workflow
 
-12. Implement basic ConstraintEngine
-    12.1. Create constraint_engine.py file
-    12.2. Implement basic constraint checking logic
-    12.3. Integrate ConstraintEngine into WorkflowDirector
+12. Improve LLM integration
+    12.1. Implement more sophisticated prompts based on workflow configuration
+    12.2. Add basic error handling for LLM queries
+    12.3. Integrate LLM responses with workflow progression
 
-13. Implement basic PriorityManager
-    13.1. Create priority_manager.py file
-    13.2. Implement basic priority calculation algorithms
-    13.3. Integrate PriorityManager into WorkflowDirector
+13. Implement basic ConstraintEngine
+    13.1. Create constraint_engine.py file
+    13.2. Implement basic constraint checking logic based on configuration
+    13.3. Integrate ConstraintEngine into WorkflowDirector
 
-14. Enhance CLI
-    14.1. Add more commands for different workflow operations
-    14.2. Implement basic logging
+14. Implement basic PriorityManager
+    14.1. Create priority_manager.py file
+    14.2. Implement basic priority calculation algorithms using configuration
+    14.3. Integrate PriorityManager into WorkflowDirector
 
-15. Expand test coverage
-    15.1. Add more unit tests for new components
-    15.2. Implement integration tests for the expanded workflow
+15. Enhance CLI
+    15.1. Add more commands for different workflow operations
+    15.2. Implement basic logging
+    15.3. Add command to display current workflow configuration
+
+16. Expand test coverage
+    16.1. Add more unit tests for new components
+    16.2. Implement integration tests for the expanded workflow
+    16.3. Add tests for different workflow configurations
 
 ## Phase 3: Refinement and Advanced Features
 
-(Subsequent phases can be planned after the minimal working CLI is implemented and tested)
+17. Implement advanced workflow features
+    17.1. Add support for conditional branching in workflow
+    17.2. Implement parallel task execution within stages
+    17.3. Add support for custom scripts or plugins in workflow
+
+18. Enhance LLM integration
+    18.1. Implement context-aware prompts based on workflow history
+    18.2. Add support for multiple LLM models or services
+    18.3. Implement prompt templates in the configuration
+
+19. Improve user interaction
+    19.1. Implement an interactive mode for workflow progression
+    19.2. Add visualization of workflow progress (e.g., ASCII charts in CLI)
+    19.3. Implement a web-based UI for workflow management (optional)
+
+20. Optimize performance
+    20.1. Implement caching for LLM responses
+    20.2. Optimize state management for large projects
+    20.3. Implement asynchronous processing where applicable
+
+21. Enhance security and error handling
+    21.1. Implement input validation for user commands and configuration
+    21.2. Add error recovery mechanisms for workflow execution
+    21.3. Implement secure handling of sensitive information in configuration
+
+22. Expand documentation
+    22.1. Create user guide for workflow configuration
+    22.2. Document best practices for LLM prompt engineering in the context of the workflow
+    22.3. Create developer documentation for extending the system
 
 ## Next Steps
 
-1. Set up the Python project structure
-   1.1. Create a new directory for the project: `mkdir llm_workflow_director`
-   1.2. Navigate to the project directory: `cd llm_workflow_director`
-   1.3. Create a Python virtual environment: `python -m venv venv`
-   1.4. Activate the virtual environment: `source venv/bin/activate` (Linux/macOS) or `venv\Scripts\activate` (Windows)
-   1.5. Create the initial project structure:
-       ```
-       mkdir src tests
-       touch src/__init__.py src/main.py src/workflow_director.py src/state_manager.py src/llm_manager.py tests/__init__.py requirements.txt README.md
-       ```
-   1.6. Initialize Git repository: `git init`
-   1.7. Create a .gitignore file with standard Python entries
+1. Create the workflow configuration file
+   1.1. Create a new file: `touch src/workflow_config.yaml`
+   1.2. Define the initial workflow structure in YAML format
 
-2. Implement basic CLI structure
-   2.1. Install Click: `pip install click`
-   2.2. Add Click to requirements.txt
-   2.3. Implement a basic CLI structure in src/main.py
+2. Update WorkflowDirector to use configuration
+   2.1. Modify src/workflow_director.py to load and use the YAML configuration
+   2.2. Implement methods to handle workflow stages and transitions
 
-3. Implement minimal WorkflowDirector
-   3.1. Create a basic WorkflowDirector class in src/workflow_director.py
-   3.2. Integrate WorkflowDirector into the CLI in src/main.py
+3. Update tests for new functionality
+   3.1. Modify existing tests to account for configurable workflow
+   3.2. Add new tests for configuration loading and stage transitions
 
-4. Implement minimal StateManager
-   4.1. Create a basic StateManager class in src/state_manager.py
-   4.2. Integrate StateManager into WorkflowDirector
+4. Update documentation
+   4.1. Add a section in README.md about workflow configuration
+   4.2. Create a separate document explaining the YAML configuration structure
 
-5. Set up LLM integration
-   5.1. Install the LLM Python package: `pip install llm`
-   5.2. Add llm to requirements.txt
-   5.3. Implement a basic LLMManager class in src/llm_manager.py
-   5.4. Integrate LLMManager into WorkflowDirector
+5. Implement basic workflow execution
+   5.1. Update the main loop in WorkflowDirector to progress through stages
+   5.2. Integrate LLM queries with stage progression
 
-6. Write initial tests
-   6.1. Install pytest: `pip install pytest`
-   6.2. Add pytest to requirements.txt
-   6.3. Create initial test files:
-       ```
-       touch tests/test_workflow_director.py tests/test_state_manager.py tests/test_llm_manager.py tests/test_cli.py
-       ```
-   6.4. Implement basic tests for each component
+6. Enhance CLI to support workflow operations
+   6.1. Add commands to display current stage, list tasks, and move between stages
+   6.2. Implement basic logging of workflow progression
 
-7. Update README.md with project description and setup instructions
+7. Test and refine
+   7.1. Run the updated system with a sample workflow configuration
+   7.2. Identify and fix any issues with the new implementation
 
-8. Make initial Git commit with the project structure and basic implementations
-
-These next steps focus on quickly setting up a minimal working CLI program with basic LLM integration. This approach allows for faster iteration and testing of core concepts before expanding to more complex features.
+These next steps focus on implementing the configurable workflow feature while maintaining the existing functionality. This approach allows for incremental development and testing of the new features.
