@@ -54,13 +54,12 @@ def test_workflow_director_complete_current_stage():
     result = director.complete_current_stage()
     assert result == True, f"Expected True, got {result}"
     assert director.is_stage_completed(initial_stage), f"Stage {initial_stage} should be marked as completed"
+    assert director.current_stage != initial_stage, f"Expected to move to a new stage, but still in {initial_stage}"
     
-    if director.current_stage != initial_stage:
-        assert director.current_stage in [t['to'] for t in director.transitions if t['from'] == initial_stage], \
-            f"Current stage {director.current_stage} is not a valid transition from {initial_stage}"
-    else:
-        assert len([t for t in director.transitions if t['from'] == initial_stage]) == 0, \
-            f"Expected no transitions from {initial_stage}, but transitions exist"
+    # Check if the new current stage is a valid transition from the initial stage
+    valid_transitions = [t['to'] for t in director.transitions if t['from'] == initial_stage]
+    assert director.current_stage in valid_transitions, \
+        f"Current stage {director.current_stage} is not a valid transition from {initial_stage}"
 
 def test_workflow_director_get_stage_progress():
     director = WorkflowDirector()

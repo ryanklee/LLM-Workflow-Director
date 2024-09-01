@@ -127,8 +127,10 @@ class WorkflowDirector:
         self.print_func(f"Completed stage: {self.current_stage}")
         self.logger.info(f"Stage {self.current_stage} marked as completed")
         
-        next_stage = self.move_to_next_stage()
-        if next_stage:
+        available_transitions = self.get_available_transitions()
+        if available_transitions:
+            next_stage = available_transitions[0]['to']
+            self.current_stage = next_stage
             self.logger.info(f"Moved to next stage: {self.current_stage}")
             return True
         else:
