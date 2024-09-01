@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/aider"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/component"
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/constraint"
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/direction"
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/priority"
@@ -50,4 +49,5 @@ func (wm *WorkflowMediator) ExecuteWorkflow(state interface{}) (interface{}, err
 	// Implement the workflow logic here, coordinating between components
 	// This method will replace the current Run() method in Director
 	// ...
+	return state, nil // Placeholder return, replace with actual implementation
 }

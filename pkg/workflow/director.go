@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"errors"
-	"time"
 
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/aider"
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/component"
@@ -33,8 +32,15 @@ func NewDirector(
 	se sufficiency.Evaluator,
 ) *Director {
 	mediator := NewWorkflowMediator(sm, ce, pm, dg, ai, uih, pt, se)
-	components := []WorkflowComponent{
-		sm, ce, pm, dg, ai, uih, pt, se,
+	components := []component.WorkflowComponent{
+		sm.(component.WorkflowComponent),
+		ce.(component.WorkflowComponent),
+		pm.(component.WorkflowComponent),
+		dg.(component.WorkflowComponent),
+		ai.(component.WorkflowComponent),
+		uih.(component.WorkflowComponent),
+		pt.(component.WorkflowComponent),
+		se.(component.WorkflowComponent),
 	}
 	return &Director{
 		components: components,
