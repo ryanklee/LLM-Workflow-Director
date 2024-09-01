@@ -50,7 +50,7 @@ class SufficiencyEvaluator:
             lines = response.split('\n')
             evaluation_line = next(line for line in lines if line.startswith('Evaluation:'))
             reasoning_line = next(line for line in lines if line.startswith('Reasoning:'))
-            next_steps_line = next(line for line in lines if line.startswith('Next Steps:'), None)
+            next_steps_line = next((line for line in lines if line.startswith('Next Steps:')), None)
 
             evaluation = evaluation_line.split(':')[1].strip().upper()
             reasoning = reasoning_line.split(':')[1].strip()
