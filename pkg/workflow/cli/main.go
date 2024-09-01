@@ -48,15 +48,39 @@ func Run() error {
 		}
 
 		fmt.Println("Initializing components")
-		// Initialize components
+		start := time.Now()
+
+		// Initialize components with timing
 		stateManager := state.NewFileStateManager(*projectPath)
+		fmt.Printf("StateManager initialization took %v\n", time.Since(start))
+		start = time.Now()
+
 		constraintEngine := constraint.NewBasicConstraintEngine()
+		fmt.Printf("ConstraintEngine initialization took %v\n", time.Since(start))
+		start = time.Now()
+
 		priorityManager := priority.NewBasicPriorityManager()
+		fmt.Printf("PriorityManager initialization took %v\n", time.Since(start))
+		start = time.Now()
+
 		directionGenerator := direction.NewBasicDirectionGenerator()
+		fmt.Printf("DirectionGenerator initialization took %v\n", time.Since(start))
+		start = time.Now()
+
 		aiderInterface := aider.NewBasicAiderInterface()
+		fmt.Printf("AiderInterface initialization took %v\n", time.Since(start))
+		start = time.Now()
+
 		userInteractionHandler := user.NewBasicUserInteractionHandler()
+		fmt.Printf("UserInteractionHandler initialization took %v\n", time.Since(start))
+		start = time.Now()
+
 		progressTracker := progress.NewBasicProgressTracker()
+		fmt.Printf("ProgressTracker initialization took %v\n", time.Since(start))
+		start = time.Now()
+
 		sufficiencyEvaluator := sufficiency.NewLLMEvaluator(aiderInterface)
+		fmt.Printf("SufficiencyEvaluator initialization took %v\n", time.Since(start))
 
 		fmt.Println("Creating workflow director")
 		// Create and run the workflow director
@@ -72,7 +96,9 @@ func Run() error {
 		)
 
 		fmt.Println("Running workflow director")
+		start = time.Now()
 		err := director.Run()
+		fmt.Printf("Director.Run() took %v\n", time.Since(start))
 		if err != nil {
 			fmt.Printf("Workflow director encountered an error: %v\n", err)
 			done <- fmt.Errorf("workflow director encountered an error: %w", err)
