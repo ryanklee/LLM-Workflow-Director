@@ -130,13 +130,19 @@ class WorkflowDirector:
             self.logger.debug(f"Current completed stages: {self.completed_stages}")
             return False
 
+    def get_available_transitions(self):
+        return [t for t in self.transitions if t['from'] == self.current_stage]
+
+    def can_transition_to(self, next_stage):
+        self.logger.info(f"Checking if transition from {self.current_stage} to {next_stage} is possible")
+        available_transitions = self.get_available_transitions()
+        return any(t['to'] == next_stage for t in available_transitions)
+
     def move_to_next_stage(self):
         available_transitions = self.get_available_transitions()
         if available_transitions:
             next_stage = available_transitions[0]['to']
-            if self.transition_to(next_stage):
-                self.current_stage = next_stage
-                return True
+            return self.transition_to(next_stage)
         self.print_func("No available transitions from the current stage.")
         return False
 

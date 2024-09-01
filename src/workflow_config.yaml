@@ -51,12 +51,12 @@ stages:
 
 transitions:
   - from: Project Initialization
-    to: Coding Conventions Setup
+    to: Requirements Gathering
     condition: All initial setup tasks completed
 
-  - from: Coding Conventions Setup
-    to: Requirements Gathering
-    condition: Coding conventions defined and integrated
+  - from: Requirements Gathering
+    to: Coding Conventions Setup
+    condition: Initial requirements gathered
 
   - from: Requirements Gathering
     to: Domain Modeling
