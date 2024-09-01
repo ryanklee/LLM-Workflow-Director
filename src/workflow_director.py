@@ -11,7 +11,7 @@ from src.llm_manager import LLMManager
 from src.sufficiency_evaluator import SufficiencyEvaluator
 from src.error_handler import ErrorHandler
 from src.vectorstore.vector_store import VectorStore
-from src.constraint_engine import ConstraintEngine
+from src.constraint_engine import ConstraintEngine, Constraint
 from src.project_state_reporter import ProjectStateReporter
 from src.documentation_health_checker import DocumentationHealthChecker
 from src.project_structure_manager import ProjectStructureManager
@@ -397,11 +397,11 @@ class WorkflowDirector:
         for stage in self.config['stages']:
             if 'constraints' in stage:
                 for constraint in stage['constraints']:
-                    self.constraint_engine.AddConstraint({
-                        'Name': f"{stage['name']}_{constraint['name']}",
-                        'Description': constraint['description'],
-                        'Validate': lambda state, c=constraint: self.validate_constraint(state, c)
-                    })
+                    self.constraint_engine.add_constraint(Constraint(
+                        name=f"{stage['name']}_{constraint['name']}",
+                        description=constraint['description'],
+                        validate=lambda state, c=constraint: self.validate_constraint(state, c)
+                    ))
 
     def validate_constraint(self, state, constraint):
         # This is a placeholder implementation. In a real-world scenario,
