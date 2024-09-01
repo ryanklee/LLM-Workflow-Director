@@ -46,6 +46,7 @@ class LLMManager:
         stage_tasks = context.get('stage_tasks', [])
         project_structure = context.get('project_structure_instructions', '')
         coding_conventions = context.get('coding_conventions', '')
+        workflow_config = context.get('workflow_config', {})
 
         enhanced_prompt = f"""
         Current Workflow Stage: {workflow_stage}
@@ -58,6 +59,10 @@ class LLMManager:
 
         Coding Conventions:
         {coding_conventions}
+
+        Workflow Configuration:
+        Stages: {', '.join(stage['name'] for stage in workflow_config.get('stages', []))}
+        Transitions: {', '.join(f"{t['from']} -> {t['to']}" for t in workflow_config.get('transitions', []))}
 
         Given the above context, please respond to the following prompt:
 
