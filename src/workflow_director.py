@@ -14,7 +14,7 @@ class WorkflowDirector:
         self.print_func = print_func
         self.logger = logging.getLogger(__name__)
         self.config = self.load_config(config_path)
-        self.current_stage = self.config['stages'][0]['name']
+        self.current_stage = self.config['stages'][0]['name'] if self.config else "Default Stage"
 
     def load_config(self, config_path):
         try:
@@ -23,7 +23,11 @@ class WorkflowDirector:
         except Exception as e:
             error_message = self.error_handler.handle_error(e)
             self.logger.error(f"Error loading configuration: {error_message}")
-            raise
+            self.logger.warning("Using default configuration")
+            return {
+                'stages': [{'name': 'Default Stage'}],
+                'transitions': []
+            }
 
     def run(self):
         self.logger.info("Starting LLM Workflow Director")
