@@ -1,21 +1,22 @@
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 
 class SufficiencyEvaluator:
     def __init__(self, llm_manager):
         self.llm_manager = llm_manager
         self.logger = logging.getLogger(__name__)
 
-    def evaluate_stage_sufficiency(self, stage_name: str, stage_data: Dict[str, Any], project_state: Dict[str, Any]) -> bool:
+    def evaluate_stage_sufficiency(self, stage_name: str, stage_data: Dict[str, Any], project_state: Dict[str, Any]) -> Tuple[bool, str]:
         self.logger.info(f"Evaluating sufficiency for stage: {stage_name}")
         
         prompt = self._generate_evaluation_prompt(stage_name, stage_data, project_state)
         response = self.llm_manager.query(prompt, context=project_state)
         
-        is_sufficient = self._parse_sufficiency_response(response)
+        is_sufficient, reasoning = self._parse_sufficiency_response(response)
         
         self.logger.info(f"Stage {stage_name} sufficiency evaluation result: {'Sufficient' if is_sufficient else 'Insufficient'}")
-        return is_sufficient
+        self.logger.debug(f"Reasoning: {reasoning}")
+        return is_sufficient, reasoning
 
     def _generate_evaluation_prompt(self, stage_name: str, stage_data: Dict[str, Any], project_state: Dict[str, Any]) -> str:
         prompt = f"""
@@ -34,6 +35,7 @@ class SufficiencyEvaluator:
         Provide your evaluation in the following format:
         Evaluation: [SUFFICIENT/INSUFFICIENT]
         Reasoning: [Your detailed reasoning here]
+        Next Steps: [If insufficient, provide specific steps to achieve sufficiency]
         """
         return prompt
 
@@ -43,11 +45,20 @@ class SufficiencyEvaluator:
     def _format_project_state(self, project_state: Dict[str, Any]) -> str:
         return '\n'.join(f"{key}: {value}" for key, value in project_state.items())
 
-    def _parse_sufficiency_response(self, response: str) -> bool:
+    def _parse_sufficiency_response(self, response: str) -> Tuple[bool, str]:
         try:
-            evaluation_line = next(line for line in response.split('\n') if line.startswith('Evaluation:'))
+            lines = response.split('\n')
+            evaluation_line = next(line for line in lines if line.startswith('Evaluation:'))
+            reasoning_line = next(line for line in lines if line.startswith('Reasoning:'))
+            next_steps_line = next(line for line in lines if line.startswith('Next Steps:'), None)
+
             evaluation = evaluation_line.split(':')[1].strip().upper()
-            return evaluation == 'SUFFICIENT'
+            reasoning = reasoning_line.split(':')[1].strip()
+            if next_steps_line:
+                reasoning += f"\nNext Steps: {next_steps_line.split(':')[1].strip()}"
+
+            is_sufficient = evaluation == 'SUFFICIENT'
+            return is_sufficient, reasoning
         except Exception as e:
             self.logger.error(f"Error parsing sufficiency response: {str(e)}")
-            return False
+            return False, f"Error parsing response: {str(e)}"

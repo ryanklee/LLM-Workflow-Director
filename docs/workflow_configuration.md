@@ -91,14 +91,47 @@ stages:
       - Document functional requirements
       - Document non-functional requirements
 
+  - name: Domain Modeling
+    description: Create and refine the domain model
+    tasks:
+      - Identify key domain concepts
+      - Define relationships between concepts
+      - Create initial domain model diagram
+
 transitions:
   - from: Project Initialization
     to: Requirements Gathering
     condition: All initial setup tasks completed
 
   - from: Requirements Gathering
+    to: Domain Modeling
+    condition: All requirements documented and approved
+
+  - from: Domain Modeling
+    to: Requirements Gathering
+    condition: Need to refine requirements based on domain model
+
+  - from: Requirements Gathering
     to: Project Initialization
     condition: Need to restart the project
 ```
 
-This configuration defines two stages and the allowed transitions between them. You can expand on this structure to create more complex workflows as needed.
+This configuration defines three stages and the allowed transitions between them. The SufficiencyEvaluator will use this configuration to determine if a stage is complete and if the workflow can progress to the next stage.
+
+## Sufficiency Evaluation
+
+The SufficiencyEvaluator uses the LLM to assess whether a stage is complete and sufficient to move to the next stage. It considers the following factors:
+
+1. Stage description
+2. Tasks associated with the stage
+3. Current project state
+
+The evaluator generates a prompt for the LLM, which then provides an evaluation in the following format:
+
+```
+Evaluation: [SUFFICIENT/INSUFFICIENT]
+Reasoning: [Detailed reasoning for the evaluation]
+Next Steps: [If insufficient, specific steps to achieve sufficiency]
+```
+
+This evaluation is used by the WorkflowDirector to determine whether to complete the current stage and move to the next one, or to remain in the current stage and provide guidance on what needs to be done to achieve sufficiency.

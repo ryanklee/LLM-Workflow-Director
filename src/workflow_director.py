@@ -339,18 +339,20 @@ class WorkflowDirector:
         current_stage_data = self.stages[self.current_stage]
         project_state = self.state_manager.get_all()
         
-        # For testing purposes, we'll consider the stage always sufficient
-        is_sufficient = True
+        is_sufficient, reasoning = self.sufficiency_evaluator.evaluate_stage_sufficiency(
+            self.current_stage, current_stage_data, project_state
+        )
         
         if not is_sufficient:
             self.logger.warning(f"Stage {self.current_stage} is not sufficient for completion")
-            self.print_func(f"Stage {self.current_stage} is not yet complete. Please address any remaining tasks or issues.")
+            self.print_func(f"Stage {self.current_stage} is not yet complete. Reason: {reasoning}")
             return False
         
         self.logger.info(f"Stage {self.current_stage} is sufficient for completion")
         self.stage_progress[self.current_stage] = 1.0
         self.completed_stages.add(self.current_stage)
         self.print_func(f"Completed stage: {self.current_stage}")
+        self.print_func(f"Completion reasoning: {reasoning}")
         
         next_stage = self.get_next_stage()
         if next_stage:
