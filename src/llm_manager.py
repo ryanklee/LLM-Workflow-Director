@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from .error_handler import ErrorHandler
 from .llm_microservice_client import LLMMicroserviceClient
 
@@ -119,3 +119,8 @@ class LLMManager:
     def _format_coding_conventions(self, conventions: str) -> str:
         # Format the coding conventions for better readability in the prompt
         return f"Coding Conventions:\n{conventions}"
+
+    def _get_stage_tasks(self, stage: str) -> List[str]:
+        # This method should retrieve the tasks for the given stage from the workflow configuration
+        # For now, we'll return a placeholder
+        return [f"Task 1 for {stage}", f"Task 2 for {stage}"]
