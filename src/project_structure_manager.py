@@ -1,7 +1,7 @@
 import os
 import yaml
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 class ProjectStructureManager:
     def __init__(self, config_path: str = 'src/project_structure_config.yaml'):
