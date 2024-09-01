@@ -137,10 +137,10 @@ class WorkflowDirector:
                 if self.llm_manager:
                     try:
                         self.logger.debug(f"Querying LLM with prompt: {prompt[:100]}...")
-                        response = self.llm_manager.query(prompt, context=context, tier=tier)
-                        self.logger.debug(f"LLM response received: {response[:100]}...")
-                        self.user_interaction_handler.display_message(f"LLM response: {response}")
-                        self._process_llm_response(response)
+                        structured_response = self.llm_manager.query(prompt, context=context, tier=tier)
+                        self.logger.debug(f"LLM response received: {structured_response}")
+                        self.user_interaction_handler.display_message(f"LLM response: {structured_response}")
+                        self._process_llm_response(structured_response)
                     except Exception as e:
                         self.logger.error(f"Error querying LLM: {str(e)}")
                         self.user_interaction_handler.display_message(f"An error occurred while processing your command: {str(e)}")
@@ -173,34 +173,32 @@ class WorkflowDirector:
             'workflow_config': self.config
         }
 
-    def _process_llm_response(self, response: str):
+    def _process_llm_response(self, structured_response: Dict[str, Any]):
         self.logger.info("Processing LLM response")
         try:
-            if response.startswith("LLM microservice is currently unavailable"):
-                self.logger.warning("LLM microservice is unavailable. Using fallback behavior.")
-                self.user_interaction_handler.display_message("LLM service is currently unavailable. Some features may be limited.")
+            if 'error' in structured_response:
+                self.logger.warning(f"LLM microservice error: {structured_response['error']}")
+                self.user_interaction_handler.display_message(f"LLM service error: {structured_response['error']}. Some features may be limited.")
                 return
 
-            parsed_response = self._parse_llm_response(response)
-            
-            if 'task_progress' in parsed_response:
-                progress = float(parsed_response['task_progress'])
+            if 'task_progress' in structured_response:
+                progress = float(structured_response['task_progress'])
                 self.update_stage_progress(progress)
                 self.logger.info(f"Updated stage progress to {progress:.2f}")
             
-            if 'state_updates' in parsed_response:
-                state_updates = parsed_response['state_updates']
+            if 'state_updates' in structured_response:
+                state_updates = structured_response['state_updates']
                 for key, value in state_updates.items():
                     self.state_manager.set(key, value)
                     self.logger.info(f"Updated project state: {key} = {value}")
             
-            if 'actions' in parsed_response:
-                actions = parsed_response['actions']
+            if 'actions' in structured_response:
+                actions = structured_response['actions']
                 for action in actions:
                     self._handle_llm_action(action)
             
-            if 'suggestions' in parsed_response:
-                suggestions = parsed_response['suggestions']
+            if 'suggestions' in structured_response:
+                suggestions = structured_response['suggestions']
                 self.user_interaction_handler.display_message("LLM Suggestions:")
                 for suggestion in suggestions:
                     self.user_interaction_handler.display_message(f"- {suggestion}")

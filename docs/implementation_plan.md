@@ -37,10 +37,10 @@
    - [x] 3.1. Design and implement the LLM microservice API using a Python web framework (e.g., Flask or FastAPI).
    - [x] 3.2. Develop a Python client for communicating with the LLM CLI microservice.
    - [>] 3.3. Implement prompt templates and dynamic prompt generation based on project state.
-   - [>] 3.4. Create a caching system for LLM responses to optimize performance.
+   - [x] 3.4. Create a caching system for LLM responses to optimize performance.
    - [x] 3.5. Implement error handling, retry mechanisms, and logging for LLM interactions.
    - [>] 3.6. Develop a tiered LLM approach for efficient task processing.
-   - [ ] 3.7. Implement structured response parsing for LLM outputs.
+   - [x] 3.7. Implement structured response parsing for LLM outputs.
    - [ ] 3.8. Develop a feedback loop for improving LLM prompts based on interaction results.
 
 - [x] 4. State Management and Constraint Engine

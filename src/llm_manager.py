@@ -103,12 +103,44 @@ class LLMManager:
         context_str = ','.join(f"{k}:{v}" for k, v in sorted(context.items()))
         return f"{prompt}|{context_str}|{tier}"
 
-    def _add_unique_id(self, response: str) -> str:
-        return f"{response} (ID: {hash(response + str(time.time()))})"
+    def _add_unique_id(self, response: Dict[str, Any]) -> Dict[str, Any]:
+        response['id'] = str(hash(str(response) + str(time.time())))
+        return response
 
     def clear_cache(self):
         self.cache.clear()
         self.logger.info("LLM response cache cleared.")
+
+    def _parse_structured_response(self, response: str) -> Dict[str, Any]:
+        structured_response = {}
+        current_key = None
+        current_value = []
+
+        for line in response.split('\n'):
+            line = line.strip()
+            if ':' in line and not line.startswith(' '):
+                if current_key:
+                    structured_response[current_key] = self._process_value(current_key, current_value)
+                current_key = line.split(':', 1)[0].strip().lower()
+                current_value = [line.split(':', 1)[1].strip()]
+            elif current_key:
+                current_value.append(line)
+
+        if current_key:
+            structured_response[current_key] = self._process_value(current_key, current_value)
+
+        return structured_response
+
+    def _process_value(self, key: str, value: List[str]) -> Any:
+        joined_value = ' '.join(value).strip()
+        if key == 'task_progress':
+            return float(joined_value)
+        elif key == 'state_updates':
+            return eval(joined_value)
+        elif key in ['actions', 'suggestions']:
+            return [item.strip() for item in joined_value.split(',')]
+        else:
+            return joined_value
 
     def evaluate_sufficiency(self, stage_name: str, stage_data: Dict[str, Any], project_state: Dict[str, Any]) -> Dict[str, Any]:
         self.logger.info(f"Evaluating sufficiency for stage: {stage_name}")

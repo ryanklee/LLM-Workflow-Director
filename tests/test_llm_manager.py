@@ -9,11 +9,16 @@ def test_llm_manager_initialization():
 
 @patch('src.llm_manager.LLMMicroserviceClient')
 def test_llm_manager_query(mock_client):
-    mock_client.return_value.query.return_value = "Test response"
+    mock_client.return_value.query.return_value = "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response"
     manager = LLMManager()
     response = manager.query("Test prompt")
-    assert "Test response" in response
-    assert "(ID:" in response
+    assert isinstance(response, dict)
+    assert 'task_progress' in response
+    assert 'state_updates' in response
+    assert 'actions' in response
+    assert 'suggestions' in response
+    assert 'response' in response
+    assert 'id' in response
 
 def test_llm_manager_query_with_context():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
