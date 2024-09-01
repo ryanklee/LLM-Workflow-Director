@@ -262,14 +262,33 @@
     18.3. The system shall use the vector database to enhance context retrieval for LLM interactions.
     18.4. The system shall implement efficient indexing and search algorithms for the vector database.
 
-19. Tiered LLM Approach
-    19.1. The system shall implement a multi-tier LLM strategy with at least two tiers: a fast, cheap tier for initial processing and a more powerful tier for complex tasks.
-    19.2. The system shall provide interfaces for integrating different LLM models into each tier.
-    19.3. The system shall implement logic to determine which LLM tier to use based on task complexity and requirements.
-    19.4. The system shall optimize LLM usage by leveraging the vector database for context and the appropriate LLM tier for processing.
+19. LLM Integration
+    19.1. The system shall integrate with the LLM CLI utility as a microservice for LLM interactions.
+    19.2. The system shall implement a Go-based wrapper or client to communicate with the LLM microservice via HTTP.
+    19.3. The system shall support multiple LLM models through the LLM CLI utility, including but not limited to OpenAI, Anthropic, and PaLM.
+    19.4. The system shall utilize the LLM CLI's templating system for generating consistent prompts.
+    19.5. The system shall leverage the LLM CLI's built-in caching capabilities to optimize performance and reduce API costs.
+    19.6. The system shall support streaming responses from the LLM CLI for long-running tasks.
+    19.7. The system shall provide an abstraction layer for LLM interactions, allowing for easy swapping of the underlying LLM service in the future.
+    19.8. The system shall implement error handling and retry mechanisms for LLM service communication.
 
-20. Caching and Optimization
-    20.1. The system shall implement caching mechanisms to store and reuse expensive LLM computations when appropriate.
-    20.2. The system shall use the vector database to cache and retrieve relevant project information quickly.
-    20.3. The system shall implement strategies to balance the use of cached information and fresh LLM computations.
-    20.4. The system shall provide mechanisms to invalidate and update cached information when project state changes.
+20. LLM Microservice Architecture
+    20.1. The system shall run the LLM CLI utility as a separate microservice.
+    20.2. The system shall implement a RESTful API for communication between the Go application and the LLM microservice.
+    20.3. The system shall ensure proper error handling and logging for the LLM microservice.
+    20.4. The system shall implement health checks and monitoring for the LLM microservice.
+    20.5. The system shall provide configuration options for the LLM microservice, including model selection and API keys.
+
+21. Performance and Optimization
+    21.1. The system shall implement caching mechanisms to store and reuse expensive LLM computations when appropriate.
+    21.2. The system shall use the vector database to cache and retrieve relevant project information quickly.
+    21.3. The system shall implement strategies to balance the use of cached information and fresh LLM computations.
+    21.4. The system shall provide mechanisms to invalidate and update cached information when project state changes.
+    21.5. The system shall monitor and optimize the performance of LLM interactions, including response times and resource usage.
+    21.6. The system shall implement concurrent processing of LLM requests where applicable to improve overall system performance.
+
+22. Extensibility and Customization
+    22.1. The system shall support the addition of custom plugins to extend LLM functionality.
+    22.2. The system shall provide interfaces for integrating new LLM models or services in the future.
+    22.3. The system shall allow for customization of prompt templates and LLM interaction patterns.
+    22.4. The system shall support the integration of domain-specific knowledge or rules into the LLM processing pipeline.
