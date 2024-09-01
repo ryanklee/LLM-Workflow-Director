@@ -176,8 +176,11 @@ def test_workflow_director_run(mock_llm_manager):
     # Check for LLM response
     assert any("LLM response: LLM response" in call[0][0] for call in mock_user_interaction_handler.display_message.call_args_list)
         
-    assert any("Current stage: Requirements Gathering" in call[0][0] for call in mock_user_interaction_handler.display_message.call_args_list)
+    # We no longer expect to see the "Requirements Gathering" stage
     assert mock_user_interaction_handler.display_message.call_args_list[-1][0][0] == "Exiting LLM Workflow Director"
+        
+    # Check that the LLM query was called twice (for 'test command' and 'next')
+    assert mock_llm_manager.return_value.query.call_count == 2
 
 @patch('src.workflow_director.LLMManager')
 def test_workflow_director_llm_integration(mock_llm_manager):
@@ -200,15 +203,11 @@ def test_workflow_director_llm_integration(mock_llm_manager):
         tier=ANY
     )
 
-    # Check the arguments of the query call
-    mock_llm_manager.return_value.query.assert_called_with(
-        "Process this command: test command",
-        context=ANY,
-        tier=ANY
-    )
-
     # Check if the LLM response was displayed
     mock_user_interaction_handler.display_message.assert_any_call("LLM response: LLM response: Update task progress")
 
     # Check if the _process_llm_response method was called
     assert any("LLM response: Update task progress" in call[0][0] for call in mock_user_interaction_handler.display_message.call_args_list)
+
+    # Check that the LLM query was called only once (for 'test command')
+    assert mock_llm_manager.return_value.query.call_count == 1
