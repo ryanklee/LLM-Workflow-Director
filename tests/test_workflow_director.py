@@ -3,7 +3,7 @@ import sys
 import os
 import pytest
 import subprocess
-from pytest import LogCaptureFixture
+import logging
 
 # Add the project root directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -174,7 +174,7 @@ def test_workflow_director_run(mock_llm_manager):
     assert mock_llm_manager.return_value.query.call_count == 2
 
 @patch('src.workflow_director.LLMManager')
-def test_workflow_director_llm_integration(mock_llm_manager):
+def test_workflow_director_llm_integration(mock_llm_manager, caplog):
     mock_llm_manager.return_value.query.return_value = "LLM response: Update task progress"
     mock_user_interaction_handler = MagicMock(spec=UserInteractionHandler)
     mock_user_interaction_handler.prompt_user.side_effect = ['test command', 'next', 'exit']
@@ -186,7 +186,7 @@ def test_workflow_director_llm_integration(mock_llm_manager):
     director._test_mode = True  # Set test mode
 
     # Capture logs
-    with pytest.LogCaptureFixture() as log_capture:
+    with caplog.at_level(logging.DEBUG):
         director.run()
 
     # Check if the query method was called
