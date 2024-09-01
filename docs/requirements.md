@@ -113,17 +113,21 @@
     18.7. The system shall utilize a prompt generator to create effective prompts for various tasks and scenarios.
     18.8. The system shall implement techniques for handling long contexts, including summarization and relevant information extraction.
 
-19. Prompt Engineering and LLM Interaction
-    19.1. The system shall maintain a library of effective prompt templates for common tasks and scenarios.
-    19.2. The system shall dynamically generate and refine prompts based on the current project state, task requirements, and previous interactions.
-    19.3. The system shall implement a feedback loop to improve prompt effectiveness based on Claude-Sonnet 3.5's responses and task outcomes.
-    19.4. The system shall provide clear instructions on how Claude-Sonnet 3.5 should format its responses for easy parsing and integration into the workflow.
-    19.5. The system shall implement error handling and retry mechanisms for cases where Claude-Sonnet 3.5's responses are unclear or off-topic.
+19. LLM Integration and Interaction
+    19.1. The system shall integrate the LLM Python API (https://llm.datasette.io/en/stable/python-api.html) for direct communication with LLM models.
+    19.2. The system shall maintain a library of effective prompt templates for common tasks and scenarios.
+    19.3. The system shall dynamically generate and refine prompts based on the current project state, task requirements, and previous interactions.
+    19.4. The system shall implement a feedback loop to improve prompt effectiveness based on LLM responses and task outcomes.
+    19.5. The system shall provide clear instructions on how the LLM should format its responses for easy parsing and integration into the workflow.
+    19.6. The system shall implement error handling and retry mechanisms for cases where LLM responses are unclear or off-topic.
+    19.7. The system shall utilize the LLM Python API's built-in caching capabilities to optimize performance and reduce API costs.
+    19.8. The system shall support multiple LLM models through the LLM Python API, including but not limited to OpenAI, Anthropic, and PaLM.
 
 20. LLM Context Awareness
-    20.1. The system shall provide a clear context header at the beginning of each interaction with Claude-Sonnet 3.5.
-    20.2. The context header shall inform Claude-Sonnet 3.5 about its role, the nature of the interaction, and the fact that it's being directed by an automated workflow system.
-    20.3. The system shall ensure that the context header is formatted in a way that Claude-Sonnet 3.5 recognizes and prioritizes.
+    20.1. The system shall provide a clear context header at the beginning of each interaction with the LLM.
+    20.2. The context header shall inform the LLM about its role, the nature of the interaction, and the fact that it's being directed by an automated workflow system.
+    20.3. The system shall ensure that the context header is formatted in a way that the LLM recognizes and prioritizes.
+    20.4. The system shall utilize the LLM Python API's context management features to maintain conversation history when appropriate.
 
 21. Information Richness and Internal Documentation Integration
     21.1. The system shall extensively reference and quote from its own documentation in communications with the LLM.
@@ -150,6 +154,17 @@
     23.2. The system shall encourage the LLM to refer back to specific sections of the documentation in its responses.
     23.3. The system shall enrich all information provided to the LLM with relevant metadata, such as last update time, author, and relevance score.
     23.4. The system shall use metadata to help the LLM understand the reliability and context of the information provided.
+    23.5. The system shall utilize the LLM Python API's streaming capabilities for long-running tasks and real-time interaction when appropriate.
+
+24. LLM Model Management
+    24.1. The system shall provide an interface for managing and switching between different LLM models supported by the LLM Python API.
+    24.2. The system shall allow for easy configuration of model-specific parameters such as temperature, top_p, and max_tokens.
+    24.3. The system shall implement a mechanism to select the most appropriate LLM model based on the task requirements and complexity.
+
+25. LLM Response Processing
+    25.1. The system shall implement parsers to extract structured information from LLM responses.
+    25.2. The system shall validate LLM responses against expected formats and schemas.
+    25.3. The system shall handle and process both synchronous and asynchronous LLM responses as supported by the LLM Python API.
 # LLM-Workflow Director Requirements (Golang Implementation)
 
 1. Project Initialization
