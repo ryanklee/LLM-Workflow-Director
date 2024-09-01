@@ -25,7 +25,8 @@ class LLMManager:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
                 response = self.client.query(enhanced_prompt, context, tier)
                 self.logger.debug(f"Received response from LLM: {response[:50]}...")
-                response_with_id = self._add_unique_id(response)
+                structured_response = self._structure_response(response)
+                response_with_id = self._add_unique_id(structured_response)
                 self.cache[cache_key] = response_with_id
                 return response_with_id
             except Exception as e:
@@ -36,6 +37,16 @@ class LLMManager:
                     self.logger.error(f"Max retries reached. Returning error message.")
                     return f"Error querying LLM after {max_retries} attempts: {error_message}"
                 time.sleep(1)  # Wait for 1 second before retrying
+
+    def _structure_response(self, response: str) -> str:
+        # This is a placeholder implementation. In a real-world scenario,
+        # you would implement more sophisticated response structuring logic.
+        structured_response = "task_progress: 0.5\n"
+        structured_response += "state_updates: {'key': 'value'}\n"
+        structured_response += "actions: update_workflow, run_tests\n"
+        structured_response += "suggestions: Review code, Update documentation\n"
+        structured_response += f"response: {response}"
+        return structured_response
 
     def _enhance_prompt(self, prompt: str, context: Optional[Dict[str, Any]]) -> str:
         if context is None:
