@@ -4,7 +4,7 @@ from .state_manager import StateManager
 from .llm_manager import LLMManager
 from .error_handler import ErrorHandler
 from .vectorstore.vector_store import VectorStore
-from ..workflow.constraint.engine import Engine as ConstraintEngine
+from pkg.workflow.constraint.engine import Engine as ConstraintEngine
 
 
 class WorkflowDirector:
