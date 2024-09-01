@@ -187,11 +187,18 @@ def test_workflow_director_llm_integration(mock_llm_manager):
 
     director = WorkflowDirector(user_interaction_handler=mock_user_interaction_handler)
     director.llm_manager = mock_llm_manager.return_value  # Explicitly set the mocked LLMManager
+    
+    # Add debug print statements before running
+    print("Before run() - LLM Manager:", director.llm_manager)
+    print("Before run() - User Interaction Handler:", director.user_interaction_handler)
+    
     director.run()
 
-    # Debug print statements
-    print(f"Mock LLM Manager query call count: {mock_llm_manager.return_value.query.call_count}")
-    print(f"Mock LLM Manager query call args: {mock_llm_manager.return_value.query.call_args_list}")
+    # Debug print statements after running
+    print("After run() - Mock LLM Manager query call count:", mock_llm_manager.return_value.query.call_count)
+    print("After run() - Mock LLM Manager query call args:", mock_llm_manager.return_value.query.call_args_list)
+    print("After run() - User Interaction Handler prompt_user call count:", mock_user_interaction_handler.prompt_user.call_count)
+    print("After run() - User Interaction Handler prompt_user call args:", mock_user_interaction_handler.prompt_user.call_args_list)
 
     # Check if the query method was called
     assert mock_llm_manager.return_value.query.called, "LLMManager.query was not called"
