@@ -19,6 +19,7 @@ import (
 )
 
 func Run() error {
+	fmt.Println("Starting Run function")
 	// Create a new flag set
 	fs := flag.NewFlagSet("workflow", flag.ExitOnError)
 
@@ -32,6 +33,7 @@ func Run() error {
 		return errors.New("project path is required. Use -project flag to specify the project directory")
 	}
 
+	fmt.Println("Initializing components")
 	// Initialize components
 	stateManager := state.NewFileStateManager(*projectPath)
 	constraintEngine := constraint.NewBasicConstraintEngine()
@@ -42,6 +44,7 @@ func Run() error {
 	progressTracker := progress.NewBasicProgressTracker()
 	sufficiencyEvaluator := sufficiency.NewLLMEvaluator(aiderInterface)
 
+	fmt.Println("Creating workflow director")
 	// Create and run the workflow director
 	director := workflow.NewDirector(
 		stateManager,
@@ -54,6 +57,7 @@ func Run() error {
 		sufficiencyEvaluator,
 	)
 
+	fmt.Println("Running workflow director")
 	err := director.Run()
 	if err != nil {
 		log.Fatalf("Workflow director encountered an error: %v", err)
