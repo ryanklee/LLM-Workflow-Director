@@ -101,8 +101,8 @@
 - [>] 12. Develop Tiered LLM Approach
     - [x] 12.1. Implement logic for selecting appropriate LLM tier based on task complexity.
     - [>] 12.2. Develop fallback mechanisms for when higher-tier LLMs are unavailable.
-    - [ ] 12.3. Implement cost optimization strategies for LLM usage.
-    - [ ] 12.4. Create a system for analyzing and reporting on LLM tier usage and effectiveness.
+    - [>] 12.3. Implement cost optimization strategies for LLM usage.
+    - [>] 12.4. Create a system for analyzing and reporting on LLM tier usage and effectiveness.
 
 - [ ] 13. Enhance LLM Context Management
     - [ ] 13.1. Develop a sophisticated context preparation system for LLM interactions.
