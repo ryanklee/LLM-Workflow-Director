@@ -7,6 +7,7 @@ def mock_llm():
     with patch('src.llm_manager.llm') as mock_llm:
         mock_model = MagicMock()
         mock_llm.get_model.return_value = mock_model
+        mock_llm.get_model_aliases.return_value = {"gpt-3.5-turbo": mock_model}
         yield mock_llm
 
 def test_llm_manager_initialization(mock_llm):

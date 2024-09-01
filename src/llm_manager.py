@@ -3,10 +3,11 @@ import llm
 class LLMManager:
     def __init__(self):
         try:
-            self.model = llm.get_model("gpt3")  # Using "gpt3" as a default model
+            self.model = llm.get_model("gpt-3.5-turbo")  # Using "gpt-3.5-turbo" as a default model
         except llm.UnknownModelError:
-            print("Warning: 'gpt3' model not available. Using first available model.")
-            self.model = next(iter(llm.get_models().values()))
+            print("Warning: 'gpt-3.5-turbo' model not available. Using first available model.")
+            models = llm.get_model_aliases()
+            self.model = llm.get_model(next(iter(models)))
 
     def query(self, prompt):
         try:
