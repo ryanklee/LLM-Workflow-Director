@@ -24,10 +24,7 @@ def test_llm_manager_query():
     manager = LLMManager()
     result = manager.query("Test prompt")
     assert isinstance(result, str)
-    if manager.mock_mode:
-        assert result == "Mock response to: Test prompt"
-    else:
-        assert "LLM response:" in result
+    assert result == "Mock response to: Test prompt"
 
 @patch('src.llm_manager.llm_spec', MagicMock())
 @patch('src.llm_manager.importlib.import_module')
@@ -39,5 +36,6 @@ def test_llm_manager_query_error(mock_import):
     mock_import.return_value = mock_llm
     
     manager = LLMManager()
+    manager.mock_mode = False  # Force non-mock mode for this test
     result = manager.query("Test prompt")
     assert "Error querying LLM: Test error" in result

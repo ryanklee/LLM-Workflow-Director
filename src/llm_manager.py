@@ -15,8 +15,7 @@ class LLMManager:
 
         if llm_spec is not None:
             try:
-                import llm
-                self.llm = llm
+                self.llm = importlib.import_module("llm")
                 self.mock_mode = False
                 try:
                     models = self.llm.models
