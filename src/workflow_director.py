@@ -136,6 +136,12 @@ class WorkflowDirector:
         # This is a placeholder. In a real implementation, you would evaluate the condition based on the current state.
         return True
 
+    def complete_current_stage(self):
+        self.stage_progress[self.current_stage] = 1.0
+        self.completed_stages.add(self.current_stage)
+        self.print_func(f"Completed stage: {self.current_stage}")
+        return self.move_to_next_stage()
+
     def evaluate_condition(self, condition):
         # This is a placeholder. In a real implementation, you would evaluate the condition based on the current state.
         return True
