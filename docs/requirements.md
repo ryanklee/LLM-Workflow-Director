@@ -1,213 +1,191 @@
-# LLM-Workflow Director Requirements (Python Implementation)
+# LLM-Workflow Director Requirements
 
-1. Project Initialization
-   1.1. The system shall bootstrap a project from initial requirements.
-   1.2. The system shall create an initial project structure with necessary documents and workflow stages.
-   1.3. The system shall identify and load existing project state if resuming an existing project.
+1. Core System Functionality
+   1.1. Project Initialization
+      1.1.1. The system shall bootstrap a project from initial requirements.
+      1.1.2. The system shall create an initial project structure with necessary documents and workflow stages.
+      1.1.3. The system shall identify and load existing project state if resuming an existing project.
 
-2. Workflow Management
-   2.1. The system shall define and manage workflow stages and steps, emphasizing Domain-Driven Design (DDD) and Test-Driven Development (TDD) principles.
-   2.2. The system shall track the status of each workflow stage and step.
-   2.3. The system shall determine the next appropriate workflow step based on current state, validation results, and DDD/TDD priorities.
-   2.4. The system shall enforce strict transition rules between stages, requiring approval or completion of key artifacts before progressing.
+   1.2. Workflow Management
+      1.2.1. The system shall define and manage workflow stages and steps, emphasizing Domain-Driven Design (DDD) and Test-Driven Development (TDD) principles.
+      1.2.2. The system shall track the status of each workflow stage and step.
+      1.2.3. The system shall determine the next appropriate workflow step based on current state, validation results, and DDD/TDD priorities.
+      1.2.4. The system shall enforce strict transition rules between stages, requiring approval or completion of key artifacts before progressing.
 
-3. Constraint Management
-   3.1. The system shall define and enforce constraints for each workflow step.
-   3.2. The system shall validate documents and project state against defined constraints.
-   3.3. The system shall provide clear violation messages for failed constraints.
-   3.4. The system shall ensure adherence to DDD and TDD principles through specific constraints.
+   1.3. Constraint Management
+      1.3.1. The system shall define and enforce constraints for each workflow step.
+      1.3.2. The system shall validate documents and project state against defined constraints.
+      1.3.3. The system shall provide clear violation messages for failed constraints.
+      1.3.4. The system shall ensure adherence to DDD and TDD principles through specific constraints.
 
-4. Priority Management
-   4.1. The system shall determine and enforce priorities based on the current project stage.
-   4.2. The system shall focus on requirements elaboration, research gathering, and domain modeling before design and implementation.
+   1.4. Priority Management
+      1.4.1. The system shall determine and enforce priorities based on the current project stage.
+      1.4.2. The system shall focus on requirements elaboration, research gathering, and domain modeling before design and implementation.
 
-5. LLM Direction
-   5.1. The system shall generate clear, actionable directions for Claude-Sonnet 3.5 via Aider based on the current workflow step, project state, and priorities.
-   5.2. The system shall format its output in a way that is optimized for Claude-Sonnet 3.5's comprehension and processing capabilities.
-   5.3. The system shall provide context and rationale for each direction given to Claude-Sonnet 3.5, including relevant project history and decision-making factors.
-   5.4. The system shall emphasize DDD and TDD practices in the generated directions, explaining their importance in the current context.
-   5.5. The system shall generate output that leverages Claude-Sonnet 3.5's strengths in natural language understanding and generation.
-   5.6. The system shall include prompts and questions in its output to encourage Claude-Sonnet 3.5 to think critically about the task at hand.
+   1.5. User Interaction
+      1.5.1. The system shall allow for user input at predefined points in the workflow.
+      1.5.2. The system shall incorporate user input into the decision-making process for next steps.
 
-6. User Interaction
-   6.1. The system shall allow for user input at predefined points in the workflow.
-   6.2. The system shall incorporate user input into the decision-making process for next steps.
+   1.6. Project State Management
+      1.6.1. The system shall maintain a current state of the project, including all documents and their versions.
+      1.6.2. The system shall provide a method to view the current project state.
+      1.6.3. The system shall track changes to the project state over time.
 
-7. Project State Management
-   7.1. The system shall maintain a current state of the project, including all documents and their versions.
-   7.2. The system shall provide a method to view the current project state.
-   7.3. The system shall track changes to the project state over time.
+   1.7. Extensibility
+      1.7.1. The system shall allow for easy addition of new workflow stages and steps.
+      1.7.2. The system shall support the definition of custom constraints.
 
-8. Integration with Aider and Claude-Sonnet 3.5
-   8.1. The system shall be executable from the command line by Aider.
-   8.2. The system shall accept input parameters from Aider, including the current project state.
-   8.3. The system shall return output in a format that Aider can parse and act upon.
-   8.4. The system shall tailor its output to Claude-Sonnet 3.5's specific capabilities and limitations.
-   8.5. The system shall include mechanisms to clarify ambiguities or request additional information from Claude-Sonnet 3.5 when necessary.
-   8.6. The system shall provide clear instructions on how to format responses for easy parsing and integration back into the workflow.
+   1.8. Performance
+      1.8.1. The system shall process and respond to commands in under 1 second for most operations.
+      1.8.2. The system shall handle projects with up to 100,000 files and 10,000,000 lines of code.
 
-9. Extensibility
-   9.1. The system shall allow for easy addition of new workflow stages and steps.
-   9.2. The system shall support the definition of custom constraints.
+2. LLM Integration and Interaction
+   2.1. LLM Direction
+      2.1.1. The system shall generate clear, actionable directions for the LLM based on the current workflow step, project state, and priorities.
+      2.1.2. The system shall format its output in a way that is optimized for the LLM's comprehension and processing capabilities.
+      2.1.3. The system shall provide context and rationale for each direction given to the LLM, including relevant project history and decision-making factors.
+      2.1.4. The system shall emphasize DDD and TDD practices in the generated directions, explaining their importance in the current context.
+      2.1.5. The system shall generate output that leverages the LLM's strengths in natural language understanding and generation.
+      2.1.6. The system shall include prompts and questions in its output to encourage the LLM to think critically about the task at hand.
 
-10. Reporting and Logging
-    10.1. The system shall generate detailed progress reports at the end of each workflow stage.
-    10.2. The system shall provide a final project report upon completion of all workflow stages.
-    10.3. The system shall maintain a log of all decisions, actions, and transitions.
-    10.4. The system shall provide clear visibility into the project's evolution and current state.
+   2.2. LLM Integration
+      2.2.1. The system shall integrate the LLM Python API (https://llm.datasette.io/en/stable/python-api.html) for direct communication with LLM models.
+      2.2.2. The system shall maintain a library of effective prompt templates for common tasks and scenarios.
+      2.2.3. The system shall dynamically generate and refine prompts based on the current project state, task requirements, and previous interactions.
+      2.2.4. The system shall implement a feedback loop to improve prompt effectiveness based on LLM responses and task outcomes.
+      2.2.5. The system shall provide clear instructions on how the LLM should format its responses for easy parsing and integration into the workflow.
+      2.2.6. The system shall implement error handling and retry mechanisms for cases where LLM responses are unclear or off-topic.
+      2.2.7. The system shall utilize the LLM Python API's built-in caching capabilities to optimize performance and reduce API costs.
+      2.2.8. The system shall support multiple LLM models through the LLM Python API, including but not limited to OpenAI, Anthropic, and PaLM.
 
-11. Performance
-    11.1. The system shall process and respond to Aider commands in under 1 second for most operations.
-    11.2. The system shall handle projects with up to 100,000 files and 10,000,000 lines of code.
+   2.3. LLM Context Awareness
+      2.3.1. The system shall provide a clear context header at the beginning of each interaction with the LLM.
+      2.3.2. The context header shall inform the LLM about its role, the nature of the interaction, and the fact that it's being directed by an automated workflow system.
+      2.3.3. The system shall ensure that the context header is formatted in a way that the LLM recognizes and prioritizes.
+      2.3.4. The system shall utilize the LLM Python API's context management features to maintain conversation history when appropriate.
 
-12. Security
-    12.1. The system shall not store or transmit sensitive project information outside the local environment.
-    12.2. The system shall validate and sanitize all inputs from Aider to prevent injection attacks.
+   2.4. LLM Model Management
+      2.4.1. The system shall provide an interface for managing and switching between different LLM models supported by the LLM Python API.
+      2.4.2. The system shall allow for easy configuration of model-specific parameters such as temperature, top_p, and max_tokens.
+      2.4.3. The system shall implement a mechanism to select the most appropriate LLM model based on the task requirements and complexity.
 
-13. Documentation
-    13.1. The system shall provide comprehensive documentation on the workflow stages and steps.
-    13.2. The system shall include detailed explanations of all constraints and their rationales.
-    13.3. The system shall offer examples of correctly formatted Aider commands and system responses.
-    13.4. The system shall provide documentation on DDD and TDD principles and how they are applied in the workflow.
+   2.5. LLM Response Processing
+      2.5.1. The system shall implement parsers to extract structured information from LLM responses.
+      2.5.2. The system shall validate LLM responses against expected formats and schemas.
+      2.5.3. The system shall handle and process both synchronous and asynchronous LLM responses as supported by the LLM Python API.
 
-14. Testing
-    14.1. The system shall include a comprehensive test suite covering all major components and workflows.
-    14.2. The system shall support automated testing of new workflow stages and constraints.
-    14.3. The system shall provide mechanisms for simulating various project states and user inputs for testing purposes.
-    14.4. The system shall include tests to verify adherence to DDD and TDD principles throughout the workflow.
+3. Project Structure and Documentation
+   3.1. Project Structure
+      3.1.1. The system shall impose a sane, reasonable, transparent, well-documented, and simple directory, document, and project structure on the user.
+      3.1.2. The system shall provide clear documentation on the imposed project structure, including the purpose and contents of each directory and file type.
+      3.1.3. The system shall programmatically generate and maintain documentation about the project structure.
+      3.1.4. The system shall include a mechanism to automatically update the documentation when changes are made to the project structure.
+      3.1.5. The system shall provide a command to generate a visual representation (e.g., tree diagram) of the project structure.
+      3.1.6. The system shall ensure that the project structure is consistent across different projects created with the LLM-Workflow Director.
+      3.1.7. The system shall provide a mechanism for users to customize the project structure within predefined limits to maintain consistency and best practices.
+      3.1.8. The system shall include version control integration in the project structure, with clear guidelines on what should be tracked and what should be ignored.
+      3.1.9. The system shall generate a README file for each project, including an overview of the project structure and how to navigate it.
 
-15. Domain-Driven Design Support
-    15.1. The system shall guide the creation and refinement of a comprehensive domain model.
-    15.2. The system shall facilitate the development of a ubiquitous language for the project.
-    15.3. The system shall ensure that design decisions are based on the domain model and requirements.
+   3.2. Auto-Documentation Features
+      3.2.1. The system shall implement auto-documentation features for code, configuration files, and other project artifacts.
+      3.2.2. The system shall use docstring conventions and type hints in Python code to generate API documentation automatically.
+      3.2.3. The system shall provide a mechanism to generate documentation from comments in configuration files.
+      3.2.4. The system shall maintain a changelog that is automatically updated with significant changes to the project structure or workflow.
+      3.2.5. The system shall generate user guides and developer documentation based on the current state of the project and its configuration.
+      3.2.6. The system shall provide a mechanism to preview generated documentation before finalizing it.
+      3.2.7. The system shall include tools to check the quality and completeness of the generated documentation.
+      3.2.8. The system shall support multiple output formats for generated documentation, including HTML, PDF, and Markdown.
+      3.2.9. The system shall provide a search functionality within the generated documentation for easy navigation.
+      3.2.10. The system shall include mechanisms to keep the generated documentation in sync with the actual project state and code.
 
-16. Test-Driven Development Support
-    16.1. The system shall guide the creation of test cases based on requirements and design before implementation.
-    16.2. The system shall ensure comprehensive test coverage for all implemented features.
-    16.3. The system shall direct Aider to run and report on test results regularly throughout the development process.
+   3.3. Project Structure Validation
+      3.3.1. The system shall include validation checks to ensure that the project structure remains consistent with the defined standards.
+      3.3.2. The system shall provide warnings or errors when files are placed in incorrect locations within the project structure.
+      3.3.3. The system shall include a linting tool to check for adherence to project structure conventions.
+      3.3.4. The system shall provide suggestions for correcting structural issues detected during validation.
+      3.3.5. The system shall allow for project-specific exceptions to structural rules, with proper documentation of these exceptions.
 
-17. Python-Specific Requirements
-    17.1. The system shall utilize Python's asyncio for concurrent processing where applicable.
-    17.2. The system shall implement robust error handling using Python's exception handling mechanisms.
-    17.3. The system shall use Python's type hinting to improve code readability and maintainability.
-    17.4. The system shall leverage Python's standard library and popular third-party libraries for HTTP communication, file I/O, and other system interactions.
-    17.5. The system shall implement efficient data structures for state management and constraint checking.
-    17.6. The system shall be packaged as a Python module for easy distribution and deployment.
-    17.7. The system shall support cross-platform compatibility.
+   3.4. Project Structure Evolution
+      3.4.1. The system shall provide mechanisms for safely evolving the project structure as the project grows or requirements change.
+      3.4.2. The system shall include tools for refactoring the project structure while maintaining consistency and updating all relevant documentation.
+      3.4.3. The system shall track and document structural changes over time, providing a history of how the project structure has evolved.
+      3.4.4. The system shall provide guidance on when and how to scale the project structure for larger projects.
 
-18. LLM-Specific Output Enhancements
-    18.1. The system shall generate comprehensive project context summaries for Claude-Sonnet 3.5 at the beginning of each interaction.
-    18.2. The system shall provide step-by-step guidance for complex tasks, breaking them down into manageable sub-tasks for Claude-Sonnet 3.5.
-    18.3. The system shall include relevant code snippets, documentation references, and examples in its output to aid Claude-Sonnet 3.5's understanding and task completion.
-    18.4. The system shall generate output that encourages Claude-Sonnet 3.5 to explain its reasoning and decision-making process.
-    18.5. The system shall adapt its language complexity and technical depth based on the current project stage and task requirements.
-    18.6. The system shall implement best practices for prompt engineering with Claude-Sonnet 3.5, including:
-        a. Being clear and direct in instructions and queries.
-        b. Using examples (multishot prompting) when appropriate.
-        c. Encouraging step-by-step thinking (chain of thought).
-        d. Using XML tags to structure prompts and responses.
-        e. Assigning specific roles to Claude-Sonnet 3.5 using system prompts.
-        f. Prefilling responses when appropriate to guide output format.
-        g. Chaining complex prompts for multi-step tasks.
-        h. Optimizing prompts for long context windows when necessary.
-    18.7. The system shall utilize a prompt generator to create effective prompts for various tasks and scenarios.
-    18.8. The system shall implement techniques for handling long contexts, including summarization and relevant information extraction.
+4. Integration and Development Support
+   4.1. Integration with Development Workflows
+      4.1.1. The system shall ensure that the project structure and auto-documentation features integrate seamlessly with common development workflows and tools.
+      4.1.2. The system shall provide hooks for continuous integration systems to validate project structure and update documentation.
+      4.1.3. The system shall generate appropriate configuration files for common development tools (e.g., linters, formatters) based on the project structure.
+      4.1.4. The system shall include best practices for working with the project structure in team environments, including guidelines for code reviews and pull requests.
 
-19. LLM Integration and Interaction
-    19.1. The system shall integrate the LLM Python API (https://llm.datasette.io/en/stable/python-api.html) for direct communication with LLM models.
-    19.2. The system shall maintain a library of effective prompt templates for common tasks and scenarios.
-    19.3. The system shall dynamically generate and refine prompts based on the current project state, task requirements, and previous interactions.
-    19.4. The system shall implement a feedback loop to improve prompt effectiveness based on LLM responses and task outcomes.
-    19.5. The system shall provide clear instructions on how the LLM should format its responses for easy parsing and integration into the workflow.
-    19.6. The system shall implement error handling and retry mechanisms for cases where LLM responses are unclear or off-topic.
-    19.7. The system shall utilize the LLM Python API's built-in caching capabilities to optimize performance and reduce API costs.
-    19.8. The system shall support multiple LLM models through the LLM Python API, including but not limited to OpenAI, Anthropic, and PaLM.
+   4.2. Domain-Driven Design Support
+      4.2.1. The system shall guide the creation and refinement of a comprehensive domain model.
+      4.2.2. The system shall facilitate the development of a ubiquitous language for the project.
+      4.2.3. The system shall ensure that design decisions are based on the domain model and requirements.
 
-20. LLM Context Awareness
-    20.1. The system shall provide a clear context header at the beginning of each interaction with the LLM.
-    20.2. The context header shall inform the LLM about its role, the nature of the interaction, and the fact that it's being directed by an automated workflow system.
-    20.3. The system shall ensure that the context header is formatted in a way that the LLM recognizes and prioritizes.
-    20.4. The system shall utilize the LLM Python API's context management features to maintain conversation history when appropriate.
+   4.3. Test-Driven Development Support
+      4.3.1. The system shall guide the creation of test cases based on requirements and design before implementation.
+      4.3.2. The system shall ensure comprehensive test coverage for all implemented features.
+      4.3.3. The system shall direct the LLM to run and report on test results regularly throughout the development process.
 
-21. Information Richness and Internal Documentation Integration
-    21.1. The system shall extensively reference and quote from its own documentation in communications with the LLM.
-    21.2. The system shall maintain an up-to-date index of all internal documentation for quick retrieval and reference.
-    21.3. The system shall provide detailed information about the current state of the workflow process to the LLM.
-    21.4. The system shall include references to relevant sections of the workflow documentation for each stage or task.
-    21.5. The system shall generate comprehensive project state reports for the LLM, including:
-        a. Current stage in the workflow
-        b. Completed and pending tasks
-        c. Recent changes and their impacts
-        d. Known issues or challenges
-    21.6. The system shall link project state information to relevant sections of the project documentation.
-    21.7. The system shall provide relevant snippets from internal documentation based on the current context of the LLM's task.
-    21.8. The system shall ensure that provided snippets are accompanied by their source and context within the larger documentation.
+5. Security and Error Handling
+   5.1. Security
+      5.1.1. The system shall not store or transmit sensitive project information outside the local environment.
+      5.1.2. The system shall validate and sanitize all inputs to prevent injection attacks.
+      5.1.3. The system shall implement secure practices for handling API keys and sensitive configuration information.
+      5.1.4. The system shall provide mechanisms for secure authentication and authorization when accessing project resources.
 
-22. Cross-Referencing and Version Control
-    22.1. The system shall implement a robust cross-referencing system within its documentation.
-    22.2. The system shall provide the LLM with related information from different sections of the documentation, highlighting connections and dependencies.
-    22.3. The system shall provide version-specific documentation and project state information to the LLM.
-    22.4. The system shall highlight changes in documentation or project state between versions when relevant.
+   5.2. Error Handling and Logging
+      5.2.1. The system shall implement comprehensive error handling mechanisms for all operations.
+      5.2.2. The system shall provide detailed error messages and suggestions for resolution.
+      5.2.3. The system shall maintain detailed logs of all system activities, errors, and user interactions.
+      5.2.4. The system shall implement log rotation and archiving to manage log file sizes.
+      5.2.5. The system shall provide configurable log levels to control the verbosity of logging.
 
-23. LLM Interaction Enhancement
-    23.1. The system shall generate prompts and questions for the LLM based on the content of the internal documentation.
-    23.2. The system shall encourage the LLM to refer back to specific sections of the documentation in its responses.
-    23.3. The system shall enrich all information provided to the LLM with relevant metadata, such as last update time, author, and relevance score.
-    23.4. The system shall use metadata to help the LLM understand the reliability and context of the information provided.
-    23.5. The system shall utilize the LLM Python API's streaming capabilities for long-running tasks and real-time interaction when appropriate.
+6. Testing and Quality Assurance
+   6.1. The system shall include a comprehensive test suite covering all major components and workflows.
+   6.2. The system shall support automated testing of new workflow stages and constraints.
+   6.3. The system shall provide mechanisms for simulating various project states and user inputs for testing purposes.
+   6.4. The system shall include tests to verify adherence to DDD and TDD principles throughout the workflow.
+   6.5. The system shall implement continuous integration and continuous deployment (CI/CD) pipelines for automated testing and deployment.
 
-24. LLM Model Management
-    24.1. The system shall provide an interface for managing and switching between different LLM models supported by the LLM Python API.
-    24.2. The system shall allow for easy configuration of model-specific parameters such as temperature, top_p, and max_tokens.
-    24.3. The system shall implement a mechanism to select the most appropriate LLM model based on the task requirements and complexity.
+7. Documentation
+   7.1. The system shall provide comprehensive documentation on the workflow stages and steps.
+   7.2. The system shall include detailed explanations of all constraints and their rationales.
+   7.3. The system shall offer examples of correctly formatted commands and system responses.
+   7.4. The system shall provide documentation on DDD and TDD principles and how they are applied in the workflow.
+   7.5. The system shall maintain up-to-date API documentation for all public interfaces.
+   7.6. The system shall provide user guides for system installation, configuration, and usage.
+   7.7. The system shall include developer documentation for extending and customizing the system.
 
-25. LLM Response Processing
-    25.1. The system shall implement parsers to extract structured information from LLM responses.
-    25.2. The system shall validate LLM responses against expected formats and schemas.
-    25.3. The system shall handle and process both synchronous and asynchronous LLM responses as supported by the LLM Python API.
+8. Performance and Scalability
+   8.1. The system shall implement caching mechanisms to optimize performance for frequently accessed data.
+   8.2. The system shall support horizontal scaling for handling large projects and multiple concurrent users.
+   8.3. The system shall implement efficient algorithms and data structures for managing large-scale projects.
+   8.4. The system shall provide performance monitoring and profiling tools to identify and address bottlenecks.
 
-26. Project Structure and Documentation
-    26.1. The system shall impose a sane, reasonable, transparent, well-documented, and simple directory, document, and project structure on the user.
-    26.2. The system shall provide clear documentation on the imposed project structure, including the purpose and contents of each directory and file type.
-    26.3. The system shall programmatically generate and maintain documentation about the project structure.
-    26.4. The system shall include a mechanism to automatically update the documentation when changes are made to the project structure.
-    26.5. The system shall provide a command to generate a visual representation (e.g., tree diagram) of the project structure.
-    26.6. The system shall include explanations and best practices for each component of the project structure in the auto-generated documentation.
-    26.7. The system shall ensure that the project structure is consistent across different projects created with the LLM-Workflow Director.
-    26.8. The system shall provide a mechanism for users to customize the project structure within predefined limits to maintain consistency and best practices.
-    26.9. The system shall include version control integration in the project structure, with clear guidelines on what should be tracked and what should be ignored.
-    26.10. The system shall generate a README file for each project, including an overview of the project structure and how to navigate it.
+9. Deployment and Maintenance
+   9.1. The system shall be packaged as a Python module for easy distribution and deployment.
+   9.2. The system shall support cross-platform compatibility (Windows, macOS, Linux).
+   9.3. The system shall provide clear upgrade paths and migration scripts for moving between versions.
+   9.4. The system shall include mechanisms for backing up and restoring project data and configurations.
+   9.5. The system shall support containerization for easy deployment in various environments.
 
-27. Auto-Documentation Features
-    27.1. The system shall implement auto-documentation features for code, configuration files, and other project artifacts.
-    27.2. The system shall use docstring conventions and type hints in Python code to generate API documentation automatically.
-    27.3. The system shall provide a mechanism to generate documentation from comments in configuration files.
-    27.4. The system shall maintain a changelog that is automatically updated with significant changes to the project structure or workflow.
-    27.5. The system shall generate user guides and developer documentation based on the current state of the project and its configuration.
-    27.6. The system shall provide a mechanism to preview generated documentation before finalizing it.
-    27.7. The system shall include tools to check the quality and completeness of the generated documentation.
-    27.8. The system shall support multiple output formats for generated documentation, including HTML, PDF, and Markdown.
-    27.9. The system shall provide a search functionality within the generated documentation for easy navigation.
-    27.10. The system shall include mechanisms to keep the generated documentation in sync with the actual project state and code.
+10. Customization and Extensibility
+    10.1. The system shall provide a plugin architecture for extending functionality without modifying core components.
+    10.2. The system shall support custom workflow definitions through configuration files.
+    10.3. The system shall allow for the integration of custom LLM models and APIs.
+    10.4. The system shall provide hooks for integrating with external tools and services.
 
-28. Project Structure Validation
-    28.1. The system shall include validation checks to ensure that the project structure remains consistent with the defined standards.
-    28.2. The system shall provide warnings or errors when files are placed in incorrect locations within the project structure.
-    28.3. The system shall include a linting tool to check for adherence to project structure conventions.
-    28.4. The system shall provide suggestions for correcting structural issues detected during validation.
-    28.5. The system shall allow for project-specific exceptions to structural rules, with proper documentation of these exceptions.
+These revised requirements address the identified issues by:
+1. Standardizing LLM references and removing specific model names.
+2. Reorganizing requirements into logical groupings.
+3. Consolidating documentation requirements.
+4. Expanding on error handling, logging, and security considerations.
+5. Focusing on desired outcomes rather than specific implementation details.
+6. Adding sections on performance, scalability, deployment, and customization.
 
-29. Project Structure Evolution
-    29.1. The system shall provide mechanisms for safely evolving the project structure as the project grows or requirements change.
-    29.2. The system shall include tools for refactoring the project structure while maintaining consistency and updating all relevant documentation.
-    29.3. The system shall track and document structural changes over time, providing a history of how the project structure has evolved.
-    29.4. The system shall provide guidance on when and how to scale the project structure for larger projects.
-
-30. Integration with Development Workflows
-    30.1. The system shall ensure that the project structure and auto-documentation features integrate seamlessly with common development workflows and tools.
-    30.2. The system shall provide hooks for continuous integration systems to validate project structure and update documentation.
-    30.3. The system shall generate appropriate configuration files for common development tools (e.g., linters, formatters) based on the project structure.
-    30.4. The system shall include best practices for working with the project structure in team environments, including guidelines for code reviews and pull requests.
+This structure provides a more comprehensive and organized set of requirements for the LLM-Workflow Director system.
 # LLM-Workflow Director Requirements (Golang Implementation)
 
 1. Project Initialization
