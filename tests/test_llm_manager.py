@@ -12,7 +12,7 @@ def test_llm_manager_initialization_mock_mode():
 def test_llm_manager_initialization_llm_mode(mock_llm):
     mock_model = MagicMock()
     mock_model.name = "TestModel"
-    mock_llm.models.return_value = [mock_model]
+    mock_llm.models = [mock_model]
     manager = LLMManager()
     assert manager.mock_mode == False
     assert manager.model == mock_model
@@ -31,7 +31,7 @@ def test_llm_manager_query():
 def test_llm_manager_query_error(mock_llm):
     mock_model = MagicMock()
     mock_model.prompt.side_effect = Exception("Test error")
-    mock_llm.models.return_value = [mock_model]
+    mock_llm.models = [mock_model]
     manager = LLMManager()
     result = manager.query("Test prompt")
     assert "Error querying LLM: Test error" in result

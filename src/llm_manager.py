@@ -17,13 +17,13 @@ class LLMManager:
                 import llm
                 self.mock_mode = False
                 try:
-                    models = llm.models()
+                    models = llm.models
                     if models:
                         self.model = models[0]  # Use the first available model
                         self.logger.info(f"Using LLM model: {self.model.name}")
                     else:
-                        raise llm.UnknownModelError("No models available")
-                except llm.UnknownModelError:
+                        raise AttributeError("No models available")
+                except AttributeError:
                     self.logger.warning("No models available. LLMManager will operate in mock mode.")
                     self.mock_mode = True
             except ImportError as e:

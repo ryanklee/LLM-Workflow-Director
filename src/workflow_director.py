@@ -7,6 +7,7 @@ from .error_handler import ErrorHandler
 
 class WorkflowDirector:
     def __init__(self, config_path='src/workflow_config.yaml', input_func=input, print_func=print):
+        self.logger = logging.getLogger(__name__)
         self.state_manager = StateManager()
         try:
             self.llm_manager = LLMManager()
@@ -16,7 +17,6 @@ class WorkflowDirector:
         self.error_handler = ErrorHandler()
         self.input_func = input_func
         self.print_func = print_func
-        self.logger = logging.getLogger(__name__)
         self.config = self.load_config(config_path)
         self.current_stage = self.config['stages'][0]['name'] if self.config else "Default Stage"
 
