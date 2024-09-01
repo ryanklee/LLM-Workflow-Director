@@ -2,9 +2,11 @@ package cli
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestRun(t *testing.T) {
@@ -43,9 +45,26 @@ func TestRun(t *testing.T) {
 		os.Args = []string{"cmd", "-project", tempDir}
 		defer func() { os.Args = oldArgs }()
 
-		err = Run()
-		if err != nil {
-			t.Errorf("Expected no error with valid project path, but got: %v", err)
+		// Create a channel to signal test completion
+		done := make(chan bool)
+
+		// Run the test in a goroutine
+		go func() {
+			fmt.Println("Starting Run() function...")
+			err := Run()
+			fmt.Println("Run() function completed")
+			if err != nil {
+				t.Errorf("Expected no error with valid project path, but got: %v", err)
+			}
+			done <- true
+		}()
+
+		// Wait for the test to complete or timeout
+		select {
+		case <-done:
+			fmt.Println("Test completed successfully")
+		case <-time.After(5 * time.Second):
+			t.Fatal("Test timed out after 5 seconds")
 		}
 	})
 }
