@@ -189,7 +189,8 @@ def test_workflow_director_llm_integration(mock_llm_manager):
     director.llm_manager = mock_llm_manager.return_value  # Explicitly set the mocked LLMManager
     director.run()
 
-    assert mock_llm_manager.return_value.query.called
+    mock_llm_manager.return_value.query.assert_called_once_with("Process this command: test command")
+    mock_user_interaction_handler.display_message.assert_called_once_with("LLM response: LLM response: Update task progress")
     assert any("LLM response: Update task progress" in call[0][0] for call in mock_user_interaction_handler.display_message.call_args_list)
     # Add more specific assertions to check the LLM integration
     mock_llm_manager.return_value.query.assert_called_once()
