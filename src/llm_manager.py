@@ -4,12 +4,56 @@ from typing import Dict, Any, Optional, List
 from .error_handler import ErrorHandler
 from .llm_microservice_client import LLMMicroserviceClient
 
+class LLMCostOptimizer:
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.usage_stats = {
+            'fast': {'count': 0, 'total_tokens': 0},
+            'balanced': {'count': 0, 'total_tokens': 0},
+            'powerful': {'count': 0, 'total_tokens': 0}
+        }
+        self.cost_per_token = {
+            'fast': 0.0001,
+            'balanced': 0.0005,
+            'powerful': 0.001
+        }
+
+    def update_usage(self, tier: str, tokens: int):
+        if tier in self.usage_stats:
+            self.usage_stats[tier]['count'] += 1
+            self.usage_stats[tier]['total_tokens'] += tokens
+        else:
+            self.logger.warning(f"Unknown tier: {tier}")
+
+    def get_usage_report(self) -> Dict[str, Any]:
+        total_cost = sum(self.usage_stats[tier]['total_tokens'] * self.cost_per_token[tier] for tier in self.usage_stats)
+        return {
+            'usage_stats': self.usage_stats,
+            'total_cost': total_cost
+        }
+
+    def suggest_optimization(self) -> str:
+        total_queries = sum(self.usage_stats[tier]['count'] for tier in self.usage_stats)
+        if total_queries == 0:
+            return "Not enough data to suggest optimizations."
+
+        powerful_ratio = self.usage_stats['powerful']['count'] / total_queries
+        fast_ratio = self.usage_stats['fast']['count'] / total_queries
+
+        if powerful_ratio > 0.3:
+            return "Consider optimizing prompts to reduce reliance on the 'powerful' tier."
+        elif fast_ratio < 0.2:
+            return "Look for opportunities to use the 'fast' tier more frequently for simple queries."
+        else:
+            return "Current usage appears to be well-balanced across tiers."
+
 class LLMManager:
     def __init__(self):
         self.error_handler = ErrorHandler()
         self.logger = logging.getLogger(__name__)
         self.cache = {}
         self.client = LLMMicroserviceClient()
+        self.cost_optimizer = LLMCostOptimizer()
 
     def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: str = 'balanced') -> Dict[str, Any]:
         self.logger.debug(f"Querying LLM with prompt: {prompt[:50]}... (tier: {tier})")
