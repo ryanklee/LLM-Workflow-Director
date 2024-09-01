@@ -16,14 +16,8 @@ import (
 
 // Director manages the workflow for LLM-assisted development
 type Director struct {
-	stateManager           state.StateManager
-	constraintEngine       constraint.ConstraintEngine
-	priorityManager        priority.PriorityManager
-	directionGenerator     direction.DirectionGenerator
-	aiderInterface         aider.AiderInterface
-	userInteractionHandler user.UserInteractionHandler
-	progressTracker        progress.ProgressTracker
-	sufficiencyEvaluator   sufficiency.Evaluator
+	components []WorkflowComponent
+	mediator   *WorkflowMediator
 }
 
 // NewDirector creates a new Director instance
@@ -37,73 +31,29 @@ func NewDirector(
 	pt progress.ProgressTracker,
 	se sufficiency.Evaluator,
 ) *Director {
+	mediator := NewWorkflowMediator(sm, ce, pm, dg, ai, uih, pt, se)
+	components := []WorkflowComponent{
+		sm, ce, pm, dg, ai, uih, pt, se,
+	}
 	return &Director{
-		stateManager:           sm,
-		constraintEngine:       ce,
-		priorityManager:        pm,
-		directionGenerator:     dg,
-		aiderInterface:         ai,
-		userInteractionHandler: uih,
-		progressTracker:        pt,
-		sufficiencyEvaluator:   se,
+		components: components,
+		mediator:   mediator,
 	}
 }
 
 // Run starts the workflow process
 func (d *Director) Run() error {
-	for {
-		state, err := d.stateManager.GetCurrentState()
-		if err != nil {
-			return err
-		}
-
-		if d.progressTracker.IsComplete(state) {
-			return nil
-		}
-
-		if err := d.constraintEngine.Validate(state); err != nil {
-			return err
-		}
-
-		sufficient, reason, err := d.sufficiencyEvaluator.Evaluate(state)
-		if err != nil {
-			return err
-		}
-
-		priorities := d.priorityManager.DeterminePriorities(state)
-
-		var directions interface{}
-		if sufficient {
-			directions, err = d.directionGenerator.Generate(state, priorities)
-		} else {
-			directions, err = d.directionGenerator.GenerateForInsufficiency(state, priorities, reason)
-		}
-		if err != nil {
-			return err
-		}
-
-		result, err := d.aiderInterface.Execute(directions)
-		if err != nil {
-			return err
-		}
-
-		if err := d.stateManager.UpdateState(result); err != nil {
-			return err
-		}
-
-		if d.userInteractionHandler.IsInteractionRequired(state) {
-			if err := d.handleUserInteraction(); err != nil {
-				return err
-			}
-		}
-
-		if err := d.progressTracker.UpdateProgress(state); err != nil {
-			return err
-		}
-
-		// Add a small delay to prevent tight looping
-		time.Sleep(10 * time.Millisecond)
+	state, err := d.mediator.stateManager.GetCurrentState()
+	if err != nil {
+		return err
 	}
+
+	result, err := d.mediator.ExecuteWorkflow(state)
+	if err != nil {
+		return err
+	}
+
+	return d.mediator.stateManager.UpdateState(result)
 }
 
 func (d *Director) handleUserInteraction() error {
