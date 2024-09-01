@@ -36,6 +36,18 @@ def test_workflow_director_move_to_next_stage():
     assert director.move_to_next_stage()
     assert director.current_stage == "Requirements Gathering"
 
+def test_workflow_director_complete_current_stage():
+    director = WorkflowDirector()
+    initial_stage = director.current_stage
+    director.complete_current_stage()
+    assert director.current_stage != initial_stage
+
+def test_workflow_director_get_stage_progress():
+    director = WorkflowDirector()
+    progress = director.get_stage_progress()
+    assert isinstance(progress, float)
+    assert 0 <= progress <= 1
+
 @patch('src.workflow_director.LLMManager')
 def test_workflow_director_run(mock_llm_manager):
     mock_llm_manager.return_value.query.return_value = "LLM response"

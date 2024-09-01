@@ -23,6 +23,7 @@ class WorkflowDirector:
         self.current_stage = self.config['stages'][0]['name'] if self.config else "Default Stage"
         self.stages = {stage['name']: stage for stage in self.config['stages']}
         self.transitions = self.config['transitions']
+        self.stage_progress = {stage: 0.0 for stage in self.stages}
 
     def load_config(self, config_path):
         try:
@@ -48,13 +49,16 @@ class WorkflowDirector:
                 self.print_func("Tasks:")
                 for task in current_stage['tasks']:
                     self.print_func(f"- {task}")
-                self.print_func("Enter a command ('next' for next stage, 'exit' to quit): ", end='')
+                self.print_func(f"Stage progress: {self.get_stage_progress():.2%}")
+                self.print_func("Enter a command ('next' for next stage, 'complete' to finish current stage, 'exit' to quit): ", end='')
                 user_input = self.input_func()
                 if user_input.lower() == 'exit':
                     break
                 elif user_input.lower() == 'next':
                     if not self.move_to_next_stage():
                         self.print_func("Cannot move to the next stage. Please complete the current stage's tasks.")
+                elif user_input.lower() == 'complete':
+                    self.complete_current_stage()
                 else:
                     if self.llm_manager:
                         response = self.llm_manager.query(user_input)
@@ -94,6 +98,17 @@ class WorkflowDirector:
         else:
             self.print_func("No available transitions from the current stage.")
             return False
+
+    def complete_current_stage(self):
+        self.stage_progress[self.current_stage] = 1.0
+        self.print_func(f"Completed stage: {self.current_stage}")
+        self.move_to_next_stage()
+
+    def get_stage_progress(self):
+        return self.stage_progress[self.current_stage]
+
+    def update_stage_progress(self, progress):
+        self.stage_progress[self.current_stage] = max(0.0, min(1.0, progress))
 
     def handle_error(self, error):
         return self.error_handler.handle_error(error)
