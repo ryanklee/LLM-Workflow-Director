@@ -98,7 +98,12 @@ class WorkflowDirector:
                 else:
                     if self.llm_manager:
                         tier = self.determine_query_tier(user_input)
-                        response = self.llm_manager.query(user_input, tier=tier)
+                        context = {
+                            'workflow_stage': self.current_stage,
+                            'project_structure_instructions': self.project_structure_manager.get_structure_instructions(),
+                            'coding_conventions': self.convention_manager.get_aider_conventions()
+                        }
+                        response = self.llm_manager.query(user_input, context=context, tier=tier)
                         self.print_func(f"LLM response: {response}")
                     else:
                         self.print_func("LLM manager is not available. Unable to process the command.")

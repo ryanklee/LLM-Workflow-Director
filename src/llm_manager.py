@@ -59,7 +59,19 @@ class LLMManager:
             except Exception as e:
                 error_message = str(e)
                 self.logger.error(f"Error querying LLM: {error_message} (tier: {tier})")
-                response = f"Error querying LLM: {error_message}"
+                retry_count = 0
+                max_retries = 3
+                while retry_count < max_retries:
+                    try:
+                        self.logger.info(f"Retrying LLM query (attempt {retry_count + 1}/{max_retries})")
+                        response = model.prompt(formatted_prompt)
+                        response = response.text()
+                        break
+                    except Exception as retry_e:
+                        retry_count += 1
+                        self.logger.error(f"Retry {retry_count} failed: {str(retry_e)}")
+                else:
+                    response = f"Error querying LLM after {max_retries} attempts: {error_message}"
 
         self.cache[cache_key] = response
         return self._add_unique_id(response)
@@ -79,17 +91,21 @@ class LLMManager:
 
         project_structure_instructions = context.get('project_structure_instructions', '')
         coding_conventions = context.get('coding_conventions', '')
+        workflow_stage = context.get('workflow_stage', '')
         
         formatted_prompt = f"Context:\n"
         for key, value in context.items():
-            if key not in ['project_structure_instructions', 'coding_conventions']:
+            if key not in ['project_structure_instructions', 'coding_conventions', 'workflow_stage']:
                 formatted_prompt += f"{key}: {value}\n"
         
+        formatted_prompt += f"\nCurrent Workflow Stage: {workflow_stage}\n"
         formatted_prompt += f"\nProject Structure Instructions:\n{project_structure_instructions}\n"
         formatted_prompt += f"\nCoding Conventions:\n{coding_conventions}\n"
         formatted_prompt += f"\nPrompt: {prompt}"
         formatted_prompt += "\n\nPlease ensure that your response adheres to the project structure guidelines and coding conventions provided above."
+        formatted_prompt += f"\nConsider the current workflow stage '{workflow_stage}' when formulating your response."
         
+        self.logger.debug(f"Formatted prompt: {formatted_prompt}")
         return formatted_prompt
 
     def _generate_cache_key(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: str = 'balanced') -> str:
