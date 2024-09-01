@@ -24,8 +24,12 @@ func (m *MockPriorityManager) DeterminePriorities(interface{}) interface{} { ret
 // MockDirectionGenerator implements direction.DirectionGenerator interface
 type MockDirectionGenerator struct{}
 
-func (m *MockDirectionGenerator) Generate(interface{}, interface{}) (interface{}, error) { return nil, nil }
-func (m *MockDirectionGenerator) GenerateForInsufficiency(interface{}, interface{}, string) (interface{}, error) { return nil, nil }
+func (m *MockDirectionGenerator) Generate(interface{}, interface{}) (interface{}, error) {
+	return nil, nil
+}
+func (m *MockDirectionGenerator) GenerateForInsufficiency(interface{}, interface{}, string) (interface{}, error) {
+	return nil, nil
+}
 
 // MockAiderInterface implements aider.AiderInterface interface
 type MockAiderInterface struct{}
