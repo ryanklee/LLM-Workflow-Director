@@ -97,7 +97,7 @@ class LLMManager:
     def determine_query_tier(self, query: str) -> str:
         if len(query.split()) < 20:
             return 'fast'
-        elif len(query.split()) > 100 or any(keyword in query.lower() for keyword in ['complex', 'detailed', 'analyze', 'summarize']):
+        elif len(query.split()) > 50 or any(keyword in query.lower() for keyword in ['complex', 'detailed', 'analyze', 'summarize']):
             return 'powerful'
         else:
             return 'balanced'
