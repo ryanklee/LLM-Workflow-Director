@@ -1,24 +1,18 @@
 from unittest.mock import patch, MagicMock
-from src.llm_manager import LLMManager, llm_spec
+from src.llm_manager import LLMManager
 
-@patch('src.llm_manager.llm_spec', None)
-def test_llm_manager_initialization_mock_mode():
+def test_llm_manager_initialization():
     manager = LLMManager()
-    assert manager.mock_mode == True
-    assert manager.models == {}
+    assert isinstance(manager.client, MagicMock)
+    assert isinstance(manager.cache, dict)
 
-@patch('src.llm_manager.llm_spec', MagicMock())
-@patch('src.llm_manager.importlib.import_module')
-def test_llm_manager_initialization_llm_mode(mock_import):
-    mock_llm = MagicMock()
-    mock_model = MagicMock()
-    mock_model.name = "TestModel"
-    mock_llm.models = [mock_model]
-    mock_import.return_value = mock_llm
-    
+@patch('src.llm_manager.LLMMicroserviceClient')
+def test_llm_manager_query(mock_client):
+    mock_client.return_value.query.return_value = "Test response"
     manager = LLMManager()
-    assert manager.mock_mode == False
-    assert manager.models['balanced'] == mock_model
+    response = manager.query("Test prompt")
+    assert "Test response" in response
+    assert "(ID:" in response
 
 def test_llm_manager_query():
     manager = LLMManager()
@@ -49,22 +43,27 @@ def test_llm_manager_query_with_context():
 
 def test_llm_manager_error_handling():
     manager = LLMManager()
-    manager.mock_mode = False
-    manager.models['balanced'] = MagicMock()
-    manager.models['balanced'].prompt.side_effect = [Exception("Test error"), Exception("Retry error"), MagicMock(text=lambda: "Success")]
+    manager.client.query.side_effect = [Exception("Test error"), Exception("Retry error"), "Success"]
     result = manager.query("Test prompt")
     assert "Success" in result
-    assert manager.models['balanced'].prompt.call_count == 3
+    assert manager.client.query.call_count == 3
 
 def test_llm_manager_query_with_tiers():
     manager = LLMManager()
-    fast_result = manager.query("Short prompt", tier='fast')
-    balanced_result = manager.query("Medium length prompt with some complexity", tier='balanced')
-    powerful_result = manager.query("Very long and complex prompt that requires detailed analysis", tier='powerful')
+    manager.client.query.side_effect = ["Fast response", "Balanced response", "Powerful response"]
     
-    assert "(tier: fast)" in fast_result
-    assert "(tier: balanced)" in balanced_result
-    assert "(tier: powerful)" in powerful_result
+    fast_result = manager.query("Short prompt", tier='fast')
+    balanced_result = manager.query("Medium length prompt", tier='balanced')
+    powerful_result = manager.query("Complex prompt", tier='powerful')
+    
+    assert "Fast response" in fast_result
+    assert "Balanced response" in balanced_result
+    assert "Powerful response" in powerful_result
+    
+    assert manager.client.query.call_count == 3
+    manager.client.query.assert_any_call("Short prompt", None, 'fast')
+    manager.client.query.assert_any_call("Medium length prompt", None, 'balanced')
+    manager.client.query.assert_any_call("Complex prompt", None, 'powerful')
 
 @patch('src.llm_manager.llm_spec', MagicMock())
 @patch('src.llm_manager.importlib.import_module')
@@ -119,3 +118,24 @@ def test_llm_manager_caching():
     assert result4.startswith("Mock response to: Test prompt")
     assert "(ID:" in result4
     assert result4 != result1  # Because it's a new mock response after cache clear
+def test_evaluate_sufficiency():
+    manager = LLMManager()
+    manager.client.evaluate_sufficiency.return_value = {
+        "is_sufficient": True,
+        "reasoning": "All tasks completed"
+    }
+    
+    result = manager.evaluate_sufficiency("Test Stage", {"description": "Test"}, {"key": "value"})
+    
+    assert result["is_sufficient"] == True
+    assert result["reasoning"] == "All tasks completed"
+    manager.client.evaluate_sufficiency.assert_called_once_with("Test Stage", {"description": "Test"}, {"key": "value"})
+
+def test_evaluate_sufficiency_error():
+    manager = LLMManager()
+    manager.client.evaluate_sufficiency.side_effect = Exception("Test error")
+    
+    result = manager.evaluate_sufficiency("Test Stage", {"description": "Test"}, {"key": "value"})
+    
+    assert result["is_sufficient"] == False
+    assert "Error evaluating sufficiency: Test error" in result["reasoning"]
