@@ -74,6 +74,7 @@ class LLMManager:
 
         max_retries = 3
         retry_count = 0
+        original_tier = tier
         while retry_count < max_retries:
             try:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
@@ -93,11 +94,26 @@ class LLMManager:
                 retry_count += 1
                 self.logger.warning(f"Error querying LLM microservice (attempt {retry_count}/{max_retries}): {str(e)} (tier: {tier})")
                 if retry_count == max_retries:
-                    self.logger.error(f"Max retries reached. Returning error message.")
-                    return {"error": f"Error querying LLM after {max_retries} attempts: {str(e)}"}
+                    if tier != 'fast':
+                        self.logger.info(f"Falling back to a lower-tier LLM")
+                        tier = self._get_fallback_tier(tier)
+                        retry_count = 0
+                    else:
+                        self.logger.error(f"Max retries reached. Returning error message.")
+                        return {"error": f"Error querying LLM after {max_retries} attempts: {str(e)}"}
         
         # This line should never be reached, but we'll add it for completeness
         return {"error": "Unexpected error in LLM query"}
+
+    def _get_fallback_tier(self, current_tier: str) -> str:
+        tiers = ['powerful', 'balanced', 'fast']
+        try:
+            current_index = tiers.index(current_tier)
+            if current_index < len(tiers) - 1:
+                return tiers[current_index + 1]
+        except ValueError:
+            pass
+        return 'fast'
 
     def determine_query_tier(self, query: str) -> str:
         if len(query.split()) < 5:
