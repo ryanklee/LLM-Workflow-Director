@@ -1,9 +1,10 @@
-import pytest
 from src.llm_manager import LLMManager
+
 
 def test_llm_manager_initialization():
     manager = LLMManager()
     assert hasattr(manager, 'mock_mode')
+
 
 def test_llm_manager_query():
     manager = LLMManager()
@@ -11,6 +12,7 @@ def test_llm_manager_query():
     assert isinstance(result, str)
     if manager.mock_mode:
         assert result == "Mock response to: Test prompt"
+
 
 def test_llm_manager_query_error():
     manager = LLMManager()

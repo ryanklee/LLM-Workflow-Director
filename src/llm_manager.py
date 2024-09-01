@@ -4,6 +4,7 @@ from .error_handler import ErrorHandler
 
 llm_spec = importlib.util.find_spec("llm")
 
+
 class LLMManager:
     def __init__(self):
         self.mock_mode = True
