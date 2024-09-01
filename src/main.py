@@ -8,8 +8,14 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 try:
     from src.workflow_director import WorkflowDirector
 except ModuleNotFoundError as e:
-    print(f"Error: {e}")
-    print("Make sure all required modules are installed and in the correct location.")
+    if "pkg.workflow.constraint.engine" in str(e):
+        print("Error: The pkg.workflow.constraint.engine module is missing.")
+        print("This module should be implemented in Go and compiled as a shared library.")
+        print("Please make sure the Go module is compiled and the shared library is in the correct location.")
+        print("Refer to the project documentation for instructions on compiling the Go module.")
+    else:
+        print(f"Error: {e}")
+        print("Make sure all required modules are installed and in the correct location.")
     sys.exit(1)
 
 
