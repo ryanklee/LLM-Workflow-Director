@@ -1,12 +1,14 @@
 import click
 import sys
 import os
+import yaml
 
 # Add the project root directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
 try:
     from src.workflow_director import WorkflowDirector
+    from src.convention_manager import ConventionManager
 except ModuleNotFoundError as e:
     if "pkg.workflow.constraint.engine" in str(e):
         print("Error: The pkg.workflow.constraint.engine module is missing.")
