@@ -110,6 +110,7 @@ class WorkflowDirector:
         if available_transitions:
             next_stage = available_transitions[0]['to']
             if self.transition_to(next_stage):
+                self.current_stage = next_stage
                 return True
         self.print_func("No available transitions from the current stage.")
         return False
@@ -120,8 +121,9 @@ class WorkflowDirector:
         self.print_func(f"Completed stage: {self.current_stage}")
         if self.move_to_next_stage():
             return True
-        self.print_func("This was the final stage.")
-        return False
+        else:
+            self.print_func("This was the final stage.")
+            return False
 
     def get_stage_progress(self):
         return self.stage_progress[self.current_stage]
