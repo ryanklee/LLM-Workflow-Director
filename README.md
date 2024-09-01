@@ -84,6 +84,15 @@ The system now provides more detailed logging information. To view debug logs, s
 LOGLEVEL=DEBUG python src/main.py run
 ```
 
+### User Confirmation for Workflow Steps
+
+When using the LLM Workflow Director with Aider, you will be prompted for confirmation before each step. You can either:
+
+- Enter 'Y' to proceed with the suggested step
+- Provide alternative directions to override the suggested step
+
+This feature allows you to maintain control over the workflow while benefiting from the automated guidance provided by the system.
+
 For detailed usage instructions, refer to the documentation in the `docs/` directory.
 
 ## Configuration

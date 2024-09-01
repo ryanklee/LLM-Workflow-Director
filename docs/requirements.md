@@ -221,6 +221,18 @@
     24.9. The help system shall support different levels of detail, from high-level overviews to detailed explanations of specific features.
     24.10. The help system shall include a search functionality to allow users to quickly find relevant information.
 
+25. User Confirmation for Workflow Steps
+    25.1. The system shall prompt Aider to seek user confirmation before proceeding with the next step indicated by the workflow director.
+    25.2. The confirmation prompt shall offer the user two options: to proceed with the suggested step (Y) or to provide alternative directions.
+    25.3. If the user chooses to proceed (Y), Aider shall execute the step as directed by the workflow director.
+    25.4. If the user chooses to provide alternative directions, Aider shall pause the workflow execution and await user input.
+    25.5. The system shall ensure that user interventions are properly logged and integrated into the overall workflow history.
+    25.6. The confirmation mechanism shall be implemented in a way that does not disrupt the flow of the development process while still providing the user with control over the workflow.
+    25.7. The system shall provide clear and concise information about the next step in the confirmation prompt to aid the user in decision-making.
+    25.8. The confirmation prompt shall include an option to display more detailed information about the proposed next step if requested by the user.
+    25.9. The system shall handle and appropriately respond to invalid user inputs during the confirmation process.
+    25.10. The confirmation mechanism shall be configurable, allowing users to set preferences for when confirmations are required (e.g., for all steps, only for critical steps, or never).
+
 12. Coding Conventions Management
     12.1. The system shall provide functionality to generate and manage coding conventions.
     12.2. The system shall allow for the specification of coding conventions to be respected by the LLMs.
