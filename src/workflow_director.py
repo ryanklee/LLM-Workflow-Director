@@ -173,6 +173,15 @@ class WorkflowDirector:
             'workflow_config': self.config
         }
 
+    def determine_query_tier(self, query: str) -> str:
+        # Simple heuristic for determining the appropriate tier
+        if len(query.split()) < 10:
+            return 'fast'
+        elif len(query.split()) > 50 or any(keyword in query.lower() for keyword in ['complex', 'detailed', 'analyze']):
+            return 'powerful'
+        else:
+            return 'balanced'
+
     def _process_llm_response(self, structured_response: Dict[str, Any]):
         self.logger.info("Processing LLM response")
         try:
