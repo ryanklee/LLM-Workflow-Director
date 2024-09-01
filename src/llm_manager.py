@@ -1,7 +1,15 @@
-import llm
+try:
+    import llm
+except ImportError as e:
+    print(f"Error importing llm: {str(e)}")
+    print("Please make sure all dependencies are installed correctly.")
+    llm = None
 
 class LLMManager:
     def __init__(self):
+        if llm is None:
+            raise ImportError("llm module is not available. Please install all required dependencies.")
+        
         try:
             self.model = llm.get_model("claude-3-opus-20240229")  # Using Claude 3 Opus as the default model
         except llm.UnknownModelError:
