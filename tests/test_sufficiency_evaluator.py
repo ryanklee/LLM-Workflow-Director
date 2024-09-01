@@ -8,7 +8,10 @@ def test_sufficiency_evaluator_initialization():
 
 def test_evaluate_stage_sufficiency_sufficient():
     mock_llm_manager = MagicMock()
-    mock_llm_manager.query.return_value = "Evaluation: SUFFICIENT\nReasoning: All tasks completed satisfactorily.\nNext Steps: N/A"
+    mock_llm_manager.evaluate_sufficiency.return_value = {
+        "is_sufficient": True,
+        "reasoning": "All tasks completed satisfactorily."
+    }
     
     evaluator = SufficiencyEvaluator(mock_llm_manager)
     
@@ -23,11 +26,14 @@ def test_evaluate_stage_sufficiency_sufficient():
     
     assert is_sufficient == True
     assert "All tasks completed satisfactorily" in reasoning
-    mock_llm_manager.query.assert_called_once()
+    mock_llm_manager.evaluate_sufficiency.assert_called_once_with(stage_name, stage_data, project_state)
 
 def test_evaluate_stage_sufficiency_insufficient():
     mock_llm_manager = MagicMock()
-    mock_llm_manager.query.return_value = "Evaluation: INSUFFICIENT\nReasoning: Some tasks are incomplete.\nNext Steps: Complete remaining tasks"
+    mock_llm_manager.evaluate_sufficiency.return_value = {
+        "is_sufficient": False,
+        "reasoning": "Some tasks are incomplete. Complete remaining tasks."
+    }
     
     evaluator = SufficiencyEvaluator(mock_llm_manager)
     
@@ -43,10 +49,12 @@ def test_evaluate_stage_sufficiency_insufficient():
     assert is_sufficient == False
     assert "Some tasks are incomplete" in reasoning
     assert "Complete remaining tasks" in reasoning
-    mock_llm_manager.query.assert_called_once()
+    mock_llm_manager.evaluate_sufficiency.assert_called_once_with(stage_name, stage_data, project_state)
 
-def test_generate_evaluation_prompt():
+def test_evaluate_stage_sufficiency_error():
     mock_llm_manager = MagicMock()
+    mock_llm_manager.evaluate_sufficiency.side_effect = Exception("Test error")
+    
     evaluator = SufficiencyEvaluator(mock_llm_manager)
     
     stage_name = "Test Stage"
@@ -56,25 +64,27 @@ def test_generate_evaluation_prompt():
     }
     project_state = {"key": "value"}
     
-    prompt = evaluator._generate_evaluation_prompt(stage_name, stage_data, project_state)
+    is_sufficient, reasoning = evaluator.evaluate_stage_sufficiency(stage_name, stage_data, project_state)
     
-    assert "Test Stage" in prompt
-    assert "Test stage description" in prompt
-    assert "Task 1" in prompt
-    assert "Task 2" in prompt
-    assert "key: value" in prompt
-    assert "Next Steps:" in prompt
+    assert is_sufficient == False
+    assert "Error evaluating sufficiency" in reasoning
+    assert "Test error" in reasoning
+    mock_llm_manager.evaluate_sufficiency.assert_called_once_with(stage_name, stage_data, project_state)
 
-def test_parse_sufficiency_response_valid():
-    mock_llm_manager = MagicMock()
-    evaluator = SufficiencyEvaluator(mock_llm_manager)
+def test_evaluate_stage_sufficiency_no_llm_manager():
+    evaluator = SufficiencyEvaluator(None)
     
-    response = "Evaluation: SUFFICIENT\nReasoning: All tasks completed satisfactorily.\nNext Steps: N/A"
-    is_sufficient, reasoning = evaluator._parse_sufficiency_response(response)
+    stage_name = "Test Stage"
+    stage_data = {
+        "description": "Test stage description",
+        "tasks": ["Task 1", "Task 2"]
+    }
+    project_state = {"key": "value"}
+    
+    is_sufficient, reasoning = evaluator.evaluate_stage_sufficiency(stage_name, stage_data, project_state)
     
     assert is_sufficient == True
-    assert "All tasks completed satisfactorily" in reasoning
-    assert "Next Steps: N/A" in reasoning
+    assert "LLMManager not available" in reasoning
 
 def test_parse_sufficiency_response_invalid():
     mock_llm_manager = MagicMock()
