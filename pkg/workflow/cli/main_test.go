@@ -39,8 +39,9 @@ func TestRun(t *testing.T) {
 		}
 
 		// Set args for this test
+		oldArgs := os.Args
 		os.Args = []string{"cmd", "-project", tempDir}
-		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+		defer func() { os.Args = oldArgs }()
 
 		err = Run()
 		if err != nil {
