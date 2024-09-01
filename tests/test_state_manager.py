@@ -1,4 +1,5 @@
 from src.state_manager import StateManager
+from src.vectorstore.vector_store import VectorStore
 
 
 def test_state_manager_initialization():
