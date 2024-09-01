@@ -214,3 +214,7 @@ def test_workflow_director_llm_integration(mock_llm_manager):
     print("Mock LLMManager query call count:", mock_llm_manager.return_value.query.call_count)
     print("Mock user interaction handler display_message call count:", mock_user_interaction_handler.display_message.call_count)
     print("Mock user interaction handler prompt_user call count:", mock_user_interaction_handler.prompt_user.call_count)
+
+    # Check if LLMManager was initialized correctly
+    assert director.llm_manager is not None, "LLMManager was not initialized"
+    assert isinstance(director.llm_manager, MagicMock), "LLMManager is not a MagicMock instance"

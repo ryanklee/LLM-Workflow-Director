@@ -91,9 +91,12 @@ class WorkflowDirector:
                 context = self._prepare_llm_context()
                 query = f"Process this command: {user_input}"
                 if self.llm_manager:
-                    response = self.llm_manager.query(query, context=context, tier=tier)
-                    self.user_interaction_handler.display_message(f"LLM response: {response}")
-                    self._process_llm_response(response)
+                    try:
+                        response = self.llm_manager.query(query, context=context, tier=tier)
+                        self.user_interaction_handler.display_message(f"LLM response: {response}")
+                        self._process_llm_response(response)
+                    except Exception as e:
+                        self.logger.error(f"Error querying LLM: {str(e)}")
                 else:
                     self.logger.warning("LLMManager not available. Skipping LLM query.")
                 
