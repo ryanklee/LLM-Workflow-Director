@@ -21,31 +21,50 @@ type Director struct {
 }
 
 // NewDirector creates a new Director instance
-func NewDirector(
-	sm state.StateManager,
-	ce constraint.ConstraintEngine,
-	pm priority.PriorityManager,
-	dg direction.DirectionGenerator,
-	ai aider.AiderInterface,
-	uih user.UserInteractionHandler,
-	pt progress.ProgressTracker,
-	se sufficiency.Evaluator,
-) *Director {
-	mediator := NewWorkflowMediator(sm, ce, pm, dg, ai, uih, pt, se)
-	components := []component.WorkflowComponent{
-		sm,
-		ce.(component.WorkflowComponent),
-		pm.(component.WorkflowComponent),
-		dg.(component.WorkflowComponent),
-		ai.(component.WorkflowComponent),
-		uih.(component.WorkflowComponent),
-		pt.(component.WorkflowComponent),
-		se.(component.WorkflowComponent),
+func NewDirector(components ...component.WorkflowComponent) (*Director, error) {
+	if len(components) == 0 {
+		return nil, errors.New("at least one component is required")
 	}
+
+	var sm state.StateManager
+	var ce constraint.ConstraintEngine
+	var pm priority.PriorityManager
+	var dg direction.DirectionGenerator
+	var ai aider.AiderInterface
+	var uih user.UserInteractionHandler
+	var pt progress.ProgressTracker
+	var se sufficiency.Evaluator
+
+	for _, comp := range components {
+		switch c := comp.(type) {
+		case state.StateManager:
+			sm = c
+		case constraint.ConstraintEngine:
+			ce = c
+		case priority.PriorityManager:
+			pm = c
+		case direction.DirectionGenerator:
+			dg = c
+		case aider.AiderInterface:
+			ai = c
+		case user.UserInteractionHandler:
+			uih = c
+		case progress.ProgressTracker:
+			pt = c
+		case sufficiency.Evaluator:
+			se = c
+		}
+	}
+
+	if sm == nil || ce == nil || pm == nil || dg == nil || ai == nil || uih == nil || pt == nil || se == nil {
+		return nil, errors.New("all required components must be provided")
+	}
+
+	mediator := NewWorkflowMediator(sm, ce, pm, dg, ai, uih, pt, se)
 	return &Director{
 		components: components,
 		mediator:   mediator,
-	}
+	}, nil
 }
 
 // Run starts the workflow process

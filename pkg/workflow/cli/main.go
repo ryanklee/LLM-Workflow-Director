@@ -43,6 +43,7 @@ func Run() error {
 
 		// Define command-line flags
 		projectPath := fs.String("project", "", "Path to the project directory")
+		configPath := fs.String("config", "", "Path to the configuration file")
 
 		// Parse command-line flags
 		fmt.Println("Parsing command-line flags")
@@ -54,53 +55,44 @@ func Run() error {
 			return
 		}
 
+		// Load configuration
+		var cfg *config.WorkflowConfig
+		var err error
+		if *configPath != "" {
+			cfg, err = config.LoadConfig(*configPath)
+			if err != nil {
+				fmt.Printf("Error loading configuration: %v\n", err)
+				fmt.Println("Using default configuration")
+				cfg = config.GetDefaultConfig()
+			}
+		} else {
+			fmt.Println("No configuration file specified. Using default configuration")
+			cfg = config.GetDefaultConfig()
+		}
+
 		fmt.Println("Initializing components")
 		start := time.Now()
 
-		// Initialize components with timing
-		stateManager := state.NewFileStateManager(*projectPath)
-		fmt.Printf("StateManager initialization took %v\n", time.Since(start))
-		start = time.Now()
-
-		constraintEngine := constraint.NewBasicConstraintEngine()
-		fmt.Printf("ConstraintEngine initialization took %v\n", time.Since(start))
-		start = time.Now()
-
-		priorityManager := priority.NewBasicPriorityManager()
-		fmt.Printf("PriorityManager initialization took %v\n", time.Since(start))
-		start = time.Now()
-
-		directionGenerator := direction.NewBasicDirectionGenerator()
-		fmt.Printf("DirectionGenerator initialization took %v\n", time.Since(start))
-		start = time.Now()
-
-		aiderInterface := aider.NewBasicAiderInterface()
-		fmt.Printf("AiderInterface initialization took %v\n", time.Since(start))
-		start = time.Now()
-
-		userInteractionHandler := user.NewBasicUserInteractionHandler()
-		fmt.Printf("UserInteractionHandler initialization took %v\n", time.Since(start))
-		start = time.Now()
-
-		progressTracker := progress.NewBasicProgressTracker()
-		fmt.Printf("ProgressTracker initialization took %v\n", time.Since(start))
-		start = time.Now()
-
-		sufficiencyEvaluator := sufficiency.NewLLMEvaluator(aiderInterface)
-		fmt.Printf("SufficiencyEvaluator initialization took %v\n", time.Since(start))
+		// Initialize components based on configuration
+		components := make([]component.WorkflowComponent, 0, len(cfg.Components))
+		for _, compConfig := range cfg.Components {
+			comp, err := createComponent(compConfig, *projectPath)
+			if err != nil {
+				done <- fmt.Errorf("failed to create component %s: %w", compConfig.Type, err)
+				return
+			}
+			components = append(components, comp)
+			fmt.Printf("%s initialization took %v\n", compConfig.Type, time.Since(start))
+			start = time.Now()
+		}
 
 		fmt.Println("Creating workflow director")
 		// Create and run the workflow director
-		director := workflow.NewDirector(
-			stateManager,
-			constraintEngine,
-			priorityManager,
-			directionGenerator,
-			aiderInterface,
-			userInteractionHandler,
-			progressTracker,
-			sufficiencyEvaluator,
-		)
+		director, err := workflow.NewDirector(components...)
+		if err != nil {
+			done <- fmt.Errorf("failed to create workflow director: %w", err)
+			return
+		}
 
 		fmt.Println("Running workflow director")
 		start = time.Now()
