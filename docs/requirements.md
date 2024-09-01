@@ -112,11 +112,11 @@
       3.4.4. The system shall provide guidance on when and how to scale the project structure for larger projects.
 
 4. Integration and Development Support
-   4.1. Integration with Development Workflows
-      4.1.1. The system shall ensure that the project structure and auto-documentation features integrate seamlessly with common development workflows and tools.
-      4.1.2. The system shall provide hooks for continuous integration systems to validate project structure and update documentation.
-      4.1.3. The system shall generate appropriate configuration files for common development tools (e.g., linters, formatters) based on the project structure.
-      4.1.4. The system shall include best practices for working with the project structure in team environments, including guidelines for code reviews and pull requests.
+   4.1. Integration with Development Workflow
+      4.1.1. The system shall ensure that the project structure and auto-documentation features support an efficient development workflow.
+      4.1.2. The system shall provide mechanisms to validate project structure and update documentation.
+      4.1.3. The system shall generate appropriate configuration files for development tools (e.g., linters, formatters) based on the project structure.
+      4.1.4. The system shall include best practices for maintaining code quality and consistency throughout the development process.
 
    4.2. Domain-Driven Design Support
       4.2.1. The system shall guide the creation and refinement of a comprehensive domain model.
