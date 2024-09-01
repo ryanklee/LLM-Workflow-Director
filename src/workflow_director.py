@@ -210,9 +210,26 @@ class WorkflowDirector:
         return True
 
     def complete_current_stage(self):
+        self.logger.info(f"Completing stage: {self.current_stage}")
         self.stage_progress[self.current_stage] = 1.0
         self.completed_stages.add(self.current_stage)
         self.print_func(f"Completed stage: {self.current_stage}")
+        self.logger.info(f"Stage {self.current_stage} marked as completed")
+        
+        available_transitions = self.get_available_transitions()
+        if available_transitions:
+            next_stage = available_transitions[0]['to']
+            if self.transition_to(next_stage):
+                self.logger.info(f"Moved to next stage: {self.current_stage}")
+                return True
+            else:
+                self.logger.warning(f"Failed to transition to next stage: {next_stage}")
+        else:
+            self.logger.info("No next stage available")
+        
+        if self.current_stage == self.config['stages'][-1]['name']:
+            self.logger.info("Completed final stage")
+            return False
         return True
 
     def evaluate_condition(self, condition):
