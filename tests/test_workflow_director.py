@@ -7,12 +7,14 @@ def test_workflow_director_initialization():
     assert hasattr(director, 'state_manager')
     assert hasattr(director, 'llm_manager')
 
-def test_workflow_director_run(capsys):
+def test_workflow_director_run():
     mock_input = MagicMock(side_effect=['test command', 'exit'])
-    director = WorkflowDirector(input_func=mock_input)
+    mock_print = MagicMock()
+    director = WorkflowDirector(input_func=mock_input, print_func=mock_print)
     director.run()
-    captured = capsys.readouterr()
-    assert "Starting LLM Workflow Director" in captured.out
-    assert "Enter a command (or 'exit' to quit):" in captured.out
-    assert "LLM response:" in captured.out
-    assert "Exiting LLM Workflow Director" in captured.out
+    
+    assert mock_print.call_args_list[0][0][0] == "Starting LLM Workflow Director"
+    assert mock_print.call_args_list[1][0][0] == "Enter a command (or 'exit' to quit): "
+    assert "LLM response:" in mock_print.call_args_list[2][0][0]
+    assert mock_print.call_args_list[3][0][0] == "Enter a command (or 'exit' to quit): "
+    assert mock_print.call_args_list[4][0][0] == "Exiting LLM Workflow Director"
