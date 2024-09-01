@@ -112,34 +112,42 @@ class LLMManager:
         self.logger.info("LLM response cache cleared.")
 
     def _parse_structured_response(self, response: str) -> Dict[str, Any]:
-        structured_response = {}
-        current_key = None
-        current_value = []
+        try:
+            structured_response = {}
+            current_key = None
+            current_value = []
 
-        for line in response.split('\n'):
-            line = line.strip()
-            if ':' in line and not line.startswith(' '):
-                if current_key:
-                    structured_response[current_key] = self._process_value(current_key, current_value)
-                current_key = line.split(':', 1)[0].strip().lower()
-                current_value = [line.split(':', 1)[1].strip()]
-            elif current_key:
-                current_value.append(line)
+            for line in response.split('\n'):
+                line = line.strip()
+                if ':' in line and not line.startswith(' '):
+                    if current_key:
+                        structured_response[current_key] = self._process_value(current_key, current_value)
+                    current_key = line.split(':', 1)[0].strip().lower()
+                    current_value = [line.split(':', 1)[1].strip()]
+                elif current_key:
+                    current_value.append(line)
 
-        if current_key:
-            structured_response[current_key] = self._process_value(current_key, current_value)
+            if current_key:
+                structured_response[current_key] = self._process_value(current_key, current_value)
 
-        return structured_response
+            return structured_response
+        except Exception as e:
+            self.logger.error(f"Error parsing structured response: {str(e)}")
+            return {"error": str(e), "raw_response": response}
 
     def _process_value(self, key: str, value: List[str]) -> Any:
         joined_value = ' '.join(value).strip()
-        if key == 'task_progress':
-            return float(joined_value)
-        elif key == 'state_updates':
-            return eval(joined_value)
-        elif key in ['actions', 'suggestions']:
-            return [item.strip() for item in joined_value.split(',')]
-        else:
+        try:
+            if key == 'task_progress':
+                return float(joined_value)
+            elif key == 'state_updates':
+                return eval(joined_value)
+            elif key in ['actions', 'suggestions']:
+                return [item.strip() for item in joined_value.split(',')]
+            else:
+                return joined_value
+        except Exception as e:
+            self.logger.error(f"Error processing value for key '{key}': {str(e)}")
             return joined_value
 
     def evaluate_sufficiency(self, stage_name: str, stage_data: Dict[str, Any], project_state: Dict[str, Any]) -> Dict[str, Any]:

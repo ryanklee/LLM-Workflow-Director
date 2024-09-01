@@ -181,29 +181,33 @@ class WorkflowDirector:
                 self.user_interaction_handler.display_message(f"LLM service error: {structured_response['error']}. Some features may be limited.")
                 return
 
-            if 'task_progress' in structured_response:
-                progress = float(structured_response['task_progress'])
-                self.update_stage_progress(progress)
-                self.logger.info(f"Updated stage progress to {progress:.2f}")
-            
-            if 'state_updates' in structured_response:
-                state_updates = structured_response['state_updates']
-                for key, value in state_updates.items():
-                    self.state_manager.set(key, value)
-                    self.logger.info(f"Updated project state: {key} = {value}")
-            
-            if 'actions' in structured_response:
-                actions = structured_response['actions']
-                for action in actions:
-                    self._handle_llm_action(action)
-            
-            if 'suggestions' in structured_response:
-                suggestions = structured_response['suggestions']
-                self.user_interaction_handler.display_message("LLM Suggestions:")
-                for suggestion in suggestions:
-                    self.user_interaction_handler.display_message(f"- {suggestion}")
-            
-            self.logger.info("LLM response processed successfully")
+            if isinstance(structured_response, dict):
+                if 'task_progress' in structured_response:
+                    progress = float(structured_response['task_progress'])
+                    self.update_stage_progress(progress)
+                    self.logger.info(f"Updated stage progress to {progress:.2f}")
+                
+                if 'state_updates' in structured_response:
+                    state_updates = structured_response['state_updates']
+                    for key, value in state_updates.items():
+                        self.state_manager.set(key, value)
+                        self.logger.info(f"Updated project state: {key} = {value}")
+                
+                if 'actions' in structured_response:
+                    actions = structured_response['actions']
+                    for action in actions:
+                        self._handle_llm_action(action)
+                
+                if 'suggestions' in structured_response:
+                    suggestions = structured_response['suggestions']
+                    self.user_interaction_handler.display_message("LLM Suggestions:")
+                    for suggestion in suggestions:
+                        self.user_interaction_handler.display_message(f"- {suggestion}")
+                
+                self.logger.info("LLM response processed successfully")
+            else:
+                self.logger.warning(f"Unexpected response format: {type(structured_response)}")
+                self.user_interaction_handler.display_message("Received an unexpected response format from the LLM service.")
         except Exception as e:
             self.logger.error(f"Error processing LLM response: {str(e)}")
             self.error_handler.handle_error(e)
