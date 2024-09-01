@@ -24,3 +24,8 @@ class VectorStore:
         """Removes a vector from the store"""
         with self.lock:
             self.vectors.pop(key, None)
+
+    def GetAll(self) -> dict:
+        """Returns all vectors in the store"""
+        with self.lock:
+            return self.vectors.copy()

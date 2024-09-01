@@ -15,3 +15,6 @@ class StateManager:
 
     def delete(self, key):
         self.vector_store.Delete(key)
+
+    def get_all(self):
+        return self.vector_store.GetAll()
