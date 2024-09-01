@@ -29,12 +29,9 @@ The LLM-Workflow Director has reached a significant milestone:
 - Tiered LLM approach for optimized performance and cost management
 - Sophisticated prompt generation based on workflow configuration
 - Enhanced logging for better debugging and monitoring
-- Sophisticated prompt generation based on workflow configuration
-- Enhanced logging for better debugging and monitoring
-- Sophisticated prompt generation based on workflow configuration
-- Enhanced logging for better debugging and monitoring
 - Detailed project structure and coding conventions integration in LLM prompts
 - Improved logging with separate console and file handlers
+- Comprehensive project state reporting with workflow visualization
 
 ## Installation
 

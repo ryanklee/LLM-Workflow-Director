@@ -572,6 +572,7 @@ class WorkflowDirector:
         self.logger.info("Generating project state report")
         report = self.project_state_reporter.generate_report(format)
         self.logger.info("Project state report generated successfully")
+        self.logger.debug(f"Report preview: {report[:200]}...")  # Log a preview of the report
         return report
 
     def initialize_priorities(self):

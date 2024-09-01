@@ -29,7 +29,8 @@ class ProjectStateReporter:
             self._generate_documentation_health(),
             self._generate_quantitative_metrics(),
             self._generate_next_steps(),
-            self._generate_risk_assessment()
+            self._generate_risk_assessment(),
+            self._generate_workflow_visualization()
         ]
         
         if format == 'plain':
@@ -40,6 +41,27 @@ class ProjectStateReporter:
             return self._format_html(report_sections)
         else:
             raise ValueError(f"Unsupported format: {format}")
+
+    def _generate_workflow_visualization(self) -> Tuple[str, str]:
+        self.logger.info("Generating workflow visualization")
+        stages = self.workflow_director.stages
+        current_stage = self.workflow_director.current_stage
+        completed_stages = self.workflow_director.completed_stages
+
+        visualization = "Workflow Visualization:\n\n"
+        for stage_name, stage_data in stages.items():
+            if stage_name == current_stage:
+                status = "[ CURRENT ]"
+            elif stage_name in completed_stages:
+                status = "[COMPLETED]"
+            else:
+                status = "[  PENDING]"
+            
+            visualization += f"{status} {stage_name}\n"
+            if stage_name != list(stages.keys())[-1]:
+                visualization += "    |\n    v\n"
+
+        return ("Workflow Visualization", visualization)
 
     def _generate_project_summary(self) -> Tuple[str, str]:
         project_state = self.workflow_director.state_manager.get_all()
