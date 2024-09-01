@@ -105,6 +105,8 @@ class WorkflowDirector:
                     "stage": current_stage['name'],
                     "stage_description": current_stage.get('description', ''),
                     "stage_tasks": current_stage.get('tasks', []),
+                    "project_structure": self.project_structure_manager.get_structure_instructions(),
+                    "coding_conventions": self.convention_manager.get_aider_conventions(),
                     "context": str(context)
                 })
                 

@@ -18,18 +18,24 @@ class LLMManager:
             self.logger.info(f"Using cached response for prompt: {prompt[:50]}... (tier: {tier})")
             return self.cache[cache_key]
 
-        try:
-            enhanced_prompt = self._enhance_prompt(prompt, context)
-            response = self.client.query(enhanced_prompt, context, tier)
-            self.logger.debug(f"Received response from LLM: {response[:50]}...")
-        except Exception as e:
-            error_message = str(e)
-            self.logger.error(f"Error querying LLM microservice: {error_message} (tier: {tier})")
-            response = self._handle_llm_error(prompt, context, tier, error_message)
-
-        response_with_id = self._add_unique_id(response)
-        self.cache[cache_key] = response_with_id
-        return response_with_id
+        max_retries = 3
+        retry_count = 0
+        while retry_count < max_retries:
+            try:
+                enhanced_prompt = self._enhance_prompt(prompt, context)
+                response = self.client.query(enhanced_prompt, context, tier)
+                self.logger.debug(f"Received response from LLM: {response[:50]}...")
+                response_with_id = self._add_unique_id(response)
+                self.cache[cache_key] = response_with_id
+                return response_with_id
+            except Exception as e:
+                retry_count += 1
+                error_message = str(e)
+                self.logger.warning(f"Error querying LLM microservice (attempt {retry_count}/{max_retries}): {error_message} (tier: {tier})")
+                if retry_count == max_retries:
+                    self.logger.error(f"Max retries reached. Returning error message.")
+                    return f"Error querying LLM after {max_retries} attempts: {error_message}"
+                time.sleep(1)  # Wait for 1 second before retrying
 
     def _enhance_prompt(self, prompt: str, context: Optional[Dict[str, Any]]) -> str:
         if context is None:
@@ -38,6 +44,8 @@ class LLMManager:
         workflow_stage = context.get('workflow_stage', 'Unknown')
         stage_description = context.get('stage_description', 'No description available')
         stage_tasks = context.get('stage_tasks', [])
+        project_structure = context.get('project_structure_instructions', '')
+        coding_conventions = context.get('coding_conventions', '')
 
         enhanced_prompt = f"""
         Current Workflow Stage: {workflow_stage}
@@ -45,10 +53,17 @@ class LLMManager:
         Stage Tasks:
         {' '.join(f'- {task}' for task in stage_tasks)}
 
+        Project Structure:
+        {project_structure}
+
+        Coding Conventions:
+        {coding_conventions}
+
         Given the above context, please respond to the following prompt:
 
         {prompt}
         """
+        self.logger.debug(f"Enhanced prompt generated: {enhanced_prompt[:100]}...")
         return enhanced_prompt
 
     def _handle_llm_error(self, prompt: str, context: Optional[Dict[str, Any]], tier: str, error_message: str) -> str:
