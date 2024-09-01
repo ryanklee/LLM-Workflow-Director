@@ -1,6 +1,7 @@
 import logging
 import time
 import yaml
+import os
 from typing import Dict, Any, Optional, List
 from .error_handler import ErrorHandler
 from .llm_microservice_client import LLMMicroserviceClient
