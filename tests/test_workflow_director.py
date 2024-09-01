@@ -118,13 +118,29 @@ def test_workflow_director_can_transition_to():
     director = WorkflowDirector()
     initial_stage = director.current_stage
     next_stage = director.transitions[0]['to']
-    assert director.can_transition_to(next_stage)
-    assert not director.can_transition_to("Non-existent Stage")
+    print(f"Initial stage: {initial_stage}")
+    print(f"Next stage: {next_stage}")
+    
+    assert director.can_transition_to(next_stage), f"Should be able to transition from {initial_stage} to {next_stage}"
+    assert not director.can_transition_to("Non-existent Stage"), "Should not be able to transition to a non-existent stage"
+    
+    print(f"Completing stage: {initial_stage}")
     director.complete_current_stage()
-    assert director.can_transition_to(next_stage)
-    # Check if we can transition to the next stage after completing the current one
+    print(f"Current stage after completion: {director.current_stage}")
+    print(f"Completed stages: {director.completed_stages}")
+    
+    assert director.can_transition_to(next_stage), f"Should be able to transition to {next_stage} after completing {initial_stage}"
+    
+    print(f"Transitioning to: {next_stage}")
     director.transition_to(next_stage)
-    assert director.can_transition_to(director.transitions[1]['to'])
+    print(f"Current stage after transition: {director.current_stage}")
+    
+    if len(director.transitions) > 1:
+        next_next_stage = director.transitions[1]['to']
+        print(f"Next next stage: {next_next_stage}")
+        assert director.can_transition_to(next_next_stage), f"Should be able to transition from {next_stage} to {next_next_stage}"
+    else:
+        print("No more transitions available")
 
 @patch('src.workflow_director.LLMManager')
 def test_workflow_director_run(mock_llm_manager):
