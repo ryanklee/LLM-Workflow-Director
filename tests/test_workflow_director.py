@@ -175,7 +175,7 @@ def test_workflow_director_run(mock_llm_manager):
 
 def test_process_llm_response(caplog):
     director = WorkflowDirector()
-    response = "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: update_workflow"
+    response = "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: update_workflow, another_action"
     
     with caplog.at_level(logging.INFO):
         director._process_llm_response(response)
@@ -183,6 +183,7 @@ def test_process_llm_response(caplog):
     assert "Updated stage progress to 0.5" in caplog.text
     assert "Updated project state: key = value" in caplog.text
     assert "Handling LLM action: update_workflow" in caplog.text
+    assert "Handling LLM action: another_action" in caplog.text
 
 def test_parse_llm_response():
     director = WorkflowDirector()

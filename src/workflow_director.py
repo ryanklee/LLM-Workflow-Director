@@ -144,19 +144,22 @@ class WorkflowDirector:
             
             # Update task progress
             if 'task_progress' in parsed_response:
-                self.update_stage_progress(parsed_response['task_progress'])
-                self.logger.info(f"Updated stage progress to {parsed_response['task_progress']}")
+                progress = float(parsed_response['task_progress'])
+                self.update_stage_progress(progress)
+                self.logger.info(f"Updated stage progress to {progress}")
             
             # Update project state
             if 'state_updates' in parsed_response:
-                for key, value in parsed_response['state_updates'].items():
+                state_updates = eval(parsed_response['state_updates'])
+                for key, value in state_updates.items():
                     self.state_manager.set(key, value)
                     self.logger.info(f"Updated project state: {key} = {value}")
             
             # Handle any actions or recommendations
             if 'actions' in parsed_response:
-                for action in parsed_response['actions']:
-                    self._handle_llm_action(action)
+                actions = parsed_response['actions'].split(',')
+                for action in actions:
+                    self._handle_llm_action(action.strip())
             
             self.logger.info("LLM response processed successfully")
         except Exception as e:
