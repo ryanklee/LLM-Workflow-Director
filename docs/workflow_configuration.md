@@ -35,7 +35,9 @@ The `transitions` section defines how the workflow can progress from one stage t
 
 - `from`: The name of the starting stage
 - `to`: The name of the destination stage
-- `condition`: A description of the condition that must be met to allow this transition
+- `condition`: (Optional) A description of the condition that must be met to allow this transition
+
+If no condition is specified, the transition will be allowed as soon as the 'from' stage is completed.
 
 Example:
 
@@ -44,7 +46,11 @@ transitions:
   - from: Project Initialization
     to: Requirements Gathering
     condition: All initial setup tasks completed
+  - from: Requirements Gathering
+    to: Domain Modeling
 ```
+
+The WorkflowDirector will evaluate these conditions when determining if a transition is allowed. If a stage is marked as completed, transitions from that stage will be allowed regardless of the condition.
 
 ## Best Practices
 
