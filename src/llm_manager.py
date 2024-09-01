@@ -54,6 +54,11 @@ class LLMManager:
         self.cache = {}
         self.client = LLMMicroserviceClient()
         self.cost_optimizer = LLMCostOptimizer()
+        self.tiers = {
+            'fast': {'model': 'gpt-3.5-turbo', 'max_tokens': 100},
+            'balanced': {'model': 'gpt-3.5-turbo', 'max_tokens': 500},
+            'powerful': {'model': 'gpt-4', 'max_tokens': 1000}
+        }
 
     def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: str = 'balanced') -> Dict[str, Any]:
         self.logger.debug(f"Querying LLM with prompt: {prompt[:50]}... (tier: {tier})")
@@ -67,7 +72,8 @@ class LLMManager:
         while retry_count < max_retries:
             try:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
-                response = self.client.query(enhanced_prompt, context, tier)
+                tier_config = self.tiers.get(tier, self.tiers['balanced'])
+                response = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
                 self.logger.debug(f"Received response from LLM: {response[:50]}...")
                 structured_response = self._parse_structured_response(response)
                 response_with_id = self._add_unique_id(structured_response)
@@ -87,6 +93,14 @@ class LLMManager:
         
         # This line should never be reached, but we'll add it for completeness
         return {"error": "Unexpected error in LLM query"}
+
+    def determine_query_tier(self, query: str) -> str:
+        if len(query.split()) < 20:
+            return 'fast'
+        elif len(query.split()) > 100 or any(keyword in query.lower() for keyword in ['complex', 'detailed', 'analyze', 'summarize']):
+            return 'powerful'
+        else:
+            return 'balanced'
 
     def get_usage_report(self) -> Dict[str, Any]:
         return self.cost_optimizer.get_usage_report()

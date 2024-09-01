@@ -123,9 +123,15 @@ def test_llm_manager_query_with_tiers():
         assert isinstance(powerful_result, dict) and powerful_result.get("response") == "Powerful response"
         
         assert mock_client.return_value.query.call_count == 3
-        mock_client.return_value.query.assert_any_call("Short prompt", None, 'fast')
-        mock_client.return_value.query.assert_any_call("Medium length prompt", None, 'balanced')
-        mock_client.return_value.query.assert_any_call("Complex prompt", None, 'powerful')
+        mock_client.return_value.query.assert_any_call("Short prompt", None, 'gpt-3.5-turbo', 100)
+        mock_client.return_value.query.assert_any_call("Medium length prompt", None, 'gpt-3.5-turbo', 500)
+        mock_client.return_value.query.assert_any_call("Complex prompt", None, 'gpt-4', 1000)
+
+def test_determine_query_tier():
+    manager = LLMManager()
+    assert manager.determine_query_tier("Short query") == 'fast'
+    assert manager.determine_query_tier("Medium length query with some details about the project") == 'balanced'
+    assert manager.determine_query_tier("Complex query that requires detailed analysis of the project structure and implementation of new features") == 'powerful'
 
 def test_llm_manager_caching():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
