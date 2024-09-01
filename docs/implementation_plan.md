@@ -60,6 +60,23 @@
    - [x] 6.2. Create a system for programmatically generating and updating project documentation.
    - [ ] 6.3. Develop mechanisms for customizing the project structure within predefined limits.
    - [ ] 6.4. Implement auto-documentation features for Python code.
+   - [ ] 6.5. Implement project structure analysis and comparison functionality.
+   - [ ] 6.6. Develop artifact mapping and conversion instruction generation.
+   - [ ] 6.7. Create a system for tracking and reporting on project structure alignment progress.
+   - [ ] 6.8. Implement rollback capabilities for structure and artifact conversions.
+   - [ ] 6.9. Develop guidelines and templates for handling edge cases in artifact conversion.
+
+- [ ] 10. Project Alignment and Conversion
+   - [ ] 10.1. Implement current project state analysis functionality.
+   - [ ] 10.2. Develop a comprehensive artifact mapping system.
+   - [ ] 10.3. Create an instruction generator for step-by-step artifact conversion.
+   - [ ] 10.4. Implement a priority system for critical artifact conversion.
+   - [ ] 10.5. Develop templates and guidelines for documentation reformatting.
+   - [ ] 10.6. Implement a validation mechanism for converted artifacts.
+   - [ ] 10.7. Create a detailed conversion reporting system.
+   - [ ] 10.8. Develop conflict resolution guidelines and mechanisms.
+   - [ ] 10.9. Implement a system for tracking and resuming partial conversions.
+   - [ ] 10.10. Create a project health reporting system for pre- and post-alignment comparison.
 
 - [>] 7. Domain-Driven Design (DDD) and Test-Driven Development (TDD) Support
    - [x] 7.1. Implement tools and utilities to support DDD practices.
