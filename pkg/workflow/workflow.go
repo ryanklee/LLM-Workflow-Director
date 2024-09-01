@@ -103,7 +103,7 @@ func (cw *componentWrapper) Execute(state interface{}) (interface{}, error) {
 	case "BasicUserInteractionHandler":
 		if uih, ok := cw.component.(user.UserInteractionHandler); ok {
 			if uih.IsInteractionRequired(state) {
-				return uih.Execute(state)
+				return uih.HandleInteraction(state)
 			}
 			return state, nil
 		}
