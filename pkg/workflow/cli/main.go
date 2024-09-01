@@ -21,7 +21,7 @@ import (
 
 func Run() error {
 	fmt.Println("Starting Run function")
-	
+
 	// Create a context with a timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
