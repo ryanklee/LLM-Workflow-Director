@@ -127,9 +127,7 @@ class WorkflowDirector:
         available_transitions = [t for t in self.transitions if t['from'] == self.current_stage and t['to'] == next_stage]
         if not available_transitions:
             return False
-        if self.is_stage_completed(self.current_stage):
-            return True
-        return True  # Always allow transition if the stage is not completed
+        return True  # Always allow transition if there are available transitions
 
     def evaluate_condition(self, condition):
         # This is a placeholder. In a real implementation, you would evaluate the condition based on the current state.
