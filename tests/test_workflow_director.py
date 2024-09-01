@@ -200,6 +200,13 @@ def test_workflow_director_llm_integration(mock_llm_manager):
         tier=ANY
     )
 
+    # Check the arguments of the query call
+    mock_llm_manager.return_value.query.assert_called_with(
+        "Process this command: test command",
+        context=ANY,
+        tier=ANY
+    )
+
     # Check if the LLM response was displayed
     mock_user_interaction_handler.display_message.assert_any_call("LLM response: LLM response: Update task progress")
 
