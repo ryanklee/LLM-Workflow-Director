@@ -173,6 +173,7 @@ class WorkflowDirector:
             self.logger.info(f"No transition defined from {self.current_stage} to {next_stage}")
             return False
 
+        # Always allow transition if the current stage is completed
         if self.is_stage_completed(self.current_stage):
             self.logger.info(f"Stage {self.current_stage} is already completed, transition allowed")
             return True
