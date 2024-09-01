@@ -1,14 +1,14 @@
 package workflow
 
 import (
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/state"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/constraint"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/priority"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/direction"
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/aider"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/user"
+	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/constraint"
+	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/direction"
+	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/priority"
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/progress"
+	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/state"
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/sufficiency"
+	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/user"
 )
 
 // WorkflowMediator coordinates the interactions between workflow components
