@@ -10,7 +10,7 @@ llm_spec = importlib.util.find_spec("llm")
 class LLMManager:
     def __init__(self):
         self.mock_mode = True
-        self.model = None
+        self.models = {}
         self.error_handler = ErrorHandler()
         self.logger = logging.getLogger(__name__)
         self.llm = None
@@ -21,10 +21,14 @@ class LLMManager:
                 self.llm = importlib.import_module("llm")
                 self.mock_mode = False
                 try:
-                    models = self.llm.models
-                    if models:
-                        self.model = models[0]  # Use the first available model
-                        self.logger.info(f"Using LLM model: {self.model.name}")
+                    available_models = self.llm.models
+                    if available_models:
+                        self.models = {
+                            'fast': available_models[0],  # Fastest/cheapest model
+                            'balanced': available_models[len(available_models)//2],  # Mid-range model
+                            'powerful': available_models[-1]  # Most capable model
+                        }
+                        self.logger.info(f"Using LLM models: {', '.join([f'{k}: {v.name}' for k, v in self.models.items()])}")
                     else:
                         raise AttributeError("No models available")
                 except AttributeError:
@@ -36,28 +40,35 @@ class LLMManager:
         if self.mock_mode:
             self.logger.info("LLMManager is operating in mock mode.")
 
-    def query(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> str:
-        cache_key = self._generate_cache_key(prompt, context)
+    def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: str = 'balanced') -> str:
+        cache_key = self._generate_cache_key(prompt, context, tier)
         if cache_key in self.cache:
-            self.logger.info(f"Using cached response for prompt: {prompt[:50]}...")
+            self.logger.info(f"Using cached response for prompt: {prompt[:50]}... (tier: {tier})")
             cached_response = self.cache[cache_key]
             return self._add_unique_id(cached_response)
 
         if self.mock_mode:
-            response = f"Mock response to: {prompt}"
+            response = f"Mock response to: {prompt} (tier: {tier})"
         else:
             try:
                 formatted_prompt = self._format_prompt(prompt, context)
-                self.logger.debug(f"Sending prompt to LLM: {formatted_prompt}")
-                response = self.model.prompt(formatted_prompt)
+                self.logger.debug(f"Sending prompt to LLM: {formatted_prompt} (tier: {tier})")
+                model = self.models.get(tier, self.models['balanced'])
+                response = model.prompt(formatted_prompt)
                 response = response.text()
             except Exception as e:
                 error_message = str(e)
-                self.logger.error(f"Error querying LLM: {error_message}")
+                self.logger.error(f"Error querying LLM: {error_message} (tier: {tier})")
                 response = f"Error querying LLM: {error_message}"
 
         self.cache[cache_key] = response
         return self._add_unique_id(response)
+
+    def _generate_cache_key(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: str = 'balanced') -> str:
+        if context is None:
+            context = {}
+        context_str = ','.join(f"{k}:{v}" for k, v in sorted(context.items()))
+        return f"{prompt}|{context_str}|{tier}"
 
     def _add_unique_id(self, response: str) -> str:
         return f"{response} (ID: {hash(response + str(time.time()))})"

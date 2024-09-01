@@ -25,6 +25,7 @@ def test_llm_manager_query():
     result = manager.query("Test prompt")
     assert isinstance(result, str)
     assert result.startswith("Mock response to: Test prompt")
+    assert "(tier: balanced)" in result
     assert "(ID:" in result
 
 def test_llm_manager_query_with_context():
@@ -33,7 +34,18 @@ def test_llm_manager_query_with_context():
     result = manager.query("Test prompt", context)
     assert isinstance(result, str)
     assert result.startswith("Mock response to: Test prompt")
+    assert "(tier: balanced)" in result
     assert "(ID:" in result
+
+def test_llm_manager_query_with_tiers():
+    manager = LLMManager()
+    fast_result = manager.query("Short prompt", tier='fast')
+    balanced_result = manager.query("Medium length prompt with some complexity", tier='balanced')
+    powerful_result = manager.query("Very long and complex prompt that requires detailed analysis", tier='powerful')
+    
+    assert "(tier: fast)" in fast_result
+    assert "(tier: balanced)" in balanced_result
+    assert "(tier: powerful)" in powerful_result
 
 @patch('src.llm_manager.llm_spec', MagicMock())
 @patch('src.llm_manager.importlib.import_module')

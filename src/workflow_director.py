@@ -97,8 +97,9 @@ class WorkflowDirector:
                         self.print_func("Completed current stage. This was the final stage.")
                 else:
                     if self.llm_manager:
-                        response = self.llm_manager.query(user_input)
-                        self.print_func(f"LLM response: {response}")
+                        tier = self.determine_query_tier(user_input)
+                        response = self.llm_manager.query(user_input, tier=tier)
+                        self.print_func(f"LLM response (tier: {tier}): {response}")
                     else:
                         self.print_func("LLM manager is not available. Unable to process the command.")
             except Exception as e:
@@ -107,6 +108,15 @@ class WorkflowDirector:
                 self.print_func(f"An error occurred: {error_message}")
         self.logger.info("Exiting LLM Workflow Director")
         self.print_func("Exiting LLM Workflow Director")
+
+    def determine_query_tier(self, query: str) -> str:
+        # Simple heuristic for determining the appropriate tier
+        if len(query.split()) < 10:
+            return 'fast'
+        elif len(query.split()) > 50 or any(keyword in query.lower() for keyword in ['complex', 'detailed', 'analyze']):
+            return 'powerful'
+        else:
+            return 'balanced'
 
     def get_current_stage(self):
         return self.stages[self.current_stage]
