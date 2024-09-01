@@ -37,7 +37,7 @@ def test_get_user_choice_invalid_then_valid(user_interaction_handler):
     user_interaction_handler.input_func.side_effect = ["4", "2"]
     result = user_interaction_handler.get_user_choice(options)
     assert result == "Option 2"
-    assert user_interaction_handler.print_func.call_count == 5  # 3 options + 1 invalid message + 1 prompt
+    assert user_interaction_handler.print_func.call_count == 7  # 3 options + 1 invalid message + 2 prompts + 1 "Please choose an option:"
 
 def test_handle_error(user_interaction_handler):
     error = ValueError("Test error")

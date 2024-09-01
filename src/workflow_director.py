@@ -21,7 +21,7 @@ from src.user_interaction_handler import UserInteractionHandler
 
 
 class WorkflowDirector:
-    def __init__(self, config_path='src/workflow_config.yaml'):
+    def __init__(self, config_path='src/workflow_config.yaml', user_interaction_handler=None):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
@@ -43,7 +43,7 @@ class WorkflowDirector:
         except Exception as e:
             self.logger.error(f"Error initializing LLMManager: {str(e)}")
         self.error_handler = ErrorHandler()
-        self.user_interaction_handler = UserInteractionHandler()
+        self.user_interaction_handler = user_interaction_handler or UserInteractionHandler()
         self.config = self.load_config(config_path)
         self.current_stage = self.config['stages'][0]['name'] if self.config else "Default Stage"
         self.stages = {stage['name']: stage for stage in self.config['stages']}
@@ -142,12 +142,12 @@ class WorkflowDirector:
             self.current_stage = next_stage
             if previous_stage not in self.completed_stages:
                 self.completed_stages.add(previous_stage)
-            self.print_func(f"Transitioned to stage: {next_stage}")
+            self.user_interaction_handler.display_message(f"Transitioned to stage: {next_stage}")
             self.logger.info(f"Successfully transitioned to stage: {next_stage}")
             self.logger.debug(f"Updated completed stages: {self.completed_stages}")
             return True
         else:
-            self.print_func(f"Cannot transition to stage: {next_stage}")
+            self.user_interaction_handler.display_message(f"Cannot transition to stage: {next_stage}")
             self.logger.warning(f"Transition to {next_stage} not allowed")
             self.logger.debug(f"Current completed stages: {self.completed_stages}")
             return False
@@ -371,7 +371,7 @@ class WorkflowDirector:
         
         if not is_sufficient:
             self.logger.warning(f"Stage {self.current_stage} is not sufficient for completion, but marked as completed")
-            self.print_func(f"Stage {self.current_stage} is marked as complete, but may need further attention. Reason: {reasoning}")
+            self.user_interaction_handler.display_message(f"Stage {self.current_stage} is marked as complete, but may need further attention. Reason: {reasoning}")
         else:
             self.logger.info(f"Stage {self.current_stage} is sufficient for completion")
             self.print_func(f"Completed stage: {self.current_stage}")
