@@ -41,6 +41,10 @@ def test_llm_manager_query_with_context():
         assert "Current Workflow Stage: Test Stage" in call_args[0]
         assert "Stage Description: Test stage description" in call_args[0]
         assert "Task 1" in call_args[0] and "Task 2" in call_args[0]
+        assert "Project Structure:" in call_args[0]
+        assert "Coding Conventions:" in call_args[0]
+        assert "stages" in call_args[0] and "transitions" in call_args[0]
+        assert "Task 1" in call_args[0] and "Task 2" in call_args[0]
 
 def test_llm_manager_error_handling():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
