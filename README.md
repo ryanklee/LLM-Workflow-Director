@@ -41,14 +41,42 @@ LLM-Workflow Director is a Python-based tool designed to assist in AI-driven sof
 To start the LLM Workflow Director:
 
 ```
-python src/main.py
+python src/main.py run
 ```
+
+You can specify a custom configuration file using the `--config` option:
+
+```
+python src/main.py run --config path/to/your/config.yaml
+```
+
+During execution, you can enter commands or type 'next' to move to the next workflow stage. Type 'exit' to quit the program.
 
 For detailed usage instructions, refer to the documentation in the `docs/` directory.
 
 ## Configuration
 
-Customize the workflow stages and LLM integrations in `src/workflow_config.yaml`.
+Customize the workflow stages and transitions in `src/workflow_config.yaml`. The configuration file defines:
+
+- Stages: Each stage has a name, description, and a list of tasks.
+- Transitions: Define how to move between stages, including conditions for transitions.
+
+Example configuration:
+
+```yaml
+stages:
+  - name: Project Initialization
+    description: Set up the initial project structure and environment
+    tasks:
+      - Create project directory
+      - Initialize git repository
+      - Set up virtual environment
+
+transitions:
+  - from: Project Initialization
+    to: Requirements Gathering
+    condition: All initial setup tasks completed
+```
 
 ## Contributing
 

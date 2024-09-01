@@ -9,9 +9,10 @@ def cli():
 
 
 @cli.command()
-def run():
+@click.option('--config', default='src/workflow_config.yaml', help='Path to the workflow configuration file')
+def run(config):
     """Run the LLM Workflow Director"""
-    director = WorkflowDirector()
+    director = WorkflowDirector(config_path=config)
     director.run()
 
 

@@ -1,0 +1,34 @@
+stages:
+  - name: Project Initialization
+    description: Set up the initial project structure and environment
+    tasks:
+      - Create project directory
+      - Initialize git repository
+      - Set up virtual environment
+
+  - name: Requirements Gathering
+    description: Collect and document project requirements
+    tasks:
+      - Interview stakeholders
+      - Document functional requirements
+      - Document non-functional requirements
+
+  - name: Domain Modeling
+    description: Create and refine the domain model
+    tasks:
+      - Identify key domain concepts
+      - Define relationships between concepts
+      - Create initial domain model diagram
+
+transitions:
+  - from: Project Initialization
+    to: Requirements Gathering
+    condition: All initial setup tasks completed
+
+  - from: Requirements Gathering
+    to: Domain Modeling
+    condition: All requirements documented and approved
+
+  - from: Domain Modeling
+    to: Requirements Gathering
+    condition: Need to refine requirements based on domain model
