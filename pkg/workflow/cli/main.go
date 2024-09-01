@@ -18,9 +18,14 @@ import (
 )
 
 func Run() error {
+	// Create a new flag set
+	fs := flag.NewFlagSet("workflow", flag.ContinueOnError)
+
 	// Parse command-line flags
-	projectPath := flag.String("project", "", "Path to the project directory")
-	flag.Parse()
+	projectPath := fs.String("project", "", "Path to the project directory")
+	if err := fs.Parse(flag.Args()); err != nil {
+		return err
+	}
 
 	if *projectPath == "" {
 		return errors.New("project path is required. Use -project flag to specify the project directory")

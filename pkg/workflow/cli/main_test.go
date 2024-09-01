@@ -13,7 +13,8 @@ func TestRun(t *testing.T) {
 
 	t.Run("Missing project path", func(t *testing.T) {
 		// Set args for this test
-		os.Args = []string{"cmd", "-project", ""}
+		os.Args = []string{"cmd"}
+		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 
 		err := Run()
 		if err == nil {
@@ -38,6 +39,7 @@ func TestRun(t *testing.T) {
 
 		// Set args for this test
 		os.Args = []string{"cmd", "-project", tempDir}
+		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 
 		err = Run()
 		if err != nil {
