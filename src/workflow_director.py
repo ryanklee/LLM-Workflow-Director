@@ -16,6 +16,7 @@ from src.project_state_reporter import ProjectStateReporter
 from src.documentation_health_checker import DocumentationHealthChecker
 from src.project_structure_manager import ProjectStructureManager
 from src.convention_manager import ConventionManager
+from src.priority_manager import PriorityManager
 
 
 class WorkflowDirector:
@@ -55,6 +56,8 @@ class WorkflowDirector:
         self.project_structure_manager = ProjectStructureManager()
         self.convention_manager = ConventionManager()
         self.sufficiency_evaluator = SufficiencyEvaluator(self.llm_manager) if self.llm_manager else None
+        self.priority_manager = PriorityManager()
+        self.initialize_priorities()
 
     def load_config(self, config_path):
         try:
@@ -442,3 +445,10 @@ class WorkflowDirector:
         report = self.project_state_reporter.generate_report(format)
         self.logger.info("Project state report generated successfully")
         return report
+
+    def initialize_priorities(self):
+        self.logger.info("Initializing priorities for all stages")
+        for stage_name, stage_data in self.stages.items():
+            priorities = stage_data.get('priorities', [])
+            self.priority_manager.set_priorities(stage_name, priorities)
+        self.logger.debug("Priorities initialized for all stages")

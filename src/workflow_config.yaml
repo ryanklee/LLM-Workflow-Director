@@ -5,6 +5,10 @@ stages:
       - Create project directory
       - Initialize git repository
       - Set up virtual environment
+    priorities:
+      - Create project directory
+      - Initialize git repository
+      - Set up virtual environment
     constraints:
       - name: project_directory_exists
         description: Ensure the project directory has been created
@@ -13,6 +17,10 @@ stages:
   - name: Coding Conventions Setup
     description: Define and set up coding conventions for the project
     tasks:
+      - Generate coding conventions file
+      - Review and adjust conventions as needed
+      - Integrate conventions with Aider
+    priorities:
       - Generate coding conventions file
       - Review and adjust conventions as needed
       - Integrate conventions with Aider
@@ -27,6 +35,10 @@ stages:
       - Interview stakeholders
       - Document functional requirements
       - Document non-functional requirements
+    priorities:
+      - Interview stakeholders
+      - Document functional requirements
+      - Document non-functional requirements
     constraints:
       - name: stakeholders_interviewed
         description: Ensure stakeholders have been interviewed
@@ -38,6 +50,10 @@ stages:
   - name: Domain Modeling
     description: Create and refine the domain model
     tasks:
+      - Identify key domain concepts
+      - Define relationships between concepts
+      - Create initial domain model diagram
+    priorities:
       - Identify key domain concepts
       - Define relationships between concepts
       - Create initial domain model diagram
