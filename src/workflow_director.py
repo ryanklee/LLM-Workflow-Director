@@ -110,6 +110,7 @@ class WorkflowDirector:
         if available_transitions:
             next_stage = available_transitions[0]['to']
             if self.transition_to(next_stage):
+                self.current_stage = next_stage
                 return True
         self.print_func("No available transitions from the current stage.")
         return False
