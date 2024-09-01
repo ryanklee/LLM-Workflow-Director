@@ -30,6 +30,7 @@ func Run() error {
 	done := make(chan error)
 
 	go func() {
+		fmt.Println("Entering goroutine")
 		// Create a new flag set
 		fs := flag.NewFlagSet("workflow", flag.ExitOnError)
 
@@ -37,9 +38,11 @@ func Run() error {
 		projectPath := fs.String("project", "", "Path to the project directory")
 
 		// Parse command-line flags
+		fmt.Println("Parsing command-line flags")
 		fs.Parse(os.Args[1:])
 
 		if *projectPath == "" {
+			fmt.Println("Project path is empty")
 			done <- errors.New("project path is required. Use -project flag to specify the project directory")
 			return
 		}
@@ -71,6 +74,7 @@ func Run() error {
 		fmt.Println("Running workflow director")
 		err := director.Run()
 		if err != nil {
+			fmt.Printf("Workflow director encountered an error: %v\n", err)
 			done <- fmt.Errorf("Workflow director encountered an error: %v", err)
 			return
 		}
@@ -79,10 +83,13 @@ func Run() error {
 		done <- nil
 	}()
 
+	fmt.Println("Waiting for goroutine to complete")
 	select {
 	case <-ctx.Done():
+		fmt.Println("Context deadline exceeded")
 		return fmt.Errorf("Run function timed out after 4 seconds")
 	case err := <-done:
+		fmt.Println("Goroutine completed")
 		return err
 	}
 }
