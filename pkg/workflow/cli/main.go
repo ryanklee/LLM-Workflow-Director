@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow"
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/aider"
