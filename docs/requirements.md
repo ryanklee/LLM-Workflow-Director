@@ -188,10 +188,26 @@
     11.8. The system shall provide guidance to the LLM for maintaining the project structure as the project evolves.
     11.9. The system shall detect and correct any deviations from the expected project structure.
 
+12. Coding Conventions Management
+    12.1. The system shall provide functionality to generate and manage coding conventions.
+    12.2. The system shall allow for the specification of coding conventions to be respected by the LLMs.
+    12.3. The system shall leverage Aider's existing functionality for specifying coding conventions.
+    12.4. The system shall provide a command-line interface for generating and managing coding conventions.
+    12.5. The system shall support both preview ("what-if") and actual generation of the conventions file.
+    12.6. The system shall focus on a concise set of critical conventions aligned with the project's goals and best practices.
+    12.7. The system shall include conventions for code style, documentation, testing, error handling, DDD/TDD principles, and project structure.
+    12.8. The system shall provide a method to generate coding conventions in a format compatible with Aider.
+    12.9. The system shall allow for easy integration of the generated conventions into the LLM workflow.
+    12.10. The system shall ensure that generated code and modifications adhere to the specified coding conventions.
+
 These revised requirements address the identified issues by:
 1. Standardizing LLM references and removing specific model names.
 2. Reorganizing requirements into logical groupings.
 3. Consolidating documentation requirements.
+4. Expanding on error handling, logging, and security considerations.
+5. Focusing on desired outcomes rather than specific implementation details.
+6. Adding sections on performance, scalability, deployment, and customization.
+7. Including new requirements for coding conventions management and integration with Aider.
 4. Expanding on error handling, logging, and security considerations.
 5. Focusing on desired outcomes rather than specific implementation details.
 6. Adding sections on performance, scalability, deployment, and customization.

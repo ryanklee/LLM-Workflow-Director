@@ -16,6 +16,7 @@ LLM-Workflow Director is a Python-based tool designed to assist in AI-driven sof
 - State management for tracking project progress
 - Command-line interface for easy interaction
 - Extensible architecture for custom plugins and LLM models
+- Coding conventions management and integration with Aider
 
 ## Installation
 
@@ -48,6 +49,24 @@ You can specify a custom configuration file using the `--config` option:
 
 ```
 python src/main.py run --config path/to/your/config.yaml
+```
+
+To generate or manage coding conventions:
+
+```
+python src/main.py conventions
+```
+
+To preview coding conventions without saving:
+
+```
+python src/main.py conventions --preview
+```
+
+To generate Aider-compatible coding conventions:
+
+```
+python src/main.py aider-conventions
 ```
 
 During execution, you can enter commands or type 'next' to move to the next workflow stage. Type 'complete' to finish the current stage, or 'exit' to quit the program.

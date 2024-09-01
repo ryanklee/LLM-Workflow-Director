@@ -10,6 +10,17 @@ stages:
         description: Ensure the project directory has been created
         condition: "'project_directory' in state and state['project_directory']"
 
+  - name: Coding Conventions Setup
+    description: Define and set up coding conventions for the project
+    tasks:
+      - Generate coding conventions file
+      - Review and adjust conventions as needed
+      - Integrate conventions with Aider
+    constraints:
+      - name: conventions_file_exists
+        description: Ensure the coding conventions file has been created
+        condition: "'conventions_file' in state and state['conventions_file']"
+
   - name: Requirements Gathering
     description: Collect and document project requirements
     tasks:
@@ -40,8 +51,12 @@ stages:
 
 transitions:
   - from: Project Initialization
-    to: Requirements Gathering
+    to: Coding Conventions Setup
     condition: All initial setup tasks completed
+
+  - from: Coding Conventions Setup
+    to: Requirements Gathering
+    condition: Coding conventions defined and integrated
 
   - from: Requirements Gathering
     to: Domain Modeling
