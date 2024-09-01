@@ -61,11 +61,16 @@ def test_workflow_director_complete_current_stage():
     assert director.current_stage in valid_transitions, \
         f"Current stage {director.current_stage} is not a valid transition from {initial_stage}"
     
+    # Test completing all stages
+    all_stages = [stage['name'] for stage in director.config['stages']]
+    for _ in range(len(all_stages) - 1):  # -1 because we've already completed the first stage
+        result = director.complete_current_stage()
+        assert result == True, f"Expected True for non-final stage, got {result}"
+    
     # Test completing the final stage
-    while director.get_available_transitions():
-        director.complete_current_stage()
     final_result = director.complete_current_stage()
     assert final_result == False, "Expected False when completing the final stage"
+    assert director.current_stage == all_stages[-1], f"Expected to be in the final stage {all_stages[-1]}, but in {director.current_stage}"
 
 def test_workflow_director_get_stage_progress():
     director = WorkflowDirector()

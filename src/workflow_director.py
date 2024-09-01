@@ -21,6 +21,11 @@ class WorkflowDirector:
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
+        
+        # Add a file handler for persistent logging
+        file_handler = logging.FileHandler('workflow_director.log')
+        file_handler.setFormatter(formatter)
+        self.logger.addHandler(file_handler)
         self.state_manager = StateManager()
         self.vector_store = VectorStore()
         self.constraint_engine = ConstraintEngine()
@@ -102,12 +107,15 @@ class WorkflowDirector:
         return any(t['to'] == next_stage for t in self.get_available_transitions())
 
     def transition_to(self, next_stage):
+        self.logger.info(f"Attempting to transition from {self.current_stage} to {next_stage}")
         if self.can_transition_to(next_stage):
             self.current_stage = next_stage
             self.print_func(f"Transitioned to stage: {next_stage}")
+            self.logger.info(f"Successfully transitioned to stage: {next_stage}")
             return True
         else:
             self.print_func(f"Cannot transition to stage: {next_stage}")
+            self.logger.warning(f"Transition to {next_stage} not allowed")
             return False
 
     def move_to_next_stage(self):
@@ -133,8 +141,15 @@ class WorkflowDirector:
             if self.transition_to(next_stage):
                 self.logger.info(f"Moved to next stage: {self.current_stage}")
                 return True
-        self.logger.info("No next stage available or transition not allowed")
-        return False
+            else:
+                self.logger.warning(f"Failed to transition to next stage: {next_stage}")
+        else:
+            self.logger.info("No next stage available")
+        
+        if self.current_stage == self.config['stages'][-1]['name']:
+            self.logger.info("Completed final stage")
+            return False
+        return True
 
     def get_available_transitions(self):
         return [t for t in self.transitions if t['from'] == self.current_stage]
@@ -152,7 +167,7 @@ class WorkflowDirector:
         return stage_name in self.completed_stages
 
     def can_transition_to(self, next_stage):
-        self.logger.info(f"Checking if transition to {next_stage} is possible")
+        self.logger.info(f"Checking if transition from {self.current_stage} to {next_stage} is possible")
         available_transitions = [t for t in self.transitions if t['from'] == self.current_stage and t['to'] == next_stage]
         if not available_transitions:
             self.logger.info(f"No transition defined from {self.current_stage} to {next_stage}")
@@ -176,6 +191,16 @@ class WorkflowDirector:
         else:
             self.logger.error(f"Unexpected result from constraint validation: {validation_result}")
             return False
+
+        # Check if there's a condition for this transition
+        transition_condition = next((t.get('condition') for t in self.transitions if t['from'] == self.current_stage and t['to'] == next_stage), None)
+        if transition_condition:
+            condition_met = self.evaluate_condition(transition_condition)
+            if not condition_met:
+                self.logger.info(f"Transition condition not met: {transition_condition}")
+                return False
+            else:
+                self.logger.info(f"Transition condition met: {transition_condition}")
 
         self.logger.info(f"Transition to {next_stage} is allowed")
         return True
