@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, List
 
 class SufficiencyEvaluator:
     def __init__(self, llm_manager):
