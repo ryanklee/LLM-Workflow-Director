@@ -185,7 +185,7 @@ def test_workflow_director_llm_integration(mock_llm_manager):
     director._test_mode = True  # Set test mode
 
     # Capture logs
-    with self.assertLogs('src.workflow_director', level='DEBUG') as log_capture:
+    with pytest.LogCaptureFixture() as log_capture:
         director.run()
 
     # Check if the query method was called
