@@ -30,6 +30,14 @@ func Run() error {
 	done := make(chan error)
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("Panic occurred: %v\n", r)
+				debug.PrintStack()
+				done <- fmt.Errorf("panic occurred: %v", r)
+			}
+		}()
+
 		fmt.Println("Entering goroutine")
 		// Create a new flag set
 		fs := flag.NewFlagSet("workflow", flag.ExitOnError)
