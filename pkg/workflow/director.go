@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/aider"
+	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/component"
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/constraint"
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/direction"
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/priority"
@@ -16,7 +17,7 @@ import (
 
 // Director manages the workflow for LLM-assisted development
 type Director struct {
-	components []WorkflowComponent
+	components []component.WorkflowComponent
 	mediator   *WorkflowMediator
 }
 
