@@ -154,6 +154,11 @@ class WorkflowDirector:
     def _process_llm_response(self, response: str):
         self.logger.info("Processing LLM response")
         try:
+            if response.startswith("LLM microservice is currently unavailable"):
+                self.logger.warning("LLM microservice is unavailable. Using fallback behavior.")
+                self.user_interaction_handler.display_message("LLM service is currently unavailable. Some features may be limited.")
+                return
+
             parsed_response = self._parse_llm_response(response)
             
             if 'task_progress' in parsed_response:
