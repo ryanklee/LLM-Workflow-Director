@@ -119,7 +119,11 @@ class ProjectStateReporter:
     def _format_markdown(self, sections: List[Tuple[str, str]]) -> str:
         report = ["# LLM-Workflow Director Project Report"]
         for title, content in sections:
-            report.extend([f"\n## {title}", content])
+            if isinstance(content, str):
+                report.extend([f"\n## {title}", content])
+            else:
+                self.logger.warning(f"Unexpected content type for section '{title}': {type(content)}")
+                report.extend([f"\n## {title}", str(content)])
         return "\n".join(report)
 
     def _format_html(self, sections: List[Tuple[str, str]]) -> str:

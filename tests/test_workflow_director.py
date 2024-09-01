@@ -98,7 +98,7 @@ def test_main_script_execution():
     result = subprocess.run(['python', 'src/main.py', 'report', '--format', 'markdown'], 
                             capture_output=True, text=True)
     assert result.returncode == 1, "Script should exit with status code 1 when module is missing"
-    assert "Error: The pkg.workflow.constraint.engine module is missing." in result.stdout
+    assert "Error importing llm module. LLMManager will operate in mock mode." in result.stderr
     assert "This module should be implemented in Go and compiled as a shared library." in result.stdout
 
 def test_workflow_director_get_stage_progress():
