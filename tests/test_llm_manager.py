@@ -138,7 +138,6 @@ def test_llm_manager_error_handling():
         assert "error" in result
         assert "Error querying LLM: Fast error" in result["error"]
         assert mock_client.return_value.query.call_count == 3
-        assert mock_client.return_value.query.call_count == 4
 
 def test_llm_manager_fallback_to_fast():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
