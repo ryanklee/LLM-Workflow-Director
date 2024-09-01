@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -16,13 +17,13 @@ import (
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/user"
 )
 
-func Run() {
+func Run() error {
 	// Parse command-line flags
 	projectPath := flag.String("project", "", "Path to the project directory")
 	flag.Parse()
 
 	if *projectPath == "" {
-		log.Fatal("Project path is required. Use -project flag to specify the project directory.")
+		return errors.New("project path is required. Use -project flag to specify the project directory")
 	}
 
 	// Initialize components
