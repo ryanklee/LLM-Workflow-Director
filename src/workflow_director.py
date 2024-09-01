@@ -95,18 +95,9 @@ class WorkflowDirector:
                 self._process_llm_response(response)
                 
                 if user_input.lower() == 'next':
-                    if self.move_to_next_stage():
-                        self.user_interaction_handler.display_message(f"Moved to next stage: {self.current_stage}")
-                    else:
-                        self.user_interaction_handler.display_message("Cannot move to the next stage. Please complete the current stage's tasks.")
+                    self.move_to_next_stage()
                 elif user_input.lower() == 'complete':
-                    if self.user_interaction_handler.confirm_action("complete the current stage"):
-                        if self.complete_current_stage():
-                            self.user_interaction_handler.display_message(f"Completed current stage and moved to: {self.current_stage}")
-                        else:
-                            self.user_interaction_handler.display_message("Completed current stage. This was the final stage.")
-                    else:
-                        self.user_interaction_handler.display_message("Stage completion cancelled.")
+                    self.complete_current_stage()
             except Exception as e:
                 self.user_interaction_handler.handle_error(e)
         self.logger.info("Exiting LLM Workflow Director")
