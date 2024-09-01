@@ -400,7 +400,7 @@ class WorkflowDirector:
             self.logger.debug(f"Updated completed stages: {self.completed_stages}")
             return True
         else:
-            self.print_func(f"Cannot transition to stage: {next_stage}")
+            self.user_interaction_handler.display_message(f"Cannot transition to stage: {next_stage}")
             self.logger.warning(f"Transition to {next_stage} not allowed")
             self.logger.debug(f"Current completed stages: {self.completed_stages}")
             return False
