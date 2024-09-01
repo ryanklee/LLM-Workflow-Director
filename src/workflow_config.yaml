@@ -5,6 +5,10 @@ stages:
       - Create project directory
       - Initialize git repository
       - Set up virtual environment
+    constraints:
+      - name: project_directory_exists
+        description: Ensure the project directory has been created
+        condition: "'project_directory' in state and state['project_directory']"
 
   - name: Requirements Gathering
     description: Collect and document project requirements
@@ -12,6 +16,13 @@ stages:
       - Interview stakeholders
       - Document functional requirements
       - Document non-functional requirements
+    constraints:
+      - name: stakeholders_interviewed
+        description: Ensure stakeholders have been interviewed
+        condition: "'stakeholders_interviewed' in state and state['stakeholders_interviewed']"
+      - name: requirements_documented
+        description: Ensure requirements have been documented
+        condition: "'functional_requirements' in state and 'non_functional_requirements' in state"
 
   - name: Domain Modeling
     description: Create and refine the domain model
@@ -19,6 +30,13 @@ stages:
       - Identify key domain concepts
       - Define relationships between concepts
       - Create initial domain model diagram
+    constraints:
+      - name: domain_concepts_identified
+        description: Ensure key domain concepts have been identified
+        condition: "'domain_concepts' in state and len(state['domain_concepts']) > 0"
+      - name: domain_model_created
+        description: Ensure the initial domain model diagram has been created
+        condition: "'domain_model_diagram' in state and state['domain_model_diagram']"
 
 transitions:
   - from: Project Initialization

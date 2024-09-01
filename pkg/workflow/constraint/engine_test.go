@@ -1,44 +1,96 @@
 package constraint
 
 import (
-	"errors"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
-type MockConstraintEngine struct {
-	mock.Mock
+func TestNewEngine(t *testing.T) {
+	engine := NewEngine()
+	if engine == nil {
+		t.Fatal("NewEngine() returned nil")
+	}
+	if engine.constraints == nil {
+		t.Fatal("Engine constraints map is nil")
+	}
 }
 
-func (m *MockConstraintEngine) Validate(state interface{}) error {
-	args := m.Called(state)
-	return args.Error(0)
+func TestAddConstraint(t *testing.T) {
+	engine := NewEngine()
+	c := Constraint{
+		Name:        "TestConstraint",
+		Description: "A test constraint",
+		Validate: func(state map[string]interface{}) (bool, error) {
+			return true, nil
+		},
+	}
+
+	err := engine.AddConstraint(c)
+	if err != nil {
+		t.Fatalf("Failed to add constraint: %v", err)
+	}
+
+	// Try to add the same constraint again
+	err = engine.AddConstraint(c)
+	if err == nil {
+		t.Fatal("Expected error when adding duplicate constraint, got nil")
+	}
 }
 
-func TestConstraintEngine(t *testing.T) {
-	mockEngine := new(MockConstraintEngine)
+func TestValidateAll(t *testing.T) {
+	engine := NewEngine()
+	c1 := Constraint{
+		Name:        "AlwaysValid",
+		Description: "A constraint that's always valid",
+		Validate: func(state map[string]interface{}) (bool, error) {
+			return true, nil
+		},
+	}
+	c2 := Constraint{
+		Name:        "AlwaysInvalid",
+		Description: "A constraint that's always invalid",
+		Validate: func(state map[string]interface{}) (bool, error) {
+			return false, nil
+		},
+	}
 
-	t.Run("Validate success", func(t *testing.T) {
-		state := map[string]string{"key": "value"}
-		mockEngine.On("Validate", state).Return(nil)
+	engine.AddConstraint(c1)
+	engine.AddConstraint(c2)
 
-		err := mockEngine.Validate(state)
+	state := make(map[string]interface{})
+	valid, violations := engine.ValidateAll(state)
 
-		assert.NoError(t, err)
-		mockEngine.AssertExpectations(t)
-	})
+	if valid {
+		t.Fatal("Expected ValidateAll to return false, got true")
+	}
 
-	t.Run("Validate error", func(t *testing.T) {
-		state := map[string]string{"key": "invalid"}
-		expectedError := errors.New("validation failed")
-		mockEngine.On("Validate", state).Return(expectedError)
+	if len(violations) != 1 || violations[0] != "AlwaysInvalid" {
+		t.Fatalf("Expected violations to be ['AlwaysInvalid'], got %v", violations)
+	}
+}
 
-		err := mockEngine.Validate(state)
+func TestGetConstraint(t *testing.T) {
+	engine := NewEngine()
+	c := Constraint{
+		Name:        "TestConstraint",
+		Description: "A test constraint",
+		Validate: func(state map[string]interface{}) (bool, error) {
+			return true, nil
+		},
+	}
 
-		assert.Error(t, err)
-		assert.Equal(t, expectedError, err)
-		mockEngine.AssertExpectations(t)
-	})
+	engine.AddConstraint(c)
+
+	retrieved, exists := engine.GetConstraint("TestConstraint")
+	if !exists {
+		t.Fatal("GetConstraint returned false for existing constraint")
+	}
+
+	if retrieved.Name != c.Name || retrieved.Description != c.Description {
+		t.Fatal("Retrieved constraint does not match the original")
+	}
+
+	_, exists = engine.GetConstraint("NonExistentConstraint")
+	if exists {
+		t.Fatal("GetConstraint returned true for non-existent constraint")
+	}
 }

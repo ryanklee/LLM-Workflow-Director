@@ -4,6 +4,7 @@ from .state_manager import StateManager
 from .llm_manager import LLMManager
 from .error_handler import ErrorHandler
 from src.vectorstore.vector_store import VectorStore
+from pkg.workflow.constraint.engine import Engine as ConstraintEngine
 
 
 class WorkflowDirector:
@@ -11,6 +12,7 @@ class WorkflowDirector:
         self.logger = logging.getLogger(__name__)
         self.state_manager = StateManager()
         self.vector_store = VectorStore()
+        self.constraint_engine = ConstraintEngine()
         self.llm_manager = None
         try:
             self.llm_manager = LLMManager()
@@ -25,6 +27,7 @@ class WorkflowDirector:
         self.transitions = self.config['transitions']
         self.stage_progress = {stage: 0.0 for stage in self.stages}
         self.completed_stages = set()
+        self.initialize_constraints()
 
     def load_config(self, config_path):
         try:
@@ -125,7 +128,17 @@ class WorkflowDirector:
 
     def can_transition_to(self, next_stage):
         available_transitions = [t for t in self.transitions if t['from'] == self.current_stage and t['to'] == next_stage]
-        return len(available_transitions) > 0 or self.is_stage_completed(self.current_stage) or self.current_stage == next_stage
+        if not available_transitions:
+            return False
+
+        current_state = self.state_manager.get_all()
+        is_valid, violations = self.constraint_engine.ValidateAll(current_state)
+
+        if not is_valid:
+            self.logger.warning(f"Cannot transition to {next_stage}. Constraint violations: {', '.join(violations)}")
+            return False
+
+        return True
 
     def evaluate_condition(self, condition):
         # This is a placeholder. In a real implementation, you would evaluate the condition based on the current state.
@@ -140,3 +153,19 @@ class WorkflowDirector:
     def evaluate_condition(self, condition):
         # This is a placeholder. In a real implementation, you would evaluate the condition based on the current state.
         return True
+    def initialize_constraints(self):
+        for stage in self.config['stages']:
+            if 'constraints' in stage:
+                for constraint in stage['constraints']:
+                    self.constraint_engine.AddConstraint({
+                        'Name': f"{stage['name']}_{constraint['name']}",
+                        'Description': constraint['description'],
+                        'Validate': lambda state, c=constraint: self.validate_constraint(state, c)
+                    })
+
+    def validate_constraint(self, state, constraint):
+        # This is a placeholder implementation. In a real-world scenario,
+        # you would implement more sophisticated constraint validation logic.
+        if 'condition' in constraint:
+            return eval(constraint['condition'], {'state': state}), None
+        return True, None
