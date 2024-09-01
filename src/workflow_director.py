@@ -274,17 +274,26 @@ class WorkflowDirector:
 
         # Check if there's a valid transition defined
         valid_transitions = [t for t in self.transitions if t['from'] == self.current_stage and t['to'] == next_stage]
-        if not valid_transitions:
-            self.logger.info(f"No transition defined from {self.current_stage} to {next_stage}")
-            return False
+        if valid_transitions:
+            self.logger.info(f"Valid transition found from {self.current_stage} to {next_stage}")
+            return True
 
-        # If there's a valid transition, allow it
-        self.logger.info(f"Valid transition found from {self.current_stage} to {next_stage}")
-        return True
+        # Check if the next stage is the current stage (allows staying in the same stage)
+        if self.current_stage == next_stage:
+            self.logger.info(f"Transition to current stage {next_stage} is allowed")
+            return True
+
+        self.logger.info(f"No valid transition found from {self.current_stage} to {next_stage}")
+        return False
 
     def get_next_stage(self):
         valid_transitions = [t for t in self.transitions if t['from'] == self.current_stage]
         if valid_transitions:
+            # Prioritize transitions to uncompleted stages
+            for transition in valid_transitions:
+                if transition['to'] not in self.completed_stages:
+                    return transition['to']
+            # If all possible next stages are completed, return the first one
             return valid_transitions[0]['to']
         return None
 
