@@ -119,10 +119,7 @@ class WorkflowDirector:
         self.stage_progress[self.current_stage] = 1.0
         self.completed_stages.add(self.current_stage)
         self.print_func(f"Completed stage: {self.current_stage}")
-        result = self.move_to_next_stage()
-        if not result:
-            self.print_func("This was the final stage.")
-        return result
+        return self.move_to_next_stage()
 
     def get_stage_progress(self):
         return self.stage_progress[self.current_stage]
