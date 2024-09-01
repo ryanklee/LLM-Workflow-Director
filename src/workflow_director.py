@@ -11,7 +11,7 @@ from src.llm_manager import LLMManager
 from src.sufficiency_evaluator import SufficiencyEvaluator
 from src.error_handler import ErrorHandler
 from src.vectorstore.vector_store import VectorStore
-from pkg.workflow.constraint.engine import Engine as ConstraintEngine
+from src.constraint_engine import ConstraintEngine
 from src.project_state_reporter import ProjectStateReporter
 from src.documentation_health_checker import DocumentationHealthChecker
 from src.project_structure_manager import ProjectStructureManager
@@ -34,6 +34,7 @@ class WorkflowDirector:
         self.state_manager = StateManager()
         self.vector_store = VectorStore()
         self.constraint_engine = ConstraintEngine()
+        self.logger.info("ConstraintEngine initialized")
         self.llm_manager = None
         try:
             self.llm_manager = LLMManager()
