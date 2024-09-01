@@ -5,7 +5,7 @@ from src.llm_manager import LLMManager, llm_spec
 def test_llm_manager_initialization_mock_mode():
     manager = LLMManager()
     assert manager.mock_mode == True
-    assert manager.model is None
+    assert manager.models == {}
 
 @patch('src.llm_manager.llm_spec', MagicMock())
 @patch('src.llm_manager.importlib.import_module')
@@ -18,7 +18,7 @@ def test_llm_manager_initialization_llm_mode(mock_import):
     
     manager = LLMManager()
     assert manager.mock_mode == False
-    assert manager.model == mock_model
+    assert manager.models['balanced'] == mock_model
 
 def test_llm_manager_query():
     manager = LLMManager()

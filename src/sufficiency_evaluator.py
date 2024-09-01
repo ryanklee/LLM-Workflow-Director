@@ -9,6 +9,10 @@ class SufficiencyEvaluator:
     def evaluate_stage_sufficiency(self, stage_name: str, stage_data: Dict[str, Any], project_state: Dict[str, Any]) -> Tuple[bool, str]:
         self.logger.info(f"Evaluating sufficiency for stage: {stage_name}")
         
+        if not self.llm_manager:
+            self.logger.warning("LLMManager not available. Assuming stage is sufficient.")
+            return True, "LLMManager not available. Stage assumed to be sufficient."
+        
         prompt = self._generate_evaluation_prompt(stage_name, stage_data, project_state)
         response = self.llm_manager.query(prompt, context=project_state)
         

@@ -92,11 +92,11 @@ class LLMManager:
         
         return formatted_prompt
 
-    def _generate_cache_key(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> str:
+    def _generate_cache_key(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: str = 'balanced') -> str:
         if context is None:
             context = {}
         context_str = ','.join(f"{k}:{v}" for k, v in sorted(context.items()))
-        return f"{prompt}|{context_str}"
+        return f"{prompt}|{context_str}|{tier}"
 
     def clear_cache(self):
         self.cache.clear()

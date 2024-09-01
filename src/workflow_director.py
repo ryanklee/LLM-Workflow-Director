@@ -54,7 +54,7 @@ class WorkflowDirector:
         self.documentation_health_checker = DocumentationHealthChecker()
         self.project_structure_manager = ProjectStructureManager()
         self.convention_manager = ConventionManager()
-        self.sufficiency_evaluator = SufficiencyEvaluator(self.llm_manager)
+        self.sufficiency_evaluator = SufficiencyEvaluator(self.llm_manager) if self.llm_manager else None
 
     def load_config(self, config_path):
         try:
@@ -350,9 +350,12 @@ class WorkflowDirector:
         current_stage_data = self.stages[self.current_stage]
         project_state = self.state_manager.get_all()
         
-        is_sufficient, reasoning = self.sufficiency_evaluator.evaluate_stage_sufficiency(
-            self.current_stage, current_stage_data, project_state
-        )
+        if self.sufficiency_evaluator:
+            is_sufficient, reasoning = self.sufficiency_evaluator.evaluate_stage_sufficiency(
+                self.current_stage, current_stage_data, project_state
+            )
+        else:
+            is_sufficient, reasoning = True, "SufficiencyEvaluator not available. Stage assumed to be sufficient."
         
         # Mark the stage as completed regardless of sufficiency
         self.stage_progress[self.current_stage] = 1.0
