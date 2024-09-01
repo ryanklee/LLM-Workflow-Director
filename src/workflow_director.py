@@ -101,7 +101,8 @@ class WorkflowDirector:
                     # Process the command using LLM
                     tier = self.determine_query_tier(user_input)
                     context = self._prepare_llm_context()
-                    response = self.llm_manager.query(user_input, context=context, tier=tier)
+                    query = f"Process this command: {user_input}"
+                    response = self.llm_manager.query(query, context=context, tier=tier)
                     self.user_interaction_handler.display_message(f"LLM response: {response}")
                     self._process_llm_response(response)
             except Exception as e:
