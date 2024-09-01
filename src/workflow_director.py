@@ -44,7 +44,7 @@ class WorkflowDirector:
         self.documentation_health_checker = DocumentationHealthChecker()
         self.project_structure_manager = ProjectStructureManager()
         self.convention_manager = ConventionManager()
-        self.sufficiency_evaluator = SufficiencyEvaluator(self.llm_manager) if self.llm_manager else None
+        self.sufficiency_evaluator = SufficiencyEvaluator(self.llm_manager)
         self.priority_manager = PriorityManager()
         self.initialize_priorities()
         self.logger.debug(f"WorkflowDirector initialized with LLMManager: {self.llm_manager}")
