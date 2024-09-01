@@ -19,7 +19,8 @@ class LLMManager:
             return self.cache[cache_key]
 
         try:
-            response = self.client.query(prompt, context, tier)
+            enhanced_prompt = self._enhance_prompt(prompt, context)
+            response = self.client.query(enhanced_prompt, context, tier)
             self.logger.debug(f"Received response from LLM: {response[:50]}...")
         except Exception as e:
             error_message = str(e)
@@ -29,6 +30,26 @@ class LLMManager:
         response_with_id = self._add_unique_id(response)
         self.cache[cache_key] = response_with_id
         return response_with_id
+
+    def _enhance_prompt(self, prompt: str, context: Optional[Dict[str, Any]]) -> str:
+        if context is None:
+            return prompt
+
+        workflow_stage = context.get('workflow_stage', 'Unknown')
+        stage_description = context.get('stage_description', 'No description available')
+        stage_tasks = context.get('stage_tasks', [])
+
+        enhanced_prompt = f"""
+        Current Workflow Stage: {workflow_stage}
+        Stage Description: {stage_description}
+        Stage Tasks:
+        {' '.join(f'- {task}' for task in stage_tasks)}
+
+        Given the above context, please respond to the following prompt:
+
+        {prompt}
+        """
+        return enhanced_prompt
 
     def _handle_llm_error(self, prompt: str, context: Optional[Dict[str, Any]], tier: str, error_message: str) -> str:
         retry_count = 0

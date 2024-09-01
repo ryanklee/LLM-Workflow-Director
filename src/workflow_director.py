@@ -103,6 +103,8 @@ class WorkflowDirector:
                 prompt = self.llm_manager.generate_prompt(prompt_template, {
                     "command": user_input,
                     "stage": current_stage['name'],
+                    "stage_description": current_stage.get('description', ''),
+                    "stage_tasks": current_stage.get('tasks', []),
                     "context": str(context)
                 })
                 

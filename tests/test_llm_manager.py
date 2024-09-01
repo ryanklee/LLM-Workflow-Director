@@ -23,6 +23,8 @@ def test_llm_manager_query_with_context():
             "key1": "value1",
             "key2": "value2",
             "workflow_stage": "Test Stage",
+            "stage_description": "Test stage description",
+            "stage_tasks": ["Task 1", "Task 2"],
             "project_structure_instructions": "Test instructions",
             "coding_conventions": "Test conventions",
             "workflow_config": {
@@ -34,6 +36,11 @@ def test_llm_manager_query_with_context():
         assert isinstance(result, str)
         assert "Test response" in result
         assert "(ID:" in result
+        mock_client.return_value.query.assert_called_once()
+        call_args = mock_client.return_value.query.call_args[0]
+        assert "Current Workflow Stage: Test Stage" in call_args[0]
+        assert "Stage Description: Test stage description" in call_args[0]
+        assert "Task 1" in call_args[0] and "Task 2" in call_args[0]
 
 def test_llm_manager_error_handling():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
