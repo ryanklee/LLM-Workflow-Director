@@ -59,7 +59,7 @@ def test_llm_manager_query_error(mock_import):
     manager = LLMManager()
     manager.mock_mode = False  # Force non-mock mode for this test
     result = manager.query("Test prompt")
-    assert result.startswith("Error querying LLM: Test error")
+    assert result.startswith("Error querying LLM after 3 attempts: Test error")
     assert "(ID:" in result
 
 def test_llm_manager_format_prompt():

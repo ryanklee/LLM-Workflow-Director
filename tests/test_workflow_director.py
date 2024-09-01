@@ -159,18 +159,22 @@ def test_workflow_director_run(mock_llm_manager):
     mock_llm_manager.return_value.query.return_value = "LLM response"
     mock_input = MagicMock(side_effect=['test command', 'next', 'exit'])
     mock_print = MagicMock()
-    director = WorkflowDirector(input_func=mock_input, print_func=mock_print)
-    director.run()
+        
+    # Mock the ConventionManager
+    with patch('src.workflow_director.ConventionManager') as mock_convention_manager:
+        mock_convention_manager.return_value.get_aider_conventions.return_value = "Mocked conventions"
+            
+        director = WorkflowDirector(input_func=mock_input, print_func=mock_print)
+        director.run()
 
     assert mock_print.call_args_list[0][0][0] == "Starting LLM Workflow Director"
     assert "Current stage: Project Initialization" in mock_print.call_args_list[1][0][0]
     assert "Description:" in mock_print.call_args_list[2][0][0]
     assert "Tasks:" in mock_print.call_args_list[3][0][0]
     assert any("Enter a command" in call[0][0] for call in mock_print.call_args_list)
-    
-    # Check for either LLM response or unavailability message
-    assert any("LLM response:" in call[0][0] for call in mock_print.call_args_list) or \
-           any("LLM manager is not available" in call[0][0] for call in mock_print.call_args_list)
-    
+        
+    # Check for LLM response
+    assert any("LLM response: LLM response" in call[0][0] for call in mock_print.call_args_list)
+        
     assert any("Current stage: Requirements Gathering" in call[0][0] for call in mock_print.call_args_list)
     assert mock_print.call_args_list[-1][0][0] == "Exiting LLM Workflow Director"
