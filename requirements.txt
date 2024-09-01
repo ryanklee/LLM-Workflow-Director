@@ -129,6 +129,3 @@ Werkzeug==2.0.1
 WTForms==2.3.3
 yarl==1.9.4
 zipp==1.0.0
-pyyaml
-llm-claude-3
-pydantic>=2.0.0
