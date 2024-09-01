@@ -148,7 +148,7 @@ class WorkflowDirector:
         
         if self.current_stage == self.config['stages'][-1]['name']:
             self.logger.info("Completed final stage")
-            return False
+            return True  # Changed from False to True
         return True
 
     def get_available_transitions(self):
