@@ -178,6 +178,12 @@ class LLMManager:
         self.cache.clear()
         self.logger.info("LLM response cache cleared.")
 
+    def get_usage_report(self) -> Dict[str, Any]:
+        return self.cost_optimizer.get_usage_report()
+
+    def get_optimization_suggestion(self) -> str:
+        return self.cost_optimizer.suggest_optimization()
+
     def evaluate_sufficiency(self, stage_name: str, stage_data: Dict[str, Any], project_state: Dict[str, Any]) -> Dict[str, Any]:
         self.logger.info(f"Evaluating sufficiency for stage: {stage_name}")
         try:

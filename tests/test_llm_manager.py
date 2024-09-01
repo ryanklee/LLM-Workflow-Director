@@ -1,11 +1,12 @@
 from unittest.mock import patch, MagicMock
-from src.llm_manager import LLMManager
+from src.llm_manager import LLMManager, LLMCostOptimizer
 
 def test_llm_manager_initialization():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
         manager = LLMManager()
         assert isinstance(manager.client, MagicMock)
         assert isinstance(manager.cache, dict)
+        assert isinstance(manager.cost_optimizer, LLMCostOptimizer)
 
 @patch('src.llm_manager.LLMMicroserviceClient')
 def test_llm_manager_query(mock_client):
@@ -19,6 +20,27 @@ def test_llm_manager_query(mock_client):
     assert 'suggestions' in response
     assert 'response' in response
     assert 'id' in response
+
+def test_llm_manager_get_usage_report():
+    manager = LLMManager()
+    manager.cost_optimizer.update_usage('fast', 100)
+    manager.cost_optimizer.update_usage('balanced', 200)
+    manager.cost_optimizer.update_usage('powerful', 300)
+    report = manager.get_usage_report()
+    assert 'usage_stats' in report
+    assert 'total_cost' in report
+    assert report['usage_stats']['fast']['count'] == 1
+    assert report['usage_stats']['balanced']['count'] == 1
+    assert report['usage_stats']['powerful']['count'] == 1
+
+def test_llm_manager_get_optimization_suggestion():
+    manager = LLMManager()
+    manager.cost_optimizer.update_usage('fast', 100)
+    manager.cost_optimizer.update_usage('balanced', 200)
+    manager.cost_optimizer.update_usage('powerful', 300)
+    suggestion = manager.get_optimization_suggestion()
+    assert isinstance(suggestion, str)
+    assert len(suggestion) > 0
 
 def test_evaluate_sufficiency():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
