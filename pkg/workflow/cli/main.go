@@ -112,25 +112,26 @@ func Run() error {
 		return err
 	}
 }
+
 func createComponent(compConfig config.ComponentConfig, projectPath string) (component.WorkflowComponent, error) {
 	switch compConfig.Type {
 	case "stateManager":
-		return state.NewFileStateManager(projectPath), nil
+		return workflow.NewFileStateManager(projectPath), nil
 	case "constraintEngine":
-		return constraint.NewBasicConstraintEngine(), nil
+		return workflow.NewBasicConstraintEngine(), nil
 	case "priorityManager":
-		return priority.NewBasicPriorityManager(), nil
+		return workflow.NewBasicPriorityManager(), nil
 	case "directionGenerator":
-		return direction.NewBasicDirectionGenerator(), nil
+		return workflow.NewBasicDirectionGenerator(), nil
 	case "aiderInterface":
-		return aider.NewBasicAiderInterface(), nil
+		return workflow.NewBasicAiderInterface(), nil
 	case "userInteractionHandler":
-		return user.NewBasicUserInteractionHandler(), nil
+		return workflow.NewBasicUserInteractionHandler(), nil
 	case "progressTracker":
-		return progress.NewBasicProgressTracker(), nil
+		return workflow.NewBasicProgressTracker(), nil
 	case "sufficiencyEvaluator":
-		ai := aider.NewBasicAiderInterface()
-		return sufficiency.NewLLMEvaluator(ai), nil
+		ai := workflow.NewBasicAiderInterface()
+		return workflow.NewLLMEvaluator(ai), nil
 	default:
 		return nil, fmt.Errorf("unknown component type: %s", compConfig.Type)
 	}
