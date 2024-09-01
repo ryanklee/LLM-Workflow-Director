@@ -3,7 +3,7 @@ import yaml
 from .state_manager import StateManager
 from .llm_manager import LLMManager
 from .error_handler import ErrorHandler
-from .vectorstore.vector_store import VectorStore
+from src.vectorstore.vector_store import VectorStore
 
 
 class WorkflowDirector:

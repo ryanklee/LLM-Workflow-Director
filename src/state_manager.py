@@ -1,4 +1,4 @@
-from .vectorstore.vector_store import VectorStore
+from src.vectorstore.vector_store import VectorStore
 
 class StateManager:
     def __init__(self):
