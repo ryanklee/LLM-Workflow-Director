@@ -153,7 +153,7 @@ def test_workflow_director_run(mock_llm_manager):
         
     # Mock the ConventionManager
     with patch('src.workflow_director.ConventionManager') as mock_convention_manager:
-        mock_convention_manager.return_value.get_aider_conventions.return_value = "Mocked conventions"
+        mock_convention_manager.return_value.load_conventions.return_value = "Mocked conventions"
             
         director = WorkflowDirector(user_interaction_handler=mock_user_interaction_handler)
         director.run()
@@ -191,6 +191,10 @@ def test_workflow_director_llm_integration(mock_llm_manager, caplog):
 
     # Check if the query method was called
     assert mock_llm_manager.return_value.query.called, "LLMManager.query was not called"
+    
+    # Print debug information
+    print("LLMManager mock calls:", mock_llm_manager.mock_calls)
+    print("LLMManager.query mock calls:", mock_llm_manager.return_value.query.mock_calls)
 
     # Check the arguments of the query calls
     mock_llm_manager.return_value.query.assert_any_call(
