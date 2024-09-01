@@ -55,21 +55,21 @@ def test_workflow_director_complete_current_stage():
     assert result == True, f"Expected True, got {result}"
     assert director.is_stage_completed(initial_stage), f"Stage {initial_stage} should be marked as completed"
     assert director.current_stage != initial_stage, f"Expected to move to a new stage, but still in {initial_stage}"
-    
+
     # Check if the new current stage is a valid transition from the initial stage
     valid_transitions = [t['to'] for t in director.transitions if t['from'] == initial_stage]
     assert director.current_stage in valid_transitions, \
         f"Current stage {director.current_stage} is not a valid transition from {initial_stage}"
-    
+
     # Test completing all stages
     all_stages = [stage['name'] for stage in director.config['stages']]
     for _ in range(len(all_stages) - 1):  # -1 because we've already completed the first stage
         result = director.complete_current_stage()
         assert result == True, f"Expected True for all stages, got {result}"
-    
+
     # Check if we're in the final stage
     assert director.current_stage == all_stages[-1], f"Expected to be in the final stage {all_stages[-1]}, but in {director.current_stage}"
-        
+    
     # Test attempting to complete after the final stage
     post_final_result = director.complete_current_stage()
     assert post_final_result == True, "Expected True when attempting to complete after the final stage"
