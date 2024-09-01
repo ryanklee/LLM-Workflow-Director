@@ -547,6 +547,17 @@ class WorkflowDirector:
                     self.user_interaction_handler.display_message(f"- {task}")
         else:
             self.logger.warning(f"No data found for stage: {stage_name}")
+
+    def get_workflow_status(self):
+        self.logger.info("Generating workflow status report")
+        status = f"Current Stage: {self.current_stage}\n"
+        status += f"Completed Stages: {', '.join(self.completed_stages)}\n"
+        status += f"Current Stage Progress: {self.stage_progress[self.current_stage]:.2%}\n"
+        status += "Available Transitions:\n"
+        for transition in self.get_available_transitions():
+            status += f"  - {transition['to']}\n"
+        self.logger.debug(f"Workflow status report generated: {status}")
+        return status
     def initialize_constraints(self):
         for stage in self.config['stages']:
             if 'constraints' in stage:

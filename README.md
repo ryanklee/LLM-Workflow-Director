@@ -84,6 +84,30 @@ To generate Aider-compatible coding conventions:
 python src/main.py aider-conventions
 ```
 
+To display the current workflow status:
+
+```
+python src/main.py status
+```
+
+To transition to a specific workflow stage:
+
+```
+python src/main.py transition <stage_name>
+```
+
+To generate a project report:
+
+```
+python src/main.py report
+```
+
+You can specify the report format using the `--format` option (plain, markdown, or html):
+
+```
+python src/main.py report --format markdown
+```
+
 During execution, you can enter commands or type 'next' to move to the next workflow stage. Type 'complete' to finish the current stage, or 'exit' to quit the program.
 
 The system now provides more detailed logging information. To view debug logs, set the environment variable `LOGLEVEL=DEBUG` before running the program:

@@ -60,5 +60,25 @@ def aider_conventions():
     convention_manager = ConventionManager()
     click.echo(convention_manager.generate_aider_conventions())
 
+@cli.command()
+@click.option('--config', default='src/workflow_config.yaml', help='Path to the workflow configuration file')
+def status(config):
+    """Display the current workflow status"""
+    director = WorkflowDirector(config_path=config)
+    status_report = director.get_workflow_status()
+    click.echo(status_report)
+
+@cli.command()
+@click.option('--config', default='src/workflow_config.yaml', help='Path to the workflow configuration file')
+@click.argument('stage_name')
+def transition(config, stage_name):
+    """Transition to a specific workflow stage"""
+    director = WorkflowDirector(config_path=config)
+    success = director.transition_to(stage_name)
+    if success:
+        click.echo(f"Successfully transitioned to stage: {stage_name}")
+    else:
+        click.echo(f"Failed to transition to stage: {stage_name}")
+
 if __name__ == '__main__':
     cli()
