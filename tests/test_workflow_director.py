@@ -3,6 +3,7 @@ import sys
 import os
 import pytest
 import subprocess
+from pytest import LogCaptureFixture
 
 # Add the project root directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
