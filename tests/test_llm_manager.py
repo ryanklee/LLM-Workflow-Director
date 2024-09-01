@@ -24,14 +24,16 @@ def test_llm_manager_query():
     manager = LLMManager()
     result = manager.query("Test prompt")
     assert isinstance(result, str)
-    assert result == "Mock response to: Test prompt"
+    assert result.startswith("Mock response to: Test prompt")
+    assert "(ID:" in result
 
 def test_llm_manager_query_with_context():
     manager = LLMManager()
     context = {"key1": "value1", "key2": "value2"}
     result = manager.query("Test prompt", context)
     assert isinstance(result, str)
-    assert result == "Mock response to: Test prompt"
+    assert result.startswith("Mock response to: Test prompt")
+    assert "(ID:" in result
 
 @patch('src.llm_manager.llm_spec', MagicMock())
 @patch('src.llm_manager.importlib.import_module')
@@ -45,7 +47,8 @@ def test_llm_manager_query_error(mock_import):
     manager = LLMManager()
     manager.mock_mode = False  # Force non-mock mode for this test
     result = manager.query("Test prompt")
-    assert result == "Error querying LLM: Test error"
+    assert result.startswith("Error querying LLM: Test error")
+    assert "(ID:" in result
 
 def test_llm_manager_format_prompt():
     manager = LLMManager()
@@ -64,7 +67,7 @@ def test_llm_manager_caching():
     
     # First query should not be cached
     result1 = manager.query(prompt, context)
-    assert result1 == "Mock response to: Test prompt"
+    assert result1.startswith("Mock response to: Test prompt")
     
     # Second query with same prompt and context should return cached result
     result2 = manager.query(prompt, context)
@@ -77,5 +80,5 @@ def test_llm_manager_caching():
     # Clear cache and verify that the original query is not cached anymore
     manager.clear_cache()
     result4 = manager.query(prompt, context)
-    assert result4 == "Mock response to: Test prompt"
+    assert result4.startswith("Mock response to: Test prompt")
     assert result4 != result1  # Because it's a new mock response after cache clear
