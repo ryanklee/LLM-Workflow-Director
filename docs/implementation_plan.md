@@ -23,7 +23,7 @@
 - [>] 1. Project Setup and Environment Configuration
    - [x] 1.1. Set up a new Go project structure with appropriate directories (cmd, pkg, internal, etc.).
    - [x] 1.2. Initialize Go modules and set up dependency management.
-   - [>] 1.3. Configure development tools (linters, formatters, etc.).
+   - [x] 1.3. Configure development tools (linters, formatters, etc.).
    - [ ] 1.4. Set up a CI/CD pipeline for automated testing and deployment.
 
 - [ ] 2. Core Components Implementation
