@@ -144,16 +144,14 @@ def test_llm_manager_fallback_to_fast():
         mock_client.return_value.query.side_effect = [
             Exception("Powerful error"),
             Exception("Balanced error"),
-            Exception("Fast error 1"),
-            Exception("Fast error 2"),
-            Exception("Fast error 3")
+            Exception("Fast error")
         ]
         manager = LLMManager()
         result = manager.query("Test prompt", tier='powerful')
         assert isinstance(result, dict)
         assert "error" in result
-        assert "Error querying LLM after 3 attempts" in result["error"]
-        assert mock_client.return_value.query.call_count == 5
+        assert "Error querying LLM: Fast error" in result["error"]
+        assert mock_client.return_value.query.call_count == 3
 
 def test_llm_manager_query_with_tiers():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
