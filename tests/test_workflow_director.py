@@ -192,6 +192,15 @@ def test_workflow_director_llm_integration(mock_llm_manager):
     print("Before run() - LLM Manager:", director.llm_manager)
     print("Before run() - User Interaction Handler:", director.user_interaction_handler)
     
+    # Patch the run method to add debug prints
+    original_run = director.run
+    def patched_run():
+        print("Inside run() - Before processing command")
+        result = original_run()
+        print("Inside run() - After processing command")
+        return result
+    director.run = patched_run
+
     director.run()
 
     # Debug print statements after running
