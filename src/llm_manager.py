@@ -1,12 +1,13 @@
 import importlib
 
-llm = importlib.util.find_spec("llm")
+llm_spec = importlib.util.find_spec("llm")
 
 class LLMManager:
     def __init__(self):
-        if llm is None:
+        if llm_spec is None:
             print("Warning: llm module is not available. LLMManager will operate in mock mode.")
             self.mock_mode = True
+            self.model = None
         else:
             self.mock_mode = False
             import llm
