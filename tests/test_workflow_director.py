@@ -46,7 +46,7 @@ def test_workflow_director_logging_setup(tmpdir):
 @patch('src.workflow_director.logging.FileHandler')
 @patch('src.workflow_director.logging.StreamHandler')
 @patch('src.workflow_director.jsonlogger.JsonFormatter')
-def test_workflow_director_json_logging(mock_json_formatter, mock_stream_handler, mock_file_handler, tmpdir):
+def test_workflow_director_logging_setup(mock_json_formatter, mock_stream_handler, mock_file_handler, tmpdir):
     log_dir = tmpdir.mkdir("logs")
     
     # Create mock handlers and logger
@@ -60,14 +60,20 @@ def test_workflow_director_json_logging(mock_json_formatter, mock_stream_handler
         director = WorkflowDirector()
         director._setup_logging()
         
-        # Trigger a log message
+        # Check that handlers were created
+        assert mock_file_handler.call_count == 2
+        assert mock_stream_handler.call_count == 1
+        assert mock_json_formatter.call_count == 1
+    
+        # Check that the logger was set up correctly
+        assert mock_logger.setLevel.called_with(logging.DEBUG)
+        assert mock_logger.addHandler.call_count == 3  # Console, File, and JSON handlers
+        
+        # Trigger a log message to check JSON formatting
         director.logger.info("Test log message", extra={'test_key': 'test_value'})
         
         # Check that the log message was called with the correct arguments
         mock_logger.info.assert_called_with("Test log message", extra={'test_key': 'test_value'})
-        
-        # Check that the JSON formatter was created
-        mock_json_formatter.assert_called_once()
 
 @pytest.fixture
 def mock_workflow_director():
