@@ -48,7 +48,7 @@ func NewBasicProgressTracker() component.WorkflowComponent {
 }
 
 func NewLLMEvaluator(ai component.WorkflowComponent) component.WorkflowComponent {
-	se := sufficiency.NewLLMEvaluator(ai.(*componentWrapper).component.(aider.AiderInterface))
+	se := sufficiency.NewLLMEvaluator(ai.(*componentWrapper).component.(*aider.BasicAiderInterface))
 	return &componentWrapper{se, "LLMEvaluator"}
 }
 
@@ -63,21 +63,21 @@ func (cw *componentWrapper) Name() string {
 
 func (cw *componentWrapper) Execute(state interface{}) (interface{}, error) {
 	switch c := cw.component.(type) {
-	case state.StateManager:
+	case *state.FileStateManager:
 		return state, c.UpdateState(state)
-	case constraint.ConstraintEngine:
+	case *constraint.BasicConstraintEngine:
 		return state, c.Validate(state)
-	case priority.PriorityManager:
+	case *priority.BasicPriorityManager:
 		return c.DeterminePriorities(state), nil
-	case direction.DirectionGenerator:
+	case *direction.BasicDirectionGenerator:
 		return c.Generate(state, nil)
-	case aider.AiderInterface:
+	case *aider.BasicAiderInterface:
 		return c.Execute(state)
-	case user.UserInteractionHandler:
+	case *user.BasicUserInteractionHandler:
 		return state, nil // Implement user interaction logic
-	case progress.ProgressTracker:
+	case *progress.BasicProgressTracker:
 		return state, c.UpdateProgress(state)
-	case sufficiency.Evaluator:
+	case *sufficiency.LLMEvaluator:
 		sufficient, reason, err := c.Evaluate(state)
 		if err != nil {
 			return state, err
