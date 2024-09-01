@@ -11,7 +11,7 @@ class LLMManager:
         self.cache = {}
         self.client = LLMMicroserviceClient()
 
-    def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: str = 'balanced') -> str:
+    def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: str = 'balanced') -> Dict[str, Any]:
         self.logger.debug(f"Querying LLM with prompt: {prompt[:50]}... (tier: {tier})")
         cache_key = self._generate_cache_key(prompt, context, tier)
         if cache_key in self.cache:
@@ -25,7 +25,7 @@ class LLMManager:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
                 response = self.client.query(enhanced_prompt, context, tier)
                 self.logger.debug(f"Received response from LLM: {response[:50]}...")
-                structured_response = self._structure_response(response)
+                structured_response = self._parse_structured_response(response)
                 response_with_id = self._add_unique_id(structured_response)
                 self.cache[cache_key] = response_with_id
                 return response_with_id
