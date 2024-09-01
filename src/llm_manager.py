@@ -4,6 +4,7 @@ import yaml
 from typing import Dict, Any, Optional, List
 from .error_handler import ErrorHandler
 from .llm_microservice_client import LLMMicroserviceClient
+from llm import Claude
 
 class LLMCostOptimizer:
     def __init__(self):
@@ -57,11 +58,12 @@ class LLMManager:
         self.cost_optimizer = LLMCostOptimizer()
         self.config = self._load_config(config_path)
         self.tiers = self.config.get('tiers', {
-            'fast': {'model': 'gpt-3.5-turbo', 'max_tokens': 100},
-            'balanced': {'model': 'gpt-3.5-turbo', 'max_tokens': 500},
-            'powerful': {'model': 'gpt-4', 'max_tokens': 1000}
+            'fast': {'model': 'claude-3-haiku-20240307', 'max_tokens': 1000},
+            'balanced': {'model': 'claude-3-sonnet-20240229', 'max_tokens': 4000},
+            'powerful': {'model': 'claude-3-opus-20240229', 'max_tokens': 4000}
         })
         self.prompt_templates = self.config.get('prompt_templates', {})
+        self.claude_client = Claude(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
     def _load_config(self, config_path):
         try:
@@ -84,7 +86,17 @@ class LLMManager:
             try:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
-                response = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
+                
+                # Use Claude client for Anthropic models
+                if 'claude' in tier_config['model']:
+                    response = self.claude_client.complete(
+                        model=tier_config['model'],
+                        prompt=enhanced_prompt,
+                        max_tokens=tier_config['max_tokens']
+                    ).completion
+                else:
+                    response = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
+                
                 self.logger.debug(f"Received response from LLM: {response[:50]}...")
                 structured_response = self._parse_structured_response(response)
                 response_with_id = self._add_unique_id(structured_response)
@@ -96,7 +108,7 @@ class LLMManager:
 
                 return response_with_id
             except Exception as e:
-                self.logger.warning(f"Error querying LLM microservice: {str(e)} (tier: {tier})")
+                self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
                 if tier == 'fast':
                     self.logger.error(f"Max retries reached. Returning error message.")
                     return {"error": f"Error querying LLM: {str(e)}"}

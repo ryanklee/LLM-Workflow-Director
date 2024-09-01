@@ -398,13 +398,15 @@ This structure provides a more comprehensive and organized set of requirements f
 19. LLM Integration
     19.1. The system shall integrate with the LLM CLI utility as a microservice for LLM interactions.
     19.2. The system shall implement a Python-based client to communicate with the LLM microservice via HTTP.
-    19.3. The system shall support multiple LLM models through the LLM CLI utility, including but not limited to OpenAI, Anthropic, and PaLM.
+    19.3. The system shall support multiple LLM models, with a primary focus on Anthropic's Claude models (Claude 3 Haiku, Sonnet, and Opus) as the default, while maintaining support for OpenAI models.
     19.4. The system shall utilize the LLM CLI's templating system for generating consistent prompts.
     19.5. The system shall leverage the LLM CLI's built-in caching capabilities to optimize performance and reduce API costs.
     19.6. The system shall support streaming responses from the LLM CLI for long-running tasks.
     19.7. The system shall provide an abstraction layer for LLM interactions, allowing for easy swapping of the underlying LLM service in the future.
     19.8. The system shall implement error handling and retry mechanisms for LLM service communication.
-    19.9. The system shall implement a tiered LLM approach, using faster, cheaper models for initial processing and more powerful models for complex tasks.
+    19.9. The system shall implement a tiered LLM approach, using faster, cheaper models (e.g., Claude 3 Haiku) for initial processing and more powerful models (e.g., Claude 3 Opus) for complex tasks.
+    19.10. The system shall implement prompt engineering techniques specific to Claude models, including clear and direct prompts, multi-shot learning, chain-of-thought prompting, and the use of XML tags for structured outputs.
+    19.11. The system shall utilize Claude's 200k context window capability for handling large amounts of context in prompts.
 
 20. LLM Microservice Architecture
     20.1. The system shall run the LLM CLI utility as a separate microservice.
