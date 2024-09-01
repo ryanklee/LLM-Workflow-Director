@@ -9,14 +9,8 @@ import (
 	"time"
 
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/aider"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/constraint"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/direction"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/priority"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/progress"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/state"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/sufficiency"
-	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/user"
+	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/component"
+	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/config"
 )
 
 func Run() error {
@@ -116,5 +110,27 @@ func Run() error {
 	case err := <-done:
 		fmt.Println("Goroutine completed")
 		return err
+	}
+}
+func createComponent(compConfig config.ComponentConfig, projectPath string) (component.WorkflowComponent, error) {
+	switch compConfig.Type {
+	case "stateManager":
+		return state.NewFileStateManager(projectPath), nil
+	case "constraintEngine":
+		return constraint.NewBasicConstraintEngine(), nil
+	case "priorityManager":
+		return priority.NewBasicPriorityManager(), nil
+	case "directionGenerator":
+		return direction.NewBasicDirectionGenerator(), nil
+	case "aiderInterface":
+		return aider.NewBasicAiderInterface(), nil
+	case "userInteractionHandler":
+		return user.NewBasicUserInteractionHandler(), nil
+	case "progressTracker":
+		return progress.NewBasicProgressTracker(), nil
+	case "sufficiencyEvaluator":
+		return sufficiency.NewLLMEvaluator(aider.NewBasicAiderInterface()), nil
+	default:
+		return nil, fmt.Errorf("unknown component type: %s", compConfig.Type)
 	}
 }
