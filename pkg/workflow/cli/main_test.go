@@ -33,3 +33,39 @@ func TestRun(t *testing.T) {
 	// For now, just ensure it doesn't panic
 	Run()
 }
+package main
+
+import (
+	"os"
+	"testing"
+)
+
+func TestRun(t *testing.T) {
+	t.Run("Missing project path", func(t *testing.T) {
+		// Save original args
+		oldArgs := os.Args
+		defer func() { os.Args = oldArgs }()
+
+		// Set args for this test
+		os.Args = []string{"cmd", "-project", ""}
+
+		err := Run()
+		if err == nil {
+			t.Error("Expected an error when project path is missing, but got nil")
+		}
+	})
+
+	t.Run("Valid project path", func(t *testing.T) {
+		// Save original args
+		oldArgs := os.Args
+		defer func() { os.Args = oldArgs }()
+
+		// Set args for this test
+		os.Args = []string{"cmd", "-project", "/tmp/test-project"}
+
+		err := Run()
+		if err != nil {
+			t.Errorf("Expected no error with valid project path, but got: %v", err)
+		}
+	})
+}
