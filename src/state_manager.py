@@ -7,7 +7,7 @@ class StateManager:
     def get(self, key, default=None):
         try:
             return self.vector_store.Retrieve(key)
-        except:
+        except KeyError:
             return default
 
     def set(self, key, value):
