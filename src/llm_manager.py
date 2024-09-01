@@ -38,14 +38,6 @@ class LLMManager:
         
         # This line should never be reached, but we'll add it for completeness
         return {"error": "Unexpected error in LLM query"}
-            except Exception as e:
-                retry_count += 1
-                error_message = str(e)
-                self.logger.warning(f"Error querying LLM microservice (attempt {retry_count}/{max_retries}): {error_message} (tier: {tier})")
-                if retry_count == max_retries:
-                    self.logger.error(f"Max retries reached. Returning error message.")
-                    return f"Error querying LLM after {max_retries} attempts: {error_message}"
-                time.sleep(1)  # Wait for 1 second before retrying
 
     def _structure_response(self, response: str) -> str:
         # This is a placeholder implementation. In a real-world scenario,
