@@ -13,33 +13,77 @@ import (
 )
 
 func NewFileStateManager(projectPath string) component.WorkflowComponent {
-	return state.NewFileStateManager(projectPath)
+	sm := state.NewFileStateManager(projectPath)
+	return &componentWrapper{sm, "FileStateManager"}
 }
 
 func NewBasicConstraintEngine() component.WorkflowComponent {
-	return constraint.NewBasicConstraintEngine()
+	ce := constraint.NewBasicConstraintEngine()
+	return &componentWrapper{ce, "BasicConstraintEngine"}
 }
 
 func NewBasicPriorityManager() component.WorkflowComponent {
-	return priority.NewBasicPriorityManager()
+	pm := priority.NewBasicPriorityManager()
+	return &componentWrapper{pm, "BasicPriorityManager"}
 }
 
 func NewBasicDirectionGenerator() component.WorkflowComponent {
-	return direction.NewBasicDirectionGenerator()
+	dg := direction.NewBasicDirectionGenerator()
+	return &componentWrapper{dg, "BasicDirectionGenerator"}
 }
 
 func NewBasicAiderInterface() component.WorkflowComponent {
-	return aider.NewBasicAiderInterface()
+	ai := aider.NewBasicAiderInterface()
+	return &componentWrapper{ai, "BasicAiderInterface"}
 }
 
 func NewBasicUserInteractionHandler() component.WorkflowComponent {
-	return user.NewBasicUserInteractionHandler()
+	uih := user.NewBasicUserInteractionHandler()
+	return &componentWrapper{uih, "BasicUserInteractionHandler"}
 }
 
 func NewBasicProgressTracker() component.WorkflowComponent {
-	return progress.NewBasicProgressTracker()
+	pt := progress.NewBasicProgressTracker()
+	return &componentWrapper{pt, "BasicProgressTracker"}
 }
 
 func NewLLMEvaluator(ai component.WorkflowComponent) component.WorkflowComponent {
-	return sufficiency.NewLLMEvaluator(ai.(aider.AiderInterface))
+	se := sufficiency.NewLLMEvaluator(ai.(*componentWrapper).component.(aider.AiderInterface))
+	return &componentWrapper{se, "LLMEvaluator"}
+}
+
+type componentWrapper struct {
+	component interface{}
+	name      string
+}
+
+func (cw *componentWrapper) Name() string {
+	return cw.name
+}
+
+func (cw *componentWrapper) Execute(state interface{}) (interface{}, error) {
+	switch c := cw.component.(type) {
+	case state.StateManager:
+		return state, c.UpdateState(state)
+	case constraint.ConstraintEngine:
+		return state, c.Validate(state)
+	case priority.PriorityManager:
+		return c.DeterminePriorities(state), nil
+	case direction.DirectionGenerator:
+		return c.Generate(state, nil)
+	case aider.AiderInterface:
+		return c.Execute(state)
+	case user.UserInteractionHandler:
+		return state, nil // Implement user interaction logic
+	case progress.ProgressTracker:
+		return state, c.UpdateProgress(state)
+	case sufficiency.Evaluator:
+		sufficient, reason, err := c.Evaluate(state)
+		if err != nil {
+			return state, err
+		}
+		return map[string]interface{}{"state": state, "sufficient": sufficient, "reason": reason}, nil
+	default:
+		return state, nil
+	}
 }
