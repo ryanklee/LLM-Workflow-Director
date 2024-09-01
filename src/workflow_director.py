@@ -1,5 +1,5 @@
-from state_manager import StateManager
-from llm_manager import LLMManager
+from .state_manager import StateManager
+from .llm_manager import LLMManager
 
 class WorkflowDirector:
     def __init__(self):
