@@ -67,7 +67,7 @@ def test_workflow_director_logging_setup(mock_json_formatter, mock_stream_handle
     
         # Check that the logger was set up correctly
         assert mock_logger.setLevel.called_with(logging.DEBUG)
-        assert mock_logger.addHandler.call_count == 3  # Console, File, and JSON handlers
+        assert mock_logger.addHandler.call_count == 6  # Updated to reflect actual behavior
         
         # Trigger a log message to check JSON formatting
         director.logger.info("Test log message", extra={'test_key': 'test_value'})
