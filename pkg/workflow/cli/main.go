@@ -33,7 +33,6 @@ func Run() error {
 		defer func() {
 			if r := recover(); r != nil {
 				fmt.Printf("Panic occurred: %v\n", r)
-				debug.PrintStack()
 				done <- fmt.Errorf("panic occurred: %v", r)
 			}
 		}()
