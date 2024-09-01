@@ -1,11 +1,16 @@
 from unittest.mock import MagicMock, patch
 import sys
 import os
+from unittest.mock import patch, MagicMock
 
 # Add the project root directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.workflow_director import WorkflowDirector
+
+# Mock the ConstraintEngine
+mock_constraint_engine = MagicMock()
+sys.modules['pkg.workflow.constraint.engine'] = mock_constraint_engine
 
 def test_workflow_director_initialization():
     director = WorkflowDirector()
