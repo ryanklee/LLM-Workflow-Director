@@ -1,59 +1,54 @@
-# Contributing to LLM-Workflow Director
+# Development Process for LLM-Workflow Director
 
-We love your input! We want to make contributing to this project as easy and transparent as possible, whether it's:
+This project is being developed as a collaboration between a human developer and an AI assistant. There are no external contributors or stakeholders involved. This document outlines the development process and guidelines for this unique collaboration.
 
-- Reporting a bug
-- Discussing the current state of the code
-- Submitting a fix
-- Proposing new features
-- Becoming a maintainer
+## Development Workflow
 
-## We Develop with Github
+1. The human developer proposes changes or new features.
+2. The AI assistant provides suggestions, code snippets, and guidance.
+3. The human developer implements the changes, potentially with further assistance from the AI.
+4. The human developer reviews and tests the changes.
+5. The changes are committed to the repository.
 
-We use github to host code, to track issues and feature requests, as well as accept pull requests.
+## Code Style and Standards
 
-## We Use [Github Flow](https://guides.github.com/introduction/flow/index.html), So All Code Changes Happen Through Pull Requests
+* Use 4 spaces for indentation rather than tabs.
+* Follow PEP 8 guidelines for Python code.
+* Use clear and descriptive variable and function names.
+* Include docstrings for all functions, classes, and modules.
+* Write unit tests for new functionality.
 
-Pull requests are the best way to propose changes to the codebase. We actively welcome your pull requests:
+## Version Control
 
-1. Fork the repo and create your branch from `main`.
-2. If you've added code that should be tested, add tests.
-3. If you've changed APIs, update the documentation.
-4. Ensure the test suite passes.
-5. Make sure your code lints.
-6. Issue that pull request!
+* Use Git for version control.
+* Commit messages should be clear and descriptive, explaining the reason for the change.
+* Use feature branches for developing new features or major changes.
 
-## Any contributions you make will be under the MIT Software License
+## Documentation
 
-In short, when you submit code changes, your submissions are understood to be under the same [MIT License](http://choosealicense.com/licenses/mit/) that covers the project. Feel free to contact the maintainers if that's a concern.
+* Keep the README.md file up to date with project overview, setup instructions, and usage guidelines.
+* Update documentation when making changes to the API or adding new features.
+* Use inline comments to explain complex logic or algorithms.
 
-## Report bugs using Github's [issues](https://github.com/yourusername/llm-workflow-director/issues)
+## Testing
 
-We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/yourusername/llm-workflow-director/issues/new); it's that easy!
+* Write unit tests for new functionality.
+* Ensure all tests pass before committing changes.
+* Aim for high test coverage, especially for critical components.
 
-## Write bug reports with detail, background, and sample code
+## Error Handling and Logging
 
-**Great Bug Reports** tend to have:
+* Implement proper error handling throughout the codebase.
+* Use logging to track important events and errors.
 
-- A quick summary and/or background
-- Steps to reproduce
-  - Be specific!
-  - Give sample code if you can.
-- What you expected would happen
-- What actually happens
-- Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
+## Security
 
-People *love* thorough bug reports. I'm not even kidding.
+* Be mindful of security best practices when handling user input or sensitive data.
+* Do not commit sensitive information (like API keys) to the repository.
 
-## Use a Consistent Coding Style
+## Continuous Improvement
 
-* 4 spaces for indentation rather than tabs
-* You can try running `pylint` for style unification
+* Regularly review and refactor code to improve readability and efficiency.
+* Stay updated with the latest best practices and technologies relevant to the project.
 
-## License
-
-By contributing, you agree that your contributions will be licensed under its MIT License.
-
-## References
-
-This document was adapted from the open-source contribution guidelines for [Facebook's Draft](https://github.com/facebook/draft-js/blob/a9316a723f9e918afde44dea68b5f9f39b7d9b00/CONTRIBUTING.md)
+Remember, this is a collaborative effort between you and the AI assistant. Feel free to discuss any aspects of the development process or seek clarification on suggestions provided by the AI.

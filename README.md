@@ -38,9 +38,9 @@ python src/main.py
 
 For more detailed usage instructions, please refer to the documentation.
 
-## Contributing
+## Development
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+This project is being developed as a collaboration between a human developer and an AI assistant. There are no external contributors or stakeholders involved.
 
 ## License
 
