@@ -4,6 +4,7 @@ import yaml
 from typing import Dict, Any, Optional, List
 from .error_handler import ErrorHandler
 from .llm_microservice_client import LLMMicroserviceClient
+from pydantic import Field, field_validator, model_validator
 from llm import Claude
 
 class LLMCostOptimizer:
