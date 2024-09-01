@@ -98,14 +98,12 @@ class WorkflowDirector:
                     else:
                         self.user_interaction_handler.display_message("Stage completion cancelled.")
                 else:
-                    if self.llm_manager:
-                        tier = self.determine_query_tier(user_input)
-                        context = self._prepare_llm_context()
-                        response = self.llm_manager.query(user_input, context=context, tier=tier)
-                        self.user_interaction_handler.display_message(f"LLM response: {response}")
-                        self._process_llm_response(response)
-                    else:
-                        self.user_interaction_handler.display_message("LLM manager is not available. Unable to process the command.")
+                    # Always attempt to use the LLM manager, even in tests
+                    tier = self.determine_query_tier(user_input)
+                    context = self._prepare_llm_context()
+                    response = self.llm_manager.query(user_input, context=context, tier=tier)
+                    self.user_interaction_handler.display_message(f"LLM response: {response}")
+                    self._process_llm_response(response)
             except Exception as e:
                 self.user_interaction_handler.handle_error(e)
         self.logger.info("Exiting LLM Workflow Director")
