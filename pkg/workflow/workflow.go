@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"fmt"
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/aider"
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/component"
 	"github.com/rlk/LLM-Workflow-Director/pkg/workflow/constraint"
@@ -14,7 +15,8 @@ import (
 
 func NewFileStateManager(projectPath string) component.WorkflowComponent {
 	sm := state.NewFileStateManager(projectPath)
-	return &componentWrapper{sm, "FileStateManager"}
+	fmt.Printf("Created FileStateManager: %T\n", sm)
+	return &componentWrapper{component: sm, name: "FileStateManager"}
 }
 
 func NewBasicConstraintEngine() component.WorkflowComponent {
@@ -62,10 +64,15 @@ func (cw *componentWrapper) Name() string {
 }
 
 func (cw *componentWrapper) Execute(state interface{}) (interface{}, error) {
+	fmt.Printf("Executing component: %s\n", cw.name)
+	fmt.Printf("Component type: %T\n", cw.component)
 	switch cw.name {
 	case "FileStateManager":
 		if sm, ok := cw.component.(state.StateManager); ok {
+			fmt.Println("Successfully type-asserted to StateManager")
 			return state, sm.UpdateState(state)
+		} else {
+			fmt.Printf("Failed to type-assert to StateManager. Actual type: %T\n", cw.component)
 		}
 	case "BasicConstraintEngine":
 		if ce, ok := cw.component.(constraint.ConstraintEngine); ok {
@@ -100,5 +107,6 @@ func (cw *componentWrapper) Execute(state interface{}) (interface{}, error) {
 			return map[string]interface{}{"state": state, "sufficient": sufficient, "reason": reason}, nil
 		}
 	}
+	fmt.Printf("No matching case for component: %s\n", cw.name)
 	return state, nil
 }
