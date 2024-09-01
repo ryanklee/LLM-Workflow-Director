@@ -59,23 +59,23 @@ def test_workflow_director_get_workflow_status():
     assert "Current Stage Progress:" in status
     assert "Available Transitions:" in status
 
-@patch('src.workflow_director.WorkflowDirector.transition_to')
-def test_cli_transition_command(mock_transition):
+@patch('src.main.WorkflowDirector')
+def test_cli_transition_command(mock_workflow_director):
     runner = CliRunner()
-    mock_transition.return_value = True
+    mock_workflow_director.return_value.transition_to.return_value = True
     result = runner.invoke(cli, ['transition', 'Requirements Gathering'])
     assert result.exit_code == 0
     assert "Successfully transitioned to stage: Requirements Gathering" in result.output
-    mock_transition.assert_called_once_with('Requirements Gathering')
+    mock_workflow_director.return_value.transition_to.assert_called_once_with('Requirements Gathering')
 
-@patch('src.workflow_director.WorkflowDirector.get_workflow_status')
-def test_cli_status_command(mock_get_status):
+@patch('src.main.WorkflowDirector')
+def test_cli_status_command(mock_workflow_director):
     runner = CliRunner()
-    mock_get_status.return_value = "Mocked status report"
+    mock_workflow_director.return_value.get_workflow_status.return_value = "Mocked status report"
     result = runner.invoke(cli, ['status'])
     assert result.exit_code == 0
     assert "Mocked status report" in result.output
-    mock_get_status.assert_called_once()
+    mock_workflow_director.return_value.get_workflow_status.assert_called_once()
 
 def test_workflow_director_complete_current_stage():
     director = WorkflowDirector()
