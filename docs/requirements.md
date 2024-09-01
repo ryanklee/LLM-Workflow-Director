@@ -187,6 +187,27 @@
     11.7. The system shall monitor the project structure throughout the development process.
     11.8. The system shall provide guidance to the LLM for maintaining the project structure as the project evolves.
     11.9. The system shall detect and correct any deviations from the expected project structure.
+    11.10. The system shall provide a mechanism for mapping existing project artifacts to the expected project structure.
+    11.11. The system shall generate conversion instructions for the LLM to transform existing artifacts into the expected format and structure.
+    11.12. The system shall maintain a record of artifact transformations and provide rollback capabilities if needed.
+    11.13. The system shall offer guidelines for handling edge cases and non-standard artifacts during the conversion process.
+    11.14. The system shall provide progress tracking and reporting during the project structure alignment process.
+    11.15. The system shall generate a detailed report of structural changes made during the alignment process.
+
+23. Project Alignment and Conversion
+    23.1. The system shall analyze the current project state and compare it with the expected project structure and artifacts.
+    23.2. The system shall generate a comprehensive mapping between existing artifacts and their expected counterparts in the target structure.
+    23.3. The system shall provide the LLM with clear, step-by-step instructions for converting each artifact to its expected format and location.
+    23.4. The system shall prioritize the conversion of critical artifacts essential for project functionality and documentation.
+    23.5. The system shall offer guidelines for preserving important metadata, comments, and version history during the conversion process.
+    23.6. The system shall provide templates and examples to guide the LLM in reformatting existing documentation to match the expected structure.
+    23.7. The system shall implement a validation mechanism to ensure converted artifacts meet the expected standards and structure.
+    23.8. The system shall generate a detailed conversion report, highlighting successful transformations, issues encountered, and any manual intervention required.
+    23.9. The system shall provide rollback capabilities for each conversion step to allow for error correction or alternative approaches.
+    23.10. The system shall offer guidance on handling conflicts or inconsistencies discovered during the alignment process.
+    23.11. The system shall implement a mechanism for tracking partial conversions and resuming the process from the last successful step.
+    23.12. The system shall provide recommendations for refactoring or reorganizing code structures to align with the target architecture and best practices.
+    23.13. The system shall generate a comprehensive project health report before and after the alignment process to measure improvements and identify areas needing further attention.
 
 12. Coding Conventions Management
     12.1. The system shall provide functionality to generate and manage coding conventions.

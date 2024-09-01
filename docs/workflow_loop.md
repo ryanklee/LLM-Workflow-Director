@@ -37,6 +37,24 @@ The LLM-Workflow Director is a Python-based system designed to guide AI-assisted
 - Maintains project state
 - Tracks workflow progress
 - Provides state update and query interfaces
+- Manages project structure and artifact mapping
+
+### 4.13 ProjectStructureManager
+- Maintains the expected project structure template
+- Analyzes current project structure
+- Generates instructions for structure alignment
+- Tracks and reports on structure changes
+
+### 4.14 ArtifactConversionManager
+- Maps existing artifacts to expected formats
+- Generates conversion instructions for the LLM
+- Tracks conversion progress and provides rollback capabilities
+- Handles edge cases and non-standard artifacts
+
+### 4.15 ProjectAlignmentReporter
+- Generates comprehensive reports on project structure and artifact alignment
+- Provides before and after project health comparisons
+- Tracks and reports on conversion progress
 
 ### 4.2 ConstraintEngine
 - Manages stage-specific constraints
