@@ -137,6 +137,9 @@ class WorkflowDirector:
             self.logger.info("No next stage available")
             return False
 
+    def get_available_transitions(self):
+        return [t for t in self.transitions if t['from'] == self.current_stage]
+
     def get_stage_progress(self):
         return self.stage_progress[self.current_stage]
 
