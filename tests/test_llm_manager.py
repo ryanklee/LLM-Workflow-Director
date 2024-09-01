@@ -12,7 +12,7 @@ def test_llm_manager_initialization():
 def test_llm_manager_query(mock_client):
     mock_client.return_value.query.return_value = "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response"
     manager = LLMManager()
-    response = manager.query("Test prompt")
+    response = manager.query("Test prompt", tier='balanced')
     assert isinstance(response, dict)
     assert 'task_progress' in response
     assert 'state_updates' in response
@@ -20,6 +20,7 @@ def test_llm_manager_query(mock_client):
     assert 'suggestions' in response
     assert 'response' in response
     assert 'id' in response
+    mock_client.return_value.query.assert_called_once_with(ANY, ANY, 'gpt-3.5-turbo', 500)
 
 def test_llm_manager_get_usage_report():
     manager = LLMManager()
