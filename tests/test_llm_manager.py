@@ -126,3 +126,26 @@ def test_evaluate_sufficiency_error():
         
         assert result["is_sufficient"] == False
         assert "Error evaluating sufficiency: Test error" in result["reasoning"]
+def test_evaluate_sufficiency():
+    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
+        mock_client.return_value.evaluate_sufficiency.return_value = {
+            "is_sufficient": True,
+            "reasoning": "All tasks completed"
+        }
+        manager = LLMManager()
+        
+        result = manager.evaluate_sufficiency("Test Stage", {"description": "Test"}, {"key": "value"})
+        
+        assert result["is_sufficient"] == True
+        assert result["reasoning"] == "All tasks completed"
+        mock_client.return_value.evaluate_sufficiency.assert_called_once_with("Test Stage", {"description": "Test"}, {"key": "value"})
+
+def test_evaluate_sufficiency_error():
+    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
+        mock_client.return_value.evaluate_sufficiency.side_effect = Exception("Test error")
+        manager = LLMManager()
+        
+        result = manager.evaluate_sufficiency("Test Stage", {"description": "Test"}, {"key": "value"})
+        
+        assert result["is_sufficient"] == False
+        assert "Error evaluating sufficiency: Test error" in result["reasoning"]

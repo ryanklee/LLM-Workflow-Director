@@ -113,6 +113,16 @@ class LLMManager:
         self.cache.clear()
         self.logger.info("LLM response cache cleared.")
 
+    def evaluate_sufficiency(self, stage_name: str, stage_data: Dict[str, Any], project_state: Dict[str, Any]) -> Dict[str, Any]:
+        self.logger.info(f"Evaluating sufficiency for stage: {stage_name}")
+        try:
+            result = self.client.evaluate_sufficiency(stage_name, stage_data, project_state)
+            self.logger.debug(f"Sufficiency evaluation result: {result}")
+            return result
+        except Exception as e:
+            self.logger.error(f"Error evaluating sufficiency: {str(e)}")
+            return {"is_sufficient": False, "reasoning": f"Error evaluating sufficiency: {str(e)}"}
+
     def _parse_structured_response(self, response: str) -> Dict[str, Any]:
         try:
             structured_response = {}
