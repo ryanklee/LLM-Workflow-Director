@@ -12,6 +12,7 @@ class LLMManager:
         self.client = LLMMicroserviceClient()
 
     def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: str = 'balanced') -> str:
+        self.logger.debug(f"Querying LLM with prompt: {prompt[:50]}... (tier: {tier})")
         cache_key = self._generate_cache_key(prompt, context, tier)
         if cache_key in self.cache:
             self.logger.info(f"Using cached response for prompt: {prompt[:50]}... (tier: {tier})")
@@ -19,6 +20,7 @@ class LLMManager:
 
         try:
             response = self.client.query(prompt, context, tier)
+            self.logger.debug(f"Received response from LLM: {response[:50]}...")
         except Exception as e:
             error_message = str(e)
             self.logger.error(f"Error querying LLM microservice: {error_message} (tier: {tier})")
@@ -35,10 +37,12 @@ class LLMManager:
             try:
                 self.logger.info(f"Retrying LLM query (attempt {retry_count + 1}/{max_retries})")
                 response = self.client.query(prompt, context, tier)
+                self.logger.info(f"Retry successful on attempt {retry_count + 1}")
                 return response
             except Exception as retry_e:
                 retry_count += 1
                 self.logger.error(f"Retry {retry_count} failed: {str(retry_e)}")
+        self.logger.critical(f"All retries failed for LLM query. Last error: {error_message}")
         return f"Error querying LLM after {max_retries} attempts: {error_message}"
 
     def _generate_cache_key(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: str = 'balanced') -> str:
@@ -55,8 +59,24 @@ class LLMManager:
         self.logger.info("LLM response cache cleared.")
 
     def evaluate_sufficiency(self, stage_name: str, stage_data: Dict[str, Any], project_state: Dict[str, Any]) -> Dict[str, Any]:
+        self.logger.info(f"Evaluating sufficiency for stage: {stage_name}")
         try:
-            return self.client.evaluate_sufficiency(stage_name, stage_data, project_state)
+            result = self.client.evaluate_sufficiency(stage_name, stage_data, project_state)
+            self.logger.debug(f"Sufficiency evaluation result: {result}")
+            return result
         except Exception as e:
             self.logger.error(f"Error evaluating sufficiency: {str(e)}")
             return {"is_sufficient": False, "reasoning": f"Error evaluating sufficiency: {str(e)}"}
+
+    def generate_prompt(self, template: str, context: Dict[str, Any]) -> str:
+        self.logger.debug(f"Generating prompt with template: {template[:50]}...")
+        try:
+            prompt = template.format(**context)
+            self.logger.debug(f"Generated prompt: {prompt[:50]}...")
+            return prompt
+        except KeyError as e:
+            self.logger.error(f"Error generating prompt: Missing key {str(e)}")
+            return f"Error generating prompt: Missing key {str(e)}"
+        except Exception as e:
+            self.logger.error(f"Unexpected error generating prompt: {str(e)}")
+            return f"Unexpected error generating prompt: {str(e)}"
