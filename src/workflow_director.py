@@ -24,6 +24,7 @@ class WorkflowDirector:
         self.stages = {stage['name']: stage for stage in self.config['stages']}
         self.transitions = self.config['transitions']
         self.stage_progress = {stage: 0.0 for stage in self.stages}
+        self.completed_stages = set()
 
     def load_config(self, config_path):
         try:
@@ -55,10 +56,15 @@ class WorkflowDirector:
                 if user_input.lower() == 'exit':
                     break
                 elif user_input.lower() == 'next':
-                    if not self.move_to_next_stage():
+                    if self.move_to_next_stage():
+                        self.print_func(f"Moved to next stage: {self.current_stage}")
+                    else:
                         self.print_func("Cannot move to the next stage. Please complete the current stage's tasks.")
                 elif user_input.lower() == 'complete':
-                    self.complete_current_stage()
+                    if self.complete_current_stage():
+                        self.print_func(f"Completed current stage and moved to: {self.current_stage}")
+                    else:
+                        self.print_func("Completed current stage. This was the final stage.")
                 else:
                     if self.llm_manager:
                         response = self.llm_manager.query(user_input)
@@ -101,8 +107,9 @@ class WorkflowDirector:
 
     def complete_current_stage(self):
         self.stage_progress[self.current_stage] = 1.0
+        self.completed_stages.add(self.current_stage)
         self.print_func(f"Completed stage: {self.current_stage}")
-        self.move_to_next_stage()
+        return self.move_to_next_stage()
 
     def get_stage_progress(self):
         return self.stage_progress[self.current_stage]
@@ -112,3 +119,17 @@ class WorkflowDirector:
 
     def handle_error(self, error):
         return self.error_handler.handle_error(error)
+
+    def is_stage_completed(self, stage_name):
+        return stage_name in self.completed_stages
+
+    def can_transition_to(self, next_stage):
+        available_transitions = [t for t in self.transitions if t['from'] == self.current_stage and t['to'] == next_stage]
+        if not available_transitions:
+            return False
+        transition = available_transitions[0]
+        return self.is_stage_completed(self.current_stage) or 'condition' not in transition or self.evaluate_condition(transition['condition'])
+
+    def evaluate_condition(self, condition):
+        # This is a placeholder. In a real implementation, you would evaluate the condition based on the current state.
+        return True

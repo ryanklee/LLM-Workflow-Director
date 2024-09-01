@@ -39,14 +39,41 @@ def test_workflow_director_move_to_next_stage():
 def test_workflow_director_complete_current_stage():
     director = WorkflowDirector()
     initial_stage = director.current_stage
-    director.complete_current_stage()
+    result = director.complete_current_stage()
+    assert result == True
     assert director.current_stage != initial_stage
+    assert director.is_stage_completed(initial_stage)
 
 def test_workflow_director_get_stage_progress():
     director = WorkflowDirector()
     progress = director.get_stage_progress()
     assert isinstance(progress, float)
     assert 0 <= progress <= 1
+
+def test_workflow_director_update_stage_progress():
+    director = WorkflowDirector()
+    director.update_stage_progress(0.5)
+    assert director.get_stage_progress() == 0.5
+    director.update_stage_progress(1.5)
+    assert director.get_stage_progress() == 1.0
+    director.update_stage_progress(-0.5)
+    assert director.get_stage_progress() == 0.0
+
+def test_workflow_director_is_stage_completed():
+    director = WorkflowDirector()
+    initial_stage = director.current_stage
+    assert not director.is_stage_completed(initial_stage)
+    director.complete_current_stage()
+    assert director.is_stage_completed(initial_stage)
+
+def test_workflow_director_can_transition_to():
+    director = WorkflowDirector()
+    initial_stage = director.current_stage
+    next_stage = director.transitions[0]['to']
+    assert director.can_transition_to(next_stage)
+    assert not director.can_transition_to("Non-existent Stage")
+    director.complete_current_stage()
+    assert director.can_transition_to(next_stage)
 
 @patch('src.workflow_director.LLMManager')
 def test_workflow_director_run(mock_llm_manager):
