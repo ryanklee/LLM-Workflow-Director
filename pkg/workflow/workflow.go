@@ -84,7 +84,9 @@ func (cw *componentWrapper) Execute(state interface{}) (interface{}, error) {
 			return ai.Execute(state)
 		}
 	case "BasicUserInteractionHandler":
-		return state, nil // Implement user interaction logic
+		if uih, ok := cw.component.(user.UserInteractionHandler); ok {
+			return uih.HandleInteraction(state)
+		}
 	case "BasicProgressTracker":
 		if pt, ok := cw.component.(progress.ProgressTracker); ok {
 			return state, pt.UpdateProgress(state)
