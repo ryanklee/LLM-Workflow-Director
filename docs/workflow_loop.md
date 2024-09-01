@@ -78,6 +78,9 @@ The LLM-Workflow Director is a Python-based system designed to guide AI-assisted
 ### 4.6 UserInteractionHandler
 - Manages user prompts and input
 - Integrates user decisions into the workflow
+- Provides methods for displaying messages, prompting for input, and handling user choices
+- Implements error handling for user interactions
+- Allows for easy mocking of user input in tests
 
 ### 4.7 ProgressTracker
 - Evaluates completion criteria

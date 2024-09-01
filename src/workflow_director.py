@@ -17,10 +17,11 @@ from src.documentation_health_checker import DocumentationHealthChecker
 from src.project_structure_manager import ProjectStructureManager
 from src.convention_manager import ConventionManager
 from src.priority_manager import PriorityManager
+from src.user_interaction_handler import UserInteractionHandler
 
 
 class WorkflowDirector:
-    def __init__(self, config_path='src/workflow_config.yaml', input_func=input, print_func=print):
+    def __init__(self, config_path='src/workflow_config.yaml'):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
@@ -42,8 +43,7 @@ class WorkflowDirector:
         except Exception as e:
             self.logger.error(f"Error initializing LLMManager: {str(e)}")
         self.error_handler = ErrorHandler()
-        self.input_func = input_func
-        self.print_func = print_func
+        self.user_interaction_handler = UserInteractionHandler()
         self.config = self.load_config(config_path)
         self.current_stage = self.config['stages'][0]['name'] if self.config else "Default Stage"
         self.stages = {stage['name']: stage for stage in self.config['stages']}
@@ -78,26 +78,28 @@ class WorkflowDirector:
         while True:
             try:
                 current_stage = self.get_current_stage()
-                self.print_func(f"Current stage: {current_stage['name']}")
-                self.print_func(f"Description: {current_stage['description']}")
-                self.print_func("Tasks:")
+                self.user_interaction_handler.display_message(f"Current stage: {current_stage['name']}")
+                self.user_interaction_handler.display_message(f"Description: {current_stage['description']}")
+                self.user_interaction_handler.display_message("Tasks:")
                 for task in current_stage['tasks']:
-                    self.print_func(f"- {task}")
-                self.print_func(f"Stage progress: {self.get_stage_progress():.2%}")
-                self.print_func("Enter a command ('next' for next stage, 'complete' to finish current stage, 'exit' to quit): ", end='')
-                user_input = self.input_func()
+                    self.user_interaction_handler.display_message(f"- {task}")
+                self.user_interaction_handler.display_message(f"Stage progress: {self.get_stage_progress():.2%}")
+                user_input = self.user_interaction_handler.prompt_user("Enter a command ('next' for next stage, 'complete' to finish current stage, 'exit' to quit):")
                 if user_input.lower() == 'exit':
                     break
                 elif user_input.lower() == 'next':
                     if self.move_to_next_stage():
-                        self.print_func(f"Moved to next stage: {self.current_stage}")
+                        self.user_interaction_handler.display_message(f"Moved to next stage: {self.current_stage}")
                     else:
-                        self.print_func("Cannot move to the next stage. Please complete the current stage's tasks.")
+                        self.user_interaction_handler.display_message("Cannot move to the next stage. Please complete the current stage's tasks.")
                 elif user_input.lower() == 'complete':
-                    if self.complete_current_stage():
-                        self.print_func(f"Completed current stage and moved to: {self.current_stage}")
+                    if self.user_interaction_handler.confirm_action("complete the current stage"):
+                        if self.complete_current_stage():
+                            self.user_interaction_handler.display_message(f"Completed current stage and moved to: {self.current_stage}")
+                        else:
+                            self.user_interaction_handler.display_message("Completed current stage. This was the final stage.")
                     else:
-                        self.print_func("Completed current stage. This was the final stage.")
+                        self.user_interaction_handler.display_message("Stage completion cancelled.")
                 else:
                     if self.llm_manager:
                         tier = self.determine_query_tier(user_input)
@@ -107,15 +109,13 @@ class WorkflowDirector:
                             'coding_conventions': self.convention_manager.get_aider_conventions()
                         }
                         response = self.llm_manager.query(user_input, context=context, tier=tier)
-                        self.print_func(f"LLM response: {response}")
+                        self.user_interaction_handler.display_message(f"LLM response: {response}")
                     else:
-                        self.print_func("LLM manager is not available. Unable to process the command.")
+                        self.user_interaction_handler.display_message("LLM manager is not available. Unable to process the command.")
             except Exception as e:
-                error_message = self.error_handler.handle_error(e)
-                self.logger.error(f"Error occurred: {error_message}")
-                self.print_func(f"An error occurred: {error_message}")
+                self.user_interaction_handler.handle_error(e)
         self.logger.info("Exiting LLM Workflow Director")
-        self.print_func("Exiting LLM Workflow Director")
+        self.user_interaction_handler.display_message("Exiting LLM Workflow Director")
 
     def determine_query_tier(self, query: str) -> str:
         # Simple heuristic for determining the appropriate tier
