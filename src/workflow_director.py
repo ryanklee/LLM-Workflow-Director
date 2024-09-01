@@ -119,7 +119,8 @@ class WorkflowDirector:
         if self.can_transition_to(next_stage):
             previous_stage = self.current_stage
             self.current_stage = next_stage
-            self.completed_stages.add(previous_stage)
+            if previous_stage not in self.completed_stages:
+                self.completed_stages.add(previous_stage)
             self.print_func(f"Transitioned to stage: {next_stage}")
             self.logger.info(f"Successfully transitioned to stage: {next_stage}")
             self.logger.debug(f"Updated completed stages: {self.completed_stages}")
@@ -280,6 +281,31 @@ class WorkflowDirector:
         # If there's a valid transition, allow it
         self.logger.info(f"Valid transition found from {self.current_stage} to {next_stage}")
         return True
+
+    def get_next_stage(self):
+        valid_transitions = [t for t in self.transitions if t['from'] == self.current_stage]
+        if valid_transitions:
+            return valid_transitions[0]['to']
+        return None
+
+    def complete_current_stage(self):
+        self.logger.info(f"Completing stage: {self.current_stage}")
+        self.stage_progress[self.current_stage] = 1.0
+        self.completed_stages.add(self.current_stage)
+        self.print_func(f"Completed stage: {self.current_stage}")
+        self.logger.info(f"Stage {self.current_stage} marked as completed")
+        
+        next_stage = self.get_next_stage()
+        if next_stage:
+            if self.transition_to(next_stage):
+                self.logger.info(f"Moved to next stage: {self.current_stage}")
+                return True
+            else:
+                self.logger.warning(f"Failed to transition to next stage: {next_stage}")
+                return False
+        else:
+            self.logger.info("No next stage available")
+            return self.current_stage == self.config['stages'][-1]['name']
 
     def get_next_stage(self):
         valid_transitions = [t for t in self.transitions if t['from'] == self.current_stage]
