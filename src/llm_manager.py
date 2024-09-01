@@ -35,6 +35,9 @@ class LLMManager:
                 if retry_count == max_retries:
                     self.logger.error(f"Max retries reached. Returning error message.")
                     return {"error": f"Error querying LLM after {max_retries} attempts: {str(e)}"}
+        
+        # This line should never be reached, but we'll add it for completeness
+        return {"error": "Unexpected error in LLM query"}
             except Exception as e:
                 retry_count += 1
                 error_message = str(e)
@@ -138,6 +141,10 @@ class LLMManager:
 
             if not structured_response:
                 return {"response": response}
+
+            # If there's only a 'response' key, return it directly
+            if len(structured_response) == 1 and 'response' in structured_response:
+                return {"response": structured_response['response']}
 
             return structured_response
         except Exception as e:

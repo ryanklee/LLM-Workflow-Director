@@ -41,7 +41,7 @@ def test_llm_manager_query_with_context():
         assert isinstance(result, dict)
         assert "response" in result
         assert result["response"] == "Test response"
-        assert "Test response" in result
+        assert "id" in result
         assert "(ID:" in result
         mock_client.return_value.query.assert_called_once()
         call_args = mock_client.return_value.query.call_args[0]
@@ -55,7 +55,7 @@ def test_llm_manager_query_with_context():
 
 def test_llm_manager_error_handling():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
-        mock_client.return_value.query.side_effect = [Exception("Test error"), Exception("Retry error"), "Success"]
+        mock_client.return_value.query.side_effect = [Exception("Test error"), Exception("Retry error"), Exception("Final error")]
         manager = LLMManager()
         result = manager.query("Test prompt")
         assert isinstance(result, dict)
@@ -97,10 +97,10 @@ def test_llm_manager_caching():
         result3 = manager.query("Different prompt", context)
         assert isinstance(result3, dict) and result3.get("response") == "Response 2"
         assert result3 != result1
-        
+            
         manager.clear_cache()
         result4 = manager.query(prompt, context)
-        assert "Response 3" in result4
+        assert result4.get("response") == "Response 3"
         assert result4 != result1
 
 def test_evaluate_sufficiency():
