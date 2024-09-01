@@ -1,5 +1,6 @@
 import importlib.util
 import logging
+import time
 from typing import Dict, Any, Optional
 from .error_handler import ErrorHandler
 
@@ -39,7 +40,8 @@ class LLMManager:
         cache_key = self._generate_cache_key(prompt, context)
         if cache_key in self.cache:
             self.logger.info(f"Using cached response for prompt: {prompt[:50]}...")
-            return self.cache[cache_key]
+            cached_response = self.cache[cache_key]
+            return self._add_unique_id(cached_response)
 
         if self.mock_mode:
             response = f"Mock response to: {prompt}"
@@ -54,9 +56,11 @@ class LLMManager:
                 self.logger.error(f"Error querying LLM: {error_message}")
                 response = f"Error querying LLM: {error_message}"
 
-        response_with_id = f"{response} (ID: {hash(cache_key)})"
-        self.cache[cache_key] = response_with_id
-        return response_with_id
+        self.cache[cache_key] = response
+        return self._add_unique_id(response)
+
+    def _add_unique_id(self, response: str) -> str:
+        return f"{response} (ID: {hash(response + str(time.time()))})"
 
     def _format_prompt(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> str:
         if context is None:
