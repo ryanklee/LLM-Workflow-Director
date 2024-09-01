@@ -15,8 +15,3 @@ func (b *BasicUserInteractionHandler) HandleInteraction(state interface{}) (inte
 	// TODO: Implement actual interaction handling logic
 	return state, nil
 }
-
-func (b *BasicUserInteractionHandler) HandleInteraction(state interface{}) (interface{}, error) {
-	// TODO: Implement actual interaction handling logic
-	return state, nil
-}
