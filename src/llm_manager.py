@@ -62,12 +62,6 @@ class LLMManager:
             self.logger.info(f"Using cached response for prompt: {prompt[:50]}... (tier: {tier})")
             return self.cache[cache_key]
 
-    def get_usage_report(self) -> Dict[str, Any]:
-        return self.cost_optimizer.get_usage_report()
-
-    def get_optimization_suggestion(self) -> str:
-        return self.cost_optimizer.suggest_optimization()
-
         max_retries = 3
         retry_count = 0
         while retry_count < max_retries:
@@ -93,6 +87,12 @@ class LLMManager:
         
         # This line should never be reached, but we'll add it for completeness
         return {"error": "Unexpected error in LLM query"}
+
+    def get_usage_report(self) -> Dict[str, Any]:
+        return self.cost_optimizer.get_usage_report()
+
+    def get_optimization_suggestion(self) -> str:
+        return self.cost_optimizer.suggest_optimization()
 
     def get_usage_report(self) -> Dict[str, Any]:
         return self.cost_optimizer.get_usage_report()
