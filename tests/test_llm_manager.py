@@ -72,9 +72,7 @@ def test_llm_manager_caching():
     
     # Second query with same prompt and context should return cached result
     result2 = manager.query(prompt, context)
-    assert result2.startswith("Mock response to: Test prompt")
-    assert "(ID:" in result2
-    assert result2.split("(ID:")[0] == result1.split("(ID:")[0]  # Compare everything before the ID
+    assert result2 == result1  # Cached result should be identical
     
     # Query with different prompt should not be cached
     result3 = manager.query("Different prompt", context)
@@ -87,5 +85,4 @@ def test_llm_manager_caching():
     result4 = manager.query(prompt, context)
     assert result4.startswith("Mock response to: Test prompt")
     assert "(ID:" in result4
-    assert result4.split("(ID:")[0] == result1.split("(ID:")[0]  # Compare everything before the ID
     assert result4 != result1  # Because it's a new mock response after cache clear

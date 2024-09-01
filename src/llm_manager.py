@@ -54,8 +54,9 @@ class LLMManager:
                 self.logger.error(f"Error querying LLM: {error_message}")
                 response = f"Error querying LLM: {error_message}"
 
-        self.cache[cache_key] = response
-        return f"{response} (ID: {hash(cache_key)})"
+        response_with_id = f"{response} (ID: {hash(cache_key)})"
+        self.cache[cache_key] = response_with_id
+        return response_with_id
 
     def _format_prompt(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> str:
         if context is None:
