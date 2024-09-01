@@ -8,7 +8,11 @@ from .error_handler import ErrorHandler
 class WorkflowDirector:
     def __init__(self, config_path='src/workflow_config.yaml', input_func=input, print_func=print):
         self.state_manager = StateManager()
-        self.llm_manager = LLMManager()
+        try:
+            self.llm_manager = LLMManager()
+        except Exception as e:
+            self.logger.error(f"Error initializing LLMManager: {str(e)}")
+            self.llm_manager = None
         self.error_handler = ErrorHandler()
         self.input_func = input_func
         self.print_func = print_func

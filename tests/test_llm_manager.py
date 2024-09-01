@@ -1,10 +1,21 @@
-from src.llm_manager import LLMManager
+from unittest.mock import patch, MagicMock
+from src.llm_manager import LLMManager, llm_spec
 
-
-def test_llm_manager_initialization():
+@patch('src.llm_manager.llm_spec', None)
+def test_llm_manager_initialization_mock_mode():
     manager = LLMManager()
-    assert hasattr(manager, 'mock_mode')
+    assert manager.mock_mode == True
+    assert manager.model is None
 
+@patch('src.llm_manager.llm_spec', MagicMock())
+@patch('src.llm_manager.llm')
+def test_llm_manager_initialization_llm_mode(mock_llm):
+    mock_model = MagicMock()
+    mock_model.name = "TestModel"
+    mock_llm.models.return_value = [mock_model]
+    manager = LLMManager()
+    assert manager.mock_mode == False
+    assert manager.model == mock_model
 
 def test_llm_manager_query():
     manager = LLMManager()
@@ -12,16 +23,15 @@ def test_llm_manager_query():
     assert isinstance(result, str)
     if manager.mock_mode:
         assert result == "Mock response to: Test prompt"
-
-
-def test_llm_manager_query_error():
-    manager = LLMManager()
-    if not manager.mock_mode:
-        def mock_prompt(x):
-            raise Exception("Test error")
-        manager.model.prompt = mock_prompt
-    result = manager.query("Test prompt")
-    if manager.mock_mode:
-        assert result == "Mock response to: Test prompt"
     else:
-        assert "Error querying LLM: Test error" in result
+        assert "LLM response:" in result
+
+@patch('src.llm_manager.llm_spec', MagicMock())
+@patch('src.llm_manager.llm')
+def test_llm_manager_query_error(mock_llm):
+    mock_model = MagicMock()
+    mock_model.prompt.side_effect = Exception("Test error")
+    mock_llm.models.return_value = [mock_model]
+    manager = LLMManager()
+    result = manager.query("Test prompt")
+    assert "Error querying LLM: Test error" in result
