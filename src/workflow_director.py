@@ -3,12 +3,14 @@ import yaml
 from .state_manager import StateManager
 from .llm_manager import LLMManager
 from .error_handler import ErrorHandler
+from .vectorstore.vector_store import VectorStore
 
 
 class WorkflowDirector:
     def __init__(self, config_path='src/workflow_config.yaml', input_func=input, print_func=print):
         self.logger = logging.getLogger(__name__)
         self.state_manager = StateManager()
+        self.vector_store = VectorStore()
         self.llm_manager = None
         try:
             self.llm_manager = LLMManager()

@@ -1,9 +1,17 @@
+from .vectorstore.vector_store import VectorStore
+
 class StateManager:
     def __init__(self):
-        self.state = {}
+        self.vector_store = VectorStore()
 
     def get(self, key, default=None):
-        return self.state.get(key, default)
+        try:
+            return self.vector_store.Retrieve(key)
+        except:
+            return default
 
     def set(self, key, value):
-        self.state[key] = value
+        self.vector_store.Store(key, value)
+
+    def delete(self, key):
+        self.vector_store.Delete(key)
