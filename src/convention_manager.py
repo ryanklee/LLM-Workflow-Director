@@ -205,7 +205,7 @@ class ConventionManager:
         with open(file_path, 'w') as f:
             yaml.dump(self.conventions, f, default_flow_style=False)
 
-    def generate_aider_conventions(self) -> str:
+    def get_aider_conventions(self) -> str:
         aider_conventions = [
             "Follow these coding conventions:",
             f"- Use {self.conventions['code_style']['indentation']} for indentation",

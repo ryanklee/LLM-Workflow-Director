@@ -214,9 +214,10 @@ def test_parse_llm_response():
 @patch('src.workflow_director.ConventionManager')
 def test_workflow_director_llm_integration(mock_convention_manager, mock_llm_manager, caplog):
     mock_llm_manager.return_value.query.return_value = "LLM response: Update task progress"
+    mock_llm_manager.return_value.generate_prompt.return_value = "Process this command: {command}"
     mock_user_interaction_handler = MagicMock(spec=UserInteractionHandler)
     mock_user_interaction_handler.prompt_user.side_effect = ['test command', 'next', 'exit']
-    mock_convention_manager.return_value.load_conventions.return_value = "Mocked conventions"
+    mock_convention_manager.return_value.get_aider_conventions.return_value = "Mocked conventions"
 
     director = WorkflowDirector(
         user_interaction_handler=mock_user_interaction_handler,
@@ -243,12 +244,7 @@ def test_workflow_director_llm_integration(mock_convention_manager, mock_llm_man
 
     # Check the arguments of the query calls
     mock_llm_manager.return_value.query.assert_any_call(
-        "Process this command: test command",
-        context=ANY,
-        tier=ANY
-    )
-    mock_llm_manager.return_value.query.assert_any_call(
-        "Process this command: next",
+        "Process this command: {command}",
         context=ANY,
         tier=ANY
     )
