@@ -19,6 +19,8 @@ class WorkflowDirector:
         self.print_func = print_func
         self.config = self.load_config(config_path)
         self.current_stage = self.config['stages'][0]['name'] if self.config else "Default Stage"
+        self.stages = {stage['name']: stage for stage in self.config['stages']}
+        self.transitions = self.config['transitions']
 
     def load_config(self, config_path):
         try:
@@ -38,13 +40,19 @@ class WorkflowDirector:
         self.print_func("Starting LLM Workflow Director")
         while True:
             try:
-                self.print_func(f"Current stage: {self.current_stage}")
-                self.print_func("Enter a command (or 'exit' to quit): ", end='')
+                current_stage = self.get_current_stage()
+                self.print_func(f"Current stage: {current_stage['name']}")
+                self.print_func(f"Description: {current_stage['description']}")
+                self.print_func("Tasks:")
+                for task in current_stage['tasks']:
+                    self.print_func(f"- {task}")
+                self.print_func("Enter a command ('next' for next stage, 'exit' to quit): ", end='')
                 user_input = self.input_func()
                 if user_input.lower() == 'exit':
                     break
                 elif user_input.lower() == 'next':
-                    self.move_to_next_stage()
+                    if not self.move_to_next_stage():
+                        self.print_func("Cannot move to the next stage. Please complete the current stage's tasks.")
                 else:
                     response = self.llm_manager.query(user_input)
                     self.print_func(f"LLM response: {response}")
@@ -55,19 +63,32 @@ class WorkflowDirector:
         self.logger.info("Exiting LLM Workflow Director")
         self.print_func("Exiting LLM Workflow Director")
 
-    def move_to_next_stage(self):
-        current_index = next((i for i, stage in enumerate(self.config['stages']) if stage['name'] == self.current_stage), None)
-        if current_index is not None and current_index < len(self.config['stages']) - 1:
-            next_stage = self.config['stages'][current_index + 1]['name']
-            transition = next((t for t in self.config['transitions'] if t['from'] == self.current_stage and t['to'] == next_stage), None)
-            if transition:
-                self.current_stage = next_stage
-                self.print_func(f"Moving to next stage: {self.current_stage}")
-                self.print_func(f"Condition: {transition['condition']}")
-            else:
-                self.print_func("No valid transition found to the next stage.")
+    def get_current_stage(self):
+        return self.stages[self.current_stage]
+
+    def get_available_transitions(self):
+        return [t for t in self.transitions if t['from'] == self.current_stage]
+
+    def can_transition_to(self, next_stage):
+        return any(t['to'] == next_stage for t in self.get_available_transitions())
+
+    def transition_to(self, next_stage):
+        if self.can_transition_to(next_stage):
+            self.current_stage = next_stage
+            self.print_func(f"Transitioned to stage: {next_stage}")
+            return True
         else:
-            self.print_func("Already at the final stage.")
+            self.print_func(f"Cannot transition to stage: {next_stage}")
+            return False
+
+    def move_to_next_stage(self):
+        available_transitions = self.get_available_transitions()
+        if available_transitions:
+            next_stage = available_transitions[0]['to']
+            return self.transition_to(next_stage)
+        else:
+            self.print_func("No available transitions from the current stage.")
+            return False
 
     def handle_error(self, error):
         return self.error_handler.handle_error(error)
