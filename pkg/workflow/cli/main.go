@@ -54,4 +54,5 @@ func Run() error {
 	}
 
 	fmt.Println("Workflow completed successfully.")
+	return nil
 }
