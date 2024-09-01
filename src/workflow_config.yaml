@@ -58,6 +58,10 @@ transitions:
     to: Coding Conventions Setup
     condition: Initial requirements gathered
 
+  - from: Coding Conventions Setup
+    to: Domain Modeling
+    condition: Coding conventions defined and integrated
+
   - from: Requirements Gathering
     to: Domain Modeling
     condition: All requirements documented and approved

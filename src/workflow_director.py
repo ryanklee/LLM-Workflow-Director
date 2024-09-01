@@ -263,6 +263,30 @@ class WorkflowDirector:
             return self.config['stages'][current_index + 1]['name']
         return None
 
+    def can_transition_to(self, next_stage):
+        self.logger.info(f"Checking if transition from {self.current_stage} to {next_stage} is possible")
+        
+        # Always allow transition if the current stage is completed
+        if self.is_stage_completed(self.current_stage):
+            self.logger.info(f"Stage {self.current_stage} is already completed, transition allowed")
+            return True
+
+        # Check if there's a valid transition defined
+        valid_transitions = [t for t in self.transitions if t['from'] == self.current_stage and t['to'] == next_stage]
+        if not valid_transitions:
+            self.logger.info(f"No transition defined from {self.current_stage} to {next_stage}")
+            return False
+
+        # If there's a valid transition, allow it
+        self.logger.info(f"Valid transition found from {self.current_stage} to {next_stage}")
+        return True
+
+    def get_next_stage(self):
+        current_index = next((i for i, stage in enumerate(self.config['stages']) if stage['name'] == self.current_stage), None)
+        if current_index is not None and current_index < len(self.config['stages']) - 1:
+            return self.config['stages'][current_index + 1]['name']
+        return None
+
     def evaluate_condition(self, condition):
         # This is a placeholder. In a real implementation, you would evaluate the condition based on the current state.
         return True
