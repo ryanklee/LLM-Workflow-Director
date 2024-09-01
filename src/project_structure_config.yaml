@@ -1,0 +1,19 @@
+directories:
+  - src
+  - tests
+  - docs
+  - data
+
+files:
+  - README.md
+  - requirements.txt
+  - .gitignore
+  - src/__init__.py
+  - tests/__init__.py
+
+placement_rules:
+  py: src
+  md: docs
+  txt: root
+  yaml: root
+  json: data

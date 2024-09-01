@@ -49,10 +49,17 @@ class LLMManager:
 
     def _format_prompt(self, prompt: str, context: Dict[str, Any] = None) -> str:
         if context is None:
-            return prompt
+            context = {}
 
+        project_structure_instructions = context.get('project_structure_instructions', '')
+        
         formatted_prompt = f"Context:\n"
         for key, value in context.items():
-            formatted_prompt += f"{key}: {value}\n"
+            if key != 'project_structure_instructions':
+                formatted_prompt += f"{key}: {value}\n"
+        
+        formatted_prompt += f"\nProject Structure Instructions:\n{project_structure_instructions}\n"
         formatted_prompt += f"\nPrompt: {prompt}"
+        formatted_prompt += "\n\nPlease ensure that your response adheres to the project structure guidelines provided above."
+        
         return formatted_prompt

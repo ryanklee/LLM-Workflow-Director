@@ -13,6 +13,7 @@ from src.vectorstore.vector_store import VectorStore
 from pkg.workflow.constraint.engine import Engine as ConstraintEngine
 from src.project_state_reporter import ProjectStateReporter
 from src.documentation_health_checker import DocumentationHealthChecker
+from src.project_structure_manager import ProjectStructureManager
 
 
 class WorkflowDirector:
@@ -48,6 +49,7 @@ class WorkflowDirector:
         self.initialize_constraints()
         self.project_state_reporter = ProjectStateReporter(self)
         self.documentation_health_checker = DocumentationHealthChecker()
+        self.project_structure_manager = ProjectStructureManager()
 
     def load_config(self, config_path):
         try:

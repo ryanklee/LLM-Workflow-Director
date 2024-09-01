@@ -57,7 +57,34 @@ func (e *Engine) ValidateAll(state map[string]interface{}) (bool, []string) {
 		}
 	}
 
+	// Add project structure validation
+	if projectStructure, ok := state["project_structure"].(map[string]interface{}); ok {
+		if isValid, err := validateProjectStructure(projectStructure); !isValid {
+			valid = false
+			violations = append(violations, fmt.Sprintf("ProjectStructure: %v", err))
+		}
+	}
+
 	return valid, violations
+}
+
+func validateProjectStructure(structure map[string]interface{}) (bool, error) {
+	requiredDirs := []string{"src", "tests", "docs", "data"}
+	requiredFiles := []string{"README.md", "requirements.txt", ".gitignore"}
+
+	for _, dir := range requiredDirs {
+		if _, ok := structure[dir]; !ok {
+			return false, fmt.Errorf("missing required directory: %s", dir)
+		}
+	}
+
+	for _, file := range requiredFiles {
+		if _, ok := structure[file]; !ok {
+			return false, fmt.Errorf("missing required file: %s", file)
+		}
+	}
+
+	return true, nil
 }
 
 // GetConstraint retrieves a constraint by name
