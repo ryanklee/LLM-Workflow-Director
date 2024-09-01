@@ -254,12 +254,12 @@ def test_workflow_director_run(mock_llm_manager):
 
 def test_process_llm_response(caplog):
     director = WorkflowDirector()
-    response = """
-    task_progress: 0.75
-    state_updates: {'key': 'value', 'another_key': 42}
-    actions: update_workflow, run_tests
-    suggestions: Review code, Update documentation
-    """
+    response = {
+        "task_progress": 0.75,
+        "state_updates": {'key': 'value', 'another_key': 42},
+        "actions": ["update_workflow", "run_tests"],
+        "suggestions": ["Review code", "Update documentation"]
+    }
     
     with caplog.at_level(logging.INFO):
         director._process_llm_response(response)

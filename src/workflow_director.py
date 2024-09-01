@@ -204,6 +204,9 @@ class WorkflowDirector:
                     for suggestion in suggestions:
                         self.user_interaction_handler.display_message(f"- {suggestion}")
                 
+                if 'response' in structured_response:
+                    self.user_interaction_handler.display_message(f"LLM Response: {structured_response['response']}")
+                
                 self.logger.info("LLM response processed successfully")
             else:
                 self.logger.warning(f"Unexpected response format: {type(structured_response)}")

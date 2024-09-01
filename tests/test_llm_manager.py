@@ -38,7 +38,9 @@ def test_llm_manager_query_with_context():
             }
         }
         result = manager.query("Test prompt", context)
-        assert isinstance(result, str)
+        assert isinstance(result, dict)
+        assert "response" in result
+        assert result["response"] == "Test response"
         assert "Test response" in result
         assert "(ID:" in result
         mock_client.return_value.query.assert_called_once()
@@ -56,21 +58,23 @@ def test_llm_manager_error_handling():
         mock_client.return_value.query.side_effect = [Exception("Test error"), Exception("Retry error"), "Success"]
         manager = LLMManager()
         result = manager.query("Test prompt")
-        assert "Success" in result
+        assert isinstance(result, dict)
+        assert "error" in result
+        assert "Error querying LLM after 3 attempts" in result["error"]
         assert mock_client.return_value.query.call_count == 3
 
 def test_llm_manager_query_with_tiers():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
         mock_client.return_value.query.side_effect = ["Fast response", "Balanced response", "Powerful response"]
         manager = LLMManager()
-        
+            
         fast_result = manager.query("Short prompt", tier='fast')
         balanced_result = manager.query("Medium length prompt", tier='balanced')
         powerful_result = manager.query("Complex prompt", tier='powerful')
-        
-        assert "Fast response" in fast_result
-        assert "Balanced response" in balanced_result
-        assert "Powerful response" in powerful_result
+            
+        assert isinstance(fast_result, dict) and fast_result.get("response") == "Fast response"
+        assert isinstance(balanced_result, dict) and balanced_result.get("response") == "Balanced response"
+        assert isinstance(powerful_result, dict) and powerful_result.get("response") == "Powerful response"
         
         assert mock_client.return_value.query.call_count == 3
         mock_client.return_value.query.assert_any_call("Short prompt", None, 'fast')
@@ -83,15 +87,15 @@ def test_llm_manager_caching():
         manager = LLMManager()
         prompt = "Test prompt"
         context = {"key": "value"}
-        
+            
         result1 = manager.query(prompt, context)
-        assert "Response 1" in result1
-        
+        assert isinstance(result1, dict) and result1.get("response") == "Response 1"
+            
         result2 = manager.query(prompt, context)
         assert result2 == result1  # Should return cached result
-        
+            
         result3 = manager.query("Different prompt", context)
-        assert "Response 2" in result3
+        assert isinstance(result3, dict) and result3.get("response") == "Response 2"
         assert result3 != result1
         
         manager.clear_cache()

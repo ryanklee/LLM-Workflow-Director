@@ -31,6 +31,12 @@ class LLMManager:
                 return response_with_id
             except Exception as e:
                 retry_count += 1
+                self.logger.warning(f"Error querying LLM microservice (attempt {retry_count}/{max_retries}): {str(e)} (tier: {tier})")
+                if retry_count == max_retries:
+                    self.logger.error(f"Max retries reached. Returning error message.")
+                    return {"error": f"Error querying LLM after {max_retries} attempts: {str(e)}"}
+            except Exception as e:
+                retry_count += 1
                 error_message = str(e)
                 self.logger.warning(f"Error querying LLM microservice (attempt {retry_count}/{max_retries}): {error_message} (tier: {tier})")
                 if retry_count == max_retries:
@@ -129,6 +135,9 @@ class LLMManager:
 
             if current_key:
                 structured_response[current_key] = self._process_value(current_key, current_value)
+
+            if not structured_response:
+                return {"response": response}
 
             return structured_response
         except Exception as e:
