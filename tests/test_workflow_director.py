@@ -175,25 +175,40 @@ def test_workflow_director_run(mock_llm_manager):
 
 def test_process_llm_response(caplog):
     director = WorkflowDirector()
-    response = "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: update_workflow, another_action"
+    response = """
+    task_progress: 0.75
+    state_updates: {'key': 'value', 'another_key': 42}
+    actions: update_workflow, run_tests
+    suggestions: Review code, Update documentation
+    """
     
     with caplog.at_level(logging.INFO):
         director._process_llm_response(response)
     
-    assert "Updated stage progress to 0.5" in caplog.text
+    assert "Updated stage progress to 0.75" in caplog.text
     assert "Updated project state: key = value" in caplog.text
-    assert "Handling LLM action: update_workflow" in caplog.text
-    assert "Handling LLM action: another_action" in caplog.text
+    assert "Updated project state: another_key = 42" in caplog.text
+    assert "LLM response processed successfully" in caplog.text
 
 def test_parse_llm_response():
     director = WorkflowDirector()
-    response = "Key1: Value1\nKey2: Value2\nKey3: Value3 with: colon"
+    response = """
+    task_progress: 0.75
+    state_updates: {'key': 'value', 'another_key': 42}
+    actions: update_workflow, run_tests
+    suggestions: Review code, Update documentation
+    multi_line_key: This is a
+     multi-line value
+     with several lines
+    """
     parsed = director._parse_llm_response(response)
     
     assert parsed == {
-        'key1': 'Value1',
-        'key2': 'Value2',
-        'key3': 'Value3 with: colon'
+        'task_progress': 0.75,
+        'state_updates': {'key': 'value', 'another_key': 42},
+        'actions': ['update_workflow', 'run_tests'],
+        'suggestions': ['Review code', 'Update documentation'],
+        'multi_line_key': 'This is a multi-line value with several lines'
     }
 
 @patch('src.workflow_director.LLMManager')

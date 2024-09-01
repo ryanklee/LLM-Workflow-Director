@@ -27,9 +27,42 @@ The LLM-Workflow Director is a Python-based system designed to guide AI-assisted
 7. **Direction Generation**: Create actionable directions for Aider, emphasizing current priorities or addressing insufficiencies, using LLM CLI for complex reasoning tasks.
 8. **Aider Execution**: Send directions to Aider and await task completion.
 9. **Result Processing**: Analyze Aider's output and update project state.
+   - Parse structured LLM responses, including task progress, state updates, actions, and suggestions.
+   - Update stage progress based on LLM-reported task completion.
+   - Apply state updates to the project's current state.
+   - Execute LLM-suggested actions within the workflow.
+   - Present LLM suggestions to the user for consideration.
 10. **User Interaction**: Handle user input when required.
 11. **Progress Evaluation**: Assess step/stage completion and manage transitions based on sufficiency evaluation.
-12. **Loop or Exit**: Continue the loop if there are more steps, or exit if the workflow is complete.
+12. **Stage Transition**: If transitioning to a new stage, perform necessary setup and provide stage information.
+13. **Loop or Exit**: Continue the loop if there are more steps, or exit if the workflow is complete.
+
+## 5. LLM Response Handling
+
+The WorkflowDirector processes structured LLM responses with the following components:
+
+1. **Task Progress**: A float value between 0 and 1 indicating the progress of the current task or stage.
+2. **State Updates**: A dictionary of key-value pairs to update in the project state.
+3. **Actions**: A list of actions for the WorkflowDirector to execute.
+4. **Suggestions**: A list of suggestions for the user to consider.
+
+The LLM response is parsed and processed to:
+- Update the stage progress
+- Modify the project state
+- Execute suggested actions
+- Present suggestions to the user
+
+This structured approach allows for more precise control and feedback within the workflow, enhancing the collaboration between the LLM, the WorkflowDirector, and the user.
+
+## 4. Stage Transition Process
+
+1. **Transition Validation**: Check if the transition to the next stage is allowed based on current state and constraints.
+2. **Completion of Current Stage**: Mark the current stage as completed and update progress.
+3. **State Update**: Update the project state to reflect the completion of the current stage.
+4. **New Stage Initialization**: Set up the new stage, including loading stage-specific configurations and constraints.
+5. **User Notification**: Inform the user about the transition to the new stage and provide relevant information.
+6. **Task Preparation**: Load and display tasks associated with the new stage.
+7. **Error Handling**: Manage any issues that occur during the transition process and provide appropriate feedback.
 
 ## 4. Key Components
 

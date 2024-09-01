@@ -139,27 +139,29 @@ class WorkflowDirector:
     def _process_llm_response(self, response: str):
         self.logger.info("Processing LLM response")
         try:
-            # Parse the response
             parsed_response = self._parse_llm_response(response)
             
-            # Update task progress
             if 'task_progress' in parsed_response:
                 progress = float(parsed_response['task_progress'])
                 self.update_stage_progress(progress)
-                self.logger.info(f"Updated stage progress to {progress}")
+                self.logger.info(f"Updated stage progress to {progress:.2f}")
             
-            # Update project state
             if 'state_updates' in parsed_response:
-                state_updates = eval(parsed_response['state_updates'])
+                state_updates = parsed_response['state_updates']
                 for key, value in state_updates.items():
                     self.state_manager.set(key, value)
                     self.logger.info(f"Updated project state: {key} = {value}")
             
-            # Handle any actions or recommendations
             if 'actions' in parsed_response:
-                actions = parsed_response['actions'].split(',')
+                actions = parsed_response['actions']
                 for action in actions:
-                    self._handle_llm_action(action.strip())
+                    self._handle_llm_action(action)
+            
+            if 'suggestions' in parsed_response:
+                suggestions = parsed_response['suggestions']
+                self.user_interaction_handler.display_message("LLM Suggestions:")
+                for suggestion in suggestions:
+                    self.user_interaction_handler.display_message(f"- {suggestion}")
             
             self.logger.info("LLM response processed successfully")
         except Exception as e:
@@ -167,14 +169,34 @@ class WorkflowDirector:
             self.error_handler.handle_error(e)
 
     def _parse_llm_response(self, response: str) -> dict:
-        # TODO: Implement more sophisticated parsing logic
-        # For now, we'll use a simple key-value parsing
         parsed = {}
+        current_key = None
+        current_value = []
+
         for line in response.split('\n'):
-            if ':' in line:
-                key, value = line.split(':', 1)
-                parsed[key.strip().lower()] = value.strip()
+            if ':' in line and not line.startswith(' '):
+                if current_key:
+                    parsed[current_key] = self._process_value(current_key, current_value)
+                current_key = line.split(':', 1)[0].strip().lower()
+                current_value = [line.split(':', 1)[1].strip()]
+            elif current_key:
+                current_value.append(line.strip())
+
+        if current_key:
+            parsed[current_key] = self._process_value(current_key, current_value)
+
         return parsed
+
+    def _process_value(self, key: str, value: List[str]) -> Any:
+        joined_value = ' '.join(value).strip()
+        if key == 'task_progress':
+            return float(joined_value)
+        elif key == 'state_updates':
+            return eval(joined_value)
+        elif key in ['actions', 'suggestions']:
+            return [item.strip() for item in joined_value.split(',')]
+        else:
+            return joined_value
 
     def _handle_llm_action(self, action: str):
         self.logger.info(f"Handling LLM action: {action}")
@@ -463,19 +485,26 @@ class WorkflowDirector:
 
     def transition_to(self, next_stage):
         self.logger.info(f"Attempting to transition from {self.current_stage} to {next_stage}")
-        if self.can_transition_to(next_stage):
+        try:
+            if not self.can_transition_to(next_stage):
+                raise ValueError(f"Transition to {next_stage} is not allowed")
+
             previous_stage = self.current_stage
             self.current_stage = next_stage
             self.completed_stages.add(previous_stage)
-            self.stage_progress[previous_stage] = 1.0  # Ensure the previous stage is marked as 100% complete
+            self.stage_progress[previous_stage] = 1.0
+
             self.user_interaction_handler.display_message(f"Transitioned to stage: {next_stage}")
             self.logger.info(f"Successfully transitioned to stage: {next_stage}")
             self.logger.debug(f"Updated completed stages: {self.completed_stages}")
+
+            # Trigger any necessary actions or callbacks for the new stage
+            self._on_stage_enter(next_stage)
+
             return True
-        else:
-            self.user_interaction_handler.display_message(f"Cannot transition to stage: {next_stage}")
-            self.logger.warning(f"Transition to {next_stage} not allowed")
-            self.logger.debug(f"Current completed stages: {self.completed_stages}")
+        except Exception as e:
+            self.logger.error(f"Error during transition to {next_stage}: {str(e)}")
+            self.user_interaction_handler.display_message(f"Failed to transition to stage: {next_stage}")
             return False
 
     def get_next_stage(self):
@@ -487,6 +516,20 @@ class WorkflowDirector:
     def evaluate_condition(self, condition):
         # This is a placeholder. In a real implementation, you would evaluate the condition based on the current state.
         return True
+
+    def _on_stage_enter(self, stage_name):
+        self.logger.info(f"Entering stage: {stage_name}")
+        stage_data = self.stages.get(stage_name)
+        if stage_data:
+            self.user_interaction_handler.display_message(f"Entered stage: {stage_name}")
+            self.user_interaction_handler.display_message(f"Description: {stage_data.get('description', 'No description available')}")
+            tasks = stage_data.get('tasks', [])
+            if tasks:
+                self.user_interaction_handler.display_message("Tasks for this stage:")
+                for task in tasks:
+                    self.user_interaction_handler.display_message(f"- {task}")
+        else:
+            self.logger.warning(f"No data found for stage: {stage_name}")
     def initialize_constraints(self):
         for stage in self.config['stages']:
             if 'constraints' in stage:
