@@ -4,6 +4,7 @@ import yaml
 import sys
 import os
 from typing import Dict, Any, List
+from datetime import datetime
 
 # Add the project root directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -62,21 +63,36 @@ class WorkflowDirector:
             }
 
     def run(self):
-        self.logger.info("Starting LLM Workflow Director")
+        self.logger.info("Starting LLM Workflow Director", extra={
+            'action': 'start_workflow',
+            'current_stage': self.current_stage
+        })
         self.user_interaction_handler.display_message("Starting LLM Workflow Director")
         try:
             while True:
-                self.logger.debug("Starting new iteration of run loop")
+                self.logger.debug("Starting new iteration of run loop", extra={
+                    'action': 'run_loop_iteration',
+                    'current_stage': self.current_stage
+                })
                 current_stage = self.get_current_stage()
                 self.user_interaction_handler.display_message(f"Current stage: {current_stage['name']}")
                 self.user_interaction_handler.display_message(f"Description: {current_stage['description']}")
                 self.user_interaction_handler.display_message("Tasks:")
                 for task in current_stage['tasks']:
                     self.user_interaction_handler.display_message(f"- {task}")
-                self.user_interaction_handler.display_message(f"Stage progress: {self.get_stage_progress():.2%}")
+                stage_progress = self.get_stage_progress()
+                self.user_interaction_handler.display_message(f"Stage progress: {stage_progress:.2%}")
+                self.logger.info(f"Current stage: {current_stage['name']}, Progress: {stage_progress:.2%}", extra={
+                    'action': 'display_stage_info',
+                    'stage_name': current_stage['name'],
+                    'stage_progress': stage_progress
+                })
                 user_input = self.user_interaction_handler.prompt_user("Enter a command ('next' for next stage, 'complete' to finish current stage, 'exit' to quit):")
                 
-                self.logger.debug(f"Received user input: {user_input}")
+                self.logger.debug(f"Received user input: {user_input}", extra={
+                    'action': 'user_input',
+                    'input': user_input
+                })
                 
                 if user_input.lower() == 'exit':
                     self.logger.info("Exit command received. Ending run loop.")
@@ -614,7 +630,8 @@ class WorkflowDirector:
         console_handler.setFormatter(console_formatter)
         
         # Create a FileHandler for persistent logging
-        file_handler = logging.FileHandler('workflow_director.log')
+        log_file = f'workflow_director_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'
+        file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.DEBUG)
         file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         file_handler.setFormatter(file_formatter)
@@ -624,8 +641,9 @@ class WorkflowDirector:
         self.logger.addHandler(file_handler)
         
         # Create a JSON formatter for structured logging
-        json_formatter = jsonlogger.JsonFormatter('%(asctime)s %(name)s %(levelname)s %(message)s')
-        json_handler = logging.FileHandler('workflow_director_structured.log')
+        json_formatter = jsonlogger.JsonFormatter('%(timestamp)s %(name)s %(levelname)s %(message)s %(filename)s %(funcName)s %(lineno)d')
+        json_file = f'workflow_director_structured_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+        json_handler = logging.FileHandler(json_file)
         json_handler.setFormatter(json_formatter)
         json_handler.setLevel(logging.DEBUG)
         self.logger.addHandler(json_handler)
@@ -633,5 +651,7 @@ class WorkflowDirector:
         self.logger.info("Logging setup completed for WorkflowDirector", extra={
             'component': 'WorkflowDirector',
             'action': 'setup_logging',
-            'status': 'completed'
+            'status': 'completed',
+            'log_file': log_file,
+            'json_file': json_file
         })

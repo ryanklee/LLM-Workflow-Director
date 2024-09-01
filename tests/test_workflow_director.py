@@ -24,6 +24,39 @@ def test_workflow_director_initialization():
     assert hasattr(director, 'llm_manager')
     assert hasattr(director, 'stages')
     assert hasattr(director, 'transitions')
+    assert hasattr(director, 'logger')
+
+def test_workflow_director_logging_setup(tmpdir):
+    log_dir = tmpdir.mkdir("logs")
+    with patch('src.workflow_director.logging.FileHandler') as mock_file_handler:
+        director = WorkflowDirector()
+        director._setup_logging()
+        
+        # Check that file handlers were created
+        assert mock_file_handler.call_count == 2
+        
+        # Check that the logger was set up correctly
+        assert director.logger.level == logging.DEBUG
+        assert len(director.logger.handlers) == 3  # Console, File, and JSON handlers
+
+def test_workflow_director_json_logging(tmpdir):
+    log_dir = tmpdir.mkdir("logs")
+    with patch('src.workflow_director.logging.FileHandler') as mock_file_handler:
+        director = WorkflowDirector()
+        director._setup_logging()
+        
+        # Trigger a log message
+        director.logger.info("Test log message", extra={'test_key': 'test_value'})
+        
+        # Check the JSON log file
+        json_handler = director.logger.handlers[2]
+        json_log_file = json_handler.baseFilename
+        with open(json_log_file, 'r') as f:
+            log_entry = json.loads(f.readline())
+            assert 'timestamp' in log_entry
+            assert log_entry['levelname'] == 'INFO'
+            assert log_entry['message'] == 'Test log message'
+            assert log_entry['test_key'] == 'test_value'
 
 def test_workflow_director_get_current_stage():
     director = WorkflowDirector()
