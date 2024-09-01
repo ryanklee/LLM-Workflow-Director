@@ -218,7 +218,7 @@ def test_workflow_director_llm_integration(mock_llm_manager, caplog):
 
     # Print captured logs
     print("Captured logs:")
-    for record in log_capture.records:
+    for record in caplog.records:
         print(f"{record.levelname}: {record.getMessage()}")
 
     # Print mock call counts
