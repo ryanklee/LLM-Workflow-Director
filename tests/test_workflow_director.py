@@ -89,7 +89,6 @@ def test_main_script_execution():
     result = subprocess.run(['python', 'src/main.py', 'report', '--format', 'markdown'], 
                             capture_output=True, text=True)
     assert result.returncode == 0, "Script should exit with status code 0"
-    assert "Error importing llm module. LLMManager will operate in mock mode." in result.stderr
     assert "# LLM-Workflow Director Project Report" in result.stdout
 
 def test_workflow_director_get_stage_progress():

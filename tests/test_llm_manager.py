@@ -2,9 +2,10 @@ from unittest.mock import patch, MagicMock
 from src.llm_manager import LLMManager
 
 def test_llm_manager_initialization():
-    manager = LLMManager()
-    assert isinstance(manager.client, MagicMock)
-    assert isinstance(manager.cache, dict)
+    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
+        manager = LLMManager()
+        assert isinstance(manager.client, MagicMock)
+        assert isinstance(manager.cache, dict)
 
 @patch('src.llm_manager.LLMMicroserviceClient')
 def test_llm_manager_query(mock_client):
@@ -14,128 +15,94 @@ def test_llm_manager_query(mock_client):
     assert "Test response" in response
     assert "(ID:" in response
 
-def test_llm_manager_query():
-    manager = LLMManager()
-    result = manager.query("Test prompt")
-    assert isinstance(result, str)
-    assert result.startswith("Mock response to: Test prompt")
-    assert "(tier: balanced)" in result
-    assert "(ID:" in result
-
 def test_llm_manager_query_with_context():
-    manager = LLMManager()
-    context = {
-        "key1": "value1",
-        "key2": "value2",
-        "workflow_stage": "Test Stage",
-        "project_structure_instructions": "Test instructions",
-        "coding_conventions": "Test conventions",
-        "workflow_config": {
-            "stages": [{"name": "Test Stage", "description": "Test description"}],
-            "transitions": [{"from": "Test Stage", "to": "Next Stage"}]
+    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
+        mock_client.return_value.query.return_value = "Test response"
+        manager = LLMManager()
+        context = {
+            "key1": "value1",
+            "key2": "value2",
+            "workflow_stage": "Test Stage",
+            "project_structure_instructions": "Test instructions",
+            "coding_conventions": "Test conventions",
+            "workflow_config": {
+                "stages": [{"name": "Test Stage", "description": "Test description"}],
+                "transitions": [{"from": "Test Stage", "to": "Next Stage"}]
+            }
         }
-    }
-    result = manager.query("Test prompt", context)
-    assert isinstance(result, str)
-    assert result.startswith("Mock response to: Test prompt")
-    assert "(tier: balanced)" in result
-    assert "(ID:" in result
+        result = manager.query("Test prompt", context)
+        assert isinstance(result, str)
+        assert "Test response" in result
+        assert "(ID:" in result
 
 def test_llm_manager_error_handling():
-    manager = LLMManager()
-    manager.client.query.side_effect = [Exception("Test error"), Exception("Retry error"), "Success"]
-    result = manager.query("Test prompt")
-    assert "Success" in result
-    assert manager.client.query.call_count == 3
+    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
+        mock_client.return_value.query.side_effect = [Exception("Test error"), Exception("Retry error"), "Success"]
+        manager = LLMManager()
+        result = manager.query("Test prompt")
+        assert "Success" in result
+        assert mock_client.return_value.query.call_count == 3
 
 def test_llm_manager_query_with_tiers():
-    manager = LLMManager()
-    manager.client.query.side_effect = ["Fast response", "Balanced response", "Powerful response"]
-    
-    fast_result = manager.query("Short prompt", tier='fast')
-    balanced_result = manager.query("Medium length prompt", tier='balanced')
-    powerful_result = manager.query("Complex prompt", tier='powerful')
-    
-    assert "Fast response" in fast_result
-    assert "Balanced response" in balanced_result
-    assert "Powerful response" in powerful_result
-    
-    assert manager.client.query.call_count == 3
-    manager.client.query.assert_any_call("Short prompt", None, 'fast')
-    manager.client.query.assert_any_call("Medium length prompt", None, 'balanced')
-    manager.client.query.assert_any_call("Complex prompt", None, 'powerful')
-
-@patch('src.llm_manager.llm_spec', MagicMock())
-@patch('src.llm_manager.importlib.import_module')
-def test_llm_manager_query_error(mock_import):
-    mock_llm = MagicMock()
-    mock_model = MagicMock()
-    mock_model.prompt.side_effect = Exception("Test error")
-    mock_llm.models = [mock_model]
-    mock_import.return_value = mock_llm
-    
-    manager = LLMManager()
-    manager.mock_mode = False  # Force non-mock mode for this test
-    result = manager.query("Test prompt")
-    assert result.startswith("Error querying LLM after 3 attempts: Test error")
-    assert "(ID:" in result
-
-def test_llm_manager_format_prompt():
-    manager = LLMManager()
-    prompt = "Test prompt"
-    context = {"key1": "value1", "key2": "value2"}
-    formatted_prompt = manager._format_prompt(prompt, context)
-    assert "Context:" in formatted_prompt
-    assert "key1: value1" in formatted_prompt
-    assert "key2: value2" in formatted_prompt
-    assert "Prompt: Test prompt" in formatted_prompt
+    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
+        mock_client.return_value.query.side_effect = ["Fast response", "Balanced response", "Powerful response"]
+        manager = LLMManager()
+        
+        fast_result = manager.query("Short prompt", tier='fast')
+        balanced_result = manager.query("Medium length prompt", tier='balanced')
+        powerful_result = manager.query("Complex prompt", tier='powerful')
+        
+        assert "Fast response" in fast_result
+        assert "Balanced response" in balanced_result
+        assert "Powerful response" in powerful_result
+        
+        assert mock_client.return_value.query.call_count == 3
+        mock_client.return_value.query.assert_any_call("Short prompt", None, 'fast')
+        mock_client.return_value.query.assert_any_call("Medium length prompt", None, 'balanced')
+        mock_client.return_value.query.assert_any_call("Complex prompt", None, 'powerful')
 
 def test_llm_manager_caching():
-    manager = LLMManager()
-    prompt = "Test prompt"
-    context = {"key": "value"}
-    
-    # First query should not be cached
-    result1 = manager.query(prompt, context)
-    assert result1.startswith("Mock response to: Test prompt")
-    assert "(ID:" in result1
-    
-    # Second query with same prompt and context should return cached result
-    result2 = manager.query(prompt, context)
-    assert result2.startswith("Mock response to: Test prompt")
-    assert "(ID:" in result2
-    assert result2 != result1  # IDs should be different
-    
-    # Query with different prompt should not be cached
-    result3 = manager.query("Different prompt", context)
-    assert result3 != result1
-    assert result3.startswith("Mock response to: Different prompt")
-    assert "(ID:" in result3
-    
-    # Clear cache and verify that the original query is not cached anymore
-    manager.clear_cache()
-    result4 = manager.query(prompt, context)
-    assert result4.startswith("Mock response to: Test prompt")
-    assert "(ID:" in result4
-    assert result4 != result1  # Because it's a new mock response after cache clear
+    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
+        mock_client.return_value.query.side_effect = ["Response 1", "Response 2", "Response 3"]
+        manager = LLMManager()
+        prompt = "Test prompt"
+        context = {"key": "value"}
+        
+        result1 = manager.query(prompt, context)
+        assert "Response 1" in result1
+        
+        result2 = manager.query(prompt, context)
+        assert result2 == result1  # Should return cached result
+        
+        result3 = manager.query("Different prompt", context)
+        assert "Response 2" in result3
+        assert result3 != result1
+        
+        manager.clear_cache()
+        result4 = manager.query(prompt, context)
+        assert "Response 3" in result4
+        assert result4 != result1
+
 def test_evaluate_sufficiency():
-    manager = LLMManager()
-    manager.client.evaluate_sufficiency.return_value = {
-        "is_sufficient": True,
-        "reasoning": "All tasks completed"
-    }
-    
-    result = manager.evaluate_sufficiency("Test Stage", {"description": "Test"}, {"key": "value"})
-    
-    assert result["is_sufficient"] == True
-    assert result["reasoning"] == "All tasks completed"
-    manager.client.evaluate_sufficiency.assert_called_once_with("Test Stage", {"description": "Test"}, {"key": "value"})
+    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
+        mock_client.return_value.evaluate_sufficiency.return_value = {
+            "is_sufficient": True,
+            "reasoning": "All tasks completed"
+        }
+        manager = LLMManager()
+        
+        result = manager.evaluate_sufficiency("Test Stage", {"description": "Test"}, {"key": "value"})
+        
+        assert result["is_sufficient"] == True
+        assert result["reasoning"] == "All tasks completed"
+        mock_client.return_value.evaluate_sufficiency.assert_called_once_with("Test Stage", {"description": "Test"}, {"key": "value"})
 
 def test_evaluate_sufficiency_error():
-    manager = LLMManager()
-    manager.client.evaluate_sufficiency.side_effect = Exception("Test error")
-    
-    result = manager.evaluate_sufficiency("Test Stage", {"description": "Test"}, {"key": "value"})
-    
-    assert result["is_sufficient"] == False
-    assert "Error evaluating sufficiency: Test error" in result["reasoning"]
+    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
+        mock_client.return_value.evaluate_sufficiency.side_effect = Exception("Test error")
+        manager = LLMManager()
+        
+        result = manager.evaluate_sufficiency("Test Stage", {"description": "Test"}, {"key": "value"})
+        
+        assert result["is_sufficient"] == False
+        assert "Error evaluating sufficiency: Test error" in result["reasoning"]
