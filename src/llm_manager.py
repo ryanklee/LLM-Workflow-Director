@@ -71,7 +71,12 @@ class LLMManager:
             try:
                 self.logger.info(f"Retrying LLM query (attempt {retry_count + 1}/{max_retries})")
                 response = model.prompt(formatted_prompt)
-                return response.text()
+                if hasattr(response, 'text') and callable(response.text):
+                    return response.text()
+                elif isinstance(response, str):
+                    return response
+                else:
+                    raise ValueError("Unexpected response type")
             except Exception as retry_e:
                 retry_count += 1
                 self.logger.error(f"Retry {retry_count} failed: {str(retry_e)}")

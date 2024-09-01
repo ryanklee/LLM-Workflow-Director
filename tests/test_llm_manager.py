@@ -51,7 +51,7 @@ def test_llm_manager_error_handling():
     manager = LLMManager()
     manager.mock_mode = False
     manager.models['balanced'] = MagicMock()
-    manager.models['balanced'].prompt.side_effect = [Exception("Test error"), Exception("Retry error"), "Success"]
+    manager.models['balanced'].prompt.side_effect = [Exception("Test error"), Exception("Retry error"), MagicMock(text=lambda: "Success")]
     result = manager.query("Test prompt")
     assert "Success" in result
     assert manager.models['balanced'].prompt.call_count == 3

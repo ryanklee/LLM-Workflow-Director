@@ -186,6 +186,7 @@ def test_workflow_director_llm_integration(mock_llm_manager):
     mock_user_interaction_handler.prompt_user.side_effect = ['test command', 'exit']
     
     director = WorkflowDirector(user_interaction_handler=mock_user_interaction_handler)
+    director.llm_manager = mock_llm_manager.return_value  # Explicitly set the mocked LLMManager
     director.run()
     
     assert mock_llm_manager.return_value.query.called

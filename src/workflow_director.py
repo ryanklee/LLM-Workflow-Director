@@ -38,11 +38,7 @@ class WorkflowDirector:
         self.vector_store = VectorStore()
         self.constraint_engine = ConstraintEngine()
         self.logger.info("ConstraintEngine initialized")
-        self.llm_manager = None
-        try:
-            self.llm_manager = LLMManager()
-        except Exception as e:
-            self.logger.error(f"Error initializing LLMManager: {str(e)}")
+        self.llm_manager = LLMManager()
         self.error_handler = ErrorHandler()
         self.user_interaction_handler = user_interaction_handler or UserInteractionHandler()
         self.config = self.load_config(config_path)
