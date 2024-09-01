@@ -66,17 +66,27 @@ func (cw *componentWrapper) Name() string {
 func (cw *componentWrapper) Execute(state interface{}) (interface{}, error) {
 	fmt.Printf("Executing component: %s\n", cw.name)
 	fmt.Printf("Component type: %T\n", cw.component)
+	var err error
+	var result interface{}
 	switch cw.name {
 	case "FileStateManager":
 		if sm, ok := cw.component.(state.StateManager); ok {
 			fmt.Println("Successfully type-asserted to StateManager")
-			return state, sm.UpdateState(state)
+			err := sm.UpdateState(state)
+			if err != nil {
+				return state, fmt.Errorf("failed to update state: %w", err)
+			}
+			return state, nil
 		} else {
 			fmt.Printf("Failed to type-assert to StateManager. Actual type: %T\n", cw.component)
+			return state, fmt.Errorf("component is not a StateManager")
 		}
 	case "BasicConstraintEngine":
 		if ce, ok := cw.component.(constraint.ConstraintEngine); ok {
-			return state, ce.Validate(state)
+			err = ce.Validate(state)
+			result = state
+		} else {
+			err = fmt.Errorf("component is not a ConstraintEngine")
 		}
 	case "BasicPriorityManager":
 		if pm, ok := cw.component.(priority.PriorityManager); ok {
@@ -92,7 +102,10 @@ func (cw *componentWrapper) Execute(state interface{}) (interface{}, error) {
 		}
 	case "BasicUserInteractionHandler":
 		if uih, ok := cw.component.(user.UserInteractionHandler); ok {
-			return uih.HandleInteraction(state)
+			if uih.IsInteractionRequired(state) {
+				return uih.HandleInteraction(state)
+			}
+			return state, nil
 		}
 	case "BasicProgressTracker":
 		if pt, ok := cw.component.(progress.ProgressTracker); ok {
@@ -107,6 +120,11 @@ func (cw *componentWrapper) Execute(state interface{}) (interface{}, error) {
 			return map[string]interface{}{"state": state, "sufficient": sufficient, "reason": reason}, nil
 		}
 	}
-	fmt.Printf("No matching case for component: %s\n", cw.name)
-	return state, nil
+	if err != nil {
+		fmt.Printf("Error executing component %s: %v\n", cw.name, err)
+	}
+	if result == nil {
+		result = state
+	}
+	return result, err
 }

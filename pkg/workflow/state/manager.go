@@ -9,5 +9,4 @@ type StateManager interface {
 	component.WorkflowComponent
 	GetCurrentState() (interface{}, error)
 	UpdateState(interface{}) error
-	Execute(state interface{}) (interface{}, error)
 }
