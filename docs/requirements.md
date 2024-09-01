@@ -86,14 +86,14 @@
     16.2. The system shall ensure comprehensive test coverage for all implemented features.
     16.3. The system shall direct Aider to run and report on test results regularly throughout the development process.
 
-17. Golang-Specific Requirements
-    17.1. The system shall utilize Go's concurrency features for parallel processing where applicable.
-    17.2. The system shall implement robust error handling using Go's error model.
-    17.3. The system shall use Go's strong typing to ensure data integrity throughout the workflow.
-    17.4. The system shall leverage Go's standard library for HTTP communication, file I/O, and other system interactions.
+17. Python-Specific Requirements
+    17.1. The system shall utilize Python's asyncio for concurrent processing where applicable.
+    17.2. The system shall implement robust error handling using Python's exception handling mechanisms.
+    17.3. The system shall use Python's type hinting to improve code readability and maintainability.
+    17.4. The system shall leverage Python's standard library and popular third-party libraries for HTTP communication, file I/O, and other system interactions.
     17.5. The system shall implement efficient data structures for state management and constraint checking.
-    17.6. The system shall compile to a single binary for easy distribution and deployment.
-    17.7. The system shall support cross-compilation for different target platforms.
+    17.6. The system shall be packaged as a Python module for easy distribution and deployment.
+    17.7. The system shall support cross-platform compatibility.
 
 18. LLM-Specific Output Enhancements
     18.1. The system shall generate comprehensive project context summaries for Claude-Sonnet 3.5 at the beginning of each interaction.

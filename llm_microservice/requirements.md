@@ -1,7 +1,7 @@
 # LLM Microservice API Requirements
 
 1. General Requirements
-   1.1. The microservice shall be implemented in Go.
+   1.1. The microservice shall be implemented in Python.
    1.2. The microservice shall provide a RESTful API for communication with the main LLM-Workflow Director.
    1.3. The microservice shall integrate with the LLM CLI utility.
    1.4. The microservice shall support multiple LLM models, including but not limited to OpenAI, Anthropic, and PaLM.

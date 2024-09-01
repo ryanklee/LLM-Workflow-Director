@@ -1,8 +1,8 @@
-# LLM-Workflow Director: Workflow Loop Design (Golang Implementation)
+# LLM-Workflow Director: Workflow Loop Design (Python Implementation)
 
 ## 1. Overview
 
-The LLM-Workflow Director is a Go-based system designed to guide AI-assisted software development processes. It emphasizes Domain-Driven Design (DDD) and Test-Driven Development (TDD) principles, ensuring systematic progression through crucial development stages.
+The LLM-Workflow Director is a Python-based system designed to guide AI-assisted software development processes. It emphasizes Domain-Driven Design (DDD) and Test-Driven Development (TDD) principles, ensuring systematic progression through crucial development stages.
 
 ## 2. Workflow Stages
 
