@@ -1,5 +1,5 @@
 import click
-from workflow_director import WorkflowDirector
+from src.workflow_director import WorkflowDirector
 
 
 @click.group()

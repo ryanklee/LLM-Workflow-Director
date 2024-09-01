@@ -6,13 +6,13 @@ import os
 # Add the project root directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from .state_manager import StateManager
-from .llm_manager import LLMManager
-from .error_handler import ErrorHandler
-from .vectorstore.vector_store import VectorStore
+from src.state_manager import StateManager
+from src.llm_manager import LLMManager
+from src.error_handler import ErrorHandler
+from src.vectorstore.vector_store import VectorStore
 from pkg.workflow.constraint.engine import Engine as ConstraintEngine
-from .project_state_reporter import ProjectStateReporter
-from .documentation_health_checker import DocumentationHealthChecker
+from src.project_state_reporter import ProjectStateReporter
+from src.documentation_health_checker import DocumentationHealthChecker
 
 
 class WorkflowDirector:
