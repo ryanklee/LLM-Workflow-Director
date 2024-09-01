@@ -94,26 +94,32 @@ class WorkflowDirector:
                 # Process all commands using LLM
                 tier = self.determine_query_tier(user_input)
                 context = self._prepare_llm_context()
-                query = f"Process this command: {user_input}"
+                prompt_template = "Process this command: {command}\nCurrent stage: {stage}\nContext: {context}"
+                prompt = self.llm_manager.generate_prompt(prompt_template, {
+                    "command": user_input,
+                    "stage": current_stage['name'],
+                    "context": str(context)
+                })
                 
                 self.logger.debug(f"Preparing to query LLM. Test mode: {getattr(self, '_test_mode', False)}")
                 
                 if self.llm_manager:
                     try:
-                        self.logger.debug(f"Querying LLM with: {query}")
-                        response = self.llm_manager.query(query, context=context, tier=tier)
-                        self.logger.debug(f"LLM response received: {response}")
+                        self.logger.debug(f"Querying LLM with prompt: {prompt[:100]}...")
+                        response = self.llm_manager.query(prompt, context=context, tier=tier)
+                        self.logger.debug(f"LLM response received: {response[:100]}...")
                         self.user_interaction_handler.display_message(f"LLM response: {response}")
                         self._process_llm_response(response)
                     except Exception as e:
                         self.logger.error(f"Error querying LLM: {str(e)}")
+                        self.user_interaction_handler.display_message(f"An error occurred while processing your command: {str(e)}")
                 else:
                     self.logger.warning("LLMManager not available. Skipping LLM query.")
                 
                 # Always call LLM query for testing purposes
                 if getattr(self, '_test_mode', False):
                     self.logger.debug("Test mode active. Forcing LLM query.")
-                    self.llm_manager.query(query, context=context, tier=tier)
+                    self.llm_manager.query(prompt, context=context, tier=tier)
                 
                 if user_input.lower() == 'next':
                     self.move_to_next_stage()

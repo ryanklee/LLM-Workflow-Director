@@ -27,6 +27,8 @@ The LLM-Workflow Director has reached a significant milestone:
 - Improved error handling and retry mechanism for LLM queries
 - Efficient caching system for LLM responses
 - Tiered LLM approach for optimized performance and cost management
+- Sophisticated prompt generation based on workflow configuration
+- Enhanced logging for better debugging and monitoring
 
 ## Installation
 
