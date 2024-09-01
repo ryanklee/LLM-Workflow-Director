@@ -83,6 +83,10 @@ stages:
       - Create project directory
       - Initialize git repository
       - Set up virtual environment
+    priorities:
+      - Create project directory
+      - Initialize git repository
+      - Set up virtual environment
 
   - name: Requirements Gathering
     description: Collect and document project requirements
@@ -90,10 +94,18 @@ stages:
       - Interview stakeholders
       - Document functional requirements
       - Document non-functional requirements
+    priorities:
+      - Interview stakeholders
+      - Document functional requirements
+      - Document non-functional requirements
 
   - name: Domain Modeling
     description: Create and refine the domain model
     tasks:
+      - Identify key domain concepts
+      - Define relationships between concepts
+      - Create initial domain model diagram
+    priorities:
       - Identify key domain concepts
       - Define relationships between concepts
       - Create initial domain model diagram
@@ -116,7 +128,72 @@ transitions:
     condition: Need to restart the project
 ```
 
-This configuration defines three stages and the allowed transitions between them. The SufficiencyEvaluator will use this configuration to determine if a stage is complete and if the workflow can progress to the next stage.
+This configuration defines three stages, their tasks, priorities, and the allowed transitions between them. The WorkflowDirector and SufficiencyEvaluator will use this configuration to manage the workflow and determine if a stage is complete.
+
+## LLM Configuration
+
+The LLM configuration is stored in a separate YAML file (`src/llm_config.yaml`) and includes settings for LLM tiers and prompt templates:
+
+```yaml
+tiers:
+  fast:
+    model: gpt-3.5-turbo
+    max_tokens: 100
+  balanced:
+    model: gpt-3.5-turbo
+    max_tokens: 500
+  powerful:
+    model: gpt-4
+    max_tokens: 1000
+
+prompt_templates:
+  default: |
+    Process this command: {command}
+    Current stage: {workflow_stage}
+    Stage description: {stage_description}
+    Stage tasks:
+    {stage_tasks}
+    Stage priorities:
+    {stage_priorities}
+    
+    Project structure:
+    {project_structure}
+    
+    Coding conventions:
+    {coding_conventions}
+    
+    Available transitions: {available_transitions}
+    Project progress: {project_progress:.2%}
+    
+    Workflow history:
+    {workflow_history}
+    
+    Additional context:
+    {context}
+
+  sufficiency_evaluation: |
+    Evaluate the sufficiency of the current stage in the workflow:
+
+    Stage Name: {stage_name}
+    Stage Description: {stage_description}
+    Stage Tasks:
+    {stage_tasks}
+
+    Current Project State:
+    {project_state}
+
+    Workflow History:
+    {workflow_history}
+
+    Based on the stage requirements, current project state, and workflow history, determine if this stage is sufficiently complete to move to the next stage.
+
+    Provide your evaluation in the following format:
+    Evaluation: [SUFFICIENT/INSUFFICIENT]
+    Reasoning: [Detailed explanation of your evaluation]
+    Next Steps: [If insufficient, provide specific steps to achieve sufficiency]
+```
+
+This configuration allows for easy customization of LLM settings and prompt templates, enabling context-aware interactions with the LLM throughout the workflow.
 
 ## Sufficiency Evaluation
 

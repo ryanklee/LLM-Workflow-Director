@@ -27,25 +27,13 @@ class SufficiencyEvaluator:
             return False, f"Error evaluating sufficiency: {str(e)}"
 
     def _generate_sufficiency_prompt(self, stage_name: str, stage_data: Dict[str, Any], project_state: Dict[str, Any]) -> str:
-        prompt = f"""
-        Evaluate the sufficiency of the current stage in the workflow:
-
-        Stage Name: {stage_name}
-        Stage Description: {stage_data.get('description', 'No description provided')}
-        Stage Tasks:
-        {self._format_tasks(stage_data.get('tasks', []))}
-
-        Current Project State:
-        {self._format_project_state(project_state)}
-
-        Based on the stage requirements and the current project state, determine if this stage is sufficiently complete to move to the next stage.
-
-        Provide your evaluation in the following format:
-        Evaluation: [SUFFICIENT/INSUFFICIENT]
-        Reasoning: [Detailed explanation of your evaluation]
-        Next Steps: [If insufficient, provide specific steps to achieve sufficiency]
-        """
-        return prompt
+        return self.llm_manager.generate_prompt('sufficiency_evaluation', {
+            "stage_name": stage_name,
+            "stage_description": stage_data.get('description', 'No description provided'),
+            "stage_tasks": self._format_tasks(stage_data.get('tasks', [])),
+            "project_state": self._format_project_state(project_state),
+            "workflow_history": '\n'.join([f"{entry['action']}: {entry['details']}" for entry in self.llm_manager._get_workflow_history()])
+        })
 
     def _format_tasks(self, tasks: List[str]) -> str:
         return "\n".join(f"- {task}" for task in tasks)

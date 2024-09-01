@@ -2,11 +2,25 @@ from unittest.mock import patch, MagicMock, ANY
 from src.llm_manager import LLMManager, LLMCostOptimizer
 
 def test_llm_manager_initialization():
-    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
+    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client, \
+         patch('src.llm_manager.yaml.safe_load') as mock_yaml_load:
+        mock_yaml_load.return_value = {
+            'tiers': {
+                'fast': {'model': 'gpt-3.5-turbo', 'max_tokens': 100},
+                'balanced': {'model': 'gpt-3.5-turbo', 'max_tokens': 500},
+                'powerful': {'model': 'gpt-4', 'max_tokens': 1000}
+            },
+            'prompt_templates': {
+                'default': 'Default template',
+                'sufficiency_evaluation': 'Sufficiency evaluation template'
+            }
+        }
         manager = LLMManager()
         assert isinstance(manager.client, MagicMock)
         assert isinstance(manager.cache, dict)
         assert isinstance(manager.cost_optimizer, LLMCostOptimizer)
+        assert 'default' in manager.prompt_templates
+        assert 'sufficiency_evaluation' in manager.prompt_templates
 
 @patch('src.llm_manager.LLMMicroserviceClient')
 def test_llm_manager_query(mock_client):

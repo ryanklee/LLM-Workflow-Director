@@ -110,34 +110,17 @@ class WorkflowDirector:
                 # Process all commands using LLM
                 tier = self.determine_query_tier(user_input)
                 context = self._prepare_llm_context()
-                prompt_template = """
-                Process this command: {command}
-                Current stage: {workflow_stage}
-                Stage description: {stage_description}
-                Stage tasks:
-                {stage_tasks}
-                Stage priorities:
-                {stage_priorities}
-                
-                Project structure:
-                {project_structure}
-                
-                Coding conventions:
-                {coding_conventions}
-                
-                Available transitions: {available_transitions}
-                Project progress: {project_progress:.2%}
-                
-                Additional context:
-                {context}
-                """
-                prompt = self.llm_manager.generate_prompt(prompt_template, {
+                prompt = self.llm_manager.generate_prompt('default', {
                     "command": user_input,
                     "workflow_stage": self.current_stage,
+                    "stage_description": self.stages[self.current_stage].get('description', ''),
+                    "stage_tasks": '\n'.join(self.stages[self.current_stage].get('tasks', [])),
+                    "stage_priorities": '\n'.join(self.priority_manager.get_priorities(self.current_stage)),
                     "project_structure": self.project_structure_manager.get_structure_instructions(),
                     "coding_conventions": self.convention_manager.get_aider_conventions(),
-                    "workflow_config": self.config,
-                    "completed_stages": list(self.completed_stages),
+                    "available_transitions": ', '.join([t['to'] for t in self.get_available_transitions()]),
+                    "project_progress": sum(self.stage_progress.values()) / len(self.stages),
+                    "workflow_history": '\n'.join([f"{entry['action']}: {entry['details']}" for entry in self._get_workflow_history()]),
                     "context": str(context)
                 })
                 
@@ -175,12 +158,28 @@ class WorkflowDirector:
             self.user_interaction_handler.display_message("Exiting LLM Workflow Director")
 
     def _prepare_llm_context(self) -> Dict[str, Any]:
-        return {
+        context = {
             'workflow_stage': self.current_stage,
             'project_structure_instructions': self.project_structure_manager.get_structure_instructions(),
             'coding_conventions': self.convention_manager.get_aider_conventions(),
-            'workflow_config': self.config
+            'workflow_config': self.config,
+            'completed_stages': list(self.completed_stages),
+            'stage_progress': self.stage_progress[self.current_stage],
+            'workflow_history': self._get_workflow_history()
         }
+        return context
+
+    def _get_workflow_history(self) -> List[Dict[str, Any]]:
+        return self.state_manager.get('workflow_history', [])
+
+    def _update_workflow_history(self, action: str, details: Dict[str, Any]):
+        history = self._get_workflow_history()
+        history.append({
+            'timestamp': datetime.now().isoformat(),
+            'action': action,
+            'details': details
+        })
+        self.state_manager.set('workflow_history', history[-10:])  # Keep last 10 entries
 
     def determine_query_tier(self, query: str) -> str:
         # Simple heuristic for determining the appropriate tier

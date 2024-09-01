@@ -48,22 +48,27 @@ class LLMCostOptimizer:
             return "Current usage appears to be well-balanced across tiers."
 
 class LLMManager:
-    def __init__(self):
+    def __init__(self, config_path='src/llm_config.yaml'):
         self.error_handler = ErrorHandler()
         self.logger = logging.getLogger(__name__)
         self.cache = {}
         self.client = LLMMicroserviceClient()
         self.cost_optimizer = LLMCostOptimizer()
-        self.tiers = {
+        self.config = self._load_config(config_path)
+        self.tiers = self.config.get('tiers', {
             'fast': {'model': 'gpt-3.5-turbo', 'max_tokens': 100},
             'balanced': {'model': 'gpt-3.5-turbo', 'max_tokens': 500},
             'powerful': {'model': 'gpt-4', 'max_tokens': 1000}
-        }
-        self.tiers = {
-            'fast': {'model': 'gpt-3.5-turbo', 'max_tokens': 100},
-            'balanced': {'model': 'gpt-3.5-turbo', 'max_tokens': 500},
-            'powerful': {'model': 'gpt-4', 'max_tokens': 1000}
-        }
+        })
+        self.prompt_templates = self.config.get('prompt_templates', {})
+
+    def _load_config(self, config_path):
+        try:
+            with open(config_path, 'r') as config_file:
+                return yaml.safe_load(config_file)
+        except Exception as e:
+            self.logger.error(f"Error loading LLM configuration: {str(e)}")
+            return {}
 
     def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: str = 'balanced') -> Dict[str, Any]:
         self.logger.debug(f"Querying LLM with prompt: {prompt[:50]}... (tier: {tier})")
@@ -291,12 +296,13 @@ class LLMManager:
             self.logger.error(f"Error evaluating sufficiency: {str(e)}")
             return {"is_sufficient": False, "reasoning": f"Error evaluating sufficiency: {str(e)}"}
 
-    def generate_prompt(self, template: str, context: Dict[str, Any]) -> str:
-        self.logger.debug(f"Generating prompt with template: {template[:50]}...")
+    def generate_prompt(self, template_name: str, context: Dict[str, Any]) -> str:
+        self.logger.debug(f"Generating prompt with template: {template_name}")
         try:
+            template = self.prompt_templates.get(template_name, self.prompt_templates['default'])
             enhanced_context = self._enhance_context(context)
             prompt = template.format(**enhanced_context)
-            self.logger.debug(f"Generated prompt: {prompt[:50]}...")
+            self.logger.debug(f"Generated prompt: {prompt[:100]}...")
             return prompt
         except KeyError as e:
             self.logger.error(f"Error generating prompt: Missing key {str(e)}", exc_info=True)

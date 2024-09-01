@@ -1,0 +1,56 @@
+tiers:
+  fast:
+    model: gpt-3.5-turbo
+    max_tokens: 100
+  balanced:
+    model: gpt-3.5-turbo
+    max_tokens: 500
+  powerful:
+    model: gpt-4
+    max_tokens: 1000
+
+prompt_templates:
+  default: |
+    Process this command: {command}
+    Current stage: {workflow_stage}
+    Stage description: {stage_description}
+    Stage tasks:
+    {stage_tasks}
+    Stage priorities:
+    {stage_priorities}
+    
+    Project structure:
+    {project_structure}
+    
+    Coding conventions:
+    {coding_conventions}
+    
+    Available transitions: {available_transitions}
+    Project progress: {project_progress:.2%}
+    
+    Workflow history:
+    {workflow_history}
+    
+    Additional context:
+    {context}
+
+  sufficiency_evaluation: |
+    Evaluate the sufficiency of the current stage in the workflow:
+
+    Stage Name: {stage_name}
+    Stage Description: {stage_description}
+    Stage Tasks:
+    {stage_tasks}
+
+    Current Project State:
+    {project_state}
+
+    Workflow History:
+    {workflow_history}
+
+    Based on the stage requirements, current project state, and workflow history, determine if this stage is sufficiently complete to move to the next stage.
+
+    Provide your evaluation in the following format:
+    Evaluation: [SUFFICIENT/INSUFFICIENT]
+    Reasoning: [Detailed explanation of your evaluation]
+    Next Steps: [If insufficient, provide specific steps to achieve sufficiency]
