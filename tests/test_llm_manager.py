@@ -43,7 +43,7 @@ def test_llm_manager_query_with_context():
         assert "Task 1" in call_args[0] and "Task 2" in call_args[0]
         assert "Project Structure:" in call_args[0]
         assert "Coding Conventions:" in call_args[0]
-        assert "stages" in call_args[0] and "transitions" in call_args[0]
+        assert "Stages:" in call_args[0] and "Transitions:" in call_args[0]
         assert "Task 1" in call_args[0] and "Task 2" in call_args[0]
 
 def test_llm_manager_error_handling():
