@@ -41,5 +41,22 @@ def report(config, format):
     report = director.generate_project_report(format)
     click.echo(report)
 
+@cli.command()
+@click.option('--preview', is_flag=True, help='Preview the conventions without saving')
+def conventions(preview):
+    """Generate or preview coding conventions"""
+    convention_manager = ConventionManager()
+    if preview:
+        click.echo(yaml.dump(convention_manager.conventions, default_flow_style=False))
+    else:
+        convention_manager.save_conventions('coding_conventions.yaml')
+        click.echo("Coding conventions saved to coding_conventions.yaml")
+
+@cli.command()
+def aider_conventions():
+    """Generate Aider-compatible coding conventions"""
+    convention_manager = ConventionManager()
+    click.echo(convention_manager.generate_aider_conventions())
+
 if __name__ == '__main__':
     cli()
