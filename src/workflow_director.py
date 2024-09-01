@@ -16,6 +16,11 @@ from pkg.workflow.constraint.engine import Engine as ConstraintEngine
 class WorkflowDirector:
     def __init__(self, config_path='src/workflow_config.yaml', input_func=input, print_func=print):
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
         self.state_manager = StateManager()
         self.vector_store = VectorStore()
         self.constraint_engine = ConstraintEngine()
@@ -116,10 +121,19 @@ class WorkflowDirector:
         return False
 
     def complete_current_stage(self):
+        self.logger.info(f"Completing stage: {self.current_stage}")
         self.stage_progress[self.current_stage] = 1.0
         self.completed_stages.add(self.current_stage)
         self.print_func(f"Completed stage: {self.current_stage}")
-        return self.move_to_next_stage()
+        self.logger.info(f"Stage {self.current_stage} marked as completed")
+        
+        next_stage = self.move_to_next_stage()
+        if next_stage:
+            self.logger.info(f"Moved to next stage: {self.current_stage}")
+            return True
+        else:
+            self.logger.info("No next stage available")
+            return False
 
     def get_stage_progress(self):
         return self.stage_progress[self.current_stage]
@@ -134,14 +148,18 @@ class WorkflowDirector:
         return stage_name in self.completed_stages
 
     def can_transition_to(self, next_stage):
+        self.logger.info(f"Checking if transition to {next_stage} is possible")
         available_transitions = [t for t in self.transitions if t['from'] == self.current_stage and t['to'] == next_stage]
         if not available_transitions:
+            self.logger.info(f"No transition defined from {self.current_stage} to {next_stage}")
             return False
 
         if self.is_stage_completed(self.current_stage):
+            self.logger.info(f"Stage {self.current_stage} is already completed, transition allowed")
             return True
 
         current_state = self.state_manager.get_all()
+        self.logger.debug(f"Current state: {current_state}")
         validation_result = self.constraint_engine.ValidateAll(current_state)
 
         if isinstance(validation_result, tuple) and len(validation_result) == 2:
@@ -149,10 +167,13 @@ class WorkflowDirector:
             if not is_valid:
                 self.logger.warning(f"Cannot transition to {next_stage}. Constraint violations: {', '.join(violations)}")
                 return False
+            else:
+                self.logger.info(f"All constraints passed for transition to {next_stage}")
         else:
-            self.logger.warning(f"Unexpected result from constraint validation: {validation_result}")
+            self.logger.error(f"Unexpected result from constraint validation: {validation_result}")
             return False
 
+        self.logger.info(f"Transition to {next_stage} is allowed")
         return True
 
     def evaluate_condition(self, condition):

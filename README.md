@@ -50,7 +50,13 @@ You can specify a custom configuration file using the `--config` option:
 python src/main.py run --config path/to/your/config.yaml
 ```
 
-During execution, you can enter commands or type 'next' to move to the next workflow stage. Type 'exit' to quit the program.
+During execution, you can enter commands or type 'next' to move to the next workflow stage. Type 'complete' to finish the current stage, or 'exit' to quit the program.
+
+The system now provides more detailed logging information. To view debug logs, set the environment variable `LOGLEVEL=DEBUG` before running the program:
+
+```
+LOGLEVEL=DEBUG python src/main.py run
+```
 
 For detailed usage instructions, refer to the documentation in the `docs/` directory.
 
