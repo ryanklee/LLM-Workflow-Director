@@ -109,7 +109,8 @@ func (cw *componentWrapper) Execute(state interface{}) (interface{}, error) {
 		}
 	case "BasicProgressTracker":
 		if pt, ok := cw.component.(progress.ProgressTracker); ok {
-			return state, pt.UpdateProgress(state)
+			err = pt.UpdateProgress(state)
+			return state, err
 		}
 	case "LLMEvaluator":
 		if se, ok := cw.component.(sufficiency.Evaluator); ok {
