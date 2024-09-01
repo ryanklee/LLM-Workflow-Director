@@ -4,6 +4,7 @@ import os
 import pytest
 import subprocess
 import logging
+import json
 from click.testing import CliRunner
 
 # Add the project root directory to the Python path
