@@ -33,7 +33,7 @@ func NewDirector(
 ) *Director {
 	mediator := NewWorkflowMediator(sm, ce, pm, dg, ai, uih, pt, se)
 	components := []component.WorkflowComponent{
-		sm.(component.WorkflowComponent),
+		sm,
 		ce.(component.WorkflowComponent),
 		pm.(component.WorkflowComponent),
 		dg.(component.WorkflowComponent),
