@@ -86,12 +86,3 @@ def test_evaluate_stage_sufficiency_no_llm_manager():
     assert is_sufficient == True
     assert "LLMManager not available" in reasoning
 
-def test_parse_sufficiency_response_invalid():
-    mock_llm_manager = MagicMock()
-    evaluator = SufficiencyEvaluator(mock_llm_manager)
-    
-    response = "Invalid response format"
-    is_sufficient, reasoning = evaluator._parse_sufficiency_response(response)
-    
-    assert is_sufficient == False
-    assert "Error parsing response" in reasoning

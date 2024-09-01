@@ -15,8 +15,7 @@ class LLMManager:
         cache_key = self._generate_cache_key(prompt, context, tier)
         if cache_key in self.cache:
             self.logger.info(f"Using cached response for prompt: {prompt[:50]}... (tier: {tier})")
-            cached_response = self.cache[cache_key]
-            return self._add_unique_id(cached_response)
+            return self.cache[cache_key]
 
         try:
             response = self.client.query(prompt, context, tier)
@@ -25,8 +24,9 @@ class LLMManager:
             self.logger.error(f"Error querying LLM microservice: {error_message} (tier: {tier})")
             response = self._handle_llm_error(prompt, context, tier, error_message)
 
-        self.cache[cache_key] = response
-        return self._add_unique_id(response)
+        response_with_id = self._add_unique_id(response)
+        self.cache[cache_key] = response_with_id
+        return response_with_id
 
     def _handle_llm_error(self, prompt: str, context: Optional[Dict[str, Any]], tier: str, error_message: str) -> str:
         retry_count = 0
