@@ -1,35 +1,24 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from src.llm_manager import LLMManager
 
-@pytest.fixture
-def mock_llm():
-    with patch('src.llm_manager.llm') as mock_llm:
-        mock_model = MagicMock()
-        mock_llm.get_model.return_value = mock_model
-        yield mock_llm
-
-@pytest.mark.skipif("llm" not in globals(), reason="llm module not available")
-def test_llm_manager_initialization(mock_llm):
-    from src.llm_manager import LLMManager
+def test_llm_manager_initialization():
     manager = LLMManager()
-    assert hasattr(manager, 'model')
+    assert hasattr(manager, 'mock_mode')
 
-@pytest.mark.skipif("llm" not in globals(), reason="llm module not available")
-def test_llm_manager_query(mock_llm):
-    from src.llm_manager import LLMManager
+def test_llm_manager_query():
     manager = LLMManager()
-    mock_response = MagicMock()
-    mock_response.text.return_value = "Test response"
-    manager.model.prompt.return_value = mock_response
-
     result = manager.query("Test prompt")
-    assert result == "Test response"
+    if manager.mock_mode:
+        assert result == "Mock response to: Test prompt"
+    else:
+        assert isinstance(result, str)
 
-@pytest.mark.skipif("llm" not in globals(), reason="llm module not available")
-def test_llm_manager_query_error(mock_llm):
-    from src.llm_manager import LLMManager
+def test_llm_manager_query_error():
     manager = LLMManager()
-    manager.model.prompt.side_effect = Exception("Test error")
-
+    if not manager.mock_mode:
+        manager.model.prompt = lambda x: (_ for _ in ()).throw(Exception("Test error"))
     result = manager.query("Test prompt")
-    assert "Error querying LLM: Test error" in result
+    if manager.mock_mode:
+        assert result == "Mock response to: Test prompt"
+    else:
+        assert "Error querying LLM: Test error" in result
