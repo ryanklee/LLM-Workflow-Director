@@ -137,6 +137,9 @@ class WorkflowDirector:
         if not available_transitions:
             return False
 
+        if self.is_stage_completed(self.current_stage):
+            return True
+
         current_state = self.state_manager.get_all()
         validation_result = self.constraint_engine.ValidateAll(current_state)
 
@@ -159,7 +162,7 @@ class WorkflowDirector:
         self.stage_progress[self.current_stage] = 1.0
         self.completed_stages.add(self.current_stage)
         self.print_func(f"Completed stage: {self.current_stage}")
-        return self.move_to_next_stage()
+        return True
 
     def evaluate_condition(self, condition):
         # This is a placeholder. In a real implementation, you would evaluate the condition based on the current state.
