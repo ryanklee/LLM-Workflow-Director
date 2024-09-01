@@ -283,6 +283,12 @@ class WorkflowDirector:
             self.logger.info(f"Transition to current stage {next_stage} is allowed")
             return True
 
+        # Check if there's a valid transition from any completed stage to the next stage
+        for completed_stage in self.completed_stages:
+            if any(t['from'] == completed_stage and t['to'] == next_stage for t in self.transitions):
+                self.logger.info(f"Valid transition found from completed stage {completed_stage} to {next_stage}")
+                return True
+
         self.logger.info(f"No valid transition found from {self.current_stage} to {next_stage}")
         return False
 
@@ -306,11 +312,15 @@ class WorkflowDirector:
         
         next_stage = self.get_next_stage()
         if next_stage:
-            if self.transition_to(next_stage):
-                self.logger.info(f"Moved to next stage: {self.current_stage}")
-                return True
+            if self.can_transition_to(next_stage):
+                if self.transition_to(next_stage):
+                    self.logger.info(f"Moved to next stage: {self.current_stage}")
+                    return True
+                else:
+                    self.logger.warning(f"Failed to transition to next stage: {next_stage}")
+                    return False
             else:
-                self.logger.warning(f"Failed to transition to next stage: {next_stage}")
+                self.logger.warning(f"Cannot transition to next stage: {next_stage}")
                 return False
         else:
             self.logger.info("No next stage available")
