@@ -103,19 +103,30 @@ class WorkflowDirector:
                 else:
                     if self.llm_manager:
                         tier = self.determine_query_tier(user_input)
-                        context = {
-                            'workflow_stage': self.current_stage,
-                            'project_structure_instructions': self.project_structure_manager.get_structure_instructions(),
-                            'coding_conventions': self.convention_manager.get_aider_conventions()
-                        }
+                        context = self._prepare_llm_context()
                         response = self.llm_manager.query(user_input, context=context, tier=tier)
                         self.user_interaction_handler.display_message(f"LLM response: {response}")
+                        self._process_llm_response(response)
                     else:
                         self.user_interaction_handler.display_message("LLM manager is not available. Unable to process the command.")
             except Exception as e:
                 self.user_interaction_handler.handle_error(e)
         self.logger.info("Exiting LLM Workflow Director")
         self.user_interaction_handler.display_message("Exiting LLM Workflow Director")
+
+    def _prepare_llm_context(self) -> Dict[str, Any]:
+        return {
+            'workflow_stage': self.current_stage,
+            'project_structure_instructions': self.project_structure_manager.get_structure_instructions(),
+            'coding_conventions': self.convention_manager.get_aider_conventions(),
+            'workflow_config': self.config
+        }
+
+    def _process_llm_response(self, response: str):
+        self.logger.info("Processing LLM response")
+        # TODO: Implement logic to process LLM response and update workflow state
+        # This could include updating task progress, modifying project state, etc.
+        pass
 
     def determine_query_tier(self, query: str) -> str:
         # Simple heuristic for determining the appropriate tier

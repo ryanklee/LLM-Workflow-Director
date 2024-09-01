@@ -178,3 +178,16 @@ def test_workflow_director_run(mock_llm_manager):
         
     assert any("Current stage: Requirements Gathering" in call[0][0] for call in mock_user_interaction_handler.display_message.call_args_list)
     assert mock_user_interaction_handler.display_message.call_args_list[-1][0][0] == "Exiting LLM Workflow Director"
+
+@patch('src.workflow_director.LLMManager')
+def test_workflow_director_llm_integration(mock_llm_manager):
+    mock_llm_manager.return_value.query.return_value = "LLM response: Update task progress"
+    mock_user_interaction_handler = MagicMock(spec=UserInteractionHandler)
+    mock_user_interaction_handler.prompt_user.side_effect = ['test command', 'exit']
+    
+    director = WorkflowDirector(user_interaction_handler=mock_user_interaction_handler)
+    director.run()
+    
+    assert mock_llm_manager.return_value.query.called
+    assert any("LLM response: Update task progress" in call[0][0] for call in mock_user_interaction_handler.display_message.call_args_list)
+    # Add more assertions to check if the LLM response is properly integrated with the workflow

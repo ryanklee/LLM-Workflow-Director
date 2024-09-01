@@ -30,12 +30,31 @@ def test_llm_manager_query():
 
 def test_llm_manager_query_with_context():
     manager = LLMManager()
-    context = {"key1": "value1", "key2": "value2"}
+    context = {
+        "key1": "value1",
+        "key2": "value2",
+        "workflow_stage": "Test Stage",
+        "project_structure_instructions": "Test instructions",
+        "coding_conventions": "Test conventions",
+        "workflow_config": {
+            "stages": [{"name": "Test Stage", "description": "Test description"}],
+            "transitions": [{"from": "Test Stage", "to": "Next Stage"}]
+        }
+    }
     result = manager.query("Test prompt", context)
     assert isinstance(result, str)
     assert result.startswith("Mock response to: Test prompt")
     assert "(tier: balanced)" in result
     assert "(ID:" in result
+
+def test_llm_manager_error_handling():
+    manager = LLMManager()
+    manager.mock_mode = False
+    manager.models['balanced'] = MagicMock()
+    manager.models['balanced'].prompt.side_effect = [Exception("Test error"), Exception("Retry error"), "Success"]
+    result = manager.query("Test prompt")
+    assert "Success" in result
+    assert manager.models['balanced'].prompt.call_count == 3
 
 def test_llm_manager_query_with_tiers():
     manager = LLMManager()
