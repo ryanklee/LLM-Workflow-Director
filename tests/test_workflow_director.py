@@ -4,6 +4,7 @@ import os
 import pytest
 import subprocess
 import logging
+from click.testing import CliRunner
 
 # Add the project root directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -15,6 +16,7 @@ sys.modules['pkg.workflow.constraint.engine'] = mock_constraint_engine
 
 from src.workflow_director import WorkflowDirector
 from src.user_interaction_handler import UserInteractionHandler
+from src.main import cli
 
 def test_workflow_director_initialization():
     director = WorkflowDirector()
