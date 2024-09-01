@@ -95,7 +95,7 @@ class LLMManager:
         return {"error": "Unexpected error in LLM query"}
 
     def determine_query_tier(self, query: str) -> str:
-        if len(query.split()) < 10:
+        if len(query.split()) < 5:
             return 'fast'
         elif len(query.split()) > 50 or any(keyword in query.lower() for keyword in ['complex', 'detailed', 'analyze', 'summarize']):
             return 'powerful'
