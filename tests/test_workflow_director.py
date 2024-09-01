@@ -187,38 +187,21 @@ def test_workflow_director_llm_integration(mock_llm_manager):
 
     director = WorkflowDirector(user_interaction_handler=mock_user_interaction_handler)
     director.llm_manager = mock_llm_manager.return_value  # Explicitly set the mocked LLMManager
-    
-    # Add debug print statements before running
-    print("Before run() - LLM Manager:", director.llm_manager)
-    print("Before run() - User Interaction Handler:", director.user_interaction_handler)
-    
-    # Patch the run method to add debug prints
-    original_run = director.run
-    def patched_run():
-        print("Inside run() - Before processing command")
-        result = original_run()
-        print("Inside run() - After processing command")
-        return result
-    director.run = patched_run
 
     director.run()
-
-    # Debug print statements after running
-    print("After run() - Mock LLM Manager query call count:", mock_llm_manager.return_value.query.call_count)
-    print("After run() - Mock LLM Manager query call args:", mock_llm_manager.return_value.query.call_args_list)
-    print("After run() - User Interaction Handler prompt_user call count:", mock_user_interaction_handler.prompt_user.call_count)
-    print("After run() - User Interaction Handler prompt_user call args:", mock_user_interaction_handler.prompt_user.call_args_list)
 
     # Check if the query method was called
     assert mock_llm_manager.return_value.query.called, "LLMManager.query was not called"
 
-    # If it was called, check the arguments
-    if mock_llm_manager.return_value.query.called:
-        mock_llm_manager.return_value.query.assert_called_with("Process this command: test command", context=ANY, tier=ANY)
+    # Check the arguments of the query call
+    mock_llm_manager.return_value.query.assert_called_with(
+        "Process this command: test command",
+        context=ANY,
+        tier=ANY
+    )
 
+    # Check if the LLM response was displayed
     mock_user_interaction_handler.display_message.assert_any_call("LLM response: LLM response: Update task progress")
-    assert any("LLM response: Update task progress" in call[0][0] for call in mock_user_interaction_handler.display_message.call_args_list)
 
-    # Add more specific assertions to check the LLM integration
-    context = director._prepare_llm_context()
-    # Add more assertions to check if the LLM response is properly integrated with the workflow
+    # Check if the _process_llm_response method was called
+    assert any("LLM response: Update task progress" in call[0][0] for call in mock_user_interaction_handler.display_message.call_args_list)
