@@ -54,8 +54,11 @@ class WorkflowDirector:
                     if not self.move_to_next_stage():
                         self.print_func("Cannot move to the next stage. Please complete the current stage's tasks.")
                 else:
-                    response = self.llm_manager.query(user_input)
-                    self.print_func(f"LLM response: {response}")
+                    if self.llm_manager:
+                        response = self.llm_manager.query(user_input)
+                        self.print_func(f"LLM response: {response}")
+                    else:
+                        self.print_func("LLM manager is not available. Unable to process the command.")
             except Exception as e:
                 error_message = self.error_handler.handle_error(e)
                 self.logger.error(f"Error occurred: {error_message}")
