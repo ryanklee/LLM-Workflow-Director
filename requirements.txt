@@ -76,7 +76,7 @@ prometheus-client==0.14.1
 psutil==5.9.0
 pycairo==1.26.1
 pydantic==1.10.13
-llm-claude-3==0.4.1
+llm-claude-3==0.3.0
 pydantic_core==2.20.1
 pyee==9.0.4
 Pygments==2.11.2
