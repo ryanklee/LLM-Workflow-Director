@@ -109,15 +109,15 @@ The LLM-Workflow Director is a Python-based system designed to guide AI-assisted
 - Maintain comprehensive decision and action logs
 - Provide clear project evolution visibility
 
-## 8. Golang-Specific Considerations
+## 8. Python-Specific Considerations
 
-- Utilize Go's concurrency features for parallel processing where applicable
-- Implement robust error handling using Go's error model
-- Use Go's strong typing to ensure data integrity throughout the workflow
-- Leverage Go's standard library for HTTP communication, file I/O, and other system interactions
+- Utilize Python's asyncio for concurrent processing where applicable
+- Implement robust error handling using Python's exception handling mechanisms
+- Use Python's type hinting to improve code readability and maintainability
+- Leverage Python's rich ecosystem of libraries for HTTP communication, file I/O, and other system interactions
 - Implement efficient data structures for state management and constraint checking
 
-This Golang-based LLM-Workflow Director design maintains the structured approach to AI-assisted software development, emphasizing DDD and TDD principles while leveraging Go's strengths in performance, concurrency, and type safety.
+This Python-based LLM-Workflow Director design maintains the structured approach to AI-assisted software development, emphasizing DDD and TDD principles while leveraging Python's strengths in readability, flexibility, and extensive library ecosystem.
 
 ## 9. LLM-Oriented Domain Model
 
