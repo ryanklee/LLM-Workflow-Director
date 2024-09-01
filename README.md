@@ -5,7 +5,7 @@ LLM-Workflow Director is a Python-based system designed to guide AI-assisted sof
 ## Features
 
 - Configurable workflow stages and transitions
-- Integration with LLM models for AI-assisted development
+- Integration with Anthropic Claude models for AI-assisted development
 - State management for tracking project progress
 - Command-line interface for easy interaction
 
