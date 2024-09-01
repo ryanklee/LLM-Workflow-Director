@@ -36,7 +36,7 @@ def test_workflow_director_move_to_next_stage():
     assert director.move_to_next_stage()
     assert director.current_stage == "Requirements Gathering"
 
-@patch('src.llm_manager.LLMManager')
+@patch('src.workflow_director.LLMManager')
 def test_workflow_director_run(mock_llm_manager):
     mock_llm_manager.return_value.query.return_value = "LLM response"
     mock_input = MagicMock(side_effect=['test command', 'next', 'exit'])
