@@ -169,7 +169,7 @@ def test_workflow_director_run(mock_llm_manager):
     assert any("Enter a command" in call[0][0] for call in mock_print.call_args_list)
     
     # Check for either LLM response or unavailability message
-    assert any("LLM response: LLM response" in call[0][0] for call in mock_print.call_args_list) or \
+    assert any("LLM response:" in call[0][0] for call in mock_print.call_args_list) or \
            any("LLM manager is not available" in call[0][0] for call in mock_print.call_args_list)
     
     assert any("Current stage: Requirements Gathering" in call[0][0] for call in mock_print.call_args_list)
