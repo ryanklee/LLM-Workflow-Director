@@ -86,27 +86,32 @@ class WorkflowDirector:
                 context = self._prepare_llm_context()
                 prompt_template = """
                 Process this command: {command}
-                Current stage: {stage}
+                Current stage: {workflow_stage}
                 Stage description: {stage_description}
                 Stage tasks:
                 {stage_tasks}
+                Stage priorities:
+                {stage_priorities}
                 
                 Project structure:
                 {project_structure}
                 
                 Coding conventions:
-                {formatted_conventions}
+                {coding_conventions}
+                
+                Available transitions: {available_transitions}
+                Project progress: {project_progress:.2%}
                 
                 Additional context:
                 {context}
                 """
                 prompt = self.llm_manager.generate_prompt(prompt_template, {
                     "command": user_input,
-                    "stage": current_stage['name'],
-                    "stage_description": current_stage.get('description', ''),
-                    "stage_tasks": current_stage.get('tasks', []),
+                    "workflow_stage": self.current_stage,
                     "project_structure": self.project_structure_manager.get_structure_instructions(),
                     "coding_conventions": self.convention_manager.get_aider_conventions(),
+                    "workflow_config": self.config,
+                    "completed_stages": list(self.completed_stages),
                     "context": str(context)
                 })
                 
@@ -617,4 +622,15 @@ class WorkflowDirector:
         self.logger.addHandler(console_handler)
         self.logger.addHandler(file_handler)
         
-        self.logger.info("Logging setup completed for WorkflowDirector")
+        # Create a JSON formatter for structured logging
+        json_formatter = jsonlogger.JsonFormatter('%(asctime)s %(name)s %(levelname)s %(message)s')
+        json_handler = logging.FileHandler('workflow_director_structured.log')
+        json_handler.setFormatter(json_formatter)
+        json_handler.setLevel(logging.DEBUG)
+        self.logger.addHandler(json_handler)
+        
+        self.logger.info("Logging setup completed for WorkflowDirector", extra={
+            'component': 'WorkflowDirector',
+            'action': 'setup_logging',
+            'status': 'completed'
+        })

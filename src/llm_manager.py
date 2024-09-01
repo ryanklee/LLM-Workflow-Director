@@ -112,17 +112,43 @@ class LLMManager:
     def generate_prompt(self, template: str, context: Dict[str, Any]) -> str:
         self.logger.debug(f"Generating prompt with template: {template[:50]}...")
         try:
-            # Enhance the context with workflow-specific information
             enhanced_context = self._enhance_context(context)
             prompt = template.format(**enhanced_context)
             self.logger.debug(f"Generated prompt: {prompt[:50]}...")
             return prompt
         except KeyError as e:
-            self.logger.error(f"Error generating prompt: Missing key {str(e)}")
+            self.logger.error(f"Error generating prompt: Missing key {str(e)}", exc_info=True)
             return f"Error generating prompt: Missing key {str(e)}"
         except Exception as e:
-            self.logger.error(f"Unexpected error generating prompt: {str(e)}")
+            self.logger.error(f"Unexpected error generating prompt: {str(e)}", exc_info=True)
             return f"Unexpected error generating prompt: {str(e)}"
+
+    def _enhance_context(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        enhanced_context = context.copy()
+        workflow_config = enhanced_context.get('workflow_config', {})
+        current_stage = enhanced_context.get('workflow_stage')
+        
+        if current_stage and 'stages' in workflow_config:
+            stage_info = next((s for s in workflow_config['stages'] if s['name'] == current_stage), None)
+            if stage_info:
+                enhanced_context['stage_description'] = stage_info.get('description', '')
+                enhanced_context['stage_tasks'] = stage_info.get('tasks', [])
+                enhanced_context['stage_priorities'] = stage_info.get('priorities', [])
+
+        enhanced_context['available_transitions'] = self._get_available_transitions(workflow_config, current_stage)
+        enhanced_context['project_progress'] = self._calculate_project_progress(workflow_config, context)
+
+        self.logger.debug(f"Enhanced context: {enhanced_context}")
+        return enhanced_context
+
+    def _get_available_transitions(self, workflow_config: Dict[str, Any], current_stage: str) -> List[str]:
+        transitions = workflow_config.get('transitions', [])
+        return [t['to'] for t in transitions if t['from'] == current_stage]
+
+    def _calculate_project_progress(self, workflow_config: Dict[str, Any], context: Dict[str, Any]) -> float:
+        total_stages = len(workflow_config.get('stages', []))
+        completed_stages = len(context.get('completed_stages', []))
+        return completed_stages / total_stages if total_stages > 0 else 0
 
     def _enhance_context(self, context: Dict[str, Any]) -> Dict[str, Any]:
         enhanced_context = context.copy()
