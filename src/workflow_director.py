@@ -74,7 +74,7 @@ class WorkflowDirector:
 
     def run(self):
         self.logger.info("Starting LLM Workflow Director")
-        self.print_func("Starting LLM Workflow Director")
+        self.user_interaction_handler.display_message("Starting LLM Workflow Director")
         while True:
             try:
                 current_stage = self.get_current_stage()
@@ -165,14 +165,14 @@ class WorkflowDirector:
         if available_transitions:
             next_stage = available_transitions[0]['to']
             return self.transition_to(next_stage)
-        self.print_func("No available transitions from the current stage.")
+        self.user_interaction_handler.display_message("No available transitions from the current stage.")
         return False
 
     def complete_current_stage(self):
         self.logger.info(f"Completing stage: {self.current_stage}")
         self.stage_progress[self.current_stage] = 1.0
         self.completed_stages.add(self.current_stage)
-        self.print_func(f"Completed stage: {self.current_stage}")
+        self.user_interaction_handler.display_message(f"Completed stage: {self.current_stage}")
         self.logger.info(f"Stage {self.current_stage} marked as completed")
         
         available_transitions = self.get_available_transitions()
@@ -395,7 +395,7 @@ class WorkflowDirector:
             self.current_stage = next_stage
             self.completed_stages.add(previous_stage)
             self.stage_progress[previous_stage] = 1.0  # Ensure the previous stage is marked as 100% complete
-            self.print_func(f"Transitioned to stage: {next_stage}")
+            self.user_interaction_handler.display_message(f"Transitioned to stage: {next_stage}")
             self.logger.info(f"Successfully transitioned to stage: {next_stage}")
             self.logger.debug(f"Updated completed stages: {self.completed_stages}")
             return True
