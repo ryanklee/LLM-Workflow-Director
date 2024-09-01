@@ -109,14 +109,17 @@ class WorkflowDirector:
     def transition_to(self, next_stage):
         self.logger.info(f"Attempting to transition from {self.current_stage} to {next_stage}")
         if self.can_transition_to(next_stage):
+            previous_stage = self.current_stage
             self.current_stage = next_stage
-            self.completed_stages.add(self.current_stage)
+            self.completed_stages.add(previous_stage)
             self.print_func(f"Transitioned to stage: {next_stage}")
             self.logger.info(f"Successfully transitioned to stage: {next_stage}")
+            self.logger.debug(f"Updated completed stages: {self.completed_stages}")
             return True
         else:
             self.print_func(f"Cannot transition to stage: {next_stage}")
             self.logger.warning(f"Transition to {next_stage} not allowed")
+            self.logger.debug(f"Current completed stages: {self.completed_stages}")
             return False
 
     def move_to_next_stage(self):
@@ -169,15 +172,16 @@ class WorkflowDirector:
 
     def can_transition_to(self, next_stage):
         self.logger.info(f"Checking if transition from {self.current_stage} to {next_stage} is possible")
-        available_transitions = [t for t in self.transitions if t['from'] == self.current_stage and t['to'] == next_stage]
-        if not available_transitions:
-            self.logger.info(f"No transition defined from {self.current_stage} to {next_stage}")
-            return False
-
+        
         # Always allow transition if the current stage is completed
         if self.is_stage_completed(self.current_stage):
             self.logger.info(f"Stage {self.current_stage} is already completed, transition allowed")
             return True
+
+        available_transitions = [t for t in self.transitions if t['from'] == self.current_stage and t['to'] == next_stage]
+        if not available_transitions:
+            self.logger.info(f"No transition defined from {self.current_stage} to {next_stage}")
+            return False
 
         current_state = self.state_manager.get_all()
         self.logger.debug(f"Current state: {current_state}")
@@ -218,21 +222,27 @@ class WorkflowDirector:
         self.print_func(f"Completed stage: {self.current_stage}")
         self.logger.info(f"Stage {self.current_stage} marked as completed")
         
-        available_transitions = self.get_available_transitions()
-        if available_transitions:
-            next_stage = available_transitions[0]['to']
+        if self.current_stage == self.config['stages'][-1]['name']:
+            self.logger.info("Completed final stage")
+            return True
+
+        next_stage = self.get_next_stage()
+        if next_stage:
             if self.transition_to(next_stage):
                 self.logger.info(f"Moved to next stage: {self.current_stage}")
                 return True
             else:
                 self.logger.warning(f"Failed to transition to next stage: {next_stage}")
+                return False
         else:
             self.logger.info("No next stage available")
-        
-        if self.current_stage == self.config['stages'][-1]['name']:
-            self.logger.info("Completed final stage")
-            return True
-        return True
+            return False
+
+    def get_next_stage(self):
+        current_index = next((i for i, stage in enumerate(self.config['stages']) if stage['name'] == self.current_stage), None)
+        if current_index is not None and current_index < len(self.config['stages']) - 1:
+            return self.config['stages'][current_index + 1]['name']
+        return None
 
     def evaluate_condition(self, condition):
         # This is a placeholder. In a real implementation, you would evaluate the condition based on the current state.
