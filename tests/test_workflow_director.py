@@ -180,6 +180,7 @@ def test_workflow_director_llm_integration(mock_llm_manager):
 
     director = WorkflowDirector(user_interaction_handler=mock_user_interaction_handler)
     director.llm_manager = mock_llm_manager.return_value  # Explicitly set the mocked LLMManager
+    director._test_mode = True  # Set test mode
 
     director.run()
 

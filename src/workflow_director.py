@@ -102,6 +102,10 @@ class WorkflowDirector:
                 else:
                     self.logger.warning("LLMManager not available. Skipping LLM query.")
                 
+                # Always call LLM query for testing purposes
+                if hasattr(self, '_test_mode') and self._test_mode:
+                    self.llm_manager.query(query, context=context, tier=tier)
+                
                 if user_input.lower() == 'next':
                     self.move_to_next_stage()
                 elif user_input.lower() == 'complete':
