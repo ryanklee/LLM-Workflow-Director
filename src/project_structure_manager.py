@@ -59,6 +59,54 @@ class ProjectStructureManager:
             return file_path.startswith(os.path.join(self.root_dir, expected_location))
         return True  # If no specific rule, assume it's valid
 
+    def check_file_modularity(self, file_path: str) -> Dict[str, Any]:
+        self.logger.info(f"Checking file modularity: {file_path}")
+        with open(file_path, 'r') as file:
+            content = file.read()
+            lines = content.split('\n')
+        
+        modularity_issues = []
+        if len(lines) > self.config['modularity_guidelines']['max_file_size']:
+            modularity_issues.append(f"File exceeds maximum size of {self.config['modularity_guidelines']['max_file_size']} lines")
+        
+        # This is a placeholder for complexity calculation. In a real implementation,
+        # you would use a proper complexity metric like McCabe complexity.
+        if len(set(lines)) > self.config['modularity_guidelines']['max_complexity']:
+            modularity_issues.append(f"File may exceed maximum complexity of {self.config['modularity_guidelines']['max_complexity']}")
+        
+        file_name = os.path.basename(file_path)
+        if not file_name.islower() and '_' not in file_name:
+            modularity_issues.append("File name does not follow snake_case convention")
+        
+        if self.config['modularity_guidelines']['file_purpose_comment']:
+            if not content.lstrip().startswith('"""') and not content.lstrip().startswith("'''"):
+                modularity_issues.append("File is missing a purpose comment at the top")
+        
+        return {
+            "is_modular": len(modularity_issues) == 0,
+            "issues": modularity_issues
+        }
+
+    def suggest_file_split(self, file_path: str) -> List[str]:
+        self.logger.info(f"Suggesting file split for: {file_path}")
+        # This is a placeholder implementation. In a real-world scenario,
+        # you would implement more sophisticated logic to suggest meaningful splits.
+        with open(file_path, 'r') as file:
+            content = file.read()
+            lines = content.split('\n')
+        
+        if len(lines) <= self.config['modularity_guidelines']['max_file_size']:
+            return []
+        
+        suggested_splits = []
+        current_line = 0
+        while current_line < len(lines):
+            end_line = min(current_line + self.config['modularity_guidelines']['max_file_size'], len(lines))
+            suggested_splits.append(f"{file_path.rsplit('.', 1)[0]}_{len(suggested_splits)+1}.{file_path.rsplit('.', 1)[1]}")
+            current_line = end_line
+        
+        return suggested_splits
+
     def get_structure_instructions(self) -> str:
         return (
             "Project Structure Instructions:\n"

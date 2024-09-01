@@ -207,6 +207,21 @@ class WorkflowDirector:
                 if 'response' in structured_response:
                     self.user_interaction_handler.display_message(f"LLM Response: {structured_response['response']}")
                 
+                # Check modularity of any new or updated files
+                if 'file_updates' in structured_response:
+                    for file_path in structured_response['file_updates']:
+                        modularity_check = self.project_structure_manager.check_file_modularity(file_path)
+                        if not modularity_check['is_modular']:
+                            self.user_interaction_handler.display_message(f"Modularity issues detected in {file_path}:")
+                            for issue in modularity_check['issues']:
+                                self.user_interaction_handler.display_message(f"- {issue}")
+                            if len(modularity_check['issues']) > 1:
+                                split_suggestions = self.project_structure_manager.suggest_file_split(file_path)
+                                if split_suggestions:
+                                    self.user_interaction_handler.display_message("Suggested file splits:")
+                                    for suggestion in split_suggestions:
+                                        self.user_interaction_handler.display_message(f"- {suggestion}")
+                
                 self.logger.info("LLM response processed successfully")
             else:
                 self.logger.warning(f"Unexpected response format: {type(structured_response)}")

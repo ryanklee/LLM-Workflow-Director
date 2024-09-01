@@ -17,3 +17,9 @@ placement_rules:
   txt: root
   yaml: root
   json: data
+
+modularity_guidelines:
+  max_file_size: 1000  # lines
+  max_complexity: 10   # McCabe complexity
+  naming_convention: "snake_case"
+  file_purpose_comment: true

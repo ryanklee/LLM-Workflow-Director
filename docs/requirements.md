@@ -110,6 +110,17 @@
       3.4.2. The system shall include tools for refactoring the project structure while maintaining consistency and updating all relevant documentation.
       3.4.3. The system shall track and document structural changes over time, providing a history of how the project structure has evolved.
       3.4.4. The system shall provide guidance on when and how to scale the project structure for larger projects.
+      3.4.5. The system shall ensure that documents and assets remain well-modularized at the file level, with each file having a narrow, coherent, and self-evident purpose.
+      3.4.6. The system shall provide guidelines and tools to prevent individual files from becoming too large or complex, ensuring efficient use of the LLM's context window.
+      3.4.7. The system shall monitor file sizes and complexity, alerting users when files may need to be split or refactored for better modularity.
+
+   3.5. File-Level Modularity
+      3.5.1. The system shall enforce and maintain a high level of modularity for all project files and assets.
+      3.5.2. Each file within the project structure shall have a single, well-defined purpose that is immediately evident from its name and location.
+      3.5.3. The system shall provide guidelines for optimal file sizes and complexity levels to ensure efficient use of the LLM's context window.
+      3.5.4. The system shall include tools for analyzing file contents and suggesting splits or merges to maintain optimal modularity.
+      3.5.5. The system shall ensure that related functionality is grouped logically while avoiding overly large or complex files.
+      3.5.6. The system shall provide mechanisms for easily navigating and understanding the relationships between modular files.
 
 4. Integration and Development Support
    4.1. Integration with Development Workflow
