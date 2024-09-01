@@ -81,6 +81,18 @@ The LLM-Workflow Director is a Python-based system designed to guide AI-assisted
 - Ensures the LLM understands its role and the nature of the interaction
 - Formats the header in a way that the LLM recognizes as high-priority information
 
+### 4.11 ProjectStateReporter
+- Generates comprehensive project state reports
+- Integrates quantitative metrics and qualitative summaries
+- Utilizes LLM for generating human-readable summaries
+- Assesses documentation health
+- Formats reports for human readability
+
+### 4.12 DocumentationHealthChecker
+- Assesses the completeness and quality of project documentation
+- Provides metrics on documentation coverage and up-to-dateness
+- Identifies areas where documentation needs improvement
+
 ## 5. Stage-Specific Workflows
 
 (Detailed workflows for each stage, similar to the original document)

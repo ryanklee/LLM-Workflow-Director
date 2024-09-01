@@ -11,6 +11,8 @@ from .llm_manager import LLMManager
 from .error_handler import ErrorHandler
 from .vectorstore.vector_store import VectorStore
 from pkg.workflow.constraint.engine import Engine as ConstraintEngine
+from .project_state_reporter import ProjectStateReporter
+from .documentation_health_checker import DocumentationHealthChecker
 
 
 class WorkflowDirector:
@@ -44,6 +46,8 @@ class WorkflowDirector:
         self.stage_progress = {stage: 0.0 for stage in self.stages}
         self.completed_stages = set()
         self.initialize_constraints()
+        self.project_state_reporter = ProjectStateReporter(self)
+        self.documentation_health_checker = DocumentationHealthChecker()
 
     def load_config(self, config_path):
         try:
@@ -268,3 +272,18 @@ class WorkflowDirector:
         if 'condition' in constraint:
             return eval(constraint['condition'], {'state': state}), None
         return True, None
+
+    def generate_project_report(self, format='plain'):
+        """
+        Generate a comprehensive project state report.
+        
+        Args:
+            format (str): The output format of the report. Options: 'plain', 'markdown', 'html'
+        
+        Returns:
+            str: The formatted project state report
+        """
+        self.logger.info("Generating project state report")
+        report = self.project_state_reporter.generate_report(format)
+        self.logger.info("Project state report generated successfully")
+        return report
