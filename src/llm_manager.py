@@ -52,14 +52,16 @@ class LLMManager:
             context = {}
 
         project_structure_instructions = context.get('project_structure_instructions', '')
+        coding_conventions = context.get('coding_conventions', '')
         
         formatted_prompt = f"Context:\n"
         for key, value in context.items():
-            if key != 'project_structure_instructions':
+            if key not in ['project_structure_instructions', 'coding_conventions']:
                 formatted_prompt += f"{key}: {value}\n"
         
         formatted_prompt += f"\nProject Structure Instructions:\n{project_structure_instructions}\n"
+        formatted_prompt += f"\nCoding Conventions:\n{coding_conventions}\n"
         formatted_prompt += f"\nPrompt: {prompt}"
-        formatted_prompt += "\n\nPlease ensure that your response adheres to the project structure guidelines provided above."
+        formatted_prompt += "\n\nPlease ensure that your response adheres to the project structure guidelines and coding conventions provided above."
         
         return formatted_prompt

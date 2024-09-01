@@ -14,6 +14,7 @@ from pkg.workflow.constraint.engine import Engine as ConstraintEngine
 from src.project_state_reporter import ProjectStateReporter
 from src.documentation_health_checker import DocumentationHealthChecker
 from src.project_structure_manager import ProjectStructureManager
+from src.convention_manager import ConventionManager
 
 
 class WorkflowDirector:
@@ -50,6 +51,7 @@ class WorkflowDirector:
         self.project_state_reporter = ProjectStateReporter(self)
         self.documentation_health_checker = DocumentationHealthChecker()
         self.project_structure_manager = ProjectStructureManager()
+        self.convention_manager = ConventionManager()
 
     def load_config(self, config_path):
         try:
