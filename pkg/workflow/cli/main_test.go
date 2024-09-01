@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"flag"
 	"os"
 	"path/filepath"
 	"testing"
