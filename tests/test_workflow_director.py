@@ -174,10 +174,12 @@ def test_workflow_director_run(mock_llm_manager):
     assert mock_llm_manager.return_value.query.call_count == 2
 
 @patch('src.workflow_director.LLMManager')
-def test_workflow_director_llm_integration(mock_llm_manager, caplog):
+@patch('src.workflow_director.ConventionManager')
+def test_workflow_director_llm_integration(mock_convention_manager, mock_llm_manager, caplog):
     mock_llm_manager.return_value.query.return_value = "LLM response: Update task progress"
     mock_user_interaction_handler = MagicMock(spec=UserInteractionHandler)
     mock_user_interaction_handler.prompt_user.side_effect = ['test command', 'next', 'exit']
+    mock_convention_manager.return_value.load_conventions.return_value = "Mocked conventions"
 
     director = WorkflowDirector(
         user_interaction_handler=mock_user_interaction_handler,
@@ -195,6 +197,12 @@ def test_workflow_director_llm_integration(mock_llm_manager, caplog):
     # Print debug information
     print("LLMManager mock calls:", mock_llm_manager.mock_calls)
     print("LLMManager.query mock calls:", mock_llm_manager.return_value.query.mock_calls)
+    print("User interaction handler mock calls:", mock_user_interaction_handler.mock_calls)
+    
+    # Print the captured logs
+    print("Captured logs:")
+    for record in caplog.records:
+        print(f"{record.levelname}: {record.getMessage()}")
 
     # Check the arguments of the query calls
     mock_llm_manager.return_value.query.assert_any_call(
