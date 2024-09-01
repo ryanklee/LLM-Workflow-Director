@@ -64,26 +64,39 @@ func (cw *componentWrapper) Name() string {
 func (cw *componentWrapper) Execute(state interface{}) (interface{}, error) {
 	switch cw.name {
 	case "FileStateManager":
-		return state, cw.component.(state.StateManager).UpdateState(state)
+		if sm, ok := cw.component.(state.StateManager); ok {
+			return state, sm.UpdateState(state)
+		}
 	case "BasicConstraintEngine":
-		return state, cw.component.(constraint.ConstraintEngine).Validate(state)
+		if ce, ok := cw.component.(constraint.ConstraintEngine); ok {
+			return state, ce.Validate(state)
+		}
 	case "BasicPriorityManager":
-		return cw.component.(priority.PriorityManager).DeterminePriorities(state), nil
+		if pm, ok := cw.component.(priority.PriorityManager); ok {
+			return pm.DeterminePriorities(state), nil
+		}
 	case "BasicDirectionGenerator":
-		return cw.component.(direction.DirectionGenerator).Generate(state, nil)
+		if dg, ok := cw.component.(direction.DirectionGenerator); ok {
+			return dg.Generate(state, nil)
+		}
 	case "BasicAiderInterface":
-		return cw.component.(aider.AiderInterface).Execute(state)
+		if ai, ok := cw.component.(aider.AiderInterface); ok {
+			return ai.Execute(state)
+		}
 	case "BasicUserInteractionHandler":
 		return state, nil // Implement user interaction logic
 	case "BasicProgressTracker":
-		return state, cw.component.(progress.ProgressTracker).UpdateProgress(state)
-	case "LLMEvaluator":
-		sufficient, reason, err := cw.component.(sufficiency.Evaluator).Evaluate(state)
-		if err != nil {
-			return state, err
+		if pt, ok := cw.component.(progress.ProgressTracker); ok {
+			return state, pt.UpdateProgress(state)
 		}
-		return map[string]interface{}{"state": state, "sufficient": sufficient, "reason": reason}, nil
-	default:
-		return state, nil
+	case "LLMEvaluator":
+		if se, ok := cw.component.(sufficiency.Evaluator); ok {
+			sufficient, reason, err := se.Evaluate(state)
+			if err != nil {
+				return state, err
+			}
+			return map[string]interface{}{"state": state, "sufficient": sufficient, "reason": reason}, nil
+		}
 	}
+	return state, nil
 }
