@@ -337,27 +337,40 @@ class WorkflowDirector:
         return False
 
     def complete_current_stage(self):
-        self.logger.info(f"Completing stage: {self.current_stage}")
-        self.stage_progress[self.current_stage] = 1.0
-        self.completed_stages.add(self.current_stage)
-        self.user_interaction_handler.display_message(f"Completed stage: {self.current_stage}")
-        self.logger.info(f"Stage {self.current_stage} marked as completed")
+        self.logger.info(f"Attempting to complete stage: {self.current_stage}")
+        current_stage_data = self.stages[self.current_stage]
+        project_state = self.state_manager.get_all()
         
-        available_transitions = self.get_available_transitions()
-        if available_transitions:
-            next_stage = available_transitions[0]['to']
-            if self.transition_to(next_stage):
-                self.logger.info(f"Moved to next stage: {self.current_stage}")
-                return True
+        is_sufficient, reasoning = self.sufficiency_evaluator.evaluate_stage_sufficiency(
+            self.current_stage, current_stage_data, project_state
+        )
+        
+        if is_sufficient:
+            self.stage_progress[self.current_stage] = 1.0
+            self.completed_stages.add(self.current_stage)
+            self.user_interaction_handler.display_message(f"Completed stage: {self.current_stage}")
+            self.user_interaction_handler.display_message(f"Completion reasoning: {reasoning}")
+            self.logger.info(f"Stage {self.current_stage} marked as completed. Reason: {reasoning}")
+            
+            next_stage = self.get_next_stage()
+            if next_stage:
+                if self.transition_to(next_stage):
+                    self.logger.info(f"Moved to next stage: {next_stage}")
+                    return True
+                else:
+                    self.logger.warning(f"Failed to transition to next stage: {next_stage}")
             else:
-                self.logger.warning(f"Failed to transition to next stage: {next_stage}")
+                self.logger.info("No next stage available")
+            
+            if self.current_stage == self.config['stages'][-1]['name']:
+                self.logger.info("Completed final stage")
+                return True
         else:
-            self.logger.info("No next stage available")
+            self.user_interaction_handler.display_message(f"Stage {self.current_stage} is not yet complete.")
+            self.user_interaction_handler.display_message(f"Reason: {reasoning}")
+            self.logger.warning(f"Stage {self.current_stage} not sufficient for completion. Reason: {reasoning}")
         
-        if self.current_stage == self.config['stages'][-1]['name']:
-            self.logger.info("Completed final stage")
-            return True
-        return self.move_to_next_stage()
+        return False
 
     def get_available_transitions(self):
         return [t for t in self.transitions if t['from'] == self.current_stage]

@@ -14,9 +14,10 @@ class SufficiencyEvaluator:
             return True, "LLMManager not available. Stage assumed to be sufficient."
         
         try:
-            result = self.llm_manager.evaluate_sufficiency(stage_name, stage_data, project_state)
-            is_sufficient = result.get('is_sufficient', False)
-            reasoning = result.get('reasoning', 'No reasoning provided')
+            prompt = self._generate_sufficiency_prompt(stage_name, stage_data, project_state)
+            response = self.llm_manager.query(prompt)
+            
+            is_sufficient, reasoning = self._parse_sufficiency_response(response)
             
             self.logger.info(f"Stage {stage_name} sufficiency evaluation result: {'Sufficient' if is_sufficient else 'Insufficient'}")
             self.logger.debug(f"Reasoning: {reasoning}")
@@ -24,6 +25,52 @@ class SufficiencyEvaluator:
         except Exception as e:
             self.logger.error(f"Error evaluating sufficiency: {str(e)}")
             return False, f"Error evaluating sufficiency: {str(e)}"
+
+    def _generate_sufficiency_prompt(self, stage_name: str, stage_data: Dict[str, Any], project_state: Dict[str, Any]) -> str:
+        prompt = f"""
+        Evaluate the sufficiency of the current stage in the workflow:
+
+        Stage Name: {stage_name}
+        Stage Description: {stage_data.get('description', 'No description provided')}
+        Stage Tasks:
+        {self._format_tasks(stage_data.get('tasks', []))}
+
+        Current Project State:
+        {self._format_project_state(project_state)}
+
+        Based on the stage requirements and the current project state, determine if this stage is sufficiently complete to move to the next stage.
+
+        Provide your evaluation in the following format:
+        Evaluation: [SUFFICIENT/INSUFFICIENT]
+        Reasoning: [Detailed explanation of your evaluation]
+        Next Steps: [If insufficient, provide specific steps to achieve sufficiency]
+        """
+        return prompt
+
+    def _format_tasks(self, tasks: List[str]) -> str:
+        return "\n".join(f"- {task}" for task in tasks)
+
+    def _format_project_state(self, project_state: Dict[str, Any]) -> str:
+        return "\n".join(f"{key}: {value}" for key, value in project_state.items())
+
+    def _parse_sufficiency_response(self, response: str) -> Tuple[bool, str]:
+        lines = response.strip().split('\n')
+        evaluation = ""
+        reasoning = ""
+        next_steps = ""
+
+        for line in lines:
+            if line.startswith("Evaluation:"):
+                evaluation = line.split(":", 1)[1].strip()
+            elif line.startswith("Reasoning:"):
+                reasoning = line.split(":", 1)[1].strip()
+            elif line.startswith("Next Steps:"):
+                next_steps = line.split(":", 1)[1].strip()
+
+        is_sufficient = evaluation.upper() == "SUFFICIENT"
+        full_reasoning = f"{reasoning}\n\nNext Steps: {next_steps}" if next_steps else reasoning
+
+        return is_sufficient, full_reasoning
 import logging
 from typing import Dict, Any, Tuple
 
