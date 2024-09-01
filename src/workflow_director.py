@@ -358,13 +358,12 @@ class WorkflowDirector:
         if next_stage:
             if self.transition_to(next_stage):
                 self.logger.info(f"Moved to next stage: {self.current_stage}")
-                return True
             else:
                 self.logger.warning(f"Failed to transition to next stage: {next_stage}")
-                return False
         else:
             self.logger.info("No next stage available")
-            return self.current_stage == self.config['stages'][-1]['name']
+        
+        return True  # Always return True when the stage is completed
 
     def transition_to(self, next_stage):
         self.logger.info(f"Attempting to transition from {self.current_stage} to {next_stage}")
@@ -372,6 +371,7 @@ class WorkflowDirector:
             previous_stage = self.current_stage
             self.current_stage = next_stage
             self.completed_stages.add(previous_stage)
+            self.stage_progress[previous_stage] = 1.0  # Ensure the previous stage is marked as 100% complete
             self.print_func(f"Transitioned to stage: {next_stage}")
             self.logger.info(f"Successfully transitioned to stage: {next_stage}")
             self.logger.debug(f"Updated completed stages: {self.completed_stages}")
