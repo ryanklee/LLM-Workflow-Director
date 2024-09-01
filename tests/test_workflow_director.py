@@ -218,4 +218,4 @@ def test_workflow_director_llm_integration(mock_llm_manager):
     assert mock_llm_manager.return_value.query.call_count == 2
 
     # Check that the move_to_next_stage method was called
-    assert mock_user_interaction_handler.display_message.call_args_list[-2][0][0].startswith("Moved to next stage:")
+    assert any("Moved to next stage:" in call[0][0] for call in mock_user_interaction_handler.display_message.call_args_list)

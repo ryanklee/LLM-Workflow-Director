@@ -82,17 +82,19 @@ class WorkflowDirector:
                     self.user_interaction_handler.display_message(f"- {task}")
                 self.user_interaction_handler.display_message(f"Stage progress: {self.get_stage_progress():.2%}")
                 user_input = self.user_interaction_handler.prompt_user("Enter a command ('next' for next stage, 'complete' to finish current stage, 'exit' to quit):")
+                
                 if user_input.lower() == 'exit':
                     break
-                elif user_input.lower() == 'next':
-                    # Process 'next' command using LLM
-                    tier = self.determine_query_tier(user_input)
-                    context = self._prepare_llm_context()
-                    query = f"Process this command: {user_input}"
-                    response = self.llm_manager.query(query, context=context, tier=tier)
-                    self.user_interaction_handler.display_message(f"LLM response: {response}")
-                    self._process_llm_response(response)
-                    
+                
+                # Process all commands using LLM
+                tier = self.determine_query_tier(user_input)
+                context = self._prepare_llm_context()
+                query = f"Process this command: {user_input}"
+                response = self.llm_manager.query(query, context=context, tier=tier)
+                self.user_interaction_handler.display_message(f"LLM response: {response}")
+                self._process_llm_response(response)
+                
+                if user_input.lower() == 'next':
                     if self.move_to_next_stage():
                         self.user_interaction_handler.display_message(f"Moved to next stage: {self.current_stage}")
                     else:
@@ -105,16 +107,6 @@ class WorkflowDirector:
                             self.user_interaction_handler.display_message("Completed current stage. This was the final stage.")
                     else:
                         self.user_interaction_handler.display_message("Stage completion cancelled.")
-                else:
-                    # Process the command using LLM
-                    tier = self.determine_query_tier(user_input)
-                    context = self._prepare_llm_context()
-                    query = f"Process this command: {user_input}"
-                    response = self.llm_manager.query(query, context=context, tier=tier)
-                    self.user_interaction_handler.display_message(f"LLM response: {response}")
-                    self._process_llm_response(response)
-                    if user_input.lower() == 'exit':
-                        break  # Exit the loop only if the command is 'exit'
             except Exception as e:
                 self.user_interaction_handler.handle_error(e)
         self.logger.info("Exiting LLM Workflow Director")
