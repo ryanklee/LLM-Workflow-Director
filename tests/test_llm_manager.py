@@ -130,13 +130,14 @@ def test_llm_manager_error_handling():
         mock_client.return_value.query.side_effect = [
             Exception("Powerful error"),
             Exception("Balanced error"),
-            Exception("Fast error"),
-            "Fast response"
+            Exception("Fast error")
         ]
         manager = LLMManager()
         result = manager.query("Test prompt", tier='powerful')
         assert isinstance(result, dict)
-        assert "Fast response" in str(result)
+        assert "error" in result
+        assert "Error querying LLM: Fast error" in result["error"]
+        assert mock_client.return_value.query.call_count == 3
         assert mock_client.return_value.query.call_count == 4
 
 def test_llm_manager_fallback_to_fast():
