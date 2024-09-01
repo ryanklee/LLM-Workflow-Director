@@ -5,7 +5,12 @@ import os
 # Add the project root directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
-from src.workflow_director import WorkflowDirector
+try:
+    from src.workflow_director import WorkflowDirector
+except ModuleNotFoundError as e:
+    print(f"Error: {e}")
+    print("Make sure all required modules are installed and in the correct location.")
+    sys.exit(1)
 
 
 @click.group()

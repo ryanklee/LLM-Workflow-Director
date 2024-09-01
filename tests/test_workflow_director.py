@@ -2,6 +2,8 @@ from unittest.mock import MagicMock, patch
 import sys
 import os
 from unittest.mock import patch, MagicMock
+import pytest
+import subprocess
 
 # Add the project root directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -91,6 +93,12 @@ def test_workflow_director_complete_current_stage():
     print(f"Final completed stages: {director.completed_stages}")
     assert post_final_result == True, "Expected True when attempting to complete after the final stage"
     assert director.current_stage == all_stages[-1], f"Expected to stay in the final stage {all_stages[-1]}, but in {director.current_stage}"
+
+def test_main_script_execution():
+    result = subprocess.run(['python', 'src/main.py', 'report', '--format', 'markdown'], 
+                            capture_output=True, text=True)
+    assert result.returncode == 0, f"Script execution failed with error: {result.stderr}"
+    assert "LLM-Workflow Director Project Report" in result.stdout, "Expected output not found in script execution"
 
 def test_workflow_director_get_stage_progress():
     director = WorkflowDirector()
