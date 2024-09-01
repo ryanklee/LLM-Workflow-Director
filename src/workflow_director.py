@@ -105,8 +105,8 @@ class WorkflowDirector:
                     response = self.llm_manager.query(query, context=context, tier=tier)
                     self.user_interaction_handler.display_message(f"LLM response: {response}")
                     self._process_llm_response(response)
-                    if user_input.lower() != 'next':
-                        break  # Exit the loop after processing one command, unless it's 'next'
+                    if user_input.lower() == 'exit':
+                        break  # Exit the loop only if the command is 'exit'
             except Exception as e:
                 self.user_interaction_handler.handle_error(e)
         self.logger.info("Exiting LLM Workflow Director")

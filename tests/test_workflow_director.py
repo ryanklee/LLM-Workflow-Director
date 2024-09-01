@@ -186,7 +186,7 @@ def test_workflow_director_run(mock_llm_manager):
 def test_workflow_director_llm_integration(mock_llm_manager):
     mock_llm_manager.return_value.query.return_value = "LLM response: Update task progress"
     mock_user_interaction_handler = MagicMock(spec=UserInteractionHandler)
-    mock_user_interaction_handler.prompt_user.side_effect = ['test command', 'exit']
+    mock_user_interaction_handler.prompt_user.side_effect = ['test command', 'next', 'exit']
 
     director = WorkflowDirector(user_interaction_handler=mock_user_interaction_handler)
     director.llm_manager = mock_llm_manager.return_value  # Explicitly set the mocked LLMManager
@@ -196,18 +196,23 @@ def test_workflow_director_llm_integration(mock_llm_manager):
     # Check if the query method was called
     assert mock_llm_manager.return_value.query.called, "LLMManager.query was not called"
 
-    # Check the arguments of the query call
-    mock_llm_manager.return_value.query.assert_called_with(
+    # Check the arguments of the query calls
+    mock_llm_manager.return_value.query.assert_any_call(
         "Process this command: test command",
         context=ANY,
         tier=ANY
     )
+    mock_llm_manager.return_value.query.assert_any_call(
+        "Process this command: next",
+        context=ANY,
+        tier=ANY
+    )
 
-    # Check if the LLM response was displayed
+    # Check if the LLM responses were displayed
     mock_user_interaction_handler.display_message.assert_any_call("LLM response: LLM response: Update task progress")
 
     # Check if the _process_llm_response method was called
     assert any("LLM response: Update task progress" in call[0][0] for call in mock_user_interaction_handler.display_message.call_args_list)
 
-    # Check that the LLM query was called only once (for 'test command')
-    assert mock_llm_manager.return_value.query.call_count == 1
+    # Check that the LLM query was called twice (for 'test command' and 'next')
+    assert mock_llm_manager.return_value.query.call_count == 2
