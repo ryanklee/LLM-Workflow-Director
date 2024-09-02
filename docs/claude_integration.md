@@ -4,7 +4,7 @@
 This document outlines the integration of Anthropic's Claude models into the LLM-Workflow Director, including best practices for prompt engineering and utilizing Claude's unique capabilities.
 
 ## Important Note on API Usage
-ALWAYS use the messages API for interacting with Claude models. The completions API is deprecated and should not be used.
+ALWAYS use the completion API for interacting with Claude models. The messages API is not officially supported for Claude 3 models.
 
 ## Supported Claude Models
 1. Claude 3 Haiku: Fast and cost-effective
@@ -24,9 +24,9 @@ Use the completion method for Claude interactions. Here's an example:
 from anthropic import Anthropic
 
 client = Anthropic()
-response = client.completion(
+response = client.completions.create(
     model="claude-3-opus-20240229",
-    max_tokens=1000,
+    max_tokens_to_sample=1000,
     prompt="\n\nHuman: Your prompt here\n\nAssistant:",
 )
 print(response.completion)
@@ -91,4 +91,4 @@ print(response.completion)
 
 By following these guidelines and best practices, we can effectively leverage the capabilities of Claude models within the LLM-Workflow Director, ensuring optimal performance and user experience.
 
-Remember: Always use the messages API for Claude interactions. The completions API is deprecated and should not be used under any circumstances.
+Remember: Always use the completion API for Claude interactions. The messages API is not officially supported for Claude 3 models and should not be used.
