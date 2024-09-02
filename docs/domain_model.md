@@ -8,6 +8,7 @@
    - Coordinates interactions between other components
    - Implements conditional branching in workflow
    - Supports parallel task execution within stages
+   - Manages user confirmations for critical workflow steps
 
 2. StateManager
    - Maintains the current state of the project
@@ -30,6 +31,7 @@
    - Employs chain-of-thought prompting for complex reasoning tasks
    - Manages context headers and summaries for LLM interactions
    - Implements caching mechanisms for optimizing API usage and costs
+   - Coordinates with AdaptiveLearningManager for model selection
 
 6. UserInteractionHandler
    - Manages user inputs and interactions
@@ -40,11 +42,13 @@
    - Defines and maintains the project structure
    - Provides tools for structure validation and evolution
    - Manages file-level modularity
+   - Supports customization within predefined limits
 
 8. DocumentationGenerator
    - Generates and maintains project documentation
    - Supports multiple output formats and auto-updating
    - Implements auto-documentation features for code and configurations
+   - Ensures synchronization between documentation and project state
 
 9. TestManager
    - Manages the creation and execution of tests
@@ -58,10 +62,12 @@
 11. VectorStore
     - Provides efficient storage and retrieval of project-related information
     - Enhances context retrieval for LLM interactions
+    - Implements optimized indexing and search algorithms
 
 12. ExternalToolIntegrator
     - Manages the integration of external tools and APIs
     - Provides interfaces for Claude to utilize external tools
+    - Handles configuration and management of external tool integrations
 
 13. MultiModalInputHandler
     - Supports processing of text and image inputs
@@ -71,11 +77,23 @@
 14. AdaptiveLearningManager
     - Implements adaptive learning for Claude model selection
     - Analyzes historical performance data to refine model selection criteria
+    - Generates reports on LLM tier usage and effectiveness
 
 15. SecurityManager
     - Implements secure practices for handling sensitive information
     - Manages authentication and authorization
     - Implements rate limiting for Claude API calls
+    - Provides configurable rate limiting settings
+
+16. CacheManager
+    - Implements caching mechanisms for LLM computations
+    - Manages cache invalidation and update strategies
+    - Optimizes cache usage for long-running workflows
+
+17. CodingConventionsManager
+    - Generates and manages coding conventions
+    - Ensures adherence to specified conventions in generated code
+    - Provides validation mechanisms for coding conventions
 
 ## Relationships
 
