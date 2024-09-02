@@ -44,16 +44,16 @@ def test_llm_manager_query(mock_time, mock_anthropic, mock_client):
     assert manager.cost_optimizer.usage_stats['balanced']['count'] == 1
     assert manager.cost_optimizer.performance_metrics['balanced']['avg_response_time'] == 1.0
 
-def test_llm_manager_query_with_error():
-    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client, \
-         patch('anthropic.Anthropic') as mock_anthropic, \
-         patch('time.time', side_effect=[0, 1, 2, 3]):  # Mock start and end times for multiple attempts
-        mock_anthropic.return_value.messages.create.side_effect = Exception("Test error")
-        manager = LLMManager()
-        response = manager.query("Test prompt")
-        assert 'error' in response
-        assert manager.cost_optimizer.usage_stats['fast']['count'] == 1  # Should fall back to 'fast' tier
-        assert manager.cost_optimizer.performance_metrics['fast']['success_rate'] < 1.0
+@patch('src.llm_manager.LLMMicroserviceClient')
+@patch('anthropic.Anthropic')
+@patch('time.time', side_effect=[0, 1, 2, 3])  # Mock start and end times for multiple attempts
+def test_llm_manager_query_with_error(mock_time, mock_anthropic, mock_client):
+    mock_anthropic.return_value.messages.create.side_effect = Exception("Test error")
+    manager = LLMManager()
+    response = manager.query("Test prompt")
+    assert 'error' in response
+    assert manager.cost_optimizer.usage_stats['fast']['count'] == 1  # Should fall back to 'fast' tier
+    assert manager.cost_optimizer.performance_metrics['fast']['success_rate'] < 1.0
 
 def test_llm_manager_tier_selection():
     manager = LLMManager()
@@ -63,11 +63,13 @@ def test_llm_manager_tier_selection():
     with patch.object(manager, 'query') as mock_query:
         manager.query(simple_query)
         mock_query.assert_called_with(simple_query, context=None, tier=ANY)
-        assert mock_query.call_args[1]['tier'] in ['fast', 'balanced', 'powerful']
-            
+        
         manager.query(complex_query)
         mock_query.assert_called_with(complex_query, context=None, tier=ANY)
-        assert mock_query.call_args[1]['tier'] in ['fast', 'balanced', 'powerful']
+        
+    # Check if the tier selection is working as expected
+    assert manager.determine_query_tier(simple_query) == 'fast'
+    assert manager.determine_query_tier(complex_query) == 'powerful'
 
 def test_llm_manager_get_usage_report():
     manager = LLMManager()
