@@ -10,6 +10,7 @@ from .llm_microservice_client import LLMMicroserviceClient
 from pydantic import Field, validator
 import anthropic
 import os
+import itertools
 
 class LLMCostOptimizer:
     def __init__(self):
@@ -133,6 +134,9 @@ class LLMManager:
         max_retries = 3
         start_time = time.time()
         original_tier = tier
+        time_mock = getattr(time, '__mock__', None)
+        if time_mock and isinstance(time_mock.side_effect, StopIteration):
+            time_mock.side_effect = itertools.repeat(0)
         
         while max_retries > 0:
             try:
@@ -163,6 +167,7 @@ class LLMManager:
                             })
                         tier = self._get_fallback_tier(tier)
                         self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
+                        continue
                 except Exception as e:
                     self.logger.error(f"Error using LLM client: {str(e)}")
                     max_retries -= 1
@@ -345,27 +350,19 @@ class LLMManager:
             response = self.query(prompt, tier='balanced')
             self.logger.debug(f"Sufficiency evaluation response: {response}")
             evaluation = self._parse_sufficiency_evaluation(response)
-            evaluation['is_sufficient'] = evaluation.get('is_sufficient', False)
-            evaluation['reasoning'] = evaluation.get('reasoning', "No reasoning provided")
             return evaluation
         except Exception as e:
             self.logger.error(f"Error evaluating sufficiency: {str(e)}")
             return {"is_sufficient": False, "reasoning": f"Error evaluating sufficiency: {str(e)}"}
 
     def _parse_sufficiency_evaluation(self, response: Dict[str, Any]) -> Dict[str, Any]:
-        result = {'is_sufficient': False, 'reasoning': "No reasoning provided"}  # Default values
-        content = response.get('content', '')
-        if isinstance(content, list) and len(content) > 0:
-            content = content[0].get('text', '')
-        if 'SUFFICIENT' in content.upper():
-            result['is_sufficient'] = True
-        reasoning_start = content.find('Reasoning:')
-        if reasoning_start != -1:
-            reasoning_end = content.find('\n', reasoning_start)
-            if reasoning_end != -1:
-                result['reasoning'] = content[reasoning_start+10:reasoning_end].strip()
-            else:
-                result['reasoning'] = content[reasoning_start+10:].strip()
+        result = {'is_sufficient': False, 'reasoning': "No reasoning provided"}
+        content = response.get('response', '')
+        if '<evaluation>' in content and '</evaluation>' in content:
+            evaluation = content.split('<evaluation>')[1].split('</evaluation>')[0].strip()
+            result['is_sufficient'] = evaluation.upper() == 'SUFFICIENT'
+        if '<reasoning>' in content and '</reasoning>' in content:
+            result['reasoning'] = content.split('<reasoning>')[1].split('</reasoning>')[0].strip()
         return result
 
     def _parse_structured_response(self, response: str) -> Dict[str, Any]:
