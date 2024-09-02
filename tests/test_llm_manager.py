@@ -68,7 +68,7 @@ def test_llm_manager_tier_selection():
             with patch.object(manager.llm_client, 'messages') as mock_messages:
                 with patch.object(manager.cost_optimizer, 'update_usage'):
                     manager.query(simple_query)
-                    mock_query.assert_called_with(ANY, None, ANY, ANY)
+                    mock_messages.create.assert_called_with(model=ANY, max_tokens=ANY, messages=[{"role": "user", "content": ANY}])
         
         with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='powerful'):
             with patch.object(manager.client, 'query') as mock_query:
@@ -137,7 +137,7 @@ def test_evaluate_sufficiency():
         
         assert result["is_sufficient"] == True
         assert result["reasoning"] == "All tasks completed"
-        mock_client.return_value.evaluate_sufficiency.assert_called_once_with("Test Stage", {"description": "Test"}, {"key": "value"})
+        mock_query.assert_called_once_with("Test Stage", {"description": "Test"}, {"key": "value"})
 
 def test_evaluate_sufficiency_error():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
