@@ -13,27 +13,46 @@ class LLMCostOptimizer:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.usage_stats = {
-            'fast': {'count': 0, 'total_tokens': 0},
-            'balanced': {'count': 0, 'total_tokens': 0},
-            'powerful': {'count': 0, 'total_tokens': 0}
+            'fast': {'count': 0, 'total_tokens': 0, 'total_cost': 0},
+            'balanced': {'count': 0, 'total_tokens': 0, 'total_cost': 0},
+            'powerful': {'count': 0, 'total_tokens': 0, 'total_cost': 0}
         }
         self.cost_per_token = {
             'fast': 0.0001,
             'balanced': 0.0005,
             'powerful': 0.001
         }
+        self.performance_metrics = {
+            'fast': {'avg_response_time': 0, 'success_rate': 1.0},
+            'balanced': {'avg_response_time': 0, 'success_rate': 1.0},
+            'powerful': {'avg_response_time': 0, 'success_rate': 1.0}
+        }
 
-    def update_usage(self, tier: str, tokens: int):
+    def update_usage(self, tier: str, tokens: int, response_time: float, success: bool):
         if tier in self.usage_stats:
             self.usage_stats[tier]['count'] += 1
             self.usage_stats[tier]['total_tokens'] += tokens
+            cost = tokens * self.cost_per_token[tier]
+            self.usage_stats[tier]['total_cost'] += cost
+
+            # Update performance metrics
+            self.performance_metrics[tier]['avg_response_time'] = (
+                (self.performance_metrics[tier]['avg_response_time'] * (self.usage_stats[tier]['count'] - 1) + response_time)
+                / self.usage_stats[tier]['count']
+            )
+            if not success:
+                self.performance_metrics[tier]['success_rate'] = (
+                    (self.performance_metrics[tier]['success_rate'] * (self.usage_stats[tier]['count'] - 1) + 0)
+                    / self.usage_stats[tier]['count']
+                )
         else:
             self.logger.warning(f"Unknown tier: {tier}")
 
     def get_usage_report(self) -> Dict[str, Any]:
-        total_cost = sum(self.usage_stats[tier]['total_tokens'] * self.cost_per_token[tier] for tier in self.usage_stats)
+        total_cost = sum(self.usage_stats[tier]['total_cost'] for tier in self.usage_stats)
         return {
             'usage_stats': self.usage_stats,
+            'performance_metrics': self.performance_metrics,
             'total_cost': total_cost
         }
 
@@ -45,12 +64,31 @@ class LLMCostOptimizer:
         powerful_ratio = self.usage_stats['powerful']['count'] / total_queries
         fast_ratio = self.usage_stats['fast']['count'] / total_queries
 
+        suggestions = []
+
         if powerful_ratio > 0.3:
-            return "Consider optimizing prompts to reduce reliance on the 'powerful' tier."
+            suggestions.append("Consider optimizing prompts to reduce reliance on the 'powerful' tier.")
         elif fast_ratio < 0.2:
-            return "Look for opportunities to use the 'fast' tier more frequently for simple queries."
+            suggestions.append("Look for opportunities to use the 'fast' tier more frequently for simple queries.")
+
+        for tier in self.performance_metrics:
+            if self.performance_metrics[tier]['success_rate'] < 0.95:
+                suggestions.append(f"Investigate and improve reliability of the '{tier}' tier.")
+            if self.performance_metrics[tier]['avg_response_time'] > 5:  # Assuming 5 seconds is our threshold
+                suggestions.append(f"Consider optimizing response time for the '{tier}' tier.")
+
+        if not suggestions:
+            return "Current usage appears to be well-balanced and performing efficiently across tiers."
+        
+        return " ".join(suggestions)
+
+    def select_optimal_tier(self, query_complexity: float) -> str:
+        if query_complexity < 0.3:
+            return 'fast'
+        elif query_complexity < 0.7:
+            return 'balanced'
         else:
-            return "Current usage appears to be well-balanced across tiers."
+            return 'powerful'
 
 class LLMManager:
     def __init__(self, config_path='src/llm_config.yaml'):
@@ -76,8 +114,15 @@ class LLMManager:
             self.logger.error(f"Error loading LLM configuration: {str(e)}")
             return {}
 
-    def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: str = 'balanced') -> Dict[str, Any]:
-        self.logger.debug(f"Querying LLM with prompt: {prompt[:50]}... (tier: {tier})")
+    def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: Optional[str] = None) -> Dict[str, Any]:
+        self.logger.debug(f"Querying LLM with prompt: {prompt[:50]}...")
+        
+        if tier is None:
+            query_complexity = self._estimate_query_complexity(prompt)
+            tier = self.cost_optimizer.select_optimal_tier(query_complexity)
+        
+        self.logger.debug(f"Selected tier: {tier}")
+        
         cache_key = self._generate_cache_key(prompt, context, tier)
         if cache_key in self.cache:
             self.logger.info(f"Using cached response for prompt: {prompt[:50]}... (tier: {tier})")
@@ -85,6 +130,7 @@ class LLMManager:
 
         max_retries = 3
         original_tier = tier
+        start_time = time.time()
         while max_retries > 0:
             try:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
@@ -114,7 +160,8 @@ class LLMManager:
 
                 # Update usage statistics
                 tokens = len(prompt.split()) + len(response_content.split())  # Simple token count estimation
-                self.cost_optimizer.update_usage(tier, tokens)
+                response_time = time.time() - start_time
+                self.cost_optimizer.update_usage(tier, tokens, response_time, success=True)
 
                 return response_with_id
             except Exception as e:
@@ -122,11 +169,22 @@ class LLMManager:
                 max_retries -= 1
                 if max_retries == 0:
                     self.logger.error(f"Max retries reached. Returning error message.")
+                    response_time = time.time() - start_time
+                    self.cost_optimizer.update_usage(tier, 0, response_time, success=False)
                     return {"error": f"Error querying LLM: {str(e)}"}
                 tier = self._get_fallback_tier(tier)
                 self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
         
         return {"error": "Failed to query LLM after all retries"}
+
+    def _estimate_query_complexity(self, query: str) -> float:
+        # This is a simple heuristic and can be improved
+        word_count = len(query.split())
+        complexity_keywords = ['analyze', 'compare', 'evaluate', 'synthesize', 'complex']
+        keyword_count = sum(1 for word in query.lower().split() if word in complexity_keywords)
+        
+        complexity = (word_count / 100) + (keyword_count * 0.1)  # Normalize to 0-1 range
+        return min(max(complexity, 0), 1)  # Ensure it's between 0 and 1
 
     def _get_fallback_tier(self, current_tier: str) -> str:
         tiers = ['powerful', 'balanced', 'fast']
