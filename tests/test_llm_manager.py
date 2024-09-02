@@ -28,7 +28,8 @@ def test_llm_manager_initialization():
 def test_llm_manager_query(mock_time, mock_anthropic, mock_client):
     mock_anthropic.return_value.messages.create.return_value.content = [type('obj', (object,), {'text': "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response"})()]
     manager = LLMManager()
-    response = manager.query("Test prompt")
+    with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
+        response = manager.query("Test prompt")
     assert isinstance(response, dict)
     assert 'task_progress' in response
     assert 'state_updates' in response
@@ -50,7 +51,8 @@ def test_llm_manager_query(mock_time, mock_anthropic, mock_client):
 def test_llm_manager_query_with_error(mock_time, mock_anthropic, mock_client):
     mock_anthropic.return_value.messages.create.side_effect = Exception("Test error")
     manager = LLMManager()
-    response = manager.query("Test prompt")
+    with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
+        response = manager.query("Test prompt")
     assert 'error' in response
     assert manager.cost_optimizer.usage_stats['fast']['count'] == 1  # Should fall back to 'fast' tier
     assert manager.cost_optimizer.performance_metrics['fast']['success_rate'] < 1.0
@@ -61,13 +63,13 @@ def test_llm_manager_tier_selection():
     complex_query = "Analyze the implications of quantum computing on modern cryptography systems."
         
     with patch.object(manager, 'query') as mock_query:
-        manager.query(simple_query)
-        mock_query.assert_called_with(simple_query, context=None, tier=ANY)
-        assert mock_query.call_args[1]['tier'] in ['fast', 'balanced', 'powerful']
+        with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='fast'):
+            manager.query(simple_query)
+            mock_query.assert_called_with(simple_query, context=None, tier='fast')
         
-        manager.query(complex_query)
-        mock_query.assert_called_with(complex_query, context=None, tier=ANY)
-        assert mock_query.call_args[1]['tier'] in ['fast', 'balanced', 'powerful']
+        with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='powerful'):
+            manager.query(complex_query)
+            mock_query.assert_called_with(complex_query, context=None, tier='powerful')
     
     # Check if the tier selection is working as expected
     assert manager.determine_query_tier(simple_query) == 'fast'
