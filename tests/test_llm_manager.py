@@ -24,12 +24,13 @@ def test_llm_manager_initialization():
 
 @patch('src.llm_manager.LLMMicroserviceClient')
 @patch('anthropic.Anthropic')
-@patch('time.time', side_effect=[0, 1, 2, 3])  # Mock start and end times
+@patch('time.time', side_effect=[0, 1])  # Mock start and end times
 def test_llm_manager_query(mock_time, mock_anthropic, mock_client):
     mock_anthropic.return_value.messages.create.return_value.content = [type('obj', (object,), {'text': "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response"})()]
     manager = LLMManager()
     with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
-        response = manager.query("Test prompt")
+        with patch.object(manager.cost_optimizer, 'update_usage'):
+            response = manager.query("Test prompt")
     assert isinstance(response, dict)
     assert 'task_progress' in response
     assert 'state_updates' in response
@@ -226,7 +227,8 @@ def test_llm_manager_fallback_to_fast():
 
 def test_llm_manager_query_with_tiers():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client, \
-         patch('anthropic.Anthropic') as mock_anthropic:
+         patch('anthropic.Anthropic') as mock_anthropic, \
+         patch('time.time', side_effect=[0, 1, 2, 3, 4, 5, 6, 7]):  # Mock start and end times
         mock_anthropic.return_value.messages.create.side_effect = [
             type('obj', (object,), {'content': [type('obj', (object,), {'text': "Fast response"})()]})(),
             type('obj', (object,), {'content': [type('obj', (object,), {'text': "Balanced response"})()]})(),
@@ -234,9 +236,10 @@ def test_llm_manager_query_with_tiers():
         ]
         manager = LLMManager()
         
-        fast_result = manager.query("Short prompt", tier='fast')
-        balanced_result = manager.query("Medium length prompt", tier='balanced')
-        powerful_result = manager.query("Complex prompt", tier='powerful')
+        with patch.object(manager.cost_optimizer, 'update_usage'):
+            fast_result = manager.query("Short prompt", tier='fast')
+            balanced_result = manager.query("Medium length prompt", tier='balanced')
+            powerful_result = manager.query("Complex prompt", tier='powerful')
         
         assert isinstance(fast_result, dict) and "Fast response" in fast_result.get("response", "")
         assert isinstance(balanced_result, dict) and "Balanced response" in balanced_result.get("response", "")
