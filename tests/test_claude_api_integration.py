@@ -11,7 +11,9 @@ class TestClaudeAPIIntegration(unittest.TestCase):
     def test_claude_api_call(self, mock_anthropic):
         mock_client = MagicMock()
         mock_anthropic.return_value = mock_client
-        mock_client.messages.create.return_value = MagicMock(content=[MagicMock(text="Test response")])
+        mock_response = MagicMock()
+        mock_response.content = [MagicMock(text="Test response")]
+        mock_client.messages.create.return_value = mock_response
 
         response = self.claude_manager.generate_response("Test prompt")
         
@@ -35,9 +37,7 @@ class TestClaudeAPIIntegration(unittest.TestCase):
         self.assertEqual(self.claude_manager.select_model("highly complex task"), "claude-3-opus-20240229")
 
     def test_error_handling(self):
-        with patch('anthropic.Anthropic') as mock_anthropic:
-            mock_client = MagicMock()
-            mock_anthropic.return_value = mock_client
+        with patch.object(self.claude_manager, 'client') as mock_client:
             mock_client.messages.create.side_effect = Exception("API Error")
 
             with self.assertRaises(Exception):
