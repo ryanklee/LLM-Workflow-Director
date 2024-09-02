@@ -179,7 +179,10 @@ class LLMManager:
 
         response_with_id['response_time'] = response_time
         response_with_id['tier'] = tier
-        response_with_id['response'] = response_content
+        if 'response' not in response_with_id:
+            response_with_id['response'] = response_content
+        elif isinstance(response_with_id['response'], MagicMock):
+            response_with_id['response'] = str(response_with_id['response'])
 
         # Ensure all parsed fields are included in the response
         for key in structured_response:
@@ -221,6 +224,24 @@ class LLMManager:
                         "response": str(e),
                         "tier": original_tier,
                         "task_progress": 0,
+                        "state_updates": {},
+                        "actions": [],
+                        "suggestions": []
+                    }
+                    return self._add_unique_id(error_response)
+                tier = self._get_fallback_tier(tier)
+                self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
+        
+        error_response = {
+            "error": "Failed to query LLM after all retries",
+            "response": "Failed to query LLM after all retries",
+            "tier": original_tier,
+            "task_progress": 0,
+            "state_updates": {},
+            "actions": [],
+            "suggestions": []
+        }
+        return self._add_unique_id(error_response)
                         "state_updates": {},
                         "actions": [],
                         "suggestions": []
