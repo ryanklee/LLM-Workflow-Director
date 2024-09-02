@@ -106,7 +106,11 @@ class LLMManager:
             'powerful': {'model': 'claude-3-opus-20240229', 'max_tokens': 4000}
         })
         self.prompt_templates = self.config.get('prompt_templates', {})
-        self.llm_client = llm.get_model("claude-3-sonnet-20240229")  # Specify a default model name
+        try:
+            self.llm_client = llm.get_model("claude-3-sonnet-20240229")
+        except llm.UnknownModelError:
+            self.logger.warning("Claude-3-sonnet model not found. Falling back to default model.")
+            self.llm_client = llm.get_model()  # Get the default model
 
     def _load_config(self, config_path):
         try:
@@ -139,13 +143,17 @@ class LLMManager:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
                 
-                response = self.llm_client.complete(enhanced_prompt, model=tier_config['model'], max_tokens=tier_config['max_tokens'])
-                response_content = response.text()
-                
-                result = self._process_response(response_content, tier, start_time)
-                self.cache[cache_key] = result
-                self.cost_optimizer.update_usage(tier, len(response_content.split()), time.time() - start_time, True)
-                return result
+                try:
+                    response = self.llm_client.complete(enhanced_prompt, model=tier_config['model'], max_tokens=tier_config['max_tokens'])
+                    response_content = response.text()
+                    
+                    result = self._process_response(response_content, tier, start_time)
+                    self.cache[cache_key] = result
+                    self.cost_optimizer.update_usage(tier, len(response_content.split()), time.time() - start_time, True)
+                    return result
+                except Exception as e:
+                    self.logger.error(f"Error using LLM client: {str(e)}")
+                    raise
             except Exception as e:
                 self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
                 self.cost_optimizer.update_usage(tier, 0, time.time() - start_time, False)
