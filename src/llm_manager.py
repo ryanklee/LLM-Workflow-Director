@@ -106,7 +106,7 @@ class LLMManager:
             'powerful': {'model': 'claude-3-opus-20240229', 'max_tokens': 4000}
         })
         self.prompt_templates = self.config.get('prompt_templates', {})
-        self.llm_client = llm  # Use the llm module directly
+        self.llm_client = llm.get_model()  # Get the default model from llm
 
     def _load_config(self, config_path):
         try:
@@ -139,7 +139,7 @@ class LLMManager:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
                 
-                response = self.llm_client.query(enhanced_prompt, model=tier_config['model'], max_tokens=tier_config['max_tokens'])
+                response = self.llm_client.complete(enhanced_prompt, model=tier_config['model'], max_tokens=tier_config['max_tokens'])
                 response_content = response.text()
                 
                 result = self._process_response(response_content, tier, start_time)
