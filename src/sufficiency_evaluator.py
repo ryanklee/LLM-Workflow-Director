@@ -106,9 +106,6 @@ class SufficiencyEvaluator:
         
         try:
             evaluation = self.llm_manager.evaluate_sufficiency(stage_name, stage_data, project_state)
-            return {
-                "is_sufficient": evaluation.get('is_sufficient', False),
-                "reasoning": evaluation.get('reasoning', 'No reasoning provided')
-            }
+            return evaluation
         except Exception as e:
             return {"is_sufficient": False, "reasoning": f"Error evaluating sufficiency: {str(e)}"}
