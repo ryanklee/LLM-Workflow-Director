@@ -177,28 +177,34 @@ class LLMManager:
         structured_response = self._parse_structured_response(response_content)
         response_with_id = self._add_unique_id(structured_response)
 
-        cache_key = self._generate_cache_key(response_content, None, tier)
-        self.cache[cache_key] = response_with_id
-
         response_with_id['response_time'] = response_time
         response_with_id['tier'] = tier
 
         return response_with_id
 
     def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: Optional[str] = None) -> Dict[str, Any]:
-        # ... (previous code remains unchanged)
+        if tier is None:
+            query_complexity = self._estimate_query_complexity(prompt)
+            tier = self.cost_optimizer.select_optimal_tier(query_complexity)
+        
+        self.logger.debug(f"Selected tier: {tier}")
+        
+        cache_key = self._generate_cache_key(prompt, context, tier)
+        if cache_key in self.cache:
+            self.logger.info(f"Using cached response for prompt: {prompt[:50]}... (tier: {tier})")
+            return self.cache[cache_key]
 
         max_retries = 3
         start_time = time.time()
-        response_content = None
-
+        
         while max_retries > 0:
             try:
-                # ... (previous code remains unchanged)
                 enhanced_prompt = self._enhance_prompt(prompt, context)
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
                 response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
-                return self._process_response(response_content, tier, start_time)
+                result = self._process_response(response_content, tier, start_time)
+                self.cache[cache_key] = result
+                return result
             except Exception as e:
                 self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
                 max_retries -= 1
@@ -209,6 +215,8 @@ class LLMManager:
                     return {"error": f"Error querying LLM: {str(e)}"}
                 tier = self._get_fallback_tier(tier)
                 self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
+        
+        return {"error": "Failed to query LLM after all retries"}
         
         return {"error": "Failed to query LLM after all retries"}
 
@@ -232,12 +240,8 @@ class LLMManager:
         return 'fast'
 
     def determine_query_tier(self, query: str) -> str:
-        if len(query.split()) < 5:
-            return 'fast'
-        elif len(query.split()) > 50 or any(keyword in query.lower() for keyword in ['complex', 'detailed', 'analyze', 'summarize']):
-            return 'powerful'
-        else:
-            return 'balanced'
+        complexity = self._estimate_query_complexity(query)
+        return self.cost_optimizer.select_optimal_tier(complexity)
 
     def get_usage_report(self) -> Dict[str, Any]:
         return self.cost_optimizer.get_usage_report()
@@ -325,6 +329,8 @@ class LLMManager:
         return f"{prompt}|{context_str}|{tier}"
 
     def _add_unique_id(self, response: Dict[str, Any]) -> Dict[str, Any]:
+        if not isinstance(response, dict):
+            response = {"response": str(response)}
         unique_id = str(hash(str(response) + str(time.time())))
         response['id'] = f"(ID: {unique_id})"
         return response
