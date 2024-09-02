@@ -185,6 +185,10 @@ class LLMManager:
         elif isinstance(response_with_id['response'], MagicMock):
             response_with_id['response'] = str(response_with_id['response'])
 
+        # Ensure all parsed fields are included in the response
+        for key in structured_response:
+            response_with_id[key] = structured_response[key]
+
         return response_with_id
 
     def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: Optional[str] = None) -> Dict[str, Any]:
@@ -207,7 +211,17 @@ class LLMManager:
             try:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
-                response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
+                if 'claude' in tier_config['model']:
+                    response = self.claude_client.messages.create(
+                        model=tier_config['model'],
+                        max_tokens=tier_config['max_tokens'],
+                        messages=[
+                            {"role": "user", "content": enhanced_prompt}
+                        ]
+                    )
+                    response_content = response.content[0].text
+                else:
+                    response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
                 result = self._process_response(response_content, tier, start_time)
                 self.cache[cache_key] = result
                 return result
