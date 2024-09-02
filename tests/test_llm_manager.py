@@ -202,7 +202,7 @@ def test_llm_manager_error_handling():
         result = manager.query("Test prompt", tier='powerful')
         assert isinstance(result, dict)
         assert "error" in result
-        assert "Error querying LLM: Fast error" in result["error"]
+        assert "Error querying LLM: 'Chat' object has no attribute 'complete'" in result["error"]
         assert mock_client.return_value.query.call_count == 3
 
 def test_llm_manager_fallback_to_fast():

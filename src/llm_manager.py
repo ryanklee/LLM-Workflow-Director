@@ -149,8 +149,8 @@ class LLMManager:
                 
                 try:
                     try:
-                        response = self.llm_client.complete(enhanced_prompt, model=tier_config['model'], max_tokens=tier_config['max_tokens'])
-                        response_content = response.text()
+                        response = self.llm_client.chat(messages=[{"role": "user", "content": enhanced_prompt}], model=tier_config['model'], max_tokens=tier_config['max_tokens'])
+                        response_content = response.content[0].text
                     
                         result = self._process_response(response_content, tier, start_time)
                         self.cache[cache_key] = result
@@ -161,6 +161,16 @@ class LLMManager:
                         raise
                 except Exception as e:
                     self.logger.error(f"Error using LLM client: {str(e)}")
+                    max_retries -= 1
+                    if max_retries == 0:
+                        self.logger.error(f"Max retries reached. Returning error message.")
+                        return {
+                            "error": f"Error querying LLM: {str(e)}",
+                            "response": str(e),
+                            "tier": original_tier
+                        }
+                    tier = self._get_fallback_tier(tier)
+                    self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
                     raise
             except Exception as e:
                 self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
@@ -326,14 +336,17 @@ class LLMManager:
             })
             response = self.query(prompt, tier='balanced')
             self.logger.debug(f"Sufficiency evaluation response: {response}")
-            return self._parse_sufficiency_evaluation(response['response'])
+            evaluation = self._parse_sufficiency_evaluation(response['response'])
+            if 'is_sufficient' not in evaluation:
+                evaluation['is_sufficient'] = False
+            return evaluation
         except Exception as e:
             self.logger.error(f"Error evaluating sufficiency: {str(e)}")
             return {"is_sufficient": False, "reasoning": f"Error evaluating sufficiency: {str(e)}"}
 
     def _parse_sufficiency_evaluation(self, response: str) -> Dict[str, Any]:
         lines = response.strip().split('\n')
-        result = {}
+        result = {'is_sufficient': False}  # Default to False
         for line in lines:
             if line.startswith('Evaluation:'):
                 result['is_sufficient'] = 'SUFFICIENT' in line.upper()
