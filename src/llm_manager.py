@@ -179,8 +179,7 @@ class LLMManager:
 
         response_with_id['response_time'] = response_time
         response_with_id['tier'] = tier
-        if 'response' not in response_with_id:
-            response_with_id['response'] = response_content
+        response_with_id['response'] = response_content
 
         return response_with_id
 
@@ -198,6 +197,7 @@ class LLMManager:
 
         max_retries = 3
         start_time = time.time()
+        original_tier = tier
         
         while max_retries > 0:
             try:
@@ -212,11 +212,11 @@ class LLMManager:
                 max_retries -= 1
                 if max_retries == 0:
                     self.logger.error(f"Max retries reached. Returning error message.")
-                    return {"error": f"Error querying LLM: {str(e)}"}
+                    return {"error": f"Error querying LLM: {str(e)}", "tier": original_tier}
                 tier = self._get_fallback_tier(tier)
                 self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
         
-        return {"error": "Failed to query LLM after all retries"}
+        return {"error": "Failed to query LLM after all retries", "tier": original_tier}
         
         return {"error": "Failed to query LLM after all retries"}
 
