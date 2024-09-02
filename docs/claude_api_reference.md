@@ -1,6 +1,6 @@
 # Claude API Reference
 
-## Models
+## Models and Cost Management
 
 Claude offers three main models:
 
@@ -12,6 +12,13 @@ All models support:
 - 200k token context window
 - Multilingual capabilities
 - Vision input
+
+To optimize API costs and usage:
+1. Use the appropriate model tier for each task
+2. Implement caching for repeated queries
+3. Batch similar requests when possible
+4. Monitor and analyze usage patterns
+5. Set up usage alerts and limits
 
 ## API Integration
 
@@ -58,7 +65,41 @@ print(message.content)
 5. Implement chain-of-thought prompting for complex tasks
 6. Use multi-shot learning for consistent outputs
 
-## Tool Use
+### Structured Output with XML Tags
+
+Example:
+```xml
+<instruction>
+Please provide a summary of the text in the following format:
+<summary>
+<main_points>
+[List the main points here]
+</main_points>
+<key_takeaways>
+[List key takeaways here]
+</key_takeaways>
+</summary>
+</instruction>
+```
+
+### Leveraging Claude's Reasoning Capabilities
+
+1. Use step-by-step instructions for complex tasks
+2. Encourage Claude to "think aloud" and explain its reasoning
+3. Use chain-of-thought prompting for multi-step problem-solving
+4. Provide examples of desired reasoning processes
+5. Ask Claude to evaluate its own responses and refine them
+
+## Fine-tuning Prompts for Performance and Consistency
+
+1. Iterate on prompts based on Claude's responses
+2. Use clear and consistent formatting across similar tasks
+3. Provide examples of desired outputs
+4. Use system messages to set context and expectations
+5. Experiment with different prompt structures and phrasings
+6. Implement A/B testing for critical prompts
+
+## Tool Use and Workflow Integration
 
 Claude can use external tools to enhance its capabilities. Implement tool use by:
 
@@ -66,6 +107,14 @@ Claude can use external tools to enhance its capabilities. Implement tool use by
 2. Providing clear instructions on when and how to use tools
 3. Parsing Claude's responses to execute tool calls
 4. Feeding tool results back to Claude for further processing
+
+Strategies for integrating Claude into larger workflows:
+
+1. Use Claude as a task router or orchestrator
+2. Implement Claude for data preprocessing and cleaning
+3. Use Claude for generating intermediate results or subtasks
+4. Integrate Claude's outputs with other AI models or traditional software systems
+5. Implement feedback loops to improve Claude's performance over time
 
 ## Vision Capabilities
 
