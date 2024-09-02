@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from src.claude_manager import ClaudeManager
+import tenacity
 
 class TestClaudeAPIIntegration(unittest.TestCase):
 
