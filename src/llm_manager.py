@@ -106,7 +106,7 @@ class LLMManager:
             'powerful': {'model': 'claude-3-opus-20240229', 'max_tokens': 4000}
         })
         self.prompt_templates = self.config.get('prompt_templates', {})
-        self.llm_client = llm.get_model()  # Get the default model from llm
+        self.llm_client = llm.get_model("claude-3-sonnet-20240229")  # Specify a default model name
 
     def _load_config(self, config_path):
         try:
