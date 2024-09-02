@@ -179,7 +179,8 @@ class LLMManager:
 
         response_with_id['response_time'] = response_time
         response_with_id['tier'] = tier
-        response_with_id['response'] = response_content
+        if 'response' not in response_with_id:
+            response_with_id['response'] = response_content
 
         return response_with_id
 
@@ -225,7 +226,7 @@ class LLMManager:
         complexity_keywords = ['analyze', 'compare', 'evaluate', 'synthesize', 'complex']
         keyword_count = sum(1 for word in query.lower().split() if word in complexity_keywords)
         
-        complexity = (word_count / 100) + (keyword_count * 0.1)  # Normalize to 0-1 range
+        complexity = (word_count / 200) + (keyword_count * 0.2)  # Adjusted normalization
         return min(max(complexity, 0), 1)  # Ensure it's between 0 and 1
 
     def _get_fallback_tier(self, current_tier: str) -> str:
@@ -240,7 +241,9 @@ class LLMManager:
 
     def determine_query_tier(self, query: str) -> str:
         complexity = self._estimate_query_complexity(query)
-        return self.cost_optimizer.select_optimal_tier(complexity)
+        tier = self.cost_optimizer.select_optimal_tier(complexity)
+        self.logger.debug(f"Query complexity: {complexity}, Selected tier: {tier}")
+        return tier
 
     def get_usage_report(self) -> Dict[str, Any]:
         return self.cost_optimizer.get_usage_report()
