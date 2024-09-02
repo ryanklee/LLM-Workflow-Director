@@ -7,17 +7,7 @@
 - Set the "anthropic-version" header to specify the API version (e.g., "2023-06-01").
 - Use "content-type: application/json" header for requests.
 
-## 2. Messages API
-
-- Primary endpoint: POST https://api.anthropic.com/v1/messages
-- Key parameters:
-  - model: Specify the Claude model version (e.g., "claude-3-opus-20240229")
-  - max_tokens: Maximum number of tokens to generate
-  - messages: Array of message objects with "role" and "content"
-  - system: Optional system prompt for context/instructions
-- Response includes generated content, stop reason, and token usage.
-
-## 3. Prompt Engineering Best Practices
+## 2. Prompt Engineering Best Practices
 
 - Be clear and direct in instructions.
 - Use examples (few-shot learning) for complex tasks.
@@ -78,27 +68,7 @@
 - Implement output filtering for sensitive information.
 - Regularly audit and rotate API keys.
 
-## 10. Example API Integration
-
-```python
-import anthropic
-
-client = anthropic.Anthropic()
-message = client.messages.create(
-    model="claude-3-opus-20240229",
-    max_tokens=1000,
-    messages=[
-        {"role": "user", "content": "Hello, Claude!"}
-    ]
-)
-
-print(message.content[0].text)
-```
-
 For detailed implementation guidance, refer to the official Anthropic documentation:
-- https://docs.anthropic.com/en/api/messages
-- https://docs.anthropic.com/en/api/getting-started
-- https://docs.anthropic.com/en/api/messages-examples
 - https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview
 - https://docs.anthropic.com/en/docs/build-with-claude/tool-use
 - https://docs.anthropic.com/en/docs/build-with-claude/embeddings
