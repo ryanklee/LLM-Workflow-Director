@@ -19,7 +19,7 @@ class TestClaudeAPIIntegration(unittest.TestCase):
         mock_client.completions.create.assert_called_once_with(
             model="claude-3-opus-20240229",
             max_tokens_to_sample=1000,
-            prompt="Test prompt"
+            prompt="\n\nHuman: Test prompt\n\nAssistant:"
         )
 
     def test_tiered_model_selection(self):
