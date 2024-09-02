@@ -179,7 +179,8 @@ class LLMManager:
 
         response_with_id['response_time'] = response_time
         response_with_id['tier'] = tier
-        response_with_id['response'] = response_with_id.get('response', response_content)
+        if 'response' not in response_with_id:
+            response_with_id['response'] = response_content
 
         return response_with_id
 
@@ -205,7 +206,8 @@ class LLMManager:
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
                 response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
                 result = self._process_response(response_content, tier, start_time)
-                self.cache[cache_key] = result
+                if 'error' not in result:
+                    self.cache[cache_key] = result
                 return result
             except Exception as e:
                 self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
@@ -213,13 +215,11 @@ class LLMManager:
                 if max_retries == 0:
                     self.logger.error(f"Max retries reached. Returning error message.")
                     error_result = {"error": f"Error querying LLM: {str(e)}", "tier": original_tier}
-                    self.cache[cache_key] = error_result
                     return error_result
                 tier = self._get_fallback_tier(tier)
                 self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
         
         error_result = {"error": "Failed to query LLM after all retries", "tier": original_tier}
-        self.cache[cache_key] = error_result
         return error_result
         
         return {"error": "Failed to query LLM after all retries"}
@@ -230,7 +230,7 @@ class LLMManager:
         complexity_keywords = ['analyze', 'compare', 'evaluate', 'synthesize', 'complex']
         keyword_count = sum(1 for word in query.lower().split() if word in complexity_keywords)
         
-        complexity = (word_count / 50) + (keyword_count * 0.4)  # Adjusted normalization
+        complexity = (word_count / 30) + (keyword_count * 0.5)  # Adjusted normalization
         return min(max(complexity, 0), 1)  # Ensure it's between 0 and 1
 
     def _get_fallback_tier(self, current_tier: str) -> str:
@@ -245,9 +245,9 @@ class LLMManager:
 
     def determine_query_tier(self, query: str) -> str:
         complexity = self._estimate_query_complexity(query)
-        if complexity < 0.3:
+        if complexity < 0.4:
             tier = 'fast'
-        elif complexity < 0.7:
+        elif complexity < 0.8:
             tier = 'balanced'
         else:
             tier = 'powerful'
