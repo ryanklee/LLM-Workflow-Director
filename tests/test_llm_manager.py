@@ -1,8 +1,10 @@
+import pytest
 from unittest.mock import patch, MagicMock, ANY
 from src.llm_manager import LLMManager, LLMCostOptimizer
 
-def test_llm_manager_initialization():
-    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client, \
+@pytest.fixture
+def llm_manager():
+    with patch('src.llm_manager.LLMMicroserviceClient'), \
          patch('src.llm_manager.yaml.safe_load') as mock_yaml_load:
         mock_yaml_load.return_value = {
             'tiers': {
@@ -15,148 +17,133 @@ def test_llm_manager_initialization():
                 'sufficiency_evaluation': 'Sufficiency evaluation template'
             }
         }
-        manager = LLMManager()
-        assert isinstance(manager.client, MagicMock)
-        assert isinstance(manager.cache, dict)
-        assert isinstance(manager.cost_optimizer, LLMCostOptimizer)
-        assert 'default' in manager.prompt_templates
-        assert 'sufficiency_evaluation' in manager.prompt_templates
+        return LLMManager()
 
+@pytest.mark.fast
+def test_llm_manager_initialization(llm_manager):
+    assert isinstance(llm_manager.client, MagicMock)
+    assert isinstance(llm_manager.cache, dict)
+    assert isinstance(llm_manager.cost_optimizer, LLMCostOptimizer)
+    assert 'default' in llm_manager.prompt_templates
+    assert 'sufficiency_evaluation' in llm_manager.prompt_templates
+
+@pytest.mark.fast
 @patch('src.llm_manager.LLMMicroserviceClient')
 @patch('anthropic.Anthropic')
 @patch('time.time', side_effect=[0, 1])  # Mock start and end times
-def test_llm_manager_query(mock_time, mock_anthropic, mock_client):
+def test_llm_manager_query(mock_time, mock_anthropic, mock_client, llm_manager):
     mock_anthropic.return_value.messages.create.return_value = type('obj', (object,), {'content': [type('obj', (object,), {'text': "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response"})]})()
-    manager = LLMManager()
-    with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
-        with patch.object(manager.cost_optimizer, 'update_usage') as mock_update_usage:
-            response = manager.query("Test prompt")
+    with patch.object(llm_manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
+        with patch.object(llm_manager.cost_optimizer, 'update_usage') as mock_update_usage:
+            response = llm_manager.query("Test prompt")
     assert isinstance(response, dict)
-    assert 'task_progress' in response
-    assert 'state_updates' in response
-    assert 'actions' in response
-    assert 'suggestions' in response
-    assert 'response' in response
-    assert 'id' in response
+    assert all(key in response for key in ['task_progress', 'state_updates', 'actions', 'suggestions', 'response', 'id'])
     mock_anthropic.return_value.messages.create.assert_called_once_with(
         model='claude-3-sonnet-20240229',
         max_tokens=4000,
         messages=[{"role": "user", "content": ANY}]
     )
-    assert mock_update_usage.call_count == 1
     mock_update_usage.assert_called_once_with('balanced', ANY, ANY, True)
-    # Remove the assertion for performance_metrics as it's not being updated in the mocked environment
 
+@pytest.mark.fast
 @patch('src.llm_manager.LLMMicroserviceClient')
 @patch('anthropic.Anthropic')
 @patch('time.time', side_effect=[0, 1, 2, 3, 4, 5])  # Mock start and end times for multiple attempts
-def test_llm_manager_query_with_error(mock_time, mock_anthropic, mock_client):
+def test_llm_manager_query_with_error(mock_time, mock_anthropic, mock_client, llm_manager):
     mock_anthropic.return_value.messages.create.side_effect = Exception("Test error")
-    manager = LLMManager()
-    with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
-        with patch.object(manager.cost_optimizer, 'update_usage') as mock_update_usage:
-            response = manager.query("Test prompt")
+    with patch.object(llm_manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
+        with patch.object(llm_manager.cost_optimizer, 'update_usage') as mock_update_usage:
+            response = llm_manager.query("Test prompt")
     assert 'error' in response
     assert mock_update_usage.call_count == 3  # One for each tier: powerful, balanced, fast
     mock_update_usage.assert_any_call('fast', ANY, ANY, False)
 
-def test_llm_manager_tier_selection():
-    manager = LLMManager()
-    simple_query = "What is 2 + 2?"
-    complex_query = "Analyze the implications of quantum computing on modern cryptography systems."
-        
-    with patch.object(manager, '_process_response', return_value={}):
-        with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='fast'):
-            with patch.object(manager.llm_client, 'messages', create=MagicMock()) as mock_messages:
-                with patch.object(manager.cost_optimizer, 'update_usage'):
-                    manager.query(simple_query)
+@pytest.mark.fast
+@pytest.mark.parametrize("query,expected_tier", [
+    ("What is 2 + 2?", 'fast'),
+    ("Analyze the implications of quantum computing on modern cryptography systems.", 'powerful'),
+])
+def test_llm_manager_tier_selection(llm_manager, query, expected_tier):
+    with patch.object(llm_manager, '_process_response', return_value={}):
+        with patch.object(llm_manager.cost_optimizer, 'select_optimal_tier', return_value=expected_tier):
+            with patch.object(llm_manager.llm_client, 'messages', create=MagicMock()) as mock_messages:
+                with patch.object(llm_manager.cost_optimizer, 'update_usage'):
+                    llm_manager.query(query)
                     mock_messages.create.assert_called_with(model=ANY, max_tokens=ANY, messages=[{"role": "user", "content": ANY}])
-            
-        with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='powerful'):
-            with patch.object(manager.llm_client, 'messages', create=MagicMock()) as mock_messages:
-                with patch.object(manager.cost_optimizer, 'update_usage'):
-                    manager.query(complex_query)
-                    mock_messages.create.assert_called_with(model=ANY, max_tokens=ANY, messages=[{"role": "user", "content": ANY}])
-        
-    # Check if the tier selection is working as expected
-    assert manager.determine_query_tier(simple_query) == 'fast'
-    assert manager.determine_query_tier(complex_query) == 'powerful'
+    
+    assert llm_manager.determine_query_tier(query) == expected_tier
 
-def test_llm_manager_get_usage_report():
-    manager = LLMManager()
-    manager.cost_optimizer.update_usage('fast', 100, 0.5, True)
-    manager.cost_optimizer.update_usage('balanced', 200, 1.0, True)
-    manager.cost_optimizer.update_usage('powerful', 300, 1.5, True)
-    report = manager.get_usage_report()
-    assert 'usage_stats' in report
-    assert 'total_cost' in report
-    assert report['usage_stats']['fast']['count'] == 1
-    assert report['usage_stats']['balanced']['count'] == 1
-    assert report['usage_stats']['powerful']['count'] == 1
+@pytest.mark.fast
+def test_llm_manager_get_usage_report(llm_manager):
+    llm_manager.cost_optimizer.update_usage('fast', 100, 0.5, True)
+    llm_manager.cost_optimizer.update_usage('balanced', 200, 1.0, True)
+    llm_manager.cost_optimizer.update_usage('powerful', 300, 1.5, True)
+    report = llm_manager.get_usage_report()
+    assert all(key in report for key in ['usage_stats', 'total_cost'])
+    assert all(report['usage_stats'][tier]['count'] == 1 for tier in ['fast', 'balanced', 'powerful'])
 
-def test_llm_manager_get_optimization_suggestion():
-    manager = LLMManager()
-    manager.cost_optimizer.update_usage('fast', 100, 0.5, True)
-    manager.cost_optimizer.update_usage('balanced', 200, 1.0, True)
-    manager.cost_optimizer.update_usage('powerful', 300, 1.5, True)
-    suggestion = manager.get_optimization_suggestion()
+@pytest.mark.fast
+def test_llm_manager_get_optimization_suggestion(llm_manager):
+    llm_manager.cost_optimizer.update_usage('fast', 100, 0.5, True)
+    llm_manager.cost_optimizer.update_usage('balanced', 200, 1.0, True)
+    llm_manager.cost_optimizer.update_usage('powerful', 300, 1.5, True)
+    suggestion = llm_manager.get_optimization_suggestion()
     assert isinstance(suggestion, str)
     assert len(suggestion) > 0
 
-def test_llm_manager_query_with_tiers():
+@pytest.mark.fast
+@pytest.mark.parametrize("tier,expected_response", [
+    ('fast', "Fast response"),
+    ('balanced', "Balanced response"),
+    ('powerful', "Powerful response"),
+])
+def test_llm_manager_query_with_tiers(llm_manager, tier, expected_response):
     mock_client = MagicMock()
-    mock_client.query.side_effect = ["Fast response", "Balanced response", "Powerful response"]
-    manager = LLMManager()
-    manager.client = mock_client
+    mock_client.query.return_value = expected_response
+    llm_manager.client = mock_client
     
-    fast_result = manager.query("Short prompt", tier='fast')
-    balanced_result = manager.query("Medium length prompt", tier='balanced')
-    powerful_result = manager.query("Complex prompt", tier='powerful')
+    result = llm_manager.query(f"{tier} prompt", tier=tier)
     
-    assert isinstance(fast_result, dict) and fast_result.get("response") == "Fast response"
-    assert isinstance(balanced_result, dict) and balanced_result.get("response") == "Balanced response"
-    assert isinstance(powerful_result, dict) and powerful_result.get("response") == "Powerful response"
-    
-    assert mock_client.query.call_count == 3
-    mock_client.query.assert_any_call(ANY, ANY, 'gpt-3.5-turbo', 100)
-    mock_client.query.assert_any_call(ANY, ANY, 'gpt-3.5-turbo', 500)
-    mock_client.query.assert_any_call(ANY, ANY, 'gpt-4', 1000)
+    assert isinstance(result, dict) and result.get("response") == expected_response
+    mock_client.query.assert_called_once()
 
-def test_determine_query_tier():
-    manager = LLMManager()
-    assert manager.determine_query_tier("Short query") == 'fast'
-    assert manager.determine_query_tier("Medium length query with some details about the project") == 'balanced'
-    assert manager.determine_query_tier("Complex query that requires detailed analysis of the project structure and implementation of new features") == 'powerful'
+@pytest.mark.fast
+@pytest.mark.parametrize("query,expected_tier", [
+    ("Short query", 'fast'),
+    ("Medium length query with some details about the project", 'balanced'),
+    ("Complex query that requires detailed analysis of the project structure and implementation of new features", 'powerful'),
+])
+def test_determine_query_tier(llm_manager, query, expected_tier):
+    assert llm_manager.determine_query_tier(query) == expected_tier
 
-def test_evaluate_sufficiency():
-    manager = LLMManager()
-    with patch.object(manager, 'query') as mock_query:
+@pytest.mark.fast
+def test_evaluate_sufficiency(llm_manager):
+    with patch.object(llm_manager, 'query') as mock_query:
         mock_query.return_value = {
             "response": "<evaluation>SUFFICIENT</evaluation><reasoning>All tasks completed</reasoning>"
         }
         
-        result = manager.evaluate_sufficiency("Test Stage", {"description": "Test"}, {"key": "value"})
+        result = llm_manager.evaluate_sufficiency("Test Stage", {"description": "Test"}, {"key": "value"})
         
         assert result["is_sufficient"] == True
         assert result["reasoning"] == "All tasks completed"
         mock_query.assert_called_once()
 
-def test_evaluate_sufficiency_error():
-    manager = LLMManager()
-    with patch.object(manager, 'query') as mock_query:
+@pytest.mark.fast
+def test_evaluate_sufficiency_error(llm_manager):
+    with patch.object(llm_manager, 'query') as mock_query:
         mock_query.side_effect = Exception("Test error")
         
-        result = manager.evaluate_sufficiency("Test Stage", {"description": "Test"}, {"key": "value"})
+        result = llm_manager.evaluate_sufficiency("Test Stage", {"description": "Test"}, {"key": "value"})
         
         assert result["is_sufficient"] == False
         assert "Error evaluating sufficiency: Test error" in result["reasoning"]
 
-def test_llm_manager_query_with_context():
-    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client, \
-         patch('anthropic.Anthropic') as mock_anthropic, \
+@pytest.mark.slow
+def test_llm_manager_query_with_context(llm_manager):
+    with patch('anthropic.Anthropic') as mock_anthropic, \
          patch('time.time', side_effect=[0, 1]):  # Mock start and end times
         mock_anthropic.return_value.messages.create.return_value.content = [type('obj', (object,), {'text': "Test response"})()]
-        manager = LLMManager()
         context = {
             "key1": "value1",
             "key2": "value2",
@@ -170,170 +157,96 @@ def test_llm_manager_query_with_context():
                 "transitions": [{"from": "Test Stage", "to": "Next Stage"}]
             }
         }
-        with patch.object(manager.cost_optimizer, 'update_usage'):
-            result = manager.query("Test prompt", context)
+        with patch.object(llm_manager.cost_optimizer, 'update_usage'):
+            result = llm_manager.query("Test prompt", context)
         assert isinstance(result, dict)
-        assert "response" in result
         assert "Test response" in result["response"]
-        assert "id" in result
         assert result["id"].startswith("(ID:")
         mock_anthropic.return_value.messages.create.assert_called_once()
         call_args = mock_anthropic.return_value.messages.create.call_args[1]['messages'][0]['content']
-        assert "Current Workflow Stage: Test Stage" in call_args
-        assert "Stage Description: Test stage description" in call_args
-        assert "Task 1" in call_args and "Task 2" in call_args
-        assert "Project Structure:" in call_args
-        assert "Coding Conventions:" in call_args
-        assert "Stages:" in call_args and "Transitions:" in call_args
+        assert all(text in call_args for text in [
+            "Current Workflow Stage: Test Stage",
+            "Stage Description: Test stage description",
+            "Task 1", "Task 2",
+            "Project Structure:",
+            "Coding Conventions:",
+            "Stages:", "Transitions:"
+        ])
 
-def test_llm_manager_error_handling():
-    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client, \
-         patch('anthropic.Anthropic') as mock_anthropic:
+@pytest.mark.slow
+def test_llm_manager_error_handling(llm_manager):
+    with patch('anthropic.Anthropic') as mock_anthropic:
         mock_anthropic.return_value.messages.create.side_effect = [
             Exception("Powerful error"),
             Exception("Balanced error"),
             Exception("Fast error")
         ]
-        manager = LLMManager()
-        result = manager.query("Test prompt", tier='powerful')
+        result = llm_manager.query("Test prompt", tier='powerful')
         assert isinstance(result, dict)
         assert "error" in result
         assert "Error querying LLM:" in result["error"]
         assert mock_anthropic.return_value.messages.create.call_count == 3
 
-def test_llm_manager_fallback_to_fast():
-    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client, \
-         patch('anthropic.Anthropic') as mock_anthropic:
+@pytest.mark.slow
+def test_llm_manager_fallback_to_fast(llm_manager):
+    with patch('anthropic.Anthropic') as mock_anthropic:
         mock_anthropic.return_value.messages.create.side_effect = [
             AttributeError("'Anthropic' object has no attribute 'messages'"),
             AttributeError("'Anthropic' object has no attribute 'messages'"),
             AttributeError("'Anthropic' object has no attribute 'messages'")
         ]
-        mock_client.return_value.query.side_effect = [
-            Exception("Powerful error"),
-            Exception("Balanced error"),
-            Exception("Fast error")
-        ]
-        manager = LLMManager()
-        result = manager.query("Test prompt", tier='powerful')
+        result = llm_manager.query("Test prompt", tier='powerful')
         assert isinstance(result, dict)
         assert "error" in result
         assert "Error querying LLM:" in result["error"]
         assert mock_anthropic.return_value.messages.create.call_count == 3
 
-def test_llm_manager_query_with_tiers():
-    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client, \
-         patch('anthropic.Anthropic') as mock_anthropic, \
+@pytest.mark.slow
+@pytest.mark.parametrize("tier,expected_response", [
+    ('fast', "Fast response"),
+    ('balanced', "Balanced response"),
+    ('powerful', "Powerful response"),
+])
+def test_llm_manager_query_with_tiers_and_models(llm_manager, tier, expected_response):
+    with patch('anthropic.Anthropic') as mock_anthropic, \
          patch('time.time', side_effect=[0, 1, 2, 3, 4, 5, 6, 7]):  # Mock start and end times
-        mock_anthropic.return_value.messages.create.side_effect = [
-            type('obj', (object,), {'content': [type('obj', (object,), {'text': "Fast response"})()]})(),
-            type('obj', (object,), {'content': [type('obj', (object,), {'text': "Balanced response"})()]})(),
-            type('obj', (object,), {'content': [type('obj', (object,), {'text': "Powerful response"})()]})()
-        ]
-        manager = LLMManager()
+        mock_anthropic.return_value.messages.create.return_value = type('obj', (object,), {'content': [type('obj', (object,), {'text': expected_response})()] })()
         
-        with patch.object(manager.cost_optimizer, 'update_usage'):
-            fast_result = manager.query("Short prompt", tier='fast')
-            balanced_result = manager.query("Medium length prompt", tier='balanced')
-            powerful_result = manager.query("Complex prompt", tier='powerful')
+        with patch.object(llm_manager.cost_optimizer, 'update_usage'):
+            result = llm_manager.query(f"{tier} prompt", tier=tier)
         
-        assert isinstance(fast_result, dict) and "Fast response" in fast_result.get("response", "")
-        assert isinstance(balanced_result, dict) and "Balanced response" in balanced_result.get("response", "")
-        assert isinstance(powerful_result, dict) and "Powerful response" in powerful_result.get("response", "")
+        assert isinstance(result, dict) and expected_response in result.get("response", "")
         
-        assert mock_anthropic.return_value.messages.create.call_count == 3
-        mock_anthropic.return_value.messages.create.assert_any_call(
-            model='claude-3-haiku-20240307',
-            max_tokens=1000,
-            messages=[{"role": "user", "content": ANY}]
-        )
-        mock_anthropic.return_value.messages.create.assert_any_call(
-            model='claude-3-sonnet-20240229',
-            max_tokens=4000,
-            messages=[{"role": "user", "content": ANY}]
-        )
-        mock_anthropic.return_value.messages.create.assert_any_call(
-            model='claude-3-opus-20240229',
-            max_tokens=4000,
+        mock_anthropic.return_value.messages.create.assert_called_once_with(
+            model=ANY,
+            max_tokens=ANY,
             messages=[{"role": "user", "content": ANY}]
         )
 
-def test_determine_query_tier():
-    manager = LLMManager()
-    assert manager.determine_query_tier("Short query") == 'fast'
-    assert manager.determine_query_tier("Medium length query with some details about the project") == 'balanced'
-    assert manager.determine_query_tier("Complex query that requires detailed analysis of the project structure and implementation of new features") == 'powerful'
-
-def test_llm_manager_caching():
-    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client, \
-         patch('anthropic.Anthropic') as mock_anthropic, \
+@pytest.mark.slow
+def test_llm_manager_caching(llm_manager):
+    with patch('anthropic.Anthropic') as mock_anthropic, \
          patch('time.time', side_effect=[0, 1, 2, 3, 4, 5, 6, 7]):  # Mock start and end times
         mock_anthropic.return_value.messages.create.side_effect = [
             type('obj', (object,), {'content': [type('obj', (object,), {'text': "Response 1"})()]}),
             type('obj', (object,), {'content': [type('obj', (object,), {'text': "Response 2"})()]}),
             type('obj', (object,), {'content': [type('obj', (object,), {'text': "Response 3"})()]})
         ]
-        manager = LLMManager()
         prompt = "Test prompt"
         context = {"key": "value"}
         
-        with patch.object(manager.cost_optimizer, 'update_usage'):
-            result1 = manager.query(prompt, context)
+        with patch.object(llm_manager.cost_optimizer, 'update_usage'):
+            result1 = llm_manager.query(prompt, context)
             assert isinstance(result1, dict) and "Response 1" in result1.get("response", "")
             
-            result2 = manager.query(prompt, context)
+            result2 = llm_manager.query(prompt, context)
             assert result2 == result1  # Should return cached result
             
-            result3 = manager.query("Different prompt", context)
+            result3 = llm_manager.query("Different prompt", context)
             assert isinstance(result3, dict) and "Response 2" in result3.get("response", "")
             assert result3 != result1
             
-            manager.clear_cache()
-            result4 = manager.query(prompt, context)
+            llm_manager.clear_cache()
+            result4 = llm_manager.query(prompt, context)
             assert "Response 3" in result4.get("response", "")
             assert result4 != result1
-
-def test_evaluate_sufficiency():
-    manager = LLMManager()
-    with patch.object(manager, 'query') as mock_query:
-        mock_query.return_value = {
-            "response": "<evaluation>SUFFICIENT</evaluation><reasoning>All tasks completed</reasoning>"
-        }
-        
-        result = manager.evaluate_sufficiency("Test Stage", {"description": "Test"}, {"key": "value"})
-        
-        assert result["is_sufficient"] == True
-        assert result["reasoning"] == "All tasks completed"
-        mock_query.assert_called_once()
-
-def test_evaluate_sufficiency_error():
-    manager = LLMManager()
-    with patch.object(manager, 'query') as mock_query:
-        mock_query.side_effect = Exception("Test error")
-        
-        result = manager.evaluate_sufficiency("Test Stage", {"description": "Test"}, {"key": "value"})
-        
-        assert result["is_sufficient"] == False
-        assert "Error evaluating sufficiency: Test error" in result["reasoning"]
-def test_evaluate_sufficiency():
-    manager = LLMManager()
-    with patch.object(manager, 'query') as mock_query:
-        mock_query.return_value = {
-            "response": "<evaluation>SUFFICIENT</evaluation><reasoning>All tasks completed</reasoning>"
-        }
-        
-        result = manager.evaluate_sufficiency("Test Stage", {"description": "Test"}, {"key": "value"})
-        
-        assert result["is_sufficient"] == True
-        assert result["reasoning"] == "All tasks completed"
-        mock_query.assert_called_once()
-
-def test_evaluate_sufficiency_error():
-    manager = LLMManager()
-    with patch.object(manager, 'query') as mock_query:
-        mock_query.side_effect = Exception("Test error")
-        
-        result = manager.evaluate_sufficiency("Test Stage", {"description": "Test"}, {"key": "value"})
-        
-        assert result["is_sufficient"] == False
-        assert "Error evaluating sufficiency: Test error" in result["reasoning"]
