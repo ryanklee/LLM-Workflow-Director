@@ -175,10 +175,11 @@ class LLMManager:
 
         self.logger.debug(f"Received response from LLM: {response_content[:50]}...")
         structured_response = self._parse_structured_response(response_content)
+        
         response_with_id = self._add_unique_id(structured_response)
-
         response_with_id['response_time'] = response_time
         response_with_id['tier'] = tier
+        
         if 'response' not in response_with_id:
             response_with_id['response'] = response_content
         elif isinstance(response_with_id['response'], MagicMock):
