@@ -378,6 +378,20 @@ class LLMManager:
         elif isinstance(content, dict):
             result['is_sufficient'] = content.get('is_sufficient', False)
             result['reasoning'] = content.get('reasoning', "No reasoning provided")
+        return result
+
+    def _parse_sufficiency_evaluation(self, response: Dict[str, Any]) -> Dict[str, Any]:
+        result = {'is_sufficient': False, 'reasoning': "No reasoning provided"}
+        content = response.get('response', '')
+        if isinstance(content, str):
+            if '<evaluation>' in content and '</evaluation>' in content:
+                evaluation = content.split('<evaluation>')[1].split('</evaluation>')[0].strip()
+                result['is_sufficient'] = evaluation.upper() == 'SUFFICIENT'
+            if '<reasoning>' in content and '</reasoning>' in content:
+                result['reasoning'] = content.split('<reasoning>')[1].split('</reasoning>')[0].strip()
+        elif isinstance(content, dict):
+            result['is_sufficient'] = content.get('is_sufficient', False)
+            result['reasoning'] = content.get('reasoning', "No reasoning provided")
         if not result['is_sufficient'] and result['reasoning'] == "No reasoning provided":
             result['reasoning'] = "Insufficient data provided in the response"
         return result
