@@ -12,12 +12,12 @@ class TestClaudeAPIIntegration(unittest.TestCase):
         mock_client = MagicMock()
         mock_anthropic.return_value = mock_client
         mock_response = MagicMock()
-        mock_response.content = [MagicMock(text="Test response")]
+        mock_response.content = [MagicMock(text="I'm happy to help! What would you like me to assist you with? Please provide a clear and specific request or question, and I'll do my best to provide a helpful response.")]
         mock_client.messages.create.return_value = mock_response
 
         response = self.claude_manager.generate_response("Test prompt")
         
-        self.assertEqual(response, "Test response")
+        self.assertEqual(response, "I'm happy to help! What would you like me to assist you with? Please provide a clear and specific request or question, and I'll do my best to provide a helpful response.")
         mock_client.messages.create.assert_called_once_with(
             model="claude-3-opus-20240229",
             max_tokens=1000,
