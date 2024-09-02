@@ -5,13 +5,15 @@ class ClaudeManager:
         self.client = Anthropic()
 
     def generate_response(self, prompt):
-        formatted_prompt = f"\n\nHuman: {prompt}\n\nAssistant:"
-        response = self.client.completions.create(
+        # Use the messages API, which is the current recommended method
+        response = self.client.messages.create(
             model="claude-3-opus-20240229",
-            max_tokens_to_sample=1000,
-            prompt=formatted_prompt
+            max_tokens=1000,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
         )
-        return response.completion
+        return response.content[0].text
 
     def select_model(self, task_description):
         if "simple" in task_description.lower():
