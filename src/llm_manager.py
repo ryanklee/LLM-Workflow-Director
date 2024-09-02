@@ -221,8 +221,6 @@ class LLMManager:
                 self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
         
         return {"error": "Failed to query LLM after all retries", "tier": original_tier}
-        
-        return {"error": "Failed to query LLM after all retries"}
 
     def _estimate_query_complexity(self, query: str) -> float:
         # This is a simple heuristic and can be improved
@@ -398,14 +396,13 @@ class LLMManager:
             if not structured_response:
                 return {"response": response}
 
-            # If there's only a 'response' key, return it directly
-            if len(structured_response) == 1 and 'response' in structured_response:
-                return {"response": structured_response['response']}
+            # Always include the full response
+            structured_response["response"] = response
 
             return structured_response
         except Exception as e:
             self.logger.error(f"Error parsing structured response: {str(e)}")
-            return {"error": str(e), "raw_response": response}
+            return {"error": str(e), "response": response}
 
     def _process_value(self, key: str, value: List[str]) -> Any:
         joined_value = ' '.join(value).strip()
