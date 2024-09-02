@@ -147,23 +147,19 @@ class LLMManager:
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
                 
                 try:
-                    try:
-                        response = self.llm_client.messages.create(model=tier_config['model'], max_tokens=tier_config['max_tokens'], messages=[{"role": "user", "content": enhanced_prompt}])
-                        response_content = response.content[0].text if response.content else ""
+                    response = self.llm_client.messages.create(model=tier_config['model'], max_tokens=tier_config['max_tokens'], messages=[{"role": "user", "content": enhanced_prompt}])
+                    response_content = response.content[0].text if response.content else ""
 
-                        result = self._process_response(response_content, tier, start_time)
-                        self.cache[cache_key] = result
-                        tokens = len(response_content.split()) if response_content else 0
-                        self.cost_optimizer.update_usage(tier, tokens, safe_time() - start_time, True)
-                        return result
+                    result = self._process_response(response_content, tier, start_time)
+                    self.cache[cache_key] = result
+                    tokens = len(response_content.split()) if response_content else 0
+                    self.cost_optimizer.update_usage(tier, tokens, safe_time() - start_time, True)
+                    return result
                 except Exception as e:
                     self.logger.error(f"Error using LLM client: {str(e)}")
                     self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
-                    raise
-                    except Exception as e:
-                        self.logger.error(f"Error using LLM client: {str(e)}")
-                        max_retries -= 1
-                        if max_retries == 0:
+                    max_retries -= 1
+                    if max_retries == 0:
                             error_response = {
                                 "error": f"Error querying LLM: {str(e)}",
                                 "response": str(e),
