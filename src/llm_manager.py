@@ -9,6 +9,7 @@ from .error_handler import ErrorHandler
 from .llm_microservice_client import LLMMicroserviceClient
 from pydantic import Field, validator
 import anthropic
+import llm
 
 class LLMCostOptimizer:
     def __init__(self):
@@ -105,7 +106,7 @@ class LLMManager:
             'powerful': {'model': 'claude-3-opus-20240229', 'max_tokens': 4000}
         })
         self.prompt_templates = self.config.get('prompt_templates', {})
-        self.claude_client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+        self.llm_client = llm.get_client()
 
     def _load_config(self, config_path):
         try:
@@ -130,75 +131,6 @@ class LLMManager:
             return self.cache[cache_key]
 
         max_retries = 3
-        original_tier = tier
-        start_time = time.time()
-        while max_retries > 0:
-            try:
-                enhanced_prompt = self._enhance_prompt(prompt, context)
-                tier_config = self.tiers.get(tier, self.tiers['balanced'])
-
-                # Use Claude client for Anthropic models
-                if 'claude' in tier_config['model']:
-                    try:
-                        response = self.claude_client.messages.create(
-                            model=tier_config['model'],
-                            max_tokens=tier_config['max_tokens'],
-                            messages=[
-                                {"role": "user", "content": enhanced_prompt}
-                            ]
-                        )
-                        response_content = response.content[0].text
-                    except AttributeError:
-                        self.logger.warning("Anthropic client not properly initialized. Falling back to LLMMicroserviceClient.")
-                        response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
-                else:
-                    response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
-
-                # Process the response content and return the result
-                return self._process_response(response_content, tier, start_time)
-            except Exception as e:
-                self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
-                max_retries -= 1
-                if max_retries == 0:
-                    self.logger.error(f"Max retries reached. Returning error message.")
-                    return {"error": f"Error querying LLM: {str(e)}"}
-                tier = self._get_fallback_tier(tier)
-                self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
-        
-        return {"error": "Failed to query LLM after all retries"}
-
-    def _process_response(self, response_content: str, tier: str, start_time: float) -> Dict[str, Any]:
-        end_time = time.time()
-        response_time = end_time - start_time
-        tokens = len(response_content.split())  # Simple token count estimation
-
-        self.logger.debug(f"Received response from LLM: {response_content[:50]}...")
-        structured_response = self._parse_structured_response(response_content)
-        
-        response_with_id = self._add_unique_id(structured_response)
-        response_with_id['response_time'] = response_time
-        response_with_id['tier'] = tier
-        
-        if 'response' not in response_with_id:
-            response_with_id['response'] = response_content
-        elif isinstance(response_with_id['response'], MagicMock):
-            response_with_id['response'] = str(response_with_id['response'])
-
-        return response_with_id
-
-    def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: Optional[str] = None) -> Dict[str, Any]:
-        if tier is None:
-            query_complexity = self._estimate_query_complexity(prompt)
-            tier = self.cost_optimizer.select_optimal_tier(query_complexity)
-        
-        self.logger.debug(f"Selected tier: {tier}")
-        
-        cache_key = self._generate_cache_key(prompt, context, tier)
-        if cache_key in self.cache:
-            self.logger.info(f"Using cached response for prompt: {prompt[:50]}... (tier: {tier})")
-            return self.cache[cache_key]
-
-        max_retries = 3
         start_time = time.time()
         original_tier = tier
         
@@ -206,21 +138,9 @@ class LLMManager:
             try:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
-                if 'claude' in tier_config['model']:
-                    try:
-                        response = self.claude_client.messages.create(
-                            model=tier_config['model'],
-                            max_tokens=tier_config['max_tokens'],
-                            messages=[
-                                {"role": "user", "content": enhanced_prompt}
-                            ]
-                        )
-                        response_content = response.content[0].text
-                    except AttributeError:
-                        self.logger.warning("Anthropic client not properly initialized. Falling back to LLMMicroserviceClient.")
-                        response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
-                else:
-                    response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
+                
+                response = self.llm_client.query(enhanced_prompt, model=tier_config['model'], max_tokens=tier_config['max_tokens'])
+                response_content = response.text()
                 
                 result = self._process_response(response_content, tier, start_time)
                 self.cache[cache_key] = result
@@ -256,6 +176,25 @@ class LLMManager:
         }
         return self._add_unique_id(error_response)
 
+    def _process_response(self, response_content: str, tier: str, start_time: float) -> Dict[str, Any]:
+        end_time = time.time()
+        response_time = end_time - start_time
+        tokens = len(response_content.split())  # Simple token count estimation
+
+        self.logger.debug(f"Received response from LLM: {response_content[:50]}...")
+        structured_response = self._parse_structured_response(response_content)
+        
+        response_with_id = self._add_unique_id(structured_response)
+        response_with_id['response_time'] = response_time
+        response_with_id['tier'] = tier
+        
+        if 'response' not in response_with_id:
+            response_with_id['response'] = response_content
+        elif isinstance(response_with_id['response'], MagicMock):
+            response_with_id['response'] = str(response_with_id['response'])
+
+        return response_with_id
+
     def _estimate_query_complexity(self, query: str) -> float:
         # This is a simple heuristic and can be improved
         word_count = len(query.split())
@@ -277,23 +216,6 @@ class LLMManager:
 
     def determine_query_tier(self, query: str) -> str:
         complexity = self._estimate_query_complexity(query)
-        if complexity < 0.4:
-            tier = 'fast'
-        elif complexity < 0.8:
-            tier = 'balanced'
-        else:
-            tier = 'powerful'
-        self.logger.debug(f"Query complexity: {complexity}, Selected tier: {tier}")
-        return tier
-
-    def get_usage_report(self) -> Dict[str, Any]:
-        return self.cost_optimizer.get_usage_report()
-
-    def get_optimization_suggestion(self) -> str:
-        return self.cost_optimizer.suggest_optimization()
-
-    def determine_query_tier(self, query: str) -> str:
-        complexity = self._estimate_query_complexity(query)
         return self.cost_optimizer.select_optimal_tier(complexity)
 
     def get_usage_report(self) -> Dict[str, Any]:
@@ -301,16 +223,6 @@ class LLMManager:
 
     def get_optimization_suggestion(self) -> str:
         return self.cost_optimizer.suggest_optimization()
-
-    def _structure_response(self, response: str) -> str:
-        # This is a placeholder implementation. In a real-world scenario,
-        # you would implement more sophisticated response structuring logic.
-        structured_response = "task_progress: 0.5\n"
-        structured_response += "state_updates: {'key': 'value'}\n"
-        structured_response += "actions: update_workflow, run_tests\n"
-        structured_response += "suggestions: Review code, Update documentation\n"
-        structured_response += f"response: {response}"
-        return structured_response
 
     def _enhance_prompt(self, prompt: str, context: Optional[Dict[str, Any]]) -> str:
         if context is None:
@@ -324,6 +236,10 @@ class LLMManager:
         workflow_config = context.get('workflow_config', {})
 
         enhanced_prompt = f"""
+        <context>
+        You are Claude, an AI language model. You are currently being directed by an automated LLM-Workflow Director as part of an AI-assisted software development process. The project is currently in the {workflow_stage} stage. Your task is to assist with the current workflow step. Please process the following information and respond accordingly.
+        </context>
+
         Current Workflow Stage: {workflow_stage}
         Stage Description: {stage_description}
         Stage Tasks:
@@ -342,24 +258,30 @@ class LLMManager:
         Given the above context, please respond to the following prompt:
 
         {prompt}
+
+        Please structure your response using the following XML tags:
+        <task_progress>
+        [Provide a float value between 0 and 1 indicating the progress of the current task]
+        </task_progress>
+
+        <state_updates>
+        [Provide any updates to the project state as key-value pairs]
+        </state_updates>
+
+        <actions>
+        [List any actions that should be taken based on your response]
+        </actions>
+
+        <suggestions>
+        [Provide any suggestions for the user or the workflow director]
+        </suggestions>
+
+        <response>
+        [Your main response to the prompt]
+        </response>
         """
         self.logger.debug(f"Enhanced prompt generated: {enhanced_prompt[:100]}...")
         return enhanced_prompt
-
-    def _handle_llm_error(self, prompt: str, context: Optional[Dict[str, Any]], tier: str, error_message: str) -> str:
-        retry_count = 0
-        max_retries = 3
-        while retry_count < max_retries:
-            try:
-                self.logger.info(f"Retrying LLM query (attempt {retry_count + 1}/{max_retries})")
-                response = self.client.query(prompt, context, tier)
-                self.logger.info(f"Retry successful on attempt {retry_count + 1}")
-                return response
-            except Exception as retry_e:
-                retry_count += 1
-                self.logger.error(f"Retry {retry_count} failed: {str(retry_e)}")
-        self.logger.critical(f"All retries failed for LLM query. Last error: {error_message}")
-        return f"Error querying LLM after {max_retries} attempts: {error_message}"
 
     def _generate_cache_key(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: str = 'balanced') -> str:
         if context is None:
@@ -378,35 +300,32 @@ class LLMManager:
         response['id'] = f"(ID: {unique_id})"
         return response
 
-    def evaluate_sufficiency(self, prompt: str) -> Dict[str, Any]:
-        self.logger.info("Evaluating sufficiency using LLM")
-        try:
-            response = self.query(prompt, tier='balanced')
-            self.logger.debug(f"Sufficiency evaluation response: {response}")
-            return response
-        except Exception as e:
-            self.logger.error(f"Error evaluating sufficiency: {str(e)}")
-            return {"error": f"Error evaluating sufficiency: {str(e)}"}
-
-    def clear_cache(self):
-        self.cache.clear()
-        self.logger.info("LLM response cache cleared.")
-
-    def get_usage_report(self) -> Dict[str, Any]:
-        return self.cost_optimizer.get_usage_report()
-
-    def get_optimization_suggestion(self) -> str:
-        return self.cost_optimizer.suggest_optimization()
-
     def evaluate_sufficiency(self, stage_name: str, stage_data: Dict[str, Any], project_state: Dict[str, Any]) -> Dict[str, Any]:
         self.logger.info(f"Evaluating sufficiency for stage: {stage_name}")
         try:
-            result = self.client.evaluate_sufficiency(stage_name, stage_data, project_state)
-            self.logger.debug(f"Sufficiency evaluation result: {result}")
-            return result
+            prompt = self.generate_prompt('sufficiency_evaluation', {
+                'stage_name': stage_name,
+                'stage_data': stage_data,
+                'project_state': project_state
+            })
+            response = self.query(prompt, tier='balanced')
+            self.logger.debug(f"Sufficiency evaluation response: {response}")
+            return self._parse_sufficiency_evaluation(response['response'])
         except Exception as e:
             self.logger.error(f"Error evaluating sufficiency: {str(e)}")
             return {"is_sufficient": False, "reasoning": f"Error evaluating sufficiency: {str(e)}"}
+
+    def _parse_sufficiency_evaluation(self, response: str) -> Dict[str, Any]:
+        lines = response.strip().split('\n')
+        result = {}
+        for line in lines:
+            if line.startswith('Evaluation:'):
+                result['is_sufficient'] = 'SUFFICIENT' in line.upper()
+            elif line.startswith('Reasoning:'):
+                result['reasoning'] = line.split(':', 1)[1].strip()
+            elif line.startswith('Next Steps:'):
+                result['next_steps'] = line.split(':', 1)[1].strip()
+        return result
 
     def _parse_structured_response(self, response: str) -> Dict[str, Any]:
         try:
@@ -415,24 +334,23 @@ class LLMManager:
                 "state_updates": {},
                 "actions": [],
                 "suggestions": [],
-                "response": response
+                "response": ""
             }
-            current_key = None
-            current_value = []
+            current_tag = None
+            current_content = []
 
             for line in response.split('\n'):
                 line = line.strip()
-                if ':' in line and not line.startswith(' '):
-                    if current_key:
-                        structured_response[current_key] = self._process_value(current_key, current_value)
-                        current_value = []
-                    current_key = line.split(':', 1)[0].strip().lower()
-                    current_value.append(line.split(':', 1)[1].strip())
-                elif current_key:
-                    current_value.append(line)
+                if line.startswith('<') and line.endswith('>'):
+                    if current_tag:
+                        structured_response[current_tag] = self._process_value(current_tag, current_content)
+                        current_content = []
+                    current_tag = line[1:-1]
+                elif current_tag:
+                    current_content.append(line)
 
-            if current_key:
-                structured_response[current_key] = self._process_value(current_key, current_value)
+            if current_tag:
+                structured_response[current_tag] = self._process_value(current_tag, current_content)
 
             return structured_response
         except Exception as e:
@@ -460,16 +378,6 @@ class LLMManager:
         except Exception as e:
             self.logger.error(f"Error processing value for key '{key}': {str(e)}")
             return joined_value
-
-    def evaluate_sufficiency(self, stage_name: str, stage_data: Dict[str, Any], project_state: Dict[str, Any]) -> Dict[str, Any]:
-        self.logger.info(f"Evaluating sufficiency for stage: {stage_name}")
-        try:
-            result = self.client.evaluate_sufficiency(stage_name, stage_data, project_state)
-            self.logger.debug(f"Sufficiency evaluation result: {result}")
-            return result
-        except Exception as e:
-            self.logger.error(f"Error evaluating sufficiency: {str(e)}")
-            return {"is_sufficient": False, "reasoning": f"Error evaluating sufficiency: {str(e)}"}
 
     def generate_prompt(self, template_name: str, context: Dict[str, Any]) -> str:
         self.logger.debug(f"Generating prompt with template: {template_name}")
@@ -513,44 +421,6 @@ class LLMManager:
         completed_stages = len(context.get('completed_stages', []))
         return completed_stages / total_stages if total_stages > 0 else 0
 
-    def _enhance_context(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        enhanced_context = context.copy()
-        
-        # Add workflow stage information
-        if 'workflow_stage' in context:
-            stage = context['workflow_stage']
-            enhanced_context['stage_description'] = self._get_stage_description(stage)
-            enhanced_context['stage_tasks'] = self._get_stage_tasks(stage)
-        
-        # Add project structure information
-        if 'project_structure_instructions' in context:
-            enhanced_context['project_structure'] = self._format_project_structure(context['project_structure_instructions'])
-        
-        # Add coding conventions
-        if 'coding_conventions' in context:
-            enhanced_context['formatted_conventions'] = self._format_coding_conventions(context['coding_conventions'])
-        
-        return enhanced_context
-
-    def _get_stage_description(self, stage: str) -> str:
-        # This method should retrieve the description of the given stage from the workflow configuration
-        # For now, we'll return a placeholder
-        return f"Description for stage: {stage}"
-
-    def _get_stage_tasks(self, stage: str) -> List[str]:
-        # This method should retrieve the tasks for the given stage from the workflow configuration
-        # For now, we'll return a placeholder
-        return [f"Task 1 for {stage}", f"Task 2 for {stage}"]
-
-    def _format_project_structure(self, instructions: str) -> str:
-        # Format the project structure instructions for better readability in the prompt
-        return f"Project Structure:\n{instructions}"
-
-    def _format_coding_conventions(self, conventions: str) -> str:
-        # Format the coding conventions for better readability in the prompt
-        return f"Coding Conventions:\n{conventions}"
-
-    def _get_stage_tasks(self, stage: str) -> List[str]:
-        # This method should retrieve the tasks for the given stage from the workflow configuration
-        # For now, we'll return a placeholder
-        return [f"Task 1 for {stage}", f"Task 2 for {stage}"]
+    def clear_cache(self):
+        self.cache.clear()
+        self.logger.info("LLM response cache cleared.")

@@ -11,6 +11,8 @@
       1.2.2. The system shall track the status of each workflow stage and step.
       1.2.3. The system shall determine the next appropriate workflow step based on current state, validation results, and DDD/TDD priorities.
       1.2.4. The system shall enforce strict transition rules between stages, requiring approval or completion of key artifacts before progressing.
+      1.2.5. The system shall support conditional branching in the workflow based on project state and LLM evaluations.
+      1.2.6. The system shall allow for parallel task execution within stages when appropriate.
 
    1.3. Constraint Management
       1.3.1. The system shall define and enforce constraints for each workflow step.
@@ -21,23 +23,29 @@
    1.4. Priority Management
       1.4.1. The system shall determine and enforce priorities based on the current project stage.
       1.4.2. The system shall focus on requirements elaboration, research gathering, and domain modeling before design and implementation.
+      1.4.3. The system shall dynamically adjust priorities based on LLM evaluations and project progress.
 
    1.5. User Interaction
       1.5.1. The system shall allow for user input at predefined points in the workflow.
       1.5.2. The system shall incorporate user input into the decision-making process for next steps.
+      1.5.3. The system shall provide a mechanism for users to override or modify LLM-suggested actions.
 
    1.6. Project State Management
       1.6.1. The system shall maintain a current state of the project, including all documents and their versions.
       1.6.2. The system shall provide a method to view the current project state.
       1.6.3. The system shall track changes to the project state over time.
+      1.6.4. The system shall implement a vector database for efficient storage and retrieval of project-related information.
 
    1.7. Extensibility
       1.7.1. The system shall allow for easy addition of new workflow stages and steps.
       1.7.2. The system shall support the definition of custom constraints.
+      1.7.3. The system shall provide a plugin architecture for extending functionality without modifying core components.
 
    1.8. Performance
       1.8.1. The system shall process and respond to commands in under 1 second for most operations.
       1.8.2. The system shall handle projects with up to 100,000 files and 10,000,000 lines of code.
+      1.8.3. The system shall implement caching mechanisms to optimize performance for frequently accessed data.
+      1.8.4. The system shall support horizontal scaling for handling large projects and multiple concurrent users.
 
 2. LLM Integration and Interaction
    2.1. LLM Direction
@@ -47,32 +55,45 @@
       2.1.4. The system shall emphasize DDD and TDD practices in the generated directions, explaining their importance in the current context.
       2.1.5. The system shall generate output that leverages the LLM's strengths in natural language understanding and generation.
       2.1.6. The system shall include prompts and questions in its output to encourage the LLM to think critically about the task at hand.
+      2.1.7. The system shall utilize XML tags for structured outputs when interacting with Claude models.
+      2.1.8. The system shall employ chain-of-thought prompting for complex reasoning tasks.
+      2.1.9. The system shall assign specific roles to guide Claude's responses when appropriate.
 
    2.2. LLM Integration
-      2.2.1. The system shall integrate the LLM Python API (https://llm.datasette.io/en/stable/python-api.html) for direct communication with LLM models.
+      2.2.1. The system shall integrate the LLM CLI (https://github.com/simonw/llm) for communication with LLM models.
       2.2.2. The system shall maintain a library of effective prompt templates for common tasks and scenarios.
       2.2.3. The system shall dynamically generate and refine prompts based on the current project state, task requirements, and previous interactions.
       2.2.4. The system shall implement a feedback loop to improve prompt effectiveness based on LLM responses and task outcomes.
       2.2.5. The system shall provide clear instructions on how the LLM should format its responses for easy parsing and integration into the workflow.
       2.2.6. The system shall implement error handling and retry mechanisms for cases where LLM responses are unclear or off-topic.
-      2.2.7. The system shall utilize the LLM Python API's built-in caching capabilities to optimize performance and reduce API costs.
-      2.2.8. The system shall support multiple LLM models through the LLM Python API, including but not limited to OpenAI, Anthropic, and PaLM.
+      2.2.7. The system shall utilize the LLM CLI's built-in caching capabilities to optimize performance and reduce API costs.
+      2.2.8. The system shall support multiple LLM models through the LLM CLI, including but not limited to OpenAI and Anthropic models.
+      2.2.9. The system shall implement a tiered LLM approach, using faster, cheaper models for initial processing and more powerful models for complex tasks.
+      2.2.10. The system shall leverage Claude's 200k token context window for handling large amounts of context in prompts.
 
    2.3. LLM Context Awareness
       2.3.1. The system shall provide a clear context header at the beginning of each interaction with the LLM.
       2.3.2. The context header shall inform the LLM about its role, the nature of the interaction, and the fact that it's being directed by an automated workflow system.
       2.3.3. The system shall ensure that the context header is formatted in a way that the LLM recognizes and prioritizes.
-      2.3.4. The system shall utilize the LLM Python API's context management features to maintain conversation history when appropriate.
+      2.3.4. The system shall utilize the LLM CLI's context management features to maintain conversation history when appropriate.
+      2.3.5. The system shall implement context summarization techniques for long-running workflows to efficiently use the large context window.
 
    2.4. LLM Model Management
-      2.4.1. The system shall provide an interface for managing and switching between different LLM models supported by the LLM Python API.
+      2.4.1. The system shall provide an interface for managing and switching between different LLM models supported by the LLM CLI.
       2.4.2. The system shall allow for easy configuration of model-specific parameters such as temperature, top_p, and max_tokens.
       2.4.3. The system shall implement a mechanism to select the most appropriate LLM model based on the task requirements and complexity.
+      2.4.4. The system shall implement fallback mechanisms for when higher-tier LLMs are unavailable or rate-limited.
 
    2.5. LLM Response Processing
       2.5.1. The system shall implement parsers to extract structured information from LLM responses.
       2.5.2. The system shall validate LLM responses against expected formats and schemas.
-      2.5.3. The system shall handle and process both synchronous and asynchronous LLM responses as supported by the LLM Python API.
+      2.5.3. The system shall handle and process both synchronous and asynchronous LLM responses as supported by the LLM CLI.
+      2.5.4. The system shall implement techniques to reduce hallucinations in LLM responses, such as providing clear context and setting explicit expectations.
+
+   2.6. External Tool Integration
+      2.6.1. The system shall support the integration of external tools and APIs that Claude can use during the workflow process.
+      2.6.2. The system shall provide a mechanism for defining and managing external tool integrations.
+      2.6.3. The system shall generate appropriate prompts for Claude to utilize external tools effectively.
 
 3. Project Structure and Documentation
    3.1. Project Structure
@@ -145,6 +166,7 @@
       5.1.2. The system shall validate and sanitize all inputs to prevent injection attacks.
       5.1.3. The system shall implement secure practices for handling API keys and sensitive configuration information.
       5.1.4. The system shall provide mechanisms for secure authentication and authorization when accessing project resources.
+      5.1.5. The system shall implement rate limiting to comply with API restrictions, particularly for Anthropic's Claude models.
 
    5.2. Error Handling and Logging
       5.2.1. The system shall implement comprehensive error handling mechanisms for all operations.
@@ -159,6 +181,7 @@
    6.3. The system shall provide mechanisms for simulating various project states and user inputs for testing purposes.
    6.4. The system shall include tests to verify adherence to DDD and TDD principles throughout the workflow.
    6.5. The system shall implement continuous integration and continuous deployment (CI/CD) pipelines for automated testing and deployment.
+   6.6. The system shall include performance tests for the vector database and tiered LLM approach.
 
 7. Documentation
    7.1. The system shall provide comprehensive documentation on the workflow stages and steps.
@@ -168,12 +191,14 @@
    7.5. The system shall maintain up-to-date API documentation for all public interfaces.
    7.6. The system shall provide user guides for system installation, configuration, and usage.
    7.7. The system shall include developer documentation for extending and customizing the system.
+   7.8. The system shall document the tiered LLM approach and vector database usage.
 
 8. Performance and Scalability
    8.1. The system shall implement caching mechanisms to optimize performance for frequently accessed data.
    8.2. The system shall support horizontal scaling for handling large projects and multiple concurrent users.
    8.3. The system shall implement efficient algorithms and data structures for managing large-scale projects.
    8.4. The system shall provide performance monitoring and profiling tools to identify and address bottlenecks.
+   8.5. The system shall optimize LLM usage by leveraging the vector database for quick retrieval of relevant information.
 
 9. Deployment and Maintenance
    9.1. The system shall be packaged as a Python module for easy distribution and deployment.
@@ -205,70 +230,79 @@
     11.14. The system shall provide progress tracking and reporting during the project structure alignment process.
     11.15. The system shall generate a detailed report of structural changes made during the alignment process.
 
-23. Project Alignment and Conversion
-    23.1. The system shall analyze the current project state and compare it with the expected project structure and artifacts.
-    23.2. The system shall generate a comprehensive mapping between existing artifacts and their expected counterparts in the target structure.
-    23.3. The system shall provide the LLM with clear, step-by-step instructions for converting each artifact to its expected format and location.
-    23.4. The system shall prioritize the conversion of critical artifacts essential for project functionality and documentation.
-    23.5. The system shall offer guidelines for preserving important metadata, comments, and version history during the conversion process.
-    23.6. The system shall provide templates and examples to guide the LLM in reformatting existing documentation to match the expected structure.
-    23.7. The system shall implement a validation mechanism to ensure converted artifacts meet the expected standards and structure.
-    23.8. The system shall generate a detailed conversion report, highlighting successful transformations, issues encountered, and any manual intervention required.
-    23.9. The system shall provide rollback capabilities for each conversion step to allow for error correction or alternative approaches.
-    23.10. The system shall offer guidance on handling conflicts or inconsistencies discovered during the alignment process.
-    23.11. The system shall implement a mechanism for tracking partial conversions and resuming the process from the last successful step.
-    23.12. The system shall provide recommendations for refactoring or reorganizing code structures to align with the target architecture and best practices.
-    23.13. The system shall generate a comprehensive project health report before and after the alignment process to measure improvements and identify areas needing further attention.
+12. Project Alignment and Conversion
+    12.1. The system shall analyze the current project state and compare it with the expected project structure and artifacts.
+    12.2. The system shall generate a comprehensive mapping between existing artifacts and their expected counterparts in the target structure.
+    12.3. The system shall provide the LLM with clear, step-by-step instructions for converting each artifact to its expected format and location.
+    12.4. The system shall prioritize the conversion of critical artifacts essential for project functionality and documentation.
+    12.5. The system shall offer guidelines for preserving important metadata, comments, and version history during the conversion process.
+    12.6. The system shall provide templates and examples to guide the LLM in reformatting existing documentation to match the expected structure.
+    12.7. The system shall implement a validation mechanism to ensure converted artifacts meet the expected standards and structure.
+    12.8. The system shall generate a detailed conversion report, highlighting successful transformations, issues encountered, and any manual intervention required.
+    12.9. The system shall provide rollback capabilities for each conversion step to allow for error correction or alternative approaches.
+    12.10. The system shall offer guidance on handling conflicts or inconsistencies discovered during the alignment process.
+    12.11. The system shall implement a mechanism for tracking partial conversions and resuming the process from the last successful step.
+    12.12. The system shall provide recommendations for refactoring or reorganizing code structures to align with the target architecture and best practices.
+    12.13. The system shall generate a comprehensive project health report before and after the alignment process to measure improvements and identify areas needing further attention.
 
-24. Help System
-    24.1. The system shall provide a comprehensive help system that gives a good overview of how to use the workflow director in the Aider developer workflow.
-    24.2. The help system shall be callable from the command line.
-    24.3. The help content shall be programmatically generated from the code and tied to the implementation.
-    24.4. The output of the help system shall be in a familiar form and easily understood by users.
-    24.5. The help system shall cover all major features and workflows of the LLM-Workflow Director.
-    24.6. The help system shall provide context-sensitive help for specific commands or stages of the workflow.
-    24.7. The help system shall include examples and use cases to illustrate proper usage of the workflow director.
-    24.8. The help system shall be easily maintainable and automatically updated when changes are made to the codebase.
-    24.9. The help system shall support different levels of detail, from high-level overviews to detailed explanations of specific features.
-    24.10. The help system shall include a search functionality to allow users to quickly find relevant information.
+13. Help System
+    13.1. The system shall provide a comprehensive help system that gives a good overview of how to use the workflow director in the Aider developer workflow.
+    13.2. The help system shall be callable from the command line.
+    13.3. The help content shall be programmatically generated from the code and tied to the implementation.
+    13.4. The output of the help system shall be in a familiar form and easily understood by users.
+    13.5. The help system shall cover all major features and workflows of the LLM-Workflow Director.
+    13.6. The help system shall provide context-sensitive help for specific commands or stages of the workflow.
+    13.7. The help system shall include examples and use cases to illustrate proper usage of the workflow director.
+    13.8. The help system shall be easily maintainable and automatically updated when changes are made to the codebase.
+    13.9. The help system shall support different levels of detail, from high-level overviews to detailed explanations of specific features.
+    13.10. The help system shall include a search functionality to allow users to quickly find relevant information.
 
-25. User Confirmation for Workflow Steps
-    25.1. The system shall prompt Aider to seek user confirmation before proceeding with the next step indicated by the workflow director.
-    25.2. The confirmation prompt shall offer the user two options: to proceed with the suggested step (Y) or to provide alternative directions.
-    25.3. If the user chooses to proceed (Y), Aider shall execute the step as directed by the workflow director.
-    25.4. If the user chooses to provide alternative directions, Aider shall pause the workflow execution and await user input.
-    25.5. The system shall ensure that user interventions are properly logged and integrated into the overall workflow history.
-    25.6. The confirmation mechanism shall be implemented in a way that does not disrupt the flow of the development process while still providing the user with control over the workflow.
-    25.7. The system shall provide clear and concise information about the next step in the confirmation prompt to aid the user in decision-making.
-    25.8. The confirmation prompt shall include an option to display more detailed information about the proposed next step if requested by the user.
-    25.9. The system shall handle and appropriately respond to invalid user inputs during the confirmation process.
-    25.10. The confirmation mechanism shall be configurable, allowing users to set preferences for when confirmations are required (e.g., for all steps, only for critical steps, or never).
+14. User Confirmation for Workflow Steps
+    14.1. The system shall prompt Aider to seek user confirmation before proceeding with the next step indicated by the workflow director.
+    14.2. The confirmation prompt shall offer the user two options: to proceed with the suggested step (Y) or to provide alternative directions.
+    14.3. If the user chooses to proceed (Y), Aider shall execute the step as directed by the workflow director.
+    14.4. If the user chooses to provide alternative directions, Aider shall pause the workflow execution and await user input.
+    14.5. The system shall ensure that user interventions are properly logged and integrated into the overall workflow history.
+    14.6. The confirmation mechanism shall be implemented in a way that does not disrupt the flow of the development process while still providing the user with control over the workflow.
+    14.7. The system shall provide clear and concise information about the next step in the confirmation prompt to aid the user in decision-making.
+    14.8. The confirmation prompt shall include an option to display more detailed information about the proposed next step if requested by the user.
+    14.9. The system shall handle and appropriately respond to invalid user inputs during the confirmation process.
+    14.10. The confirmation mechanism shall be configurable, allowing users to set preferences for when confirmations are required (e.g., for all steps, only for critical steps, or never).
 
-12. Coding Conventions Management
-    12.1. The system shall provide functionality to generate and manage coding conventions.
-    12.2. The system shall allow for the specification of coding conventions to be respected by the LLMs.
-    12.3. The system shall leverage Aider's existing functionality for specifying coding conventions.
-    12.4. The system shall provide a command-line interface for generating and managing coding conventions.
-    12.5. The system shall support both preview ("what-if") and actual generation of the conventions file.
-    12.6. The system shall focus on a concise set of critical conventions aligned with the project's goals and best practices.
-    12.7. The system shall include conventions for code style, documentation, testing, error handling, DDD/TDD principles, and project structure.
-    12.8. The system shall provide a method to generate coding conventions in a format compatible with Aider.
-    12.9. The system shall allow for easy integration of the generated conventions into the LLM workflow.
-    12.10. The system shall ensure that generated code and modifications adhere to the specified coding conventions.
+15. Coding Conventions Management
+    15.1. The system shall provide functionality to generate and manage coding conventions.
+    15.2. The system shall allow for the specification of coding conventions to be respected by the LLMs.
+    15.3. The system shall leverage Aider's existing functionality for specifying coding conventions.
+    15.4. The system shall provide a command-line interface for generating and managing coding conventions.
+    15.5. The system shall support both preview ("what-if") and actual generation of the conventions file.
+    15.6. The system shall focus on a concise set of critical conventions aligned with the project's goals and best practices.
+    15.7. The system shall include conventions for code style, documentation, testing, error handling, DDD/TDD principles, and project structure.
+    15.8. The system shall provide a method to generate coding conventions in a format compatible with Aider.
+    15.9. The system shall allow for easy integration of the generated conventions into the LLM workflow.
+    15.10. The system shall ensure that generated code and modifications adhere to the specified coding conventions.
+
+16. Multi-Modal Input Support
+    16.1. The system shall support multi-modal inputs, including text and images, leveraging Claude 3 models' capabilities.
+    16.2. The system shall provide mechanisms for users to include image inputs as part of the workflow process.
+    16.3. The system shall generate appropriate prompts for Claude to analyze and interpret image inputs in the context of the current workflow stage.
+    16.4. The system shall integrate image analysis results into the overall project state and decision-making process.
+
+17. Adaptive Learning for LLM Tier Selection
+    17.1. The system shall implement adaptive learning mechanisms to improve LLM tier selection over time.
+    17.2. The system shall track the performance and outcomes of different LLM tiers for various task types.
+    17.3. The system shall periodically analyze historical performance data to refine tier selection criteria.
+    17.4. The system shall provide reports on LLM tier usage, effectiveness, and cost optimization suggestions.
 
 These revised requirements address the identified issues by:
-1. Standardizing LLM references and removing specific model names.
-2. Reorganizing requirements into logical groupings.
-3. Consolidating documentation requirements.
-4. Expanding on error handling, logging, and security considerations.
-5. Focusing on desired outcomes rather than specific implementation details.
-6. Adding sections on performance, scalability, deployment, and customization.
-7. Including new requirements for coding conventions management and integration with Aider.
-4. Expanding on error handling, logging, and security considerations.
-5. Focusing on desired outcomes rather than specific implementation details.
-6. Adding sections on performance, scalability, deployment, and customization.
+1. Incorporating LLM CLI and Claude-specific features and best practices.
+2. Enhancing LLM integration with tiered approaches and advanced context management.
+3. Adding support for multi-modal inputs and external tool integration.
+4. Expanding on error handling, logging, and security considerations, including rate limiting.
+5. Enhancing performance and scalability requirements, including vector database integration.
+6. Adding requirements for adaptive learning in LLM tier selection.
+7. Maintaining and expanding upon existing requirements for project structure, documentation, and coding conventions management.
 
-This structure provides a more comprehensive and organized set of requirements for the LLM-Workflow Director system.
+This structure provides a more comprehensive and organized set of requirements for the LLM-Workflow Director system, incorporating the latest capabilities of Claude models and the LLM CLI.
 # LLM-Workflow Director Requirements (Python Implementation)
 
 1. Project Initialization
