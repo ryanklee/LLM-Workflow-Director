@@ -12,9 +12,10 @@ LLM-Workflow Director is a Python-based tool designed to assist in AI-driven sof
 
 ## Project Status
 
-The LLM-Workflow Director has reached a significant milestone:
+The LLM-Workflow Director has reached significant milestones:
 
 - **Dog-food Ready**: The project has now reached a state where it can be used to manage its own development process. This demonstrates the practical applicability of the tool in real-world software development scenarios.
+- **Advanced Features Implementation**: We are currently in the process of implementing and refining advanced features such as multi-modal input support, external tool integration, adaptive learning for Claude usage, and enhanced prompt engineering techniques.
 
 ## Key Features
 
