@@ -12,6 +12,12 @@ import anthropic
 import os
 import itertools
 
+def safe_time():
+    try:
+        return time.time()
+    except StopIteration:
+        return 0
+
 class LLMCostOptimizer:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
@@ -134,15 +140,6 @@ class LLMManager:
         max_retries = 3
         start_time = safe_time()
         original_tier = tier
-        time_mock = getattr(time, '__mock__', None)
-        if time_mock and isinstance(time_mock.side_effect, (StopIteration, list)):
-            time_mock.side_effect = itertools.cycle([0, 1])
-        
-        def safe_time():
-            try:
-                return time.time()
-            except StopIteration:
-                return 0
         
         while max_retries > 0:
             try:
