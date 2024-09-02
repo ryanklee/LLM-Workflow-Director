@@ -242,24 +242,6 @@ class LLMManager:
             "suggestions": []
         }
         return self._add_unique_id(error_response)
-                        "state_updates": {},
-                        "actions": [],
-                        "suggestions": []
-                    }
-                    return self._add_unique_id(error_response)
-                tier = self._get_fallback_tier(tier)
-                self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
-        
-        error_response = {
-            "error": "Failed to query LLM after all retries",
-            "response": "Failed to query LLM after all retries",
-            "tier": original_tier,
-            "task_progress": 0,
-            "state_updates": {},
-            "actions": [],
-            "suggestions": []
-        }
-        return self._add_unique_id(error_response)
 
     def _estimate_query_complexity(self, query: str) -> float:
         # This is a simple heuristic and can be improved
