@@ -149,9 +149,9 @@ class LLMManager:
                 
                 try:
                     try:
-                        response = self.llm_client(enhanced_prompt, model=tier_config['model'], max_tokens=tier_config['max_tokens'])
-                        response_content = str(response)
-                    
+                        response = self.llm_client.chat(messages=[{"role": "user", "content": enhanced_prompt}], model=tier_config['model'], max_tokens=tier_config['max_tokens'])
+                        response_content = response.content[0].text if response.content else ""
+
                         result = self._process_response(response_content, tier, start_time)
                         self.cache[cache_key] = result
                         self.cost_optimizer.update_usage(tier, len(response_content.split()), time.time() - start_time, True)
