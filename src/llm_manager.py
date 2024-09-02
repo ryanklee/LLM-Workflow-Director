@@ -149,8 +149,8 @@ class LLMManager:
                 
                 try:
                     try:
-                        response = self.llm_client.chat(messages=[{"role": "user", "content": enhanced_prompt}], model=tier_config['model'], max_tokens=tier_config['max_tokens'])
-                        response_content = response.content[0].text
+                        response = self.llm_client(enhanced_prompt, model=tier_config['model'], max_tokens=tier_config['max_tokens'])
+                        response_content = response
                     
                         result = self._process_response(response_content, tier, start_time)
                         self.cache[cache_key] = result
@@ -167,7 +167,11 @@ class LLMManager:
                         return {
                             "error": f"Error querying LLM: {str(e)}",
                             "response": str(e),
-                            "tier": original_tier
+                            "tier": original_tier,
+                            "task_progress": 0,
+                            "state_updates": {},
+                            "actions": [],
+                            "suggestions": []
                         }
                     tier = self._get_fallback_tier(tier)
                     self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
@@ -339,6 +343,8 @@ class LLMManager:
             evaluation = self._parse_sufficiency_evaluation(response['response'])
             if 'is_sufficient' not in evaluation:
                 evaluation['is_sufficient'] = False
+            if 'reasoning' not in evaluation:
+                evaluation['reasoning'] = "No reasoning provided"
             return evaluation
         except Exception as e:
             self.logger.error(f"Error evaluating sufficiency: {str(e)}")
@@ -346,7 +352,7 @@ class LLMManager:
 
     def _parse_sufficiency_evaluation(self, response: str) -> Dict[str, Any]:
         lines = response.strip().split('\n')
-        result = {'is_sufficient': False}  # Default to False
+        result = {'is_sufficient': False, 'reasoning': "No reasoning provided"}  # Default values
         for line in lines:
             if line.startswith('Evaluation:'):
                 result['is_sufficient'] = 'SUFFICIENT' in line.upper()
