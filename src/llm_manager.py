@@ -147,12 +147,12 @@ class LLMManager:
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
                 
                 try:
-                    response = self.llm_client.messages.create(
+                    response = self.llm_client.completions.create(
                         model=tier_config['model'],
                         max_tokens=tier_config['max_tokens'],
-                        messages=[{"role": "user", "content": enhanced_prompt}]
+                        prompt=enhanced_prompt
                     )
-                    response_content = response.content[0].text if response.content else ""
+                    response_content = response.completion if response.completion else ""
 
                     result = self._process_response(response_content, tier, start_time)
                     self.cache[cache_key] = result
