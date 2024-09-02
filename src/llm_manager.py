@@ -179,6 +179,7 @@ class LLMManager:
 
         response_with_id['response_time'] = response_time
         response_with_id['tier'] = tier
+        response_with_id['response'] = response_content
 
         return response_with_id
 
@@ -210,8 +211,6 @@ class LLMManager:
                 max_retries -= 1
                 if max_retries == 0:
                     self.logger.error(f"Max retries reached. Returning error message.")
-                    response_time = time.time() - start_time
-                    self.cost_optimizer.update_usage(tier, 0, response_time, success=False)
                     return {"error": f"Error querying LLM: {str(e)}"}
                 tier = self._get_fallback_tier(tier)
                 self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
@@ -250,12 +249,8 @@ class LLMManager:
         return self.cost_optimizer.suggest_optimization()
 
     def determine_query_tier(self, query: str) -> str:
-        if len(query.split()) < 5:
-            return 'fast'
-        elif len(query.split()) > 50 or any(keyword in query.lower() for keyword in ['complex', 'detailed', 'analyze', 'summarize']):
-            return 'powerful'
-        else:
-            return 'balanced'
+        complexity = self._estimate_query_complexity(query)
+        return self.cost_optimizer.select_optimal_tier(complexity)
 
     def get_usage_report(self) -> Dict[str, Any]:
         return self.cost_optimizer.get_usage_report()
