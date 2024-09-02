@@ -149,8 +149,8 @@ class LLMManager:
                 
                 try:
                     try:
-                        response = self.llm_client.chat(messages=[{"role": "user", "content": enhanced_prompt}], model=tier_config['model'], max_tokens=tier_config['max_tokens'])
-                        response_content = response.content[0].text
+                        response = self.llm_client(enhanced_prompt, model=tier_config['model'], max_tokens=tier_config['max_tokens'])
+                        response_content = str(response)
                     
                         result = self._process_response(response_content, tier, start_time)
                         self.cache[cache_key] = result
@@ -340,7 +340,7 @@ class LLMManager:
             })
             response = self.query(prompt, tier='balanced')
             self.logger.debug(f"Sufficiency evaluation response: {response}")
-            evaluation = self._parse_sufficiency_evaluation(response.get('response', ''))
+            evaluation = self._parse_sufficiency_evaluation(response)
             evaluation['is_sufficient'] = evaluation.get('is_sufficient', False)
             evaluation['reasoning'] = evaluation.get('reasoning', "No reasoning provided")
             return evaluation
@@ -349,15 +349,16 @@ class LLMManager:
             return {"is_sufficient": False, "reasoning": f"Error evaluating sufficiency: {str(e)}"}
 
     def _parse_sufficiency_evaluation(self, response: str) -> Dict[str, Any]:
-        lines = response.strip().split('\n')
         result = {'is_sufficient': False, 'reasoning': "No reasoning provided"}  # Default values
-        for line in lines:
-            if line.startswith('Evaluation:'):
-                result['is_sufficient'] = 'SUFFICIENT' in line.upper()
-            elif line.startswith('Reasoning:'):
-                result['reasoning'] = line.split(':', 1)[1].strip()
-            elif line.startswith('Next Steps:'):
-                result['next_steps'] = line.split(':', 1)[1].strip()
+        if 'SUFFICIENT' in response.upper():
+            result['is_sufficient'] = True
+        reasoning_start = response.find('Reasoning:')
+        if reasoning_start != -1:
+            reasoning_end = response.find('\n', reasoning_start)
+            if reasoning_end != -1:
+                result['reasoning'] = response[reasoning_start+10:reasoning_end].strip()
+            else:
+                result['reasoning'] = response[reasoning_start+10:].strip()
         return result
 
     def _parse_structured_response(self, response: str) -> Dict[str, Any]:

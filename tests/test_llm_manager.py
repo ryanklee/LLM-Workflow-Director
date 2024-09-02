@@ -26,7 +26,7 @@ def test_llm_manager_initialization():
 @patch('anthropic.Anthropic')
 @patch('time.time', side_effect=[0, 1])  # Mock start and end times
 def test_llm_manager_query(mock_time, mock_anthropic, mock_client):
-    mock_anthropic.return_value.messages.create.return_value.content = [type('obj', (object,), {'text': "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response"})()]
+    mock_client.return_value.return_value = "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response"
     manager = LLMManager()
     with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
         with patch.object(manager.cost_optimizer, 'update_usage'):
@@ -50,7 +50,7 @@ def test_llm_manager_query(mock_time, mock_anthropic, mock_client):
 @patch('anthropic.Anthropic')
 @patch('time.time', side_effect=[0, 1, 2, 3, 4, 5])  # Mock start and end times for multiple attempts
 def test_llm_manager_query_with_error(mock_time, mock_anthropic, mock_client):
-    mock_anthropic.return_value.messages.create.side_effect = Exception("Test error")
+    mock_client.return_value.side_effect = Exception("Test error")
     manager = LLMManager()
     with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
         response = manager.query("Test prompt")
@@ -203,7 +203,7 @@ def test_llm_manager_error_handling():
         assert isinstance(result, dict)
         assert "error" in result
         assert "Error querying LLM:" in result["error"]
-        assert mock_anthropic.return_value.messages.create.call_count == 3
+        assert mock_client.return_value.call_count == 3
 
 def test_llm_manager_fallback_to_fast():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client, \
