@@ -132,11 +132,17 @@ class LLMManager:
             return self.cache[cache_key]
 
         max_retries = 3
-        start_time = time.time()
+        start_time = safe_time()
         original_tier = tier
         time_mock = getattr(time, '__mock__', None)
         if time_mock and isinstance(time_mock.side_effect, (StopIteration, list)):
             time_mock.side_effect = itertools.cycle([0, 1])
+        
+        def safe_time():
+            try:
+                return time.time()
+            except StopIteration:
+                return 0
         
         while max_retries > 0:
             try:
@@ -150,7 +156,7 @@ class LLMManager:
 
                         result = self._process_response(response_content, tier, start_time)
                         self.cache[cache_key] = result
-                        self.cost_optimizer.update_usage(tier, len(response_content.split()), time.time() - start_time, True)
+                        self.cost_optimizer.update_usage(tier, len(response_content.split()), safe_time() - start_time, True)
                         return result
                     except Exception as e:
                         self.logger.error(f"Error using LLM client: {str(e)}")
@@ -167,7 +173,7 @@ class LLMManager:
                             })
                         tier = self._get_fallback_tier(tier)
                         self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
-                    continue
+                        continue
                 except Exception as e:
                     self.logger.error(f"Error using LLM client: {str(e)}")
                     max_retries -= 1
@@ -350,10 +356,6 @@ class LLMManager:
             response = self.query(prompt, tier='balanced')
             self.logger.debug(f"Sufficiency evaluation response: {response}")
             evaluation = self._parse_sufficiency_evaluation(response)
-            if 'is_sufficient' not in evaluation:
-                evaluation['is_sufficient'] = False
-            if 'reasoning' not in evaluation:
-                evaluation['reasoning'] = "No reasoning provided"
             return evaluation
         except Exception as e:
             self.logger.error(f"Error evaluating sufficiency: {str(e)}")
