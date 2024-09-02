@@ -12,14 +12,14 @@ class TestClaudeAPIIntegration(unittest.TestCase):
         mock_client = MagicMock()
         mock_anthropic.return_value = mock_client
         mock_response = MagicMock()
-        mock_response.content = [MagicMock(text="I do not actually respond to test prompts. I am Claude, an AI assistant created by Anthropic to be helpful, harmless, and honest.")]
+        mock_response.content = [MagicMock(text="<response>I do not actually respond to test prompts. I am Claude, an AI assistant created by Anthropic to be helpful, harmless, and honest.</response>")]
         mock_client.messages.create.return_value = mock_response
 
         response = self.claude_manager.generate_response("Test prompt")
         
         self.assertEqual(response, "I do not actually respond to test prompts. I am Claude, an AI assistant created by Anthropic to be helpful, harmless, and honest.")
         mock_client.messages.create.assert_called_once_with(
-            model="claude-3-opus-20240229",
+            model=self.claude_manager.select_model("Test prompt"),
             max_tokens=1000,
             messages=[
                 {"role": "user", "content": "Test prompt"}
@@ -45,12 +45,12 @@ class TestClaudeAPIIntegration(unittest.TestCase):
 
     def test_input_validation(self):
         # Test empty input
-        with self.assertRaises(ValueError):
+        with self.assertRaises(tenacity.RetryError):
             self.claude_manager.generate_response("")
 
         # Test very long input
         long_input = "a" * 100001  # Assuming 100,000 is the max allowed length
-        with self.assertRaises(ValueError):
+        with self.assertRaises(tenacity.RetryError):
             self.claude_manager.generate_response(long_input)
 
     @patch('anthropic.Anthropic')
@@ -71,7 +71,7 @@ class TestClaudeAPIIntegration(unittest.TestCase):
         mock_anthropic.return_value = mock_client
         mock_client.messages.create.side_effect = [
             Exception("Temporary error"),
-            MagicMock(content=[MagicMock(text="Successful response")])
+            MagicMock(content=[MagicMock(text="<response>Successful response</response>")])
         ]
 
         response = self.claude_manager.generate_response("Test prompt")

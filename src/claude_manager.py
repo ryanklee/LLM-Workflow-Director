@@ -1,6 +1,6 @@
 import re
 from anthropic import Anthropic
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, stop_after_attempt, wait_exponential, RetryError
 
 class ClaudeManager:
     def __init__(self):
