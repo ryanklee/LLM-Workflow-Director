@@ -222,7 +222,7 @@ class LLMManager:
         return self._add_unique_id(error_response)
 
     def _process_response(self, response_content: str, tier: str, start_time: float) -> Dict[str, Any]:
-        end_time = time.time()
+        end_time = safe_time()
         response_time = end_time - start_time
         tokens = len(response_content.split()) if response_content else 0  # Simple token count estimation
 
