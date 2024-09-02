@@ -18,20 +18,18 @@ ALWAYS use the messages API for interacting with Claude models. The completions 
 - Vision capabilities (image input)
 
 ## API Usage
-Always use the messages API for Claude interactions. Here's an example:
+Use the completion method for Claude interactions. Here's an example:
 
 ```python
 from anthropic import Anthropic
 
 client = Anthropic()
-response = client.messages.create(
+response = client.completion(
     model="claude-3-opus-20240229",
     max_tokens=1000,
-    messages=[
-        {"role": "user", "content": "Your prompt here"}
-    ]
+    prompt="\n\nHuman: Your prompt here\n\nAssistant:",
 )
-print(response.content[0].text)
+print(response.completion)
 ```
 
 ## Prompt Engineering Best Practices
