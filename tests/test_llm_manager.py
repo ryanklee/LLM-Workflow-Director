@@ -25,7 +25,7 @@ def test_llm_manager_initialization():
 @patch('src.llm_manager.LLMMicroserviceClient')
 @patch('anthropic.Anthropic')
 def test_llm_manager_query(mock_anthropic, mock_client):
-    mock_anthropic.return_value.completions.create.return_value.completion = "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response"
+    mock_anthropic.return_value.messages.create.return_value.content = [type('obj', (object,), {'text': "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response"})()]
     manager = LLMManager()
     response = manager.query("Test prompt", tier='balanced')
     assert isinstance(response, dict)
@@ -35,10 +35,10 @@ def test_llm_manager_query(mock_anthropic, mock_client):
     assert 'suggestions' in response
     assert 'response' in response
     assert 'id' in response
-    mock_anthropic.return_value.completions.create.assert_called_once_with(
+    mock_anthropic.return_value.messages.create.assert_called_once_with(
         model='claude-3-sonnet-20240229',
-        prompt='\n\nHuman: Test prompt\n\nAssistant:',
-        max_tokens_to_sample=4000
+        max_tokens=4000,
+        messages=[{"role": "user", "content": ANY}]
     )
 
 def test_llm_manager_get_usage_report():
