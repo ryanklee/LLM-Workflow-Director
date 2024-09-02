@@ -90,26 +90,26 @@ class LLMManager:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
                 
-                # Format prompt for Anthropic models
-                formatted_prompt = f"\n\nHuman: {enhanced_prompt}\n\nAssistant:"
-                
                 # Use Claude client for Anthropic models
                 if 'claude' in tier_config['model']:
-                    response = self.claude_client.completions.create(
+                    response = self.claude_client.messages.create(
                         model=tier_config['model'],
-                        prompt=formatted_prompt,
-                        max_tokens_to_sample=tier_config['max_tokens']
-                    ).completion
+                        max_tokens=tier_config['max_tokens'],
+                        messages=[
+                            {"role": "user", "content": enhanced_prompt}
+                        ]
+                    )
+                    response_content = response.content[0].text
                 else:
-                    response = self.client.query(formatted_prompt, context, tier_config['model'], tier_config['max_tokens'])
+                    response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
                 
-                self.logger.debug(f"Received response from LLM: {response[:50]}...")
-                structured_response = self._parse_structured_response(response)
+                self.logger.debug(f"Received response from LLM: {response_content[:50]}...")
+                structured_response = self._parse_structured_response(response_content)
                 response_with_id = self._add_unique_id(structured_response)
                 self.cache[cache_key] = response_with_id
 
                 # Update usage statistics
-                tokens = len(prompt.split()) + len(response.split())  # Simple token count estimation
+                tokens = len(prompt.split()) + len(response_content.split())  # Simple token count estimation
                 self.cost_optimizer.update_usage(tier, tokens)
 
                 return response_with_id

@@ -175,10 +175,10 @@ def test_llm_manager_fallback_to_fast():
 def test_llm_manager_query_with_tiers():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client, \
          patch('anthropic.Anthropic') as mock_anthropic:
-        mock_anthropic.return_value.completions.create.side_effect = [
-            type('obj', (object,), {'completion': "Fast response"})(),
-            type('obj', (object,), {'completion': "Balanced response"})(),
-            type('obj', (object,), {'completion': "Powerful response"})()
+        mock_anthropic.return_value.messages.create.side_effect = [
+            type('obj', (object,), {'content': [type('obj', (object,), {'text': "Fast response"})()]})(),
+            type('obj', (object,), {'content': [type('obj', (object,), {'text': "Balanced response"})()]})(),
+            type('obj', (object,), {'content': [type('obj', (object,), {'text': "Powerful response"})()]})()
         ]
         manager = LLMManager()
         
@@ -190,10 +190,22 @@ def test_llm_manager_query_with_tiers():
         assert isinstance(balanced_result, dict) and balanced_result.get("response") == "Balanced response"
         assert isinstance(powerful_result, dict) and powerful_result.get("response") == "Powerful response"
         
-        assert mock_anthropic.return_value.completions.create.call_count == 3
-        mock_anthropic.return_value.completions.create.assert_any_call(model='claude-3-haiku-20240307', prompt='\n\nHuman: Short prompt\n\nAssistant:', max_tokens_to_sample=1000)
-        mock_anthropic.return_value.completions.create.assert_any_call(model='claude-3-sonnet-20240229', prompt='\n\nHuman: Medium length prompt\n\nAssistant:', max_tokens_to_sample=4000)
-        mock_anthropic.return_value.completions.create.assert_any_call(model='claude-3-opus-20240229', prompt='\n\nHuman: Complex prompt\n\nAssistant:', max_tokens_to_sample=4000)
+        assert mock_anthropic.return_value.messages.create.call_count == 3
+        mock_anthropic.return_value.messages.create.assert_any_call(
+            model='claude-3-haiku-20240307',
+            max_tokens=1000,
+            messages=[{"role": "user", "content": "Short prompt"}]
+        )
+        mock_anthropic.return_value.messages.create.assert_any_call(
+            model='claude-3-sonnet-20240229',
+            max_tokens=4000,
+            messages=[{"role": "user", "content": "Medium length prompt"}]
+        )
+        mock_anthropic.return_value.messages.create.assert_any_call(
+            model='claude-3-opus-20240229',
+            max_tokens=4000,
+            messages=[{"role": "user", "content": "Complex prompt"}]
+        )
 
 def test_determine_query_tier():
     manager = LLMManager()
