@@ -179,7 +179,8 @@ class LLMManager:
 
         response_with_id['response_time'] = response_time
         response_with_id['tier'] = tier
-        response_with_id['response'] = response_content
+        if 'response' not in response_with_id:
+            response_with_id['response'] = response_content
 
         return response_with_id
 
@@ -226,7 +227,7 @@ class LLMManager:
         complexity_keywords = ['analyze', 'compare', 'evaluate', 'synthesize', 'complex']
         keyword_count = sum(1 for word in query.lower().split() if word in complexity_keywords)
         
-        complexity = (word_count / 200) + (keyword_count * 0.2)  # Adjusted normalization
+        complexity = (word_count / 100) + (keyword_count * 0.3)  # Adjusted normalization
         return min(max(complexity, 0), 1)  # Ensure it's between 0 and 1
 
     def _get_fallback_tier(self, current_tier: str) -> str:
@@ -329,7 +330,7 @@ class LLMManager:
     def _add_unique_id(self, response: Dict[str, Any]) -> Dict[str, Any]:
         if not isinstance(response, dict):
             response = {"response": str(response)}
-        unique_id = str(hash(str(response) + str(time.time())))
+        unique_id = str(abs(hash(str(response) + str(time.time()))))
         response['id'] = f"(ID: {unique_id})"
         return response
 
