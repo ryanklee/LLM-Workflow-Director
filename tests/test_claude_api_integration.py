@@ -46,10 +46,28 @@ def test_error_handling(claude_manager):
             claude_manager.generate_response("Test prompt")
 
 @pytest.mark.fast
-@pytest.mark.parametrize("input_text", ["", "a" * 100001])
-def test_input_validation(claude_manager, input_text):
-    with pytest.raises(tenacity.RetryError):
-        claude_manager.generate_response(input_text)
+def test_input_validation(claude_manager):
+    # Test with valid input
+    assert claude_manager.generate_response("Valid input") == "Valid response"
+
+    # Test various invalid inputs
+    invalid_inputs = [
+        ("", "Input cannot be empty"),
+        ("a" * 100001, "Input exceeds maximum length"),
+        ("<script>alert('xss');</script>", "Input contains prohibited content"),
+        ("SSN: 123-45-6789", "Input contains sensitive information"),
+        (123, "Input must be a string"),
+        ("   \n\t   ", "Input cannot be empty or only whitespace"),
+    ]
+
+    for invalid_input, error_message in invalid_inputs:
+        with pytest.raises(ValueError, match=error_message):
+            claude_manager.generate_response(invalid_input)
+
+    # Test with Unicode and special characters (valid inputs)
+    valid_inputs = ["こんにちは", "!@#$%^&*()_+-=[]{}|;:,.<>?"]
+    for valid_input in valid_inputs:
+        assert claude_manager.generate_response(valid_input) == "Valid response"
 
 @pytest.mark.fast
 @patch('anthropic.Anthropic')
