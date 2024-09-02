@@ -179,15 +179,11 @@ class LLMManager:
 
         response_with_id['response_time'] = response_time
         response_with_id['tier'] = tier
-        if 'response' not in response_with_id:
-            response_with_id['response'] = response_content
-        elif isinstance(response_with_id['response'], MagicMock):
-            response_with_id['response'] = str(response_with_id['response'])
+        response_with_id['response'] = response_content
 
         # Ensure all parsed fields are included in the response
         for key in structured_response:
-            if key not in response_with_id:
-                response_with_id[key] = structured_response[key]
+            response_with_id[key] = structured_response[key]
 
         return response_with_id
 
@@ -213,19 +209,36 @@ class LLMManager:
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
                 response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
                 result = self._process_response(response_content, tier, start_time)
-                if 'error' not in result:
-                    self.cache[cache_key] = result
+                self.cache[cache_key] = result
                 return result
             except Exception as e:
                 self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
                 max_retries -= 1
                 if max_retries == 0:
                     self.logger.error(f"Max retries reached. Returning error message.")
-                    return {"error": f"Error querying LLM: {str(e)}", "response": str(e), "tier": original_tier}
+                    error_response = {
+                        "error": f"Error querying LLM: {str(e)}",
+                        "response": str(e),
+                        "tier": original_tier,
+                        "task_progress": 0,
+                        "state_updates": {},
+                        "actions": [],
+                        "suggestions": []
+                    }
+                    return self._add_unique_id(error_response)
                 tier = self._get_fallback_tier(tier)
                 self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
         
-        return {"error": "Failed to query LLM after all retries", "response": "Failed to query LLM after all retries", "tier": original_tier}
+        error_response = {
+            "error": "Failed to query LLM after all retries",
+            "response": "Failed to query LLM after all retries",
+            "tier": original_tier,
+            "task_progress": 0,
+            "state_updates": {},
+            "actions": [],
+            "suggestions": []
+        }
+        return self._add_unique_id(error_response)
 
     def _estimate_query_complexity(self, query: str) -> float:
         # This is a simple heuristic and can be improved
