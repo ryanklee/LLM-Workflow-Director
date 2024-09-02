@@ -3,11 +3,11 @@ import time
 import yaml
 import os
 from typing import Dict, Any, Optional, List
+from unittest.mock import MagicMock
 from .error_handler import ErrorHandler
 from .llm_microservice_client import LLMMicroserviceClient
 from pydantic import Field, validator
 import anthropic
-from pydantic import Field, validator
 
 class LLMCostOptimizer:
     def __init__(self):
