@@ -11,7 +11,6 @@ class ClaudeManager:
         if not prompt or len(prompt) > 100000:
             raise ValueError("Invalid prompt length")
 
-        # Use the Messages API, which is the current recommended method
         response = self.client.messages.create(
             model=self.select_model(prompt),
             max_tokens=1000,
@@ -30,8 +29,7 @@ class ClaudeManager:
             return "claude-3-sonnet-20240229"
 
     def parse_response(self, response_text):
-        # Extract content between <response> tags
         match = re.search(r'<response>(.*?)</response>', response_text, re.DOTALL)
         if match:
             return match.group(1).strip()
-        return response_text  # Return the full response if no tags are found
+        return response_text

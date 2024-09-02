@@ -1,81 +1,66 @@
 # LLM API Testing Best Practices
 
-## 1. Unit Testing
+## 1. Task-Specific Testing
 
-1.1. Mock LLM API Responses:
-- Use a mocking library (e.g., unittest.mock) to simulate LLM API responses.
-- Create a variety of mock responses to cover different scenarios (success, failure, edge cases).
-- Ensure mocked responses match the structure of actual API responses.
+1.1. Design Comprehensive Test Cases:
+- Create test cases that mirror real-world task distribution.
+- Include edge cases and potential failure modes.
+- Cover a wide range of inputs and expected outputs.
 
-1.2. Test Input Validation:
-- Verify that your code properly validates and sanitizes inputs before sending them to the LLM API.
-- Test with various input types and edge cases (empty strings, very long inputs, special characters).
+1.2. Automated Evaluation:
+- Structure questions to allow for automated grading where possible.
+- Use multiple-choice, string matching, or code-graded evaluations for simple cases.
+- Implement LLM-based grading for more complex judgments.
 
-1.3. Test Error Handling:
-- Simulate API errors (e.g., rate limiting, authentication failures) and verify proper error handling.
-- Ensure your code gracefully handles unexpected response formats.
+## 2. LLM-Based Grading
 
-1.4. Test Parsing and Processing:
-- Verify that your code correctly parses and processes the LLM API responses.
-- Test with different response structures and content types.
+2.1. Implement LLMEvaluator:
+- Use a separate LLM instance for evaluating responses.
+- Provide clear rubrics for grading criteria.
+- Encourage step-by-step reasoning in the grading process.
 
-## 2. Integration Testing
+2.2. Robust Evaluation Prompts:
+- Design prompts that focus on specific, measurable criteria.
+- Use structured output formats (e.g., XML tags) for consistent parsing.
 
-2.1. Limited Live API Calls:
-- Use a small number of actual API calls in integration tests to verify end-to-end functionality.
-- Cache API responses for repeated use to minimize costs and API usage.
+## 3. Consistency and Reliability Testing
 
-2.2. Test Retry Mechanisms:
-- Verify that your code properly implements retry logic for transient errors.
-- Test with simulated network failures and API timeouts.
+3.1. Test for Consistent Outputs:
+- Verify that similar inputs produce consistent outputs.
+- Use cosine similarity or other metrics to measure output consistency.
 
-## 3. Qualitative Evaluation
+3.2. Implement Retry Mechanisms:
+- Test the system's ability to handle temporary errors.
+- Verify that retry logic works as expected.
 
-3.1. Human Evaluation:
-- Implement a system for human reviewers to assess the quality of LLM outputs.
-- Define clear evaluation criteria (e.g., relevance, coherence, factual accuracy).
+## 4. Performance and Scalability
 
-3.2. Comparative Testing:
-- Compare outputs from different LLM models or versions to assess improvements or regressions.
-- Use established benchmarks or create custom test sets for your specific use case.
-
-## 4. Quantitative Evaluation
-
-4.1. Metrics:
-- Implement relevant metrics for your use case (e.g., BLEU score for translation, perplexity for language modeling).
-- Track performance metrics over time to identify trends or regressions.
-
-4.2. Response Time and Latency:
+4.1. Response Time Tracking:
 - Measure and log response times for LLM API calls.
 - Set performance benchmarks and alert on significant deviations.
 
-## 5. Continuous Monitoring
+4.2. Load Testing:
+- Simulate high-load scenarios to test system performance.
+- Verify that the system can handle expected peak loads.
 
-5.1. Logging and Alerting:
-- Implement comprehensive logging for all LLM API interactions.
-- Set up alerts for unusual patterns, errors, or performance issues.
+## 5. Security and Compliance
 
-5.2. A/B Testing:
-- Use A/B testing to compare different prompts, models, or integration strategies in production.
+5.1. Input Validation:
+- Test with various input types, including potentially malicious inputs.
+- Verify that the system properly sanitizes inputs before processing.
 
-## 6. Security and Compliance
+5.2. Output Filtering:
+- Implement and test mechanisms to filter out sensitive or inappropriate content.
+- Verify that the system handles unexpected or malformed LLM outputs gracefully.
 
-6.1. Data Privacy:
-- Ensure that no sensitive information is sent to the LLM API in tests.
-- Verify that your code properly handles and stores any sensitive information in responses.
+## 6. Continuous Improvement
 
-6.2. API Key Management:
-- Use separate API keys for testing and production environments.
-- Implement secure storage and rotation of API keys.
+6.1. Version Control:
+- Maintain version control for test cases, prompts, and evaluation criteria.
+- Document changes and rationale for modifications.
 
-## 7. Version Control and Documentation
+6.2. Performance Tracking:
+- Implement a system to track test results over time.
+- Use this data to identify trends and areas for improvement.
 
-7.1. Prompt Versioning:
-- Version control your prompts and test cases.
-- Document changes and rationale for prompt modifications.
-
-7.2. Test Documentation:
-- Maintain clear documentation of test cases, including expected behaviors and edge cases.
-- Update documentation when adding new features or changing LLM integration strategies.
-
-By following these best practices, we can ensure robust and reliable testing of our LLM API integration, leading to higher quality and more dependable AI-assisted workflows.
+By following these best practices, we ensure a robust and reliable testing framework for our LLM-based system, leading to higher quality and more dependable AI-assisted workflows.
