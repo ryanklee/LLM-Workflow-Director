@@ -5,10 +5,11 @@ class ClaudeManager:
         self.client = Anthropic()
 
     def generate_response(self, prompt):
+        formatted_prompt = f"\n\nHuman: {prompt}\n\nAssistant:"
         response = self.client.completions.create(
             model="claude-3-opus-20240229",
             max_tokens_to_sample=1000,
-            prompt=prompt
+            prompt=formatted_prompt
         )
         return response.completion
 
