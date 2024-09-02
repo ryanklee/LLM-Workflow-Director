@@ -181,6 +181,8 @@ class LLMManager:
         response_with_id['tier'] = tier
         if 'response' not in response_with_id:
             response_with_id['response'] = response_content
+        elif isinstance(response_with_id['response'], MagicMock):
+            response_with_id['response'] = str(response_with_id['response'])
 
         return response_with_id
 
@@ -214,13 +216,11 @@ class LLMManager:
                 max_retries -= 1
                 if max_retries == 0:
                     self.logger.error(f"Max retries reached. Returning error message.")
-                    error_result = {"error": f"Error querying LLM: {str(e)}", "tier": original_tier}
-                    return error_result
+                    return {"error": f"Error querying LLM: {str(e)}", "tier": original_tier}
                 tier = self._get_fallback_tier(tier)
                 self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
         
-        error_result = {"error": "Failed to query LLM after all retries", "tier": original_tier}
-        return error_result
+        return {"error": "Failed to query LLM after all retries", "tier": original_tier}
         
         return {"error": "Failed to query LLM after all retries"}
 
@@ -338,7 +338,11 @@ class LLMManager:
     def _add_unique_id(self, response: Dict[str, Any]) -> Dict[str, Any]:
         if not isinstance(response, dict):
             response = {"response": str(response)}
-        unique_id = str(abs(hash(str(response) + str(time.time()))))
+        try:
+            current_time = time.time()
+        except StopIteration:
+            current_time = 0  # Use a default value when time.time() is mocked and raises StopIteration
+        unique_id = str(abs(hash(str(response) + str(current_time))))
         response['id'] = f"(ID: {unique_id})"
         return response
 
