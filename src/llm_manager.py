@@ -2,6 +2,7 @@ import logging
 import time
 import yaml
 import os
+import ast
 from typing import Dict, Any, Optional, List
 from unittest.mock import MagicMock
 from .error_handler import ErrorHandler
@@ -171,8 +172,6 @@ class LLMManager:
         response_time = end_time - start_time
         tokens = len(response_content.split())  # Simple token count estimation
 
-        self.cost_optimizer.update_usage(tier, tokens, response_time, success=True)
-
         self.logger.debug(f"Received response from LLM: {response_content[:50]}...")
         structured_response = self._parse_structured_response(response_content)
         
@@ -184,10 +183,6 @@ class LLMManager:
             response_with_id['response'] = response_content
         elif isinstance(response_with_id['response'], MagicMock):
             response_with_id['response'] = str(response_with_id['response'])
-
-        # Ensure all parsed fields are included in the response
-        for key in structured_response:
-            response_with_id[key] = structured_response[key]
 
         return response_with_id
 
@@ -212,21 +207,28 @@ class LLMManager:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
                 if 'claude' in tier_config['model']:
-                    response = self.claude_client.messages.create(
-                        model=tier_config['model'],
-                        max_tokens=tier_config['max_tokens'],
-                        messages=[
-                            {"role": "user", "content": enhanced_prompt}
-                        ]
-                    )
-                    response_content = response.content[0].text
+                    try:
+                        response = self.claude_client.messages.create(
+                            model=tier_config['model'],
+                            max_tokens=tier_config['max_tokens'],
+                            messages=[
+                                {"role": "user", "content": enhanced_prompt}
+                            ]
+                        )
+                        response_content = response.content[0].text
+                    except AttributeError:
+                        self.logger.warning("Anthropic client not properly initialized. Falling back to LLMMicroserviceClient.")
+                        response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
                 else:
                     response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
+                
                 result = self._process_response(response_content, tier, start_time)
                 self.cache[cache_key] = result
+                self.cost_optimizer.update_usage(tier, len(response_content.split()), time.time() - start_time, True)
                 return result
             except Exception as e:
                 self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
+                self.cost_optimizer.update_usage(tier, 0, time.time() - start_time, False)
                 max_retries -= 1
                 if max_retries == 0:
                     self.logger.error(f"Max retries reached. Returning error message.")
@@ -408,7 +410,13 @@ class LLMManager:
 
     def _parse_structured_response(self, response: str) -> Dict[str, Any]:
         try:
-            structured_response = {}
+            structured_response = {
+                "task_progress": 0,
+                "state_updates": {},
+                "actions": [],
+                "suggestions": [],
+                "response": response
+            }
             current_key = None
             current_value = []
 
@@ -417,24 +425,26 @@ class LLMManager:
                 if ':' in line and not line.startswith(' '):
                     if current_key:
                         structured_response[current_key] = self._process_value(current_key, current_value)
+                        current_value = []
                     current_key = line.split(':', 1)[0].strip().lower()
-                    current_value = [line.split(':', 1)[1].strip()]
+                    current_value.append(line.split(':', 1)[1].strip())
                 elif current_key:
                     current_value.append(line)
 
             if current_key:
                 structured_response[current_key] = self._process_value(current_key, current_value)
 
-            if not structured_response:
-                return {"response": response}
-
-            # Always include the full response
-            structured_response["response"] = response
-
             return structured_response
         except Exception as e:
             self.logger.error(f"Error parsing structured response: {str(e)}")
-            return {"error": str(e), "response": response}
+            return {
+                "error": str(e),
+                "response": response,
+                "task_progress": 0,
+                "state_updates": {},
+                "actions": [],
+                "suggestions": []
+            }
 
     def _process_value(self, key: str, value: List[str]) -> Any:
         joined_value = ' '.join(value).strip()
@@ -442,9 +452,9 @@ class LLMManager:
             if key == 'task_progress':
                 return float(joined_value)
             elif key == 'state_updates':
-                return eval(joined_value)
+                return ast.literal_eval(joined_value)
             elif key in ['actions', 'suggestions']:
-                return [item.strip() for item in joined_value.split(',')]
+                return [item.strip() for item in joined_value.split(',') if item.strip()]
             else:
                 return joined_value
         except Exception as e:
