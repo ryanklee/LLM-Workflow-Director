@@ -85,21 +85,25 @@ class LLMManager:
 
         max_retries = 3
         original_tier = tier
-        while True:
+        while max_retries > 0:
             try:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
-                
+
                 # Use Claude client for Anthropic models
                 if 'claude' in tier_config['model']:
-                    response = self.claude_client.messages.create(
-                        model=tier_config['model'],
-                        max_tokens=tier_config['max_tokens'],
-                        messages=[
-                            {"role": "user", "content": enhanced_prompt}
-                        ]
-                    )
-                    response_content = response.content[0].text
+                    try:
+                        response = self.claude_client.messages.create(
+                            model=tier_config['model'],
+                            max_tokens=tier_config['max_tokens'],
+                            messages=[
+                                {"role": "user", "content": enhanced_prompt}
+                            ]
+                        )
+                        response_content = response.content[0].text
+                    except AttributeError:
+                        self.logger.warning("Anthropic client not properly initialized. Falling back to LLMMicroserviceClient.")
+                        response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
                 else:
                     response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
                 
@@ -113,22 +117,16 @@ class LLMManager:
                 self.cost_optimizer.update_usage(tier, tokens)
 
                 return response_with_id
-            except AttributeError as e:
-                if 'messages' in str(e):
-                    self.logger.warning(f"Anthropic client not properly initialized. Falling back to LLMMicroserviceClient.")
-                    response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
-                    structured_response = self._parse_structured_response(response_content)
-                    response_with_id = self._add_unique_id(structured_response)
-                    return response_with_id
-                else:
-                    raise
             except Exception as e:
                 self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
-                if tier == 'fast':
+                max_retries -= 1
+                if max_retries == 0:
                     self.logger.error(f"Max retries reached. Returning error message.")
                     return {"error": f"Error querying LLM: {str(e)}"}
                 tier = self._get_fallback_tier(tier)
                 self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
+        
+        return {"error": "Failed to query LLM after all retries"}
 
     def _get_fallback_tier(self, current_tier: str) -> str:
         tiers = ['powerful', 'balanced', 'fast']

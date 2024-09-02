@@ -30,6 +30,25 @@ class LLMMicroserviceClient:
         self.logger.warning("Using fallback response due to LLM microservice unavailability")
         return f"LLM microservice is currently unavailable. Unable to process the query with model {model} and max_tokens {max_tokens}: {prompt[:100]}..."
 
+    def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, model: str = 'gpt-3.5-turbo', max_tokens: int = 500) -> str:
+        self.logger.info(f"Querying LLM microservice with model: {model}, max_tokens: {max_tokens}")
+        endpoint = f"{self.base_url}/query"
+        payload = {
+            "prompt": prompt,
+            "context": context or {},
+            "model": model,
+            "max_tokens": max_tokens
+        }
+        try:
+            response = requests.post(endpoint, json=payload, timeout=10)
+            response.raise_for_status()
+            result = response.json()
+            self.logger.debug(f"LLM microservice response: {result}")
+            return result["response"]
+        except requests.RequestException as e:
+            self.logger.error(f"Error querying LLM microservice: {str(e)}")
+            return self._fallback_response(prompt, context, model, max_tokens)
+
     def evaluate_sufficiency(self, stage_name: str, stage_data: Dict[str, Any], project_state: Dict[str, Any]) -> Dict[str, Any]:
         self.logger.info(f"Evaluating sufficiency for stage: {stage_name}")
         endpoint = f"{self.base_url}/evaluate_sufficiency"
