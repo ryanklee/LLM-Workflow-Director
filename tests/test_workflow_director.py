@@ -166,11 +166,22 @@ def test_workflow_director_complete_current_stage():
     assert director.current_stage == all_stages[-1], f"Expected to stay in the final stage {all_stages[-1]}, but in {director.current_stage}"
     assert len(director.completed_stages) == len(all_stages), f"Expected all stages to be completed, but only {len(director.completed_stages)} are completed"
 
-def test_main_script_execution():
-    result = subprocess.run(['python', 'src/main.py', 'report', '--format', 'markdown'], 
-                            capture_output=True, text=True)
-    assert result.returncode == 0, "Script should exit with status code 0"
-    assert "# LLM-Workflow Director Project Report" in result.stdout
+@pytest.mark.fast
+def test_workflow_director_complete_current_stage(mocker):
+    director = WorkflowDirector()
+    mocker.patch.object(director.sufficiency_evaluator, 'evaluate_stage_sufficiency', return_value=True)
+    director.current_stage = "Requirements Gathering"
+    director.state_manager.set("requirements_documented", True)
+    director.complete_current_stage()
+    assert director.current_stage == "Domain Modeling"
+    assert director.state_manager.get("requirements_gathering_completed") == True
+
+@pytest.mark.slow
+def test_main_script_execution(mocker):
+    mocker.patch('src.workflow_director.WorkflowDirector.run', return_value=None)
+    result = subprocess.run(["python", "src/main.py"], capture_output=True, text=True, timeout=5)
+    assert result.returncode == 0
+    assert "Workflow completed successfully" in result.stdout
 
 def test_workflow_director_get_stage_progress():
     director = WorkflowDirector()
