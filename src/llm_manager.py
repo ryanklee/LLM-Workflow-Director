@@ -6,7 +6,7 @@ from typing import Dict, Any, Optional, List
 from .error_handler import ErrorHandler
 from .llm_microservice_client import LLMMicroserviceClient
 from pydantic import Field, validator
-import llm
+import anthropic
 from pydantic import Field, validator
 
 class LLMCostOptimizer:
@@ -66,7 +66,7 @@ class LLMManager:
             'powerful': {'model': 'claude-3-opus-20240229', 'max_tokens': 4000}
         })
         self.prompt_templates = self.config.get('prompt_templates', {})
-        self.claude_client = llm.get_model("claude-3-opus-20240229")
+        self.claude_client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
     def _load_config(self, config_path):
         try:
@@ -92,10 +92,10 @@ class LLMManager:
                 
                 # Use Claude client for Anthropic models
                 if 'claude' in tier_config['model']:
-                    response = self.claude_client.complete(
+                    response = self.claude_client.completions.create(
                         model=tier_config['model'],
                         prompt=enhanced_prompt,
-                        max_tokens=tier_config['max_tokens']
+                        max_tokens_to_sample=tier_config['max_tokens']
                     ).completion
                 else:
                     response = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])

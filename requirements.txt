@@ -132,3 +132,4 @@ WTForms==2.3.3
 yarl==1.9.4
 zipp==1.0.0
 python-json-logger==2.0.7
+anthropic==0.3.11
