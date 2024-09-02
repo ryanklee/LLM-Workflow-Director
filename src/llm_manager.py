@@ -188,9 +188,14 @@ class LLMManager:
     def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: Optional[str] = None) -> Dict[str, Any]:
         # ... (previous code remains unchanged)
 
+        max_retries = 3
+        start_time = time.time()
+        response_content = None
+
         while max_retries > 0:
             try:
                 # ... (previous code remains unchanged)
+                response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
                 return self._process_response(response_content, tier, start_time)
             except Exception as e:
                 self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
