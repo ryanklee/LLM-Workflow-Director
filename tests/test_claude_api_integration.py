@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
+from anthropic import HUMAN_PROMPT, AI_PROMPT
 from src.claude_manager import ClaudeManager
 
 class TestClaudeAPIIntegration(unittest.TestCase):
