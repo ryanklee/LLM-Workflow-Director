@@ -12,12 +12,14 @@ class ClaudeManager:
             raise ValueError("Invalid prompt length")
 
         try:
-            response = self.client.completions.create(
+            response = self.client.messages.create(
                 model=self.select_model(prompt),
                 max_tokens=1000,
-                prompt=prompt
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
             )
-            return self.parse_response(response.completion)
+            return self.parse_response(response.content[0].text)
         except Exception as e:
             # Log the error or handle it as needed
             print(f"Error in generate_response: {str(e)}")
@@ -32,5 +34,5 @@ class ClaudeManager:
             return "claude-3-sonnet-20240229"
 
     def parse_response(self, response_text):
-        # The response is already the completion text, so we just need to wrap it
+        # The response is the message content, so we just need to wrap it
         return f"<response>{response_text.strip()}</response>"
