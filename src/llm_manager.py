@@ -196,6 +196,7 @@ class LLMManager:
             try:
                 # ... (previous code remains unchanged)
                 enhanced_prompt = self._enhance_prompt(prompt, context)
+                tier_config = self.tiers.get(tier, self.tiers['balanced'])
                 response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
                 return self._process_response(response_content, tier, start_time)
             except Exception as e:
