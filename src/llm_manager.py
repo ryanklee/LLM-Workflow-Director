@@ -149,7 +149,7 @@ class LLMManager:
                 
                 try:
                     try:
-                        response = self.llm_client.chat(messages=[{"role": "user", "content": enhanced_prompt}], model=tier_config['model'], max_tokens=tier_config['max_tokens'])
+                        response = self.llm_client(messages=[{"role": "user", "content": enhanced_prompt}], model=tier_config['model'], max_tokens=tier_config['max_tokens'])
                         response_content = response.content[0].text if response.content else ""
 
                         result = self._process_response(response_content, tier, start_time)
