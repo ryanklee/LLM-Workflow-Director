@@ -6,16 +6,37 @@
 - All requests require an "x-api-key" header with your API key for authentication.
 - Set the "anthropic-version" header to specify the API version (e.g., "2023-06-01").
 - Use "content-type: application/json" header for requests.
+- ALWAYS use the messages API for interacting with Claude models.
 
-## 2. Prompt Engineering Best Practices
+## 2. Messages API
+
+- The messages API is the primary method for interacting with Claude models.
+- Use the POST /v1/messages endpoint to send messages and receive responses.
+- The request body should include:
+  - "model": The Claude model to use (e.g., "claude-3-opus-20240229")
+  - "messages": An array of message objects, each with "role" and "content"
+  - "max_tokens": Maximum number of tokens in the response
+
+Example request:
+```json
+{
+  "model": "claude-3-opus-20240229",
+  "max_tokens": 1000,
+  "messages": [
+    {"role": "user", "content": "Hello, Claude!"}
+  ]
+}
+```
+
+## 3. Prompt Engineering Best Practices
 
 - Be clear and direct in instructions.
 - Use examples (few-shot learning) for complex tasks.
 - Implement chain-of-thought prompting for reasoning tasks.
 - Utilize XML tags for structured input/output.
-- Assign roles to Claude using system prompts.
+- Assign roles to Claude using system messages.
 - For long contexts (200K+ tokens):
-  - Place long-form data at the top of the prompt.
+  - Place long-form data at the beginning of the conversation.
   - Structure document content with XML tags.
   - Use grounding by asking Claude to quote relevant parts before analysis.
 
@@ -64,11 +85,20 @@
 
 - Store API keys securely (environment variables, secret management systems).
 - Implement input validation and sanitization.
-- Be cautious with user-generated content in prompts.
+- Be cautious with user-generated content in messages.
 - Implement output filtering for sensitive information.
 - Regularly audit and rotate API keys.
+- Use HTTPS for all API communications.
+
+## 10. Best Practices for Messages API Usage
+
+- Always use the messages API for interacting with Claude models.
+- Structure your conversation history as an array of message objects.
+- Use system messages to set context or assign roles to Claude.
+- Keep track of the conversation history to maintain context across multiple interactions.
+- Be mindful of the token limit and manage long conversations by summarizing or truncating when necessary.
 
 For detailed implementation guidance, refer to the official Anthropic documentation:
-- https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview
-- https://docs.anthropic.com/en/docs/build-with-claude/tool-use
-- https://docs.anthropic.com/en/docs/build-with-claude/embeddings
+- https://docs.anthropic.com/claude/reference/messages_post
+- https://docs.anthropic.com/claude/docs/intro-to-claude
+- https://docs.anthropic.com/claude/docs/message-conventions
