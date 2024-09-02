@@ -142,25 +142,27 @@ def test_workflow_director_complete_current_stage():
     director.logger.info(f"Initial completed stages: {director.completed_stages}")
 
     for i, stage in enumerate(all_stages):
-        result = director.complete_current_stage()
-        director.logger.info(f"Completed stage {i}: {stage}")
-        director.logger.info(f"Result of completing stage: {result}")
-        director.logger.info(f"Current stage after completion: {director.current_stage}")
-        director.logger.info(f"Completed stages: {director.completed_stages}")
-        
-        assert result == True, f"Expected True for stage {stage}, got {result}"
-        assert director.is_stage_completed(stage), f"Stage {stage} should be marked as completed"
-        
-        if i < len(all_stages) - 1:
-            assert director.current_stage == all_stages[i+1], f"Expected to move to stage {all_stages[i+1]}, but in {director.current_stage}"
-        else:
-            assert director.current_stage == stage, f"Expected to stay in the final stage {stage}, but in {director.current_stage}"
+        with patch.object(director.sufficiency_evaluator, 'evaluate_stage_sufficiency', return_value={'is_sufficient': True, 'reasoning': 'All tasks completed'}):
+            result = director.complete_current_stage()
+            director.logger.info(f"Completed stage {i}: {stage}")
+            director.logger.info(f"Result of completing stage: {result}")
+            director.logger.info(f"Current stage after completion: {director.current_stage}")
+            director.logger.info(f"Completed stages: {director.completed_stages}")
+            
+            assert result == True, f"Expected True for stage {stage}, got {result}"
+            assert director.is_stage_completed(stage), f"Stage {stage} should be marked as completed"
+            
+            if i < len(all_stages) - 1:
+                assert director.current_stage == all_stages[i+1], f"Expected to move to stage {all_stages[i+1]}, but in {director.current_stage}"
+            else:
+                assert director.current_stage == stage, f"Expected to stay in the final stage {stage}, but in {director.current_stage}"
 
     # Test attempting to complete after the final stage
-    post_final_result = director.complete_current_stage()
-    director.logger.info(f"Result of completing after final stage: {post_final_result}")
-    director.logger.info(f"Final current stage: {director.current_stage}")
-    director.logger.info(f"Final completed stages: {director.completed_stages}")
+    with patch.object(director.sufficiency_evaluator, 'evaluate_stage_sufficiency', return_value={'is_sufficient': True, 'reasoning': 'All tasks completed'}):
+        post_final_result = director.complete_current_stage()
+        director.logger.info(f"Result of completing after final stage: {post_final_result}")
+        director.logger.info(f"Final current stage: {director.current_stage}")
+        director.logger.info(f"Final completed stages: {director.completed_stages}")
     
     assert post_final_result == True, "Expected True when attempting to complete after the final stage"
     assert director.current_stage == all_stages[-1], f"Expected to stay in the final stage {all_stages[-1]}, but in {director.current_stage}"

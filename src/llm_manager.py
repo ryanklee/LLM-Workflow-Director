@@ -171,38 +171,6 @@ class LLMManager:
                             continue
                     result = self._handle_error(prompt, context, tier, e)
                     return result
-                    self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
-                    max_retries -= 1
-                    if max_retries == 0:
-                        error_response = {
-                            "error": f"Error querying LLM: {str(e)}",
-                            "response": str(e),
-                            "tier": original_tier,
-                            "task_progress": 0,
-                            "state_updates": {},
-                            "actions": [],
-                            "suggestions": []
-                        }
-                        return self._add_unique_id(error_response)
-                tier = self._get_fallback_tier(tier)
-                self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
-            except Exception as e:
-                    self.logger.error(f"Error using LLM client: {str(e)}")
-                    max_retries -= 1
-                    if max_retries == 0:
-                        self.logger.error(f"Max retries reached. Returning error message.")
-                        return self._add_unique_id({
-                            "error": f"Error querying LLM: {str(e)}",
-                            "response": str(e),
-                            "tier": original_tier,
-                            "task_progress": 0,
-                            "state_updates": {},
-                            "actions": [],
-                            "suggestions": []
-                        })
-                    tier = self._get_fallback_tier(tier)
-                    self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
-                    raise
             except Exception as e:
                 self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
                 self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
