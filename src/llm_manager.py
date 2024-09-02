@@ -171,10 +171,10 @@ class LLMManager:
                             }
                             self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
                             return self._add_unique_id(error_response)
-                        tier = self._get_fallback_tier(tier)
-                        self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
-                        continue
-                except Exception as e:
+                    tier = self._get_fallback_tier(tier)
+                    self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
+                    continue
+            except Exception as e:
                     self.logger.error(f"Error using LLM client: {str(e)}")
                     max_retries -= 1
                     if max_retries == 0:
