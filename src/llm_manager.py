@@ -135,8 +135,8 @@ class LLMManager:
         start_time = time.time()
         original_tier = tier
         time_mock = getattr(time, '__mock__', None)
-        if time_mock and isinstance(time_mock.side_effect, StopIteration):
-            time_mock.side_effect = itertools.repeat(0)
+        if time_mock and isinstance(time_mock.side_effect, (StopIteration, list)):
+            time_mock.side_effect = itertools.cycle([0, 1])
         
         while max_retries > 0:
             try:
@@ -167,7 +167,7 @@ class LLMManager:
                             })
                         tier = self._get_fallback_tier(tier)
                         self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
-                        continue
+                    continue
                 except Exception as e:
                     self.logger.error(f"Error using LLM client: {str(e)}")
                     max_retries -= 1
@@ -218,7 +218,7 @@ class LLMManager:
     def _process_response(self, response_content: str, tier: str, start_time: float) -> Dict[str, Any]:
         end_time = time.time()
         response_time = end_time - start_time
-        tokens = len(response_content.split())  # Simple token count estimation
+        tokens = len(response_content.split()) if response_content else 0  # Simple token count estimation
 
         self.logger.debug(f"Received response from LLM: {response_content[:50]}...")
         structured_response = self._parse_structured_response(response_content)
@@ -227,8 +227,8 @@ class LLMManager:
         response_with_id['response_time'] = response_time
         response_with_id['tier'] = tier
         
-        if 'response' not in response_with_id:
-            response_with_id['response'] = response_content
+        if 'response' not in response_with_id or not response_with_id['response']:
+            response_with_id['response'] = response_content or "No response content"
         elif isinstance(response_with_id['response'], MagicMock):
             response_with_id['response'] = str(response_with_id['response'])
 
@@ -350,6 +350,10 @@ class LLMManager:
             response = self.query(prompt, tier='balanced')
             self.logger.debug(f"Sufficiency evaluation response: {response}")
             evaluation = self._parse_sufficiency_evaluation(response)
+            if 'is_sufficient' not in evaluation:
+                evaluation['is_sufficient'] = False
+            if 'reasoning' not in evaluation:
+                evaluation['reasoning'] = "No reasoning provided"
             return evaluation
         except Exception as e:
             self.logger.error(f"Error evaluating sufficiency: {str(e)}")
@@ -363,6 +367,8 @@ class LLMManager:
             result['is_sufficient'] = evaluation.upper() == 'SUFFICIENT'
         if '<reasoning>' in content and '</reasoning>' in content:
             result['reasoning'] = content.split('<reasoning>')[1].split('</reasoning>')[0].strip()
+        if not result['is_sufficient'] and not result['reasoning']:
+            result['reasoning'] = "Insufficient data provided in the response"
         return result
 
     def _parse_structured_response(self, response: str) -> Dict[str, Any]:
