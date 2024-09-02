@@ -11,14 +11,14 @@ class TestClaudeAPIIntegration(unittest.TestCase):
     def test_claude_api_call(self, mock_anthropic):
         mock_client = MagicMock()
         mock_anthropic.return_value = mock_client
-        mock_client.messages.create.return_value = MagicMock(content=[MagicMock(text="Test response")])
+        mock_client.completions.create.return_value = MagicMock(completion="Test response")
 
         response = self.claude_manager.generate_response("Test prompt")
         
         self.assertEqual(response, "Test response")
         mock_client.completions.create.assert_called_once_with(
             model="claude-3-opus-20240229",
-            max_tokens_to_sample=1000,
+            max_tokens=1000,
             prompt="\n\nHuman: Test prompt\n\nAssistant:",
         )
 
