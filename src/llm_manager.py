@@ -9,7 +9,7 @@ from .error_handler import ErrorHandler
 from .llm_microservice_client import LLMMicroserviceClient
 from pydantic import Field, validator
 import anthropic
-import anthropic
+import os
 
 class LLMCostOptimizer:
     def __init__(self):
@@ -106,7 +106,7 @@ class LLMManager:
             'powerful': {'model': 'claude-3-opus-20240229', 'max_tokens': 4000}
         })
         self.prompt_templates = self.config.get('prompt_templates', {})
-        self.llm_client = anthropic.Anthropic()
+        self.llm_client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
     def _load_config(self, config_path):
         try:
@@ -141,7 +141,7 @@ class LLMManager:
                 
                 try:
                     try:
-                        response = self.llm_client.create(messages=[{"role": "user", "content": enhanced_prompt}], model=tier_config['model'], max_tokens=tier_config['max_tokens'])
+                        response = self.llm_client.messages.create(model=tier_config['model'], max_tokens=tier_config['max_tokens'], messages=[{"role": "user", "content": enhanced_prompt}])
                         response_content = response.content[0].text if response.content else ""
 
                         result = self._process_response(response_content, tier, start_time)
@@ -150,7 +150,19 @@ class LLMManager:
                         return result
                     except Exception as e:
                         self.logger.error(f"Error using LLM client: {str(e)}")
-                        raise
+                        max_retries -= 1
+                        if max_retries == 0:
+                            return self._add_unique_id({
+                                "error": f"Error querying LLM: {str(e)}",
+                                "response": str(e),
+                                "tier": original_tier,
+                                "task_progress": 0,
+                                "state_updates": {},
+                                "actions": [],
+                                "suggestions": []
+                            })
+                        tier = self._get_fallback_tier(tier)
+                        self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
                 except Exception as e:
                     self.logger.error(f"Error using LLM client: {str(e)}")
                     max_retries -= 1
@@ -340,17 +352,20 @@ class LLMManager:
             self.logger.error(f"Error evaluating sufficiency: {str(e)}")
             return {"is_sufficient": False, "reasoning": f"Error evaluating sufficiency: {str(e)}"}
 
-    def _parse_sufficiency_evaluation(self, response: str) -> Dict[str, Any]:
+    def _parse_sufficiency_evaluation(self, response: Dict[str, Any]) -> Dict[str, Any]:
         result = {'is_sufficient': False, 'reasoning': "No reasoning provided"}  # Default values
-        if 'SUFFICIENT' in response.upper():
+        content = response.get('content', '')
+        if isinstance(content, list) and len(content) > 0:
+            content = content[0].get('text', '')
+        if 'SUFFICIENT' in content.upper():
             result['is_sufficient'] = True
-        reasoning_start = response.find('Reasoning:')
+        reasoning_start = content.find('Reasoning:')
         if reasoning_start != -1:
-            reasoning_end = response.find('\n', reasoning_start)
+            reasoning_end = content.find('\n', reasoning_start)
             if reasoning_end != -1:
-                result['reasoning'] = response[reasoning_start+10:reasoning_end].strip()
+                result['reasoning'] = content[reasoning_start+10:reasoning_end].strip()
             else:
-                result['reasoning'] = response[reasoning_start+10:].strip()
+                result['reasoning'] = content[reasoning_start+10:].strip()
         return result
 
     def _parse_structured_response(self, response: str) -> Dict[str, Any]:
