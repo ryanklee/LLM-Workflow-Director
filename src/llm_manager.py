@@ -161,6 +161,14 @@ class LLMManager:
                     return result
                 except Exception as e:
                     self.logger.error(f"Error using LLM client: {str(e)}")
+                    if isinstance(e, anthropic.APIError):
+                        if e.status_code == 429:
+                            self.logger.warning("Rate limit exceeded. Implementing exponential backoff.")
+                            time.sleep(2 ** (3 - max_retries))  # Exponential backoff
+                            max_retries -= 1
+                            continue
+                    result = self._fallback_response(prompt, context, tier)
+                    return result
                     self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
                     max_retries -= 1
                     if max_retries == 0:

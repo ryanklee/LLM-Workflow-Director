@@ -181,7 +181,8 @@ def test_main_script_execution(mocker):
     mocker.patch('src.workflow_director.WorkflowDirector.run', return_value=None)
     result = subprocess.run(["python", "src/main.py", "run"], capture_output=True, text=True, timeout=5)
     assert result.returncode == 0
-    assert "Workflow completed successfully" in result.stdout
+    assert "Starting LLM Workflow Director" in result.stdout
+    assert "Exiting LLM Workflow Director" in result.stdout
 
 def test_workflow_director_get_stage_progress():
     director = WorkflowDirector()
