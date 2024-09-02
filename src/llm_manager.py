@@ -147,8 +147,12 @@ class LLMManager:
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
                 
                 try:
-                    response = self.llm_client.messages.create(model=tier_config['model'], max_tokens=tier_config['max_tokens'], messages=[{"role": "user", "content": enhanced_prompt}])
-                    response_content = response.content[0].text if response.content else ""
+                    response = self.llm_client.completions.create(
+                        model=tier_config['model'],
+                        max_tokens=tier_config['max_tokens'],
+                        prompt=enhanced_prompt
+                    )
+                    response_content = response.completion if response.completion else ""
 
                     result = self._process_response(response_content, tier, start_time)
                     self.cache[cache_key] = result
@@ -160,20 +164,18 @@ class LLMManager:
                     self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
                     max_retries -= 1
                     if max_retries == 0:
-                            error_response = {
-                                "error": f"Error querying LLM: {str(e)}",
-                                "response": str(e),
-                                "tier": original_tier,
-                                "task_progress": 0,
-                                "state_updates": {},
-                                "actions": [],
-                                "suggestions": []
-                            }
-                            self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
-                            return self._add_unique_id(error_response)
-                    tier = self._get_fallback_tier(tier)
-                    self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
-                    continue
+                        error_response = {
+                            "error": f"Error querying LLM: {str(e)}",
+                            "response": str(e),
+                            "tier": original_tier,
+                            "task_progress": 0,
+                            "state_updates": {},
+                            "actions": [],
+                            "suggestions": []
+                        }
+                        return self._add_unique_id(error_response)
+                tier = self._get_fallback_tier(tier)
+                self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
             except Exception as e:
                     self.logger.error(f"Error using LLM client: {str(e)}")
                     max_retries -= 1
@@ -367,11 +369,12 @@ class LLMManager:
     def _parse_sufficiency_evaluation(self, response: Dict[str, Any]) -> Dict[str, Any]:
         result = {'is_sufficient': False, 'reasoning': "No reasoning provided"}
         content = response.get('response', '')
-        if '<evaluation>' in content and '</evaluation>' in content:
-            evaluation = content.split('<evaluation>')[1].split('</evaluation>')[0].strip()
-            result['is_sufficient'] = evaluation.upper() == 'SUFFICIENT'
-        if '<reasoning>' in content and '</reasoning>' in content:
-            result['reasoning'] = content.split('<reasoning>')[1].split('</reasoning>')[0].strip()
+        if isinstance(content, str):
+            if '<evaluation>' in content and '</evaluation>' in content:
+                evaluation = content.split('<evaluation>')[1].split('</evaluation>')[0].strip()
+                result['is_sufficient'] = evaluation.upper() == 'SUFFICIENT'
+            if '<reasoning>' in content and '</reasoning>' in content:
+                result['reasoning'] = content.split('<reasoning>')[1].split('</reasoning>')[0].strip()
         if not result['is_sufficient'] and result['reasoning'] == "No reasoning provided":
             result['reasoning'] = "Insufficient data provided in the response"
         return result
