@@ -184,6 +184,11 @@ class LLMManager:
         elif isinstance(response_with_id['response'], MagicMock):
             response_with_id['response'] = str(response_with_id['response'])
 
+        # Ensure all parsed fields are included in the response
+        for key in structured_response:
+            if key not in response_with_id:
+                response_with_id[key] = structured_response[key]
+
         return response_with_id
 
     def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: Optional[str] = None) -> Dict[str, Any]:
@@ -216,11 +221,11 @@ class LLMManager:
                 max_retries -= 1
                 if max_retries == 0:
                     self.logger.error(f"Max retries reached. Returning error message.")
-                    return {"error": f"Error querying LLM: {str(e)}", "tier": original_tier}
+                    return {"error": f"Error querying LLM: {str(e)}", "response": str(e), "tier": original_tier}
                 tier = self._get_fallback_tier(tier)
                 self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
         
-        return {"error": "Failed to query LLM after all retries", "tier": original_tier}
+        return {"error": "Failed to query LLM after all retries", "response": "Failed to query LLM after all retries", "tier": original_tier}
 
     def _estimate_query_complexity(self, query: str) -> float:
         # This is a simple heuristic and can be improved
