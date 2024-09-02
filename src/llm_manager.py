@@ -173,26 +173,25 @@ class LLMManager:
 
         self.cost_optimizer.update_usage(tier, tokens, response_time, success=True)
 
-        processed_response = self._parse_structured_response(response_content)
-        processed_response['response_time'] = response_time
-        processed_response['tier'] = tier
+        self.logger.debug(f"Received response from LLM: {response_content[:50]}...")
+        structured_response = self._parse_structured_response(response_content)
+        response_with_id = self._add_unique_id(structured_response)
 
         cache_key = self._generate_cache_key(response_content, None, tier)
-        self.cache[cache_key] = processed_response
+        self.cache[cache_key] = response_with_id
 
-        return processed_response
-                
-                self.logger.debug(f"Received response from LLM: {response_content[:50]}...")
-                structured_response = self._parse_structured_response(response_content)
-                response_with_id = self._add_unique_id(structured_response)
-                self.cache[cache_key] = response_with_id
+        response_with_id['response_time'] = response_time
+        response_with_id['tier'] = tier
 
-                # Update usage statistics
-                tokens = len(prompt.split()) + len(response_content.split())  # Simple token count estimation
-                response_time = time.time() - start_time
-                self.cost_optimizer.update_usage(tier, tokens, response_time, success=True)
+        return response_with_id
 
-                return response_with_id
+    def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: Optional[str] = None) -> Dict[str, Any]:
+        # ... (previous code remains unchanged)
+
+        while max_retries > 0:
+            try:
+                # ... (previous code remains unchanged)
+                return self._process_response(response_content, tier, start_time)
             except Exception as e:
                 self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
                 max_retries -= 1
