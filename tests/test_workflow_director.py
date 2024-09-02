@@ -98,7 +98,8 @@ def test_workflow_director_can_transition_to(mock_workflow_director):
     assert mock_workflow_director.can_transition_to("Requirements Gathering")
     assert not mock_workflow_director.can_transition_to("Non-existent Stage")
 
-def test_workflow_director_transition_to(mock_workflow_director):
+def test_workflow_director_transition_to(mock_workflow_director, mocker):
+    mocker.patch.object(mock_workflow_director.sufficiency_evaluator, 'evaluate_stage_sufficiency', return_value={'is_sufficient': True, 'reasoning': 'All tasks completed'})
     assert mock_workflow_director.transition_to("Requirements Gathering")
     assert not mock_workflow_director.transition_to("Non-existent Stage")
 
