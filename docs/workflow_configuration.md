@@ -137,41 +137,73 @@ The LLM configuration is stored in a separate YAML file (`src/llm_config.yaml`) 
 ```yaml
 tiers:
   fast:
-    model: gpt-3.5-turbo
-    max_tokens: 100
-  balanced:
-    model: gpt-3.5-turbo
-    max_tokens: 500
-  powerful:
-    model: gpt-4
+    model: claude-3-haiku-20240307
     max_tokens: 1000
+  balanced:
+    model: claude-3-sonnet-20240229
+    max_tokens: 4000
+  powerful:
+    model: claude-3-opus-20240229
+    max_tokens: 4000
 
 prompt_templates:
   default: |
-    Process this command: {command}
-    Current stage: {workflow_stage}
-    Stage description: {stage_description}
-    Stage tasks:
+    <context>
+    You are Claude, an AI language model. You are currently being directed by an automated LLM-Workflow Director as part of an AI-assisted software development process. The project is currently in the {workflow_stage} stage. Your task is to assist with the current workflow step. Please process the following information and respond accordingly.
+    </context>
+
+    Current Workflow Stage: {workflow_stage}
+    Stage Description: {stage_description}
+    Stage Tasks:
     {stage_tasks}
-    Stage priorities:
+    Stage Priorities:
     {stage_priorities}
     
-    Project structure:
+    Project Structure:
     {project_structure}
     
-    Coding conventions:
+    Coding Conventions:
     {coding_conventions}
     
-    Available transitions: {available_transitions}
-    Project progress: {project_progress:.2%}
+    Available Transitions: {available_transitions}
+    Project Progress: {project_progress:.2%}
     
-    Workflow history:
+    Workflow History:
     {workflow_history}
     
-    Additional context:
+    Additional Context:
     {context}
 
+    Given the above context, please respond to the following prompt:
+
+    {command}
+
+    Please structure your response using the following XML tags:
+    <task_progress>
+    [Provide a float value between 0 and 1 indicating the progress of the current task]
+    </task_progress>
+
+    <state_updates>
+    [Provide any updates to the project state as key-value pairs]
+    </state_updates>
+
+    <actions>
+    [List any actions that should be taken based on your response]
+    </actions>
+
+    <suggestions>
+    [Provide any suggestions for the user or the workflow director]
+    </suggestions>
+
+    <response>
+    [Your main response to the prompt]
+    </response>
+
   sufficiency_evaluation: |
+    <context>
+    You are Claude, an AI language model. You are currently being directed by an automated LLM-Workflow Director as part of an AI-assisted software development process. Your task is to evaluate the sufficiency of the current stage in the workflow. Please process the following information and provide a detailed evaluation.
+    </context>
+
     Evaluate the sufficiency of the current stage in the workflow:
 
     Stage Name: {stage_name}
@@ -185,12 +217,25 @@ prompt_templates:
     Workflow History:
     {workflow_history}
 
-    Based on the stage requirements, current project state, and workflow history, determine if this stage is sufficiently complete to move to the next stage.
+    Based on the stage requirements, current project state, and workflow history, determine if this stage is sufficiently complete to move to the next stage. Consider the following aspects in your evaluation:
+    1. Completion of all required tasks
+    2. Quality of the work done
+    3. Adherence to project standards and conventions
+    4. Readiness for the next stage
 
-    Provide your evaluation in the following format:
-    Evaluation: [SUFFICIENT/INSUFFICIENT]
-    Reasoning: [Detailed explanation of your evaluation]
-    Next Steps: [If insufficient, provide specific steps to achieve sufficiency]
+    Please structure your response using the following XML tags:
+
+    <evaluation>
+    [SUFFICIENT or INSUFFICIENT]
+    </evaluation>
+
+    <reasoning>
+    [Provide a detailed explanation of your evaluation, addressing each of the aspects mentioned above]
+    </reasoning>
+
+    <next_steps>
+    [If insufficient, provide specific steps to achieve sufficiency. If sufficient, suggest any final touches or preparations for the next stage]
+    </next_steps>
 ```
 
 This configuration allows for easy customization of LLM settings and prompt templates, enabling context-aware interactions with the LLM throughout the workflow.
