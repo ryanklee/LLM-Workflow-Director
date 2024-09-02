@@ -43,5 +43,41 @@ class TestClaudeAPIIntegration(unittest.TestCase):
             with self.assertRaises(Exception):
                 self.claude_manager.generate_response("Test prompt")
 
+    def test_input_validation(self):
+        # Test empty input
+        with self.assertRaises(ValueError):
+            self.claude_manager.generate_response("")
+
+        # Test very long input
+        long_input = "a" * 100001  # Assuming 100,000 is the max allowed length
+        with self.assertRaises(ValueError):
+            self.claude_manager.generate_response(long_input)
+
+    @patch('anthropic.Anthropic')
+    def test_response_parsing(self, mock_anthropic):
+        mock_client = MagicMock()
+        mock_anthropic.return_value = mock_client
+        mock_response = MagicMock()
+        mock_response.content = [MagicMock(text="<response>Parsed response</response>")]
+        mock_client.messages.create.return_value = mock_response
+
+        response = self.claude_manager.generate_response("Test prompt")
+        
+        self.assertEqual(response, "Parsed response")
+
+    @patch('anthropic.Anthropic')
+    def test_retry_mechanism(self, mock_anthropic):
+        mock_client = MagicMock()
+        mock_anthropic.return_value = mock_client
+        mock_client.messages.create.side_effect = [
+            Exception("Temporary error"),
+            MagicMock(content=[MagicMock(text="Successful response")])
+        ]
+
+        response = self.claude_manager.generate_response("Test prompt")
+        
+        self.assertEqual(response, "Successful response")
+        self.assertEqual(mock_client.messages.create.call_count, 2)
+
 if __name__ == '__main__':
     unittest.main()
