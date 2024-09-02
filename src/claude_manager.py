@@ -1,18 +1,16 @@
-from anthropic import Anthropic
+from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
 
 class ClaudeManager:
     def __init__(self):
         self.client = Anthropic()
 
     def generate_response(self, prompt):
-        response = self.client.messages.create(
+        response = self.client.completions.create(
             model="claude-3-opus-20240229",
-            max_tokens=1000,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+            max_tokens_to_sample=1000,
+            prompt=f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}",
         )
-        return response.content
+        return response.completion
 
     def select_model(self, task_description):
         if "simple" in task_description.lower():
