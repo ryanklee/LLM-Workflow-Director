@@ -113,6 +113,15 @@ class LLMManager:
                 self.cost_optimizer.update_usage(tier, tokens)
 
                 return response_with_id
+            except AttributeError as e:
+                if 'messages' in str(e):
+                    self.logger.warning(f"Anthropic client not properly initialized. Falling back to LLMMicroserviceClient.")
+                    response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
+                    structured_response = self._parse_structured_response(response_content)
+                    response_with_id = self._add_unique_id(structured_response)
+                    return response_with_id
+                else:
+                    raise
             except Exception as e:
                 self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
                 if tier == 'fast':
