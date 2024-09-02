@@ -153,13 +153,14 @@ class LLMManager:
 
                         result = self._process_response(response_content, tier, start_time)
                         self.cache[cache_key] = result
-                        self.cost_optimizer.update_usage(tier, len(response_content.split()), safe_time() - start_time, True)
+                        tokens = len(response_content.split()) if response_content else 0
+                        self.cost_optimizer.update_usage(tier, tokens, safe_time() - start_time, True)
                         return result
                     except Exception as e:
                         self.logger.error(f"Error using LLM client: {str(e)}")
                         max_retries -= 1
                         if max_retries == 0:
-                            return self._add_unique_id({
+                            error_response = {
                                 "error": f"Error querying LLM: {str(e)}",
                                 "response": str(e),
                                 "tier": original_tier,
@@ -167,7 +168,9 @@ class LLMManager:
                                 "state_updates": {},
                                 "actions": [],
                                 "suggestions": []
-                            })
+                            }
+                            self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
+                            return self._add_unique_id(error_response)
                         tier = self._get_fallback_tier(tier)
                         self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
                         continue
@@ -345,11 +348,13 @@ class LLMManager:
     def evaluate_sufficiency(self, stage_name: str, stage_data: Dict[str, Any], project_state: Dict[str, Any]) -> Dict[str, Any]:
         self.logger.info(f"Evaluating sufficiency for stage: {stage_name}")
         try:
-            prompt = self.generate_prompt('sufficiency_evaluation', {
+            context = {
                 'stage_name': stage_name,
-                'stage_data': stage_data,
+                'stage_description': stage_data.get('description', 'No description available'),
+                'stage_tasks': stage_data.get('tasks', []),
                 'project_state': project_state
-            })
+            }
+            prompt = self.generate_prompt('sufficiency_evaluation', context)
             response = self.query(prompt, tier='balanced')
             self.logger.debug(f"Sufficiency evaluation response: {response}")
             evaluation = self._parse_sufficiency_evaluation(response)
@@ -366,7 +371,7 @@ class LLMManager:
             result['is_sufficient'] = evaluation.upper() == 'SUFFICIENT'
         if '<reasoning>' in content and '</reasoning>' in content:
             result['reasoning'] = content.split('<reasoning>')[1].split('</reasoning>')[0].strip()
-        if not result['is_sufficient'] and not result['reasoning']:
+        if not result['is_sufficient'] and result['reasoning'] == "No reasoning provided":
             result['reasoning'] = "Insufficient data provided in the response"
         return result
 
