@@ -66,16 +66,16 @@ def test_llm_manager_tier_selection():
         
     with patch.object(manager, '_process_response', return_value={}):
         with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='fast'):
-            with patch.object(manager.llm_client, 'messages') as mock_messages:
+            with patch.object(manager.llm_client.messages, 'create') as mock_create:
                 with patch.object(manager.cost_optimizer, 'update_usage'):
                     manager.query(simple_query)
-                    mock_messages.create.assert_called_with(model=ANY, max_tokens=ANY, messages=[{"role": "user", "content": ANY}])
+                    mock_create.assert_called_with(model=ANY, max_tokens=ANY, messages=[{"role": "user", "content": ANY}])
         
         with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='powerful'):
-            with patch.object(manager.client, 'query') as mock_query:
+            with patch.object(manager.llm_client.messages, 'create') as mock_create:
                 with patch.object(manager.cost_optimizer, 'update_usage'):
                     manager.query(complex_query)
-                    mock_query.assert_called_with(ANY, None, ANY, ANY)
+                    mock_create.assert_called_with(model=ANY, max_tokens=ANY, messages=[{"role": "user", "content": ANY}])
     
     # Check if the tier selection is working as expected
     assert manager.determine_query_tier(simple_query) == 'fast'
