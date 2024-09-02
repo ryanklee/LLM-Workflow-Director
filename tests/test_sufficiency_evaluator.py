@@ -198,10 +198,10 @@ def test_evaluate_stage_sufficiency_sufficient():
     }
     project_state = {"key": "value"}
         
-    is_sufficient, reasoning = evaluator.evaluate_stage_sufficiency(stage_name, stage_data, project_state)
+    result = evaluator.evaluate_stage_sufficiency(stage_name, stage_data, project_state)
         
-    assert is_sufficient == True
-    assert "All tasks completed satisfactorily" in reasoning
+    assert result["is_sufficient"] == True
+    assert "All tasks completed satisfactorily" in result["reasoning"]
     mock_llm_manager.evaluate_sufficiency.assert_called_once_with(stage_name, stage_data, project_state)
 
 def test_evaluate_stage_sufficiency_insufficient():
@@ -220,11 +220,11 @@ def test_evaluate_stage_sufficiency_insufficient():
     }
     project_state = {"key": "value"}
         
-    is_sufficient, reasoning = evaluator.evaluate_stage_sufficiency(stage_name, stage_data, project_state)
+    result = evaluator.evaluate_stage_sufficiency(stage_name, stage_data, project_state)
         
-    assert is_sufficient == False
-    assert "Some tasks are incomplete" in reasoning
-    assert "Complete remaining tasks" in reasoning
+    assert result["is_sufficient"] == False
+    assert "Some tasks are incomplete" in result["reasoning"]
+    assert "Complete remaining tasks" in result["reasoning"]
     mock_llm_manager.evaluate_sufficiency.assert_called_once_with(stage_name, stage_data, project_state)
 
 def test_evaluate_stage_sufficiency_error():
