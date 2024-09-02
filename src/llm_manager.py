@@ -152,6 +152,9 @@ class LLMManager:
                         response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
                 else:
                     response_content = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
+
+                # Process the response content and return the result
+                return self._process_response(response_content, tier, start_time)
                 
                 self.logger.debug(f"Received response from LLM: {response_content[:50]}...")
                 structured_response = self._parse_structured_response(response_content)

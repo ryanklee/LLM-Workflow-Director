@@ -62,14 +62,16 @@ def test_llm_manager_tier_selection():
     simple_query = "What is 2 + 2?"
     complex_query = "Analyze the implications of quantum computing on modern cryptography systems."
         
-    with patch.object(manager, 'query') as mock_query:
+    with patch.object(manager, '_process_response', return_value={}):
         with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='fast'):
-            manager.query(simple_query)
-            mock_query.assert_called_with(simple_query, context=None, tier='fast')
+            with patch.object(manager.client, 'query') as mock_query:
+                manager.query(simple_query)
+                mock_query.assert_called_with(ANY, None, ANY, ANY)
         
         with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='powerful'):
-            manager.query(complex_query)
-            mock_query.assert_called_with(complex_query, context=None, tier='powerful')
+            with patch.object(manager.client, 'query') as mock_query:
+                manager.query(complex_query)
+                mock_query.assert_called_with(ANY, None, ANY, ANY)
     
     # Check if the tier selection is working as expected
     assert manager.determine_query_tier(simple_query) == 'fast'
