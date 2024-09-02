@@ -7,7 +7,7 @@ class ClaudeManager:
     def generate_response(self, prompt):
         response = self.client.completions.create(
             model="claude-3-opus-20240229",
-            max_tokens=1000,
+            max_tokens_to_sample=1000,
             prompt=prompt
         )
         return response.completion
