@@ -11,12 +11,12 @@ class TestClaudeAPIIntegration(unittest.TestCase):
     def test_claude_api_call(self, mock_anthropic):
         mock_client = MagicMock()
         mock_anthropic.return_value = mock_client
-        mock_client.completions.create.return_value = MagicMock(completion="Test response")
+        mock_client.messages.create.return_value = MagicMock(content="Test response")
 
         response = self.claude_manager.generate_response("Test prompt")
         
         self.assertEqual(response, "Test response")
-        mock_client.completions.create.assert_called_once()
+        mock_client.messages.create.assert_called_once()
 
     def test_tiered_model_selection(self):
         # Test fast tier
