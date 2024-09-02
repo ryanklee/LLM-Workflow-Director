@@ -261,3 +261,47 @@ def test_evaluate_stage_sufficiency_no_llm_manager():
     
     assert is_sufficient == True
     assert "LLMManager not available" in reasoning
+import pytest
+from unittest.mock import MagicMock
+from src.sufficiency_evaluator import SufficiencyEvaluator
+from src.llm_manager import LLMManager
+
+@pytest.fixture
+def mock_llm_manager():
+    return MagicMock(spec=LLMManager)
+
+@pytest.fixture
+def sufficiency_evaluator(mock_llm_manager):
+    return SufficiencyEvaluator(mock_llm_manager)
+
+def test_evaluate_stage_sufficiency(sufficiency_evaluator, mock_llm_manager):
+    stage_name = "Test Stage"
+    stage_data = {"description": "Test stage description"}
+    project_state = {"key": "value"}
+    
+    mock_llm_manager.evaluate_sufficiency.return_value = {
+        "is_sufficient": True,
+        "reasoning": "All tasks completed successfully"
+    }
+    
+    result = sufficiency_evaluator.evaluate_stage_sufficiency(stage_name, stage_data, project_state)
+    
+    assert result["is_sufficient"] == True
+    assert result["reasoning"] == "All tasks completed successfully"
+    mock_llm_manager.evaluate_sufficiency.assert_called_once_with(stage_name, stage_data, project_state)
+
+def test_evaluate_stage_insufficiency(sufficiency_evaluator, mock_llm_manager):
+    stage_name = "Test Stage"
+    stage_data = {"description": "Test stage description"}
+    project_state = {"key": "value"}
+    
+    mock_llm_manager.evaluate_sufficiency.return_value = {
+        "is_sufficient": False,
+        "reasoning": "Some tasks are incomplete"
+    }
+    
+    result = sufficiency_evaluator.evaluate_stage_sufficiency(stage_name, stage_data, project_state)
+    
+    assert result["is_sufficient"] == False
+    assert result["reasoning"] == "Some tasks are incomplete"
+    mock_llm_manager.evaluate_sufficiency.assert_called_once_with(stage_name, stage_data, project_state)

@@ -85,3 +85,21 @@ class SufficiencyEvaluator:
         except Exception as e:
             self.logger.error(f"Error evaluating sufficiency: {str(e)}")
             return False, f"Error evaluating sufficiency: {str(e)}"
+from typing import Dict, Any
+from .llm_manager import LLMManager
+
+class SufficiencyEvaluator:
+    def __init__(self, llm_manager: LLMManager):
+        self.llm_manager = llm_manager
+
+    def evaluate_stage_sufficiency(self, stage_name: str, stage_data: Dict[str, Any], project_state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Evaluate the sufficiency of a workflow stage using the LLM.
+        
+        :param stage_name: The name of the current stage
+        :param stage_data: Data related to the current stage
+        :param project_state: The current state of the project
+        :return: A dictionary containing the evaluation result and reasoning
+        """
+        evaluation = self.llm_manager.evaluate_sufficiency(stage_name, stage_data, project_state)
+        return evaluation

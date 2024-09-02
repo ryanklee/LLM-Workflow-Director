@@ -33,6 +33,7 @@ class WorkflowDirector:
         self.llm_manager = llm_manager or LLMManager()
         self.error_handler = ErrorHandler()
         self.user_interaction_handler = user_interaction_handler or UserInteractionHandler()
+        self.sufficiency_evaluator = SufficiencyEvaluator(self.llm_manager)
         self.config = self.load_config(config_path)
         self.current_stage = self.config['stages'][0]['name'] if self.config else "Default Stage"
         self.stages = {stage['name']: stage for stage in self.config['stages']}
