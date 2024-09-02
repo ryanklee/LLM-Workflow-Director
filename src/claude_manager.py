@@ -11,14 +11,19 @@ class ClaudeManager:
         if not prompt or len(prompt) > 100000:
             raise ValueError("Invalid prompt length")
 
-        response = self.client.messages.create(
-            model=self.select_model(prompt),
-            max_tokens=1000,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
-        )
-        return self.parse_response(response.content[0].text)
+        try:
+            response = self.client.messages.create(
+                model=self.select_model(prompt),
+                max_tokens=1000,
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            return self.parse_response(response.content[0].text)
+        except Exception as e:
+            # Log the error or handle it as needed
+            print(f"Error in generate_response: {str(e)}")
+            raise  # Re-raise the exception to trigger the retry mechanism
 
     def select_model(self, task_description):
         if "simple" in task_description.lower():
@@ -31,5 +36,5 @@ class ClaudeManager:
     def parse_response(self, response_text):
         match = re.search(r'<response>(.*?)</response>', response_text, re.DOTALL)
         if match:
-            return match.group(1).strip()
-        return response_text
+            return f"<response>{match.group(1).strip()}</response>"
+        return f"<response>{response_text.strip()}</response>"
