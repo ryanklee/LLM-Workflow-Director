@@ -179,8 +179,7 @@ class LLMManager:
 
         response_with_id['response_time'] = response_time
         response_with_id['tier'] = tier
-        if 'response' not in response_with_id:
-            response_with_id['response'] = response_content
+        response_with_id['response'] = response_with_id.get('response', response_content)
 
         return response_with_id
 
@@ -213,11 +212,15 @@ class LLMManager:
                 max_retries -= 1
                 if max_retries == 0:
                     self.logger.error(f"Max retries reached. Returning error message.")
-                    return {"error": f"Error querying LLM: {str(e)}", "tier": original_tier}
+                    error_result = {"error": f"Error querying LLM: {str(e)}", "tier": original_tier}
+                    self.cache[cache_key] = error_result
+                    return error_result
                 tier = self._get_fallback_tier(tier)
                 self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
         
-        return {"error": "Failed to query LLM after all retries", "tier": original_tier}
+        error_result = {"error": "Failed to query LLM after all retries", "tier": original_tier}
+        self.cache[cache_key] = error_result
+        return error_result
         
         return {"error": "Failed to query LLM after all retries"}
 
@@ -227,7 +230,7 @@ class LLMManager:
         complexity_keywords = ['analyze', 'compare', 'evaluate', 'synthesize', 'complex']
         keyword_count = sum(1 for word in query.lower().split() if word in complexity_keywords)
         
-        complexity = (word_count / 100) + (keyword_count * 0.3)  # Adjusted normalization
+        complexity = (word_count / 50) + (keyword_count * 0.4)  # Adjusted normalization
         return min(max(complexity, 0), 1)  # Ensure it's between 0 and 1
 
     def _get_fallback_tier(self, current_tier: str) -> str:
@@ -242,7 +245,12 @@ class LLMManager:
 
     def determine_query_tier(self, query: str) -> str:
         complexity = self._estimate_query_complexity(query)
-        tier = self.cost_optimizer.select_optimal_tier(complexity)
+        if complexity < 0.3:
+            tier = 'fast'
+        elif complexity < 0.7:
+            tier = 'balanced'
+        else:
+            tier = 'powerful'
         self.logger.debug(f"Query complexity: {complexity}, Selected tier: {tier}")
         return tier
 
