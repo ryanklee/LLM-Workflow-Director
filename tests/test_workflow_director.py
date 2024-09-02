@@ -169,7 +169,7 @@ def test_workflow_director_complete_current_stage():
 @pytest.mark.fast
 def test_workflow_director_complete_current_stage(mocker):
     director = WorkflowDirector()
-    mocker.patch.object(director.sufficiency_evaluator, 'evaluate_stage_sufficiency', return_value=True)
+    mocker.patch.object(director.sufficiency_evaluator, 'evaluate_stage_sufficiency', return_value={'is_sufficient': True, 'reasoning': 'All tasks completed'})
     director.current_stage = "Requirements Gathering"
     director.state_manager.set("requirements_documented", True)
     director.complete_current_stage()
@@ -179,7 +179,7 @@ def test_workflow_director_complete_current_stage(mocker):
 @pytest.mark.slow
 def test_main_script_execution(mocker):
     mocker.patch('src.workflow_director.WorkflowDirector.run', return_value=None)
-    result = subprocess.run(["python", "src/main.py"], capture_output=True, text=True, timeout=5)
+    result = subprocess.run(["python", "src/main.py", "run"], capture_output=True, text=True, timeout=5)
     assert result.returncode == 0
     assert "Workflow completed successfully" in result.stdout
 
