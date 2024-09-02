@@ -156,6 +156,10 @@ class LLMManager:
                         tokens = len(response_content.split()) if response_content else 0
                         self.cost_optimizer.update_usage(tier, tokens, safe_time() - start_time, True)
                         return result
+                except Exception as e:
+                    self.logger.error(f"Error using LLM client: {str(e)}")
+                    self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
+                    raise
                     except Exception as e:
                         self.logger.error(f"Error using LLM client: {str(e)}")
                         max_retries -= 1
@@ -193,7 +197,7 @@ class LLMManager:
                     raise
             except Exception as e:
                 self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
-                self.cost_optimizer.update_usage(tier, 0, time.time() - start_time, False)
+                self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
                 max_retries -= 1
                 if max_retries == 0:
                     self.logger.error(f"Max retries reached. Returning error message.")
@@ -352,7 +356,8 @@ class LLMManager:
                 'stage_name': stage_name,
                 'stage_description': stage_data.get('description', 'No description available'),
                 'stage_tasks': stage_data.get('tasks', []),
-                'project_state': project_state
+                'project_state': project_state,
+                'workflow_history': project_state.get('workflow_history', [])
             }
             prompt = self.generate_prompt('sufficiency_evaluation', context)
             response = self.query(prompt, tier='balanced')
