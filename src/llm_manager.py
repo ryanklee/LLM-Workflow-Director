@@ -6,7 +6,7 @@ from typing import Dict, Any, Optional, List
 from .error_handler import ErrorHandler
 from .llm_microservice_client import LLMMicroserviceClient
 from pydantic import Field, validator
-from llm import Claude
+import llm
 from pydantic import Field, validator
 
 class LLMCostOptimizer:
@@ -66,7 +66,7 @@ class LLMManager:
             'powerful': {'model': 'claude-3-opus-20240229', 'max_tokens': 4000}
         })
         self.prompt_templates = self.config.get('prompt_templates', {})
-        self.claude_client = Claude(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+        self.claude_client = llm.get_model("claude-3-opus-20240229")
 
     def _load_config(self, config_path):
         try:
