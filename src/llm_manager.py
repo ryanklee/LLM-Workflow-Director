@@ -110,7 +110,11 @@ class LLMManager:
             self.llm_client = llm.get_model("claude-3-sonnet-20240229")
         except llm.UnknownModelError:
             self.logger.warning("Claude-3-sonnet model not found. Falling back to default model.")
-            self.llm_client = llm.get_model()  # Get the default model
+            default_model = next(iter(llm.get_model_aliases().keys()), None)
+            if default_model:
+                self.llm_client = llm.get_model(default_model)
+            else:
+                raise ValueError("No available LLM models found")
 
     def _load_config(self, config_path):
         try:
@@ -144,13 +148,17 @@ class LLMManager:
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
                 
                 try:
-                    response = self.llm_client.complete(enhanced_prompt, model=tier_config['model'], max_tokens=tier_config['max_tokens'])
-                    response_content = response.text()
+                    try:
+                        response = self.llm_client.complete(enhanced_prompt, model=tier_config['model'], max_tokens=tier_config['max_tokens'])
+                        response_content = response.text()
                     
-                    result = self._process_response(response_content, tier, start_time)
-                    self.cache[cache_key] = result
-                    self.cost_optimizer.update_usage(tier, len(response_content.split()), time.time() - start_time, True)
-                    return result
+                        result = self._process_response(response_content, tier, start_time)
+                        self.cache[cache_key] = result
+                        self.cost_optimizer.update_usage(tier, len(response_content.split()), time.time() - start_time, True)
+                        return result
+                    except Exception as e:
+                        self.logger.error(f"Error using LLM client: {str(e)}")
+                        raise
                 except Exception as e:
                     self.logger.error(f"Error using LLM client: {str(e)}")
                     raise
