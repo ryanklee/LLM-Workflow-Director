@@ -176,7 +176,8 @@ def test_workflow_director_complete_current_stage(mocker):
     mocker.patch.object(director.sufficiency_evaluator, 'evaluate_stage_sufficiency', return_value={'is_sufficient': True, 'reasoning': 'All tasks completed'})
     director.current_stage = "Requirements Gathering"
     director.state_manager.set("requirements_documented", True)
-    director.complete_current_stage()
+    result = director.complete_current_stage()
+    assert result == True, "Expected complete_current_stage to return True"
     assert director.current_stage == "Domain Modeling"
     assert director.state_manager.get("requirements_gathering_completed") == True
 

@@ -167,7 +167,7 @@ class LLMManager:
                             time.sleep(2 ** (3 - max_retries))  # Exponential backoff
                             max_retries -= 1
                             continue
-                    result = self._fallback_response(prompt, context, tier)
+                    result = self._handle_error(prompt, context, tier, e)
                     return result
                     self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
                     max_retries -= 1
@@ -501,3 +501,15 @@ class LLMManager:
     def clear_cache(self):
         self.cache.clear()
         self.logger.info("LLM response cache cleared.")
+    def _handle_error(self, prompt: str, context: Optional[Dict[str, Any]], tier: str, error: Exception) -> Dict[str, Any]:
+        self.logger.error(f"Error in LLM query: {str(error)}")
+        self.cost_optimizer.update_usage(tier, 0, 0, False)
+        return {
+            "error": f"Error querying LLM: {str(error)}",
+            "response": str(error),
+            "tier": tier,
+            "task_progress": 0,
+            "state_updates": {},
+            "actions": [],
+            "suggestions": []
+        }
