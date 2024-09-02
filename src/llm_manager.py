@@ -149,8 +149,8 @@ class LLMManager:
                 
                 try:
                     try:
-                        response = self.llm_client(enhanced_prompt, model=tier_config['model'], max_tokens=tier_config['max_tokens'])
-                        response_content = response
+                        response = self.llm_client.chat(messages=[{"role": "user", "content": enhanced_prompt}], model=tier_config['model'], max_tokens=tier_config['max_tokens'])
+                        response_content = response.content[0].text
                     
                         result = self._process_response(response_content, tier, start_time)
                         self.cache[cache_key] = result
@@ -164,7 +164,7 @@ class LLMManager:
                     max_retries -= 1
                     if max_retries == 0:
                         self.logger.error(f"Max retries reached. Returning error message.")
-                        return {
+                        return self._add_unique_id({
                             "error": f"Error querying LLM: {str(e)}",
                             "response": str(e),
                             "tier": original_tier,
@@ -172,7 +172,7 @@ class LLMManager:
                             "state_updates": {},
                             "actions": [],
                             "suggestions": []
-                        }
+                        })
                     tier = self._get_fallback_tier(tier)
                     self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
                     raise
@@ -340,7 +340,7 @@ class LLMManager:
             })
             response = self.query(prompt, tier='balanced')
             self.logger.debug(f"Sufficiency evaluation response: {response}")
-            evaluation = self._parse_sufficiency_evaluation(response['response'])
+            evaluation = self._parse_sufficiency_evaluation(response.get('response', ''))
             evaluation['is_sufficient'] = evaluation.get('is_sufficient', False)
             evaluation['reasoning'] = evaluation.get('reasoning', "No reasoning provided")
             return evaluation

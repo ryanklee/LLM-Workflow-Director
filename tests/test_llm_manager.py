@@ -203,7 +203,7 @@ def test_llm_manager_error_handling():
         assert isinstance(result, dict)
         assert "error" in result
         assert "Error querying LLM:" in result["error"]
-        assert mock_client.return_value.query.call_count == 3
+        assert mock_anthropic.return_value.messages.create.call_count == 3
 
 def test_llm_manager_fallback_to_fast():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client, \
@@ -223,7 +223,7 @@ def test_llm_manager_fallback_to_fast():
         assert isinstance(result, dict)
         assert "error" in result
         assert "Error querying LLM:" in result["error"]
-        assert mock_client.return_value.query.call_count == 3
+        assert mock_anthropic.return_value.messages.create.call_count == 3
 
 def test_llm_manager_query_with_tiers():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client, \
