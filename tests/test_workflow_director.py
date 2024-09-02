@@ -170,6 +170,10 @@ def test_workflow_director_complete_current_stage():
     for stage in all_stages:
         assert director.state_manager.get(f"{stage.lower().replace(' ', '_')}_completed") == True, f"State for {stage} should be marked as completed"
 
+    # Ensure the current stage is marked as completed in the state manager
+    stage_name = director.current_stage.lower().replace(' ', '_')
+    assert director.state_manager.get(f"{stage_name}_completed") == True, f"Current stage {director.current_stage} should be marked as completed in state manager"
+
 @pytest.mark.fast
 def test_workflow_director_complete_current_stage(mocker):
     director = WorkflowDirector()
