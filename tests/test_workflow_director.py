@@ -166,6 +166,10 @@ def test_workflow_director_complete_current_stage():
     assert director.current_stage == all_stages[-1], f"Expected to stay in the final stage {all_stages[-1]}, but in {director.current_stage}"
     assert len(director.completed_stages) == len(all_stages), f"Expected all stages to be completed, but only {len(director.completed_stages)} are completed"
 
+    # Add assertions to check if state is updated correctly
+    for stage in all_stages:
+        assert director.state_manager.get(f"{stage.lower().replace(' ', '_')}_completed") == True, f"State for {stage} should be marked as completed"
+
 @pytest.mark.fast
 def test_workflow_director_complete_current_stage(mocker):
     director = WorkflowDirector()
