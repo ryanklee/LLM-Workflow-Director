@@ -29,7 +29,7 @@ def test_llm_manager_query(mock_time, mock_anthropic, mock_client):
     mock_anthropic.return_value.messages.create.return_value = type('obj', (object,), {'content': [type('obj', (object,), {'text': "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response"})]})()
     manager = LLMManager()
     with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
-        with patch.object(manager.cost_optimizer, 'update_usage'):
+        with patch.object(manager.cost_optimizer, 'update_usage') as mock_update_usage:
             response = manager.query("Test prompt")
     assert isinstance(response, dict)
     assert 'task_progress' in response
@@ -43,8 +43,8 @@ def test_llm_manager_query(mock_time, mock_anthropic, mock_client):
         max_tokens=4000,
         messages=[{"role": "user", "content": ANY}]
     )
-    assert manager.cost_optimizer.update_usage.call_count == 1
-    manager.cost_optimizer.update_usage.assert_called_once_with('balanced', ANY, ANY, True)
+    assert mock_update_usage.call_count == 1
+    mock_update_usage.assert_called_once_with('balanced', ANY, ANY, True)
     assert manager.cost_optimizer.performance_metrics['balanced']['avg_response_time'] > 0
 
 @patch('src.llm_manager.LLMMicroserviceClient')
@@ -54,10 +54,11 @@ def test_llm_manager_query_with_error(mock_time, mock_anthropic, mock_client):
     mock_anthropic.return_value.messages.create.side_effect = Exception("Test error")
     manager = LLMManager()
     with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
-        response = manager.query("Test prompt")
+        with patch.object(manager.cost_optimizer, 'update_usage') as mock_update_usage:
+            response = manager.query("Test prompt")
     assert 'error' in response
-    assert manager.cost_optimizer.update_usage.call_count == 3  # One for each tier: powerful, balanced, fast
-    manager.cost_optimizer.update_usage.assert_any_call('fast', ANY, ANY, False)
+    assert mock_update_usage.call_count == 3  # One for each tier: powerful, balanced, fast
+    mock_update_usage.assert_any_call('fast', ANY, ANY, False)
 
 def test_llm_manager_tier_selection():
     manager = LLMManager()
@@ -66,17 +67,17 @@ def test_llm_manager_tier_selection():
         
     with patch.object(manager, '_process_response', return_value={}):
         with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='fast'):
-            with patch.object(manager.llm_client.messages, 'create') as mock_create:
+            with patch.object(manager.llm_client, 'messages') as mock_messages:
                 with patch.object(manager.cost_optimizer, 'update_usage'):
                     manager.query(simple_query)
-                    mock_create.assert_called_with(model=ANY, max_tokens=ANY, messages=[{"role": "user", "content": ANY}])
-        
+                    mock_messages.create.assert_called_with(model=ANY, max_tokens=ANY, messages=[{"role": "user", "content": ANY}])
+            
         with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='powerful'):
-            with patch.object(manager.llm_client.messages, 'create') as mock_create:
+            with patch.object(manager.llm_client, 'messages') as mock_messages:
                 with patch.object(manager.cost_optimizer, 'update_usage'):
                     manager.query(complex_query)
-                    mock_create.assert_called_with(model=ANY, max_tokens=ANY, messages=[{"role": "user", "content": ANY}])
-    
+                    mock_messages.create.assert_called_with(model=ANY, max_tokens=ANY, messages=[{"role": "user", "content": ANY}])
+        
     # Check if the tier selection is working as expected
     assert manager.determine_query_tier(simple_query) == 'fast'
     assert manager.determine_query_tier(complex_query) == 'powerful'
@@ -293,23 +294,22 @@ def test_llm_manager_caching():
             assert result4 != result1
 
 def test_evaluate_sufficiency():
-    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
-        mock_client.return_value.evaluate_sufficiency.return_value = {
-            "is_sufficient": True,
-            "reasoning": "All tasks completed"
+    manager = LLMManager()
+    with patch.object(manager, 'query') as mock_query:
+        mock_query.return_value = {
+            "response": "<evaluation>SUFFICIENT</evaluation><reasoning>All tasks completed</reasoning>"
         }
-        manager = LLMManager()
         
         result = manager.evaluate_sufficiency("Test Stage", {"description": "Test"}, {"key": "value"})
         
         assert result["is_sufficient"] == True
         assert result["reasoning"] == "All tasks completed"
-        mock_client.return_value.evaluate_sufficiency.assert_called_once_with("Test Stage", {"description": "Test"}, {"key": "value"})
+        mock_query.assert_called_once()
 
 def test_evaluate_sufficiency_error():
-    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
-        mock_client.return_value.evaluate_sufficiency.side_effect = Exception("Test error")
-        manager = LLMManager()
+    manager = LLMManager()
+    with patch.object(manager, 'query') as mock_query:
+        mock_query.side_effect = Exception("Test error")
         
         result = manager.evaluate_sufficiency("Test Stage", {"description": "Test"}, {"key": "value"})
         
