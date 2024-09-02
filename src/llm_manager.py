@@ -106,7 +106,7 @@ class LLMManager:
             'powerful': {'model': 'claude-3-opus-20240229', 'max_tokens': 4000}
         })
         self.prompt_templates = self.config.get('prompt_templates', {})
-        self.llm_client = llm.LLM()  # Changed from llm.get_client() to llm.LLM()
+        self.llm_client = llm.get_client()  # Changed back to llm.get_client()
 
     def _load_config(self, config_path):
         try:
