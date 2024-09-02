@@ -161,6 +161,8 @@ class LLMManager:
                     return result
                 except Exception as e:
                     self.logger.error(f"Error using LLM client: {str(e)}")
+                    if isinstance(e, anthropic.NotFoundError):
+                        return self._handle_error(prompt, context, tier, e)
                     if isinstance(e, anthropic.APIError):
                         if e.status_code == 429:
                             self.logger.warning("Rate limit exceeded. Implementing exponential backoff.")

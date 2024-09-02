@@ -36,7 +36,8 @@ def test_llm_manager_query(mock_time, mock_anthropic, mock_client, llm_manager):
     mock_anthropic.return_value.messages.create.return_value = mock_response
     with patch.object(llm_manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
         with patch.object(llm_manager.cost_optimizer, 'update_usage') as mock_update_usage:
-            response = llm_manager.query("Test prompt")
+            with patch.object(llm_manager, '_handle_error', return_value={'error': 'Test error', 'response': 'Error response'}):
+                response = llm_manager.query("Test prompt")
             assert isinstance(response, dict)
             assert 'response' in response
             assert response['response'] == "Test response"
