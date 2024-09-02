@@ -185,10 +185,6 @@ class LLMManager:
         elif isinstance(response_with_id['response'], MagicMock):
             response_with_id['response'] = str(response_with_id['response'])
 
-        # Ensure all parsed fields are included in the response
-        for key in structured_response:
-            response_with_id[key] = structured_response[key]
-
         return response_with_id
 
     def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: Optional[str] = None) -> Dict[str, Any]:
