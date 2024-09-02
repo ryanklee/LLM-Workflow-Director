@@ -173,22 +173,27 @@ def test_llm_manager_fallback_to_fast():
         assert mock_client.return_value.query.call_count == 3
 
 def test_llm_manager_query_with_tiers():
-    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:
-        mock_client.return_value.query.side_effect = ["Fast response", "Balanced response", "Powerful response"]
+    with patch('src.llm_manager.LLMMicroserviceClient') as mock_client, \
+         patch('anthropic.Anthropic') as mock_anthropic:
+        mock_anthropic.return_value.completions.create.side_effect = [
+            type('obj', (object,), {'completion': "Fast response"})(),
+            type('obj', (object,), {'completion': "Balanced response"})(),
+            type('obj', (object,), {'completion': "Powerful response"})()
+        ]
         manager = LLMManager()
-            
+        
         fast_result = manager.query("Short prompt", tier='fast')
         balanced_result = manager.query("Medium length prompt", tier='balanced')
         powerful_result = manager.query("Complex prompt", tier='powerful')
-            
+        
         assert isinstance(fast_result, dict) and fast_result.get("response") == "Fast response"
         assert isinstance(balanced_result, dict) and balanced_result.get("response") == "Balanced response"
         assert isinstance(powerful_result, dict) and powerful_result.get("response") == "Powerful response"
         
-        assert mock_client.return_value.query.call_count == 3
-        mock_client.return_value.query.assert_any_call("Short prompt", None, 'gpt-3.5-turbo', 100)
-        mock_client.return_value.query.assert_any_call("Medium length prompt", None, 'gpt-3.5-turbo', 500)
-        mock_client.return_value.query.assert_any_call("Complex prompt", None, 'gpt-4', 1000)
+        assert mock_anthropic.return_value.completions.create.call_count == 3
+        mock_anthropic.return_value.completions.create.assert_any_call(model='claude-3-haiku-20240307', prompt='\n\nHuman: Short prompt\n\nAssistant:', max_tokens_to_sample=1000)
+        mock_anthropic.return_value.completions.create.assert_any_call(model='claude-3-sonnet-20240229', prompt='\n\nHuman: Medium length prompt\n\nAssistant:', max_tokens_to_sample=4000)
+        mock_anthropic.return_value.completions.create.assert_any_call(model='claude-3-opus-20240229', prompt='\n\nHuman: Complex prompt\n\nAssistant:', max_tokens_to_sample=4000)
 
 def test_determine_query_tier():
     manager = LLMManager()
