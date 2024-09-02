@@ -26,7 +26,7 @@ def test_llm_manager_initialization():
 @patch('anthropic.Anthropic')
 @patch('time.time', side_effect=[0, 1])  # Mock start and end times
 def test_llm_manager_query(mock_time, mock_anthropic, mock_client):
-    mock_anthropic.return_value.completions.create.return_value = type('obj', (object,), {'completion': "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response"})()
+    mock_anthropic.return_value.messages.create.return_value = type('obj', (object,), {'content': [type('obj', (object,), {'text': "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response"})]})()
     manager = LLMManager()
     with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
         with patch.object(manager.cost_optimizer, 'update_usage'):
@@ -50,7 +50,7 @@ def test_llm_manager_query(mock_time, mock_anthropic, mock_client):
 @patch('anthropic.Anthropic')
 @patch('time.time', side_effect=[0, 1, 2, 3, 4, 5])  # Mock start and end times for multiple attempts
 def test_llm_manager_query_with_error(mock_time, mock_anthropic, mock_client):
-    mock_anthropic.return_value.completions.create.side_effect = Exception("Test error")
+    mock_anthropic.return_value.messages.create.side_effect = Exception("Test error")
     manager = LLMManager()
     with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
         response = manager.query("Test prompt")
@@ -65,7 +65,7 @@ def test_llm_manager_tier_selection():
         
     with patch.object(manager, '_process_response', return_value={}):
         with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='fast'):
-            with patch.object(manager.llm_client, 'completions') as mock_completions:
+            with patch.object(manager.llm_client, 'messages') as mock_messages:
                 with patch.object(manager.cost_optimizer, 'update_usage'):
                     manager.query(simple_query)
                     mock_query.assert_called_with(ANY, None, ANY, ANY)
@@ -187,7 +187,7 @@ def test_llm_manager_query_with_context():
 def test_llm_manager_error_handling():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client, \
          patch('anthropic.Anthropic') as mock_anthropic:
-        mock_anthropic.return_value.completions.create.side_effect = [
+        mock_anthropic.return_value.messages.create.side_effect = [
             Exception("Powerful error"),
             Exception("Balanced error"),
             Exception("Fast error")

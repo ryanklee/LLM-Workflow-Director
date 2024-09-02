@@ -147,12 +147,12 @@ class LLMManager:
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
                 
                 try:
-                    response = self.llm_client.completions.create(
+                    response = self.llm_client.messages.create(
                         model=tier_config['model'],
                         max_tokens=tier_config['max_tokens'],
-                        prompt=enhanced_prompt
+                        messages=[{"role": "user", "content": enhanced_prompt}]
                     )
-                    response_content = response.completion if response.completion else ""
+                    response_content = response.content[0].text if response.content else ""
 
                     result = self._process_response(response_content, tier, start_time)
                     self.cache[cache_key] = result
@@ -358,7 +358,7 @@ class LLMManager:
                 'workflow_history': project_state.get('workflow_history', [])
             }
             prompt = self.generate_prompt('sufficiency_evaluation', context)
-            response = self.query(prompt, tier='balanced')
+            response = self.query(prompt, context=context, tier='balanced')
             self.logger.debug(f"Sufficiency evaluation response: {response}")
             evaluation = self._parse_sufficiency_evaluation(response)
             return evaluation
