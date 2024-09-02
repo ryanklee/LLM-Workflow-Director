@@ -155,6 +155,16 @@ class LLMManager:
 
                 # Process the response content and return the result
                 return self._process_response(response_content, tier, start_time)
+            except Exception as e:
+                self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
+                max_retries -= 1
+                if max_retries == 0:
+                    self.logger.error(f"Max retries reached. Returning error message.")
+                    return {"error": f"Error querying LLM: {str(e)}"}
+                tier = self._get_fallback_tier(tier)
+                self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
+        
+        return {"error": "Failed to query LLM after all retries"}
 
     def _process_response(self, response_content: str, tier: str, start_time: float) -> Dict[str, Any]:
         end_time = time.time()
