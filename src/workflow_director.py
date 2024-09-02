@@ -307,6 +307,18 @@ class WorkflowDirector:
         self.logger.info(f"Attempting to transition from {self.current_stage} to {next_stage}")
         if self.can_transition_to(next_stage):
             previous_stage = self.current_stage
+            current_stage_data = self.stages[self.current_stage]
+            project_state = self.state_manager.get_all()
+            
+            evaluation = self.sufficiency_evaluator.evaluate_stage_sufficiency(
+                self.current_stage, current_stage_data, project_state
+            )
+            
+            if not evaluation['is_sufficient']:
+                self.logger.warning(f"Stage {self.current_stage} is not sufficient to transition. Reason: {evaluation['reasoning']}")
+                self.user_interaction_handler.display_message(f"Cannot transition to stage: {next_stage}. Reason: {evaluation['reasoning']}")
+                return False
+            
             self.current_stage = next_stage
             if previous_stage not in self.completed_stages:
                 self.completed_stages.add(previous_stage)
