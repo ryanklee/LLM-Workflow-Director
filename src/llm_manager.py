@@ -90,15 +90,18 @@ class LLMManager:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
                 
+                # Format prompt for Anthropic models
+                formatted_prompt = f"\n\nHuman: {enhanced_prompt}\n\nAssistant:"
+                
                 # Use Claude client for Anthropic models
                 if 'claude' in tier_config['model']:
                     response = self.claude_client.completions.create(
                         model=tier_config['model'],
-                        prompt=enhanced_prompt,
+                        prompt=formatted_prompt,
                         max_tokens_to_sample=tier_config['max_tokens']
                     ).completion
                 else:
-                    response = self.client.query(enhanced_prompt, context, tier_config['model'], tier_config['max_tokens'])
+                    response = self.client.query(formatted_prompt, context, tier_config['model'], tier_config['max_tokens'])
                 
                 self.logger.debug(f"Received response from LLM: {response[:50]}...")
                 structured_response = self._parse_structured_response(response)

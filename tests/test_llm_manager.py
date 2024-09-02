@@ -23,8 +23,9 @@ def test_llm_manager_initialization():
         assert 'sufficiency_evaluation' in manager.prompt_templates
 
 @patch('src.llm_manager.LLMMicroserviceClient')
-def test_llm_manager_query(mock_client):
-    mock_client.return_value.query.return_value = "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response"
+@patch('anthropic.Anthropic')
+def test_llm_manager_query(mock_anthropic, mock_client):
+    mock_anthropic.return_value.completions.create.return_value.completion = "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response"
     manager = LLMManager()
     response = manager.query("Test prompt", tier='balanced')
     assert isinstance(response, dict)
@@ -34,7 +35,11 @@ def test_llm_manager_query(mock_client):
     assert 'suggestions' in response
     assert 'response' in response
     assert 'id' in response
-    mock_client.return_value.query.assert_called_once_with(ANY, ANY, 'gpt-3.5-turbo', 500)
+    mock_anthropic.return_value.completions.create.assert_called_once_with(
+        model='claude-3-sonnet-20240229',
+        prompt='\n\nHuman: Test prompt\n\nAssistant:',
+        max_tokens_to_sample=4000
+    )
 
 def test_llm_manager_get_usage_report():
     manager = LLMManager()
