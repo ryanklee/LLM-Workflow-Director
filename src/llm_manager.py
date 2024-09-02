@@ -147,12 +147,12 @@ class LLMManager:
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
                 
                 try:
-                    response = self.llm_client.completions.create(
+                    response = self.llm_client.messages.create(
                         model=tier_config['model'],
                         max_tokens=tier_config['max_tokens'],
-                        prompt=enhanced_prompt
+                        messages=[{"role": "user", "content": enhanced_prompt}]
                     )
-                    response_content = response.completion if response.completion else ""
+                    response_content = response.content[0].text if response.content else ""
 
                     result = self._process_response(response_content, tier, start_time)
                     self.cache[cache_key] = result
@@ -375,6 +375,9 @@ class LLMManager:
                 result['is_sufficient'] = evaluation.upper() == 'SUFFICIENT'
             if '<reasoning>' in content and '</reasoning>' in content:
                 result['reasoning'] = content.split('<reasoning>')[1].split('</reasoning>')[0].strip()
+        elif isinstance(content, dict):
+            result['is_sufficient'] = content.get('is_sufficient', False)
+            result['reasoning'] = content.get('reasoning', "No reasoning provided")
         if not result['is_sufficient'] and result['reasoning'] == "No reasoning provided":
             result['reasoning'] = "Insufficient data provided in the response"
         return result
