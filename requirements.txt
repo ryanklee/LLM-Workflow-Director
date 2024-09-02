@@ -22,7 +22,6 @@ cryptography==3.4.8
 cycler==0.12.1
 dbus-python==1.2.18
 distro==1.7.0
-pydantic==1.10.7
 distro-info==1.1+ubuntu0.2
 exceptiongroup==1.2.2
 fastapi==0.68.0
