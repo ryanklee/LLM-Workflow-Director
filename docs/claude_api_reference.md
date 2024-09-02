@@ -11,11 +11,10 @@
 
 - Primary endpoint: POST https://api.anthropic.com/v1/messages
 - Key parameters:
-  - model: Specify the Claude model version (e.g., "claude-3-5-sonnet-20240620")
+  - model: Specify the Claude model version (e.g., "claude-3-opus-20240229")
   - max_tokens: Maximum number of tokens to generate
   - messages: Array of message objects with "role" and "content"
   - system: Optional system prompt for context/instructions
-  - tools: Array of tool definitions (for function calling)
 - Response includes generated content, stop reason, and token usage.
 
 ## 3. Prompt Engineering Best Practices
@@ -86,16 +85,14 @@ import anthropic
 
 client = anthropic.Anthropic()
 message = client.messages.create(
-    model="claude-3-5-sonnet-20240620",
+    model="claude-3-opus-20240229",
     max_tokens=1000,
-    temperature=0.7,
-    system="You are a helpful AI assistant.",
     messages=[
         {"role": "user", "content": "Hello, Claude!"}
     ]
 )
 
-print(message.content)
+print(message.content[0].text)
 ```
 
 For detailed implementation guidance, refer to the official Anthropic documentation:
