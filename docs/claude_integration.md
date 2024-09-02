@@ -73,4 +73,4 @@ This document outlines the integration of Anthropic's Claude models into the LLM
 
 By following these guidelines and best practices, we can effectively leverage the capabilities of Claude models within the LLM-Workflow Director, ensuring optimal performance and user experience.
 
-Remember: Always use the completion API for Claude interactions. The messages API is not officially supported for Claude 3 models and should not be used.
+Remember: Always use the messages API for Claude interactions. The completion API is deprecated and should not be used.

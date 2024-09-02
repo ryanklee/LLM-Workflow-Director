@@ -97,6 +97,7 @@ Example request:
 - Use system messages to set context or assign roles to Claude.
 - Keep track of the conversation history to maintain context across multiple interactions.
 - Be mindful of the token limit and manage long conversations by summarizing or truncating when necessary.
+- Never use the completions API as it is deprecated.
 
 For detailed implementation guidance, refer to the official Anthropic documentation:
 - https://docs.anthropic.com/claude/reference/messages_post
