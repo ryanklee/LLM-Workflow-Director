@@ -52,8 +52,6 @@ launchpadlib==1.10.16
 lazr.restfulclient==0.14.4
 lazr.uri==1.0.6
 livereload==2.6.3
-llm==0.15
-llm-claude-3==0.4.1
 Markdown==3.3.6
 MarkupSafe==2.1.5
 matplotlib==3.9.2
@@ -76,7 +74,6 @@ prometheus-client==0.14.1
 psutil==5.9.0
 pycairo==1.26.1
 pydantic>=1.9.0,<3.0.0
-llm-claude-3==0.4.1
 fastapi==0.68.0
 pydantic_core==2.20.1
 pyee==9.0.4
@@ -132,5 +129,4 @@ WTForms==2.3.3
 yarl==1.9.4
 zipp==1.0.0
 python-json-logger==2.0.7
-anthropic==0.3.11
 tenacity==9.0.0
