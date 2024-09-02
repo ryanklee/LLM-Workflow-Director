@@ -65,13 +65,15 @@ def test_llm_manager_tier_selection():
     with patch.object(manager, '_process_response', return_value={}):
         with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='fast'):
             with patch.object(manager.client, 'query') as mock_query:
-                manager.query(simple_query)
-                mock_query.assert_called_with(ANY, None, ANY, ANY)
+                with patch.object(manager.cost_optimizer, 'update_usage'):
+                    manager.query(simple_query)
+                    mock_query.assert_called_with(ANY, None, ANY, ANY)
         
         with patch.object(manager.cost_optimizer, 'select_optimal_tier', return_value='powerful'):
             with patch.object(manager.client, 'query') as mock_query:
-                manager.query(complex_query)
-                mock_query.assert_called_with(ANY, None, ANY, ANY)
+                with patch.object(manager.cost_optimizer, 'update_usage'):
+                    manager.query(complex_query)
+                    mock_query.assert_called_with(ANY, None, ANY, ANY)
     
     # Check if the tier selection is working as expected
     assert manager.determine_query_tier(simple_query) == 'fast'
@@ -149,7 +151,8 @@ def test_evaluate_sufficiency_error():
 
 def test_llm_manager_query_with_context():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client, \
-         patch('anthropic.Anthropic') as mock_anthropic:
+         patch('anthropic.Anthropic') as mock_anthropic, \
+         patch('time.time', side_effect=[0, 1]):  # Mock start and end times
         mock_anthropic.return_value.messages.create.return_value.content = [type('obj', (object,), {'text': "Test response"})()]
         manager = LLMManager()
         context = {
@@ -165,7 +168,8 @@ def test_llm_manager_query_with_context():
                 "transitions": [{"from": "Test Stage", "to": "Next Stage"}]
             }
         }
-        result = manager.query("Test prompt", context)
+        with patch.object(manager.cost_optimizer, 'update_usage'):
+            result = manager.query("Test prompt", context)
         assert isinstance(result, dict)
         assert "response" in result
         assert "Test response" in result["response"]
@@ -263,7 +267,8 @@ def test_determine_query_tier():
 
 def test_llm_manager_caching():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client, \
-         patch('anthropic.Anthropic') as mock_anthropic:
+         patch('anthropic.Anthropic') as mock_anthropic, \
+         patch('time.time', side_effect=[0, 1, 2, 3, 4, 5, 6, 7]):  # Mock start and end times
         mock_anthropic.return_value.messages.create.side_effect = [
             type('obj', (object,), {'content': [type('obj', (object,), {'text': "Response 1"})()]}),
             type('obj', (object,), {'content': [type('obj', (object,), {'text': "Response 2"})()]}),
@@ -272,21 +277,22 @@ def test_llm_manager_caching():
         manager = LLMManager()
         prompt = "Test prompt"
         context = {"key": "value"}
+        
+        with patch.object(manager.cost_optimizer, 'update_usage'):
+            result1 = manager.query(prompt, context)
+            assert isinstance(result1, dict) and "Response 1" in result1.get("response", "")
             
-        result1 = manager.query(prompt, context)
-        assert isinstance(result1, dict) and "Response 1" in result1.get("response", "")
+            result2 = manager.query(prompt, context)
+            assert result2 == result1  # Should return cached result
             
-        result2 = manager.query(prompt, context)
-        assert result2 == result1  # Should return cached result
+            result3 = manager.query("Different prompt", context)
+            assert isinstance(result3, dict) and "Response 2" in result3.get("response", "")
+            assert result3 != result1
             
-        result3 = manager.query("Different prompt", context)
-        assert isinstance(result3, dict) and "Response 2" in result3.get("response", "")
-        assert result3 != result1
-            
-        manager.clear_cache()
-        result4 = manager.query(prompt, context)
-        assert "Response 3" in result4.get("response", "")
-        assert result4 != result1
+            manager.clear_cache()
+            result4 = manager.query(prompt, context)
+            assert "Response 3" in result4.get("response", "")
+            assert result4 != result1
 
 def test_evaluate_sufficiency():
     with patch('src.llm_manager.LLMMicroserviceClient') as mock_client:

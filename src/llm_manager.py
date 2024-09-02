@@ -155,6 +155,22 @@ class LLMManager:
 
                 # Process the response content and return the result
                 return self._process_response(response_content, tier, start_time)
+
+    def _process_response(self, response_content: str, tier: str, start_time: float) -> Dict[str, Any]:
+        end_time = time.time()
+        response_time = end_time - start_time
+        tokens = len(response_content.split())  # Simple token count estimation
+
+        self.cost_optimizer.update_usage(tier, tokens, response_time, success=True)
+
+        processed_response = self._parse_structured_response(response_content)
+        processed_response['response_time'] = response_time
+        processed_response['tier'] = tier
+
+        cache_key = self._generate_cache_key(response_content, None, tier)
+        self.cache[cache_key] = processed_response
+
+        return processed_response
                 
                 self.logger.debug(f"Received response from LLM: {response_content[:50]}...")
                 structured_response = self._parse_structured_response(response_content)
