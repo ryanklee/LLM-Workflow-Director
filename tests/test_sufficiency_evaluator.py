@@ -305,3 +305,27 @@ def test_evaluate_stage_insufficiency(sufficiency_evaluator, mock_llm_manager):
     assert result["is_sufficient"] == False
     assert result["reasoning"] == "Some tasks are incomplete"
     mock_llm_manager.evaluate_sufficiency.assert_called_once_with(stage_name, stage_data, project_state)
+
+def test_evaluate_stage_sufficiency_no_llm_manager(sufficiency_evaluator):
+    sufficiency_evaluator.llm_manager = None
+    stage_name = "Test Stage"
+    stage_data = {"description": "Test stage description"}
+    project_state = {"key": "value"}
+    
+    result = sufficiency_evaluator.evaluate_stage_sufficiency(stage_name, stage_data, project_state)
+    
+    assert result["is_sufficient"] == True
+    assert "LLMManager not available" in result["reasoning"]
+
+def test_evaluate_stage_sufficiency_error(sufficiency_evaluator, mock_llm_manager):
+    stage_name = "Test Stage"
+    stage_data = {"description": "Test stage description"}
+    project_state = {"key": "value"}
+    
+    mock_llm_manager.evaluate_sufficiency.side_effect = Exception("Test error")
+    
+    result = sufficiency_evaluator.evaluate_stage_sufficiency(stage_name, stage_data, project_state)
+    
+    assert result["is_sufficient"] == False
+    assert "Error evaluating sufficiency" in result["reasoning"]
+    assert "Test error" in result["reasoning"]

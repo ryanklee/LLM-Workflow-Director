@@ -92,20 +92,23 @@ class SufficiencyEvaluator:
     def __init__(self, llm_manager: LLMManager):
         self.llm_manager = llm_manager
 
-    def evaluate_stage_sufficiency(self, stage_name: str, stage_data: Dict[str, Any], project_state: Dict[str, Any]) -> Tuple[bool, str]:
+    def evaluate_stage_sufficiency(self, stage_name: str, stage_data: Dict[str, Any], project_state: Dict[str, Any]) -> Dict[str, Any]:
         """
         Evaluate the sufficiency of a workflow stage using the LLM.
         
         :param stage_name: The name of the current stage
         :param stage_data: Data related to the current stage
         :param project_state: The current state of the project
-        :return: A tuple containing a boolean indicating sufficiency and a string with reasoning
+        :return: A dictionary containing the evaluation result and reasoning
         """
         if not self.llm_manager:
-            return True, "LLMManager not available. Stage assumed to be sufficient."
+            return {"is_sufficient": True, "reasoning": "LLMManager not available. Stage assumed to be sufficient."}
         
         try:
             evaluation = self.llm_manager.evaluate_sufficiency(stage_name, stage_data, project_state)
-            return evaluation.get('is_sufficient', False), evaluation.get('reasoning', 'No reasoning provided')
+            return {
+                "is_sufficient": evaluation.get('is_sufficient', False),
+                "reasoning": evaluation.get('reasoning', 'No reasoning provided')
+            }
         except Exception as e:
-            return False, f"Error evaluating sufficiency: {str(e)}"
+            return {"is_sufficient": False, "reasoning": f"Error evaluating sufficiency: {str(e)}"}
