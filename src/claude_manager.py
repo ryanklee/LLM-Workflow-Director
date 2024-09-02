@@ -5,14 +5,12 @@ class ClaudeManager:
         self.client = Anthropic()
 
     def generate_response(self, prompt):
-        response = self.client.messages.create(
+        response = self.client.completions.create(
             model="claude-3-opus-20240229",
             max_tokens=1000,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+            prompt=prompt
         )
-        return response.content
+        return response.completion
 
     def select_model(self, task_description):
         if "simple" in task_description.lower():
