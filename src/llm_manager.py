@@ -179,16 +179,17 @@ class LLMManager:
                 tokens = len(response_content.split()) if response_content else 0
                 self.cost_optimizer.update_usage(tier, tokens, safe_time() - start_time, True)
                 return result
-                    if isinstance(e, anthropic.NotFoundError):
-                        return self._handle_error(prompt, context, tier, e)
-                    if isinstance(e, anthropic.APIError):
-                        if e.status_code == 429:
-                            self.logger.warning("Rate limit exceeded. Implementing exponential backoff.")
-                            time.sleep(2 ** (3 - max_retries))  # Exponential backoff
-                            max_retries -= 1
-                            continue
-                    result = self._handle_error(prompt, context, tier, e)
-                    return result
+            except Exception as e:
+                if isinstance(e, anthropic.NotFoundError):
+                    return self._handle_error(prompt, context, tier, e)
+                if isinstance(e, anthropic.APIError):
+                    if e.status_code == 429:
+                        self.logger.warning("Rate limit exceeded. Implementing exponential backoff.")
+                        time.sleep(2 ** (3 - max_retries))  # Exponential backoff
+                        max_retries -= 1
+                        continue
+                result = self._handle_error(prompt, context, tier, e)
+                return result
             except Exception as e:
                 self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
                 self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
