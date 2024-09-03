@@ -533,7 +533,7 @@ class WorkflowDirector:
             return valid_transitions[0]['to']
         return None
 
-    def complete_current_stage(self):
+    def complete_current_stage(self) -> bool:
         self.logger.info(f"Completing stage: {self.current_stage}")
         self.stage_progress[self.current_stage] = 1.0
         self.completed_stages.add(self.current_stage)
