@@ -53,13 +53,10 @@ Example request:
 
 ## 5. Embeddings
 
-- Anthropic recommends using Voyage AI for embeddings.
-- Key Voyage models:
-  - voyage-2: 4000 context length, 1024-dim embeddings
-  - voyage-large-2: 16000 context length, 1536-dim embeddings
-  - voyage-code-2: Optimized for code retrieval
-- Use "input_type" parameter ("query" or "document") for enhanced retrieval quality.
-- Embeddings can be used for semantic search and similarity comparisons.
+- Claude API provides built-in embedding functionality.
+- Use the /v1/embed endpoint for generating embeddings.
+- Embeddings can be used for semantic search, similarity comparisons, and efficient information retrieval.
+- Refer to the official Claude API documentation for the latest information on embedding models and parameters.
 
 ## 6. API Versioning and Rate Limits
 

@@ -114,11 +114,7 @@ class LLMManager:
             'powerful': {'model': 'claude-3-opus-20240229', 'max_tokens': 4000}
         })
         # Fallback to OpenAI models if Claude models are not available
-        self.openai_tiers = {
-            'fast': {'model': 'gpt-3.5-turbo', 'max_tokens': 1000},
-            'balanced': {'model': 'gpt-3.5-turbo', 'max_tokens': 4000},
-            'powerful': {'model': 'gpt-4', 'max_tokens': 4000}
-        }
+        # Removed OpenAI tiers as we're fully committed to Claude API
         self.prompt_templates = self.config.get('prompt_templates', {})
         self.llm_client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
@@ -162,18 +158,7 @@ class LLMManager:
                     response_content = response.content[0].text if response.content else ""
                 except Exception as e:
                     self.logger.error(f"Error using Claude API: {str(e)}")
-                    # Fallback to OpenAI
-                    try:
-                        openai_config = self.openai_tiers.get(tier, self.openai_tiers['balanced'])
-                        response = openai.ChatCompletion.create(
-                            model=openai_config['model'],
-                            max_tokens=openai_config['max_tokens'],
-                            messages=[{"role": "user", "content": enhanced_prompt}]
-                        )
-                        response_content = response.choices[0].message.content
-                    except Exception as openai_error:
-                        self.logger.error(f"Error using OpenAI API: {str(openai_error)}")
-                        raise
+                    raise
 
                 result = self._process_response(response_content, tier, start_time)
                 self.cache[cache_key] = result
