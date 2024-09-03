@@ -30,6 +30,8 @@ class ClaudeManager:
             return "claude-3-haiku-20240307"
         elif "highly complex" in task_description.lower():
             return "claude-3-opus-20240229"
+        elif "balanced" in task_description.lower():
+            return "claude-3-sonnet-20240229"
         else:
             return "claude-3-sonnet-20240229"
 

@@ -197,6 +197,24 @@ class LLMManager:
                     return self._add_unique_id(error_response)
                 tier = self._get_fallback_tier(tier)
                 self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
+            except Exception as e:
+                self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
+                self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
+                max_retries -= 1
+                if max_retries == 0:
+                    self.logger.error(f"Max retries reached. Returning error message.")
+                    error_response = {
+                        "error": f"Error querying LLM: {str(e)}",
+                        "response": str(e),
+                        "tier": original_tier,
+                        "task_progress": 0,
+                        "state_updates": {},
+                        "actions": [],
+                        "suggestions": []
+                    }
+                    return self._add_unique_id(error_response)
+                tier = self._get_fallback_tier(tier)
+                self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
         
         error_response = {
             "error": "Failed to query LLM after all retries",
