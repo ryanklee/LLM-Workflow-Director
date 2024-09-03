@@ -159,22 +159,26 @@ class LLMManager:
                         messages=[{"role": "user", "content": enhanced_prompt}]
                     )
                     response_content = response.content[0].text if response.content else ""
-                except AttributeError:
-                    # Fallback to completion API if messages API is not available
-                    response = self.llm_client.completions.create(
-                        model=tier_config['model'],
-                        max_tokens=tier_config['max_tokens'],
-                        prompt=enhanced_prompt
-                    )
-                    response_content = response.completion
-
-                    result = self._process_response(response_content, tier, start_time)
-                    self.cache[cache_key] = result
-                    tokens = len(response_content.split()) if response_content else 0
-                    self.cost_optimizer.update_usage(tier, tokens, safe_time() - start_time, True)
-                    return result
                 except Exception as e:
-                    self.logger.error(f"Error using LLM client: {str(e)}")
+                    self.logger.error(f"Error using Claude API: {str(e)}")
+                    # Fallback to OpenAI
+                    try:
+                        openai_config = self.openai_tiers.get(tier, self.openai_tiers['balanced'])
+                        response = openai.ChatCompletion.create(
+                            model=openai_config['model'],
+                            max_tokens=openai_config['max_tokens'],
+                            messages=[{"role": "user", "content": enhanced_prompt}]
+                        )
+                        response_content = response.choices[0].message.content
+                    except Exception as openai_error:
+                        self.logger.error(f"Error using OpenAI API: {str(openai_error)}")
+                        raise
+
+                result = self._process_response(response_content, tier, start_time)
+                self.cache[cache_key] = result
+                tokens = len(response_content.split()) if response_content else 0
+                self.cost_optimizer.update_usage(tier, tokens, safe_time() - start_time, True)
+                return result
                     if isinstance(e, anthropic.NotFoundError):
                         return self._handle_error(prompt, context, tier, e)
                     if isinstance(e, anthropic.APIError):

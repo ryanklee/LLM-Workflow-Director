@@ -111,7 +111,7 @@ def test_llm_manager_query_with_tiers(llm_manager, tier, expected_response):
         
         assert isinstance(result, dict) and expected_response in result.get("response", "")
         mock_anthropic.return_value.messages.create.assert_called_once()
-        mock_openai.assert_called_once()
+        mock_openai.create.assert_called_once()
 
 @pytest.mark.fast
 @pytest.mark.parametrize("query,expected_tier", [
