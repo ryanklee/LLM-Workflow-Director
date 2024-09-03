@@ -153,6 +153,14 @@ class LLMManager:
                         messages=[{"role": "user", "content": enhanced_prompt}]
                     )
                     response_content = response.content[0].text if response.content else ""
+                except AttributeError:
+                    # Fallback to completion API if messages API is not available
+                    response = self.llm_client.completions.create(
+                        model=tier_config['model'],
+                        max_tokens=tier_config['max_tokens'],
+                        prompt=enhanced_prompt
+                    )
+                    response_content = response.completion
 
                     result = self._process_response(response_content, tier, start_time)
                     self.cache[cache_key] = result
