@@ -187,6 +187,7 @@ def test_workflow_director_complete_current_stage(mocker):
     assert director.current_stage == "Domain Modeling"
     assert director.state_manager.get("requirements_gathering_completed") == True
     assert director.is_stage_completed("Requirements Gathering") == True
+    assert director.is_stage_completed("Requirements Gathering") == True
 
 @pytest.mark.slow
 def test_main_script_execution(mocker):
