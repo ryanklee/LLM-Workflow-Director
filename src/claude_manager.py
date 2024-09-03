@@ -1,6 +1,7 @@
 import re
 from anthropic import Anthropic
 from tenacity import retry, stop_after_attempt, wait_exponential, RetryError
+import time
 
 class ClaudeManager:
     def __init__(self):
@@ -21,8 +22,11 @@ class ClaudeManager:
             )
             return self.parse_response(response.content[0].text)
         except Exception as e:
-            # Log the error or handle it as needed
-            print(f"Error in generate_response: {str(e)}")
+            if "rate_limit_error" in str(e):
+                print(f"Rate limit error encountered: {str(e)}")
+                time.sleep(60)  # Wait for 60 seconds before retrying
+            else:
+                print(f"Error in generate_response: {str(e)}")
             raise  # Re-raise the exception to trigger the retry mechanism
 
     def select_model(self, task_description):

@@ -540,6 +540,9 @@ class WorkflowDirector:
         self.print_func(f"Completed stage: {self.current_stage}")
         self.logger.info(f"Stage {self.current_stage} marked as completed")
         
+        # Set the state for completed stage
+        self.state_manager.set(f"{self.current_stage.lower().replace(' ', '_')}_completed", True)
+        
         next_stage = self.get_next_stage()
         if next_stage:
             if self.can_transition_to(next_stage):
