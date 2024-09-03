@@ -11,6 +11,7 @@ from pydantic import Field, validator
 import anthropic
 import os
 import itertools
+import openai
 
 def safe_time():
     try:
