@@ -24,7 +24,7 @@ class ClaudeManager:
         except Exception as e:
             if "rate_limit_error" in str(e):
                 print(f"Rate limit error encountered: {str(e)}")
-                time.sleep(60)  # Wait for 60 seconds before retrying
+                time.sleep(5)  # Wait for 5 seconds before retrying
             else:
                 print(f"Error in generate_response: {str(e)}")
             raise  # Re-raise the exception to trigger the retry mechanism

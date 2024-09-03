@@ -112,6 +112,12 @@ class LLMManager:
             'balanced': {'model': 'claude-3-sonnet-20240229', 'max_tokens': 4000},
             'powerful': {'model': 'claude-3-opus-20240229', 'max_tokens': 4000}
         })
+        # Fallback to OpenAI models if Claude models are not available
+        self.openai_tiers = {
+            'fast': {'model': 'gpt-3.5-turbo', 'max_tokens': 1000},
+            'balanced': {'model': 'gpt-3.5-turbo', 'max_tokens': 4000},
+            'powerful': {'model': 'gpt-4', 'max_tokens': 4000}
+        }
         self.prompt_templates = self.config.get('prompt_templates', {})
         self.llm_client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
