@@ -5,7 +5,11 @@ import time
 
 class ClaudeManager:
     def __init__(self, client=None):
-        self.client = client or Anthropic()
+        self.client = client or self.create_client()
+
+    @staticmethod
+    def create_client():
+        return Anthropic()
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
     def generate_response(self, prompt):

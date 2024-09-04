@@ -2,19 +2,23 @@ import pytest
 from unittest.mock import patch, MagicMock
 from src.claude_manager import ClaudeManager
 from src.llm_evaluator import LLMEvaluator
+from src.mock_claude_client import MockClaudeClient
 
 @pytest.fixture
-def claude_manager():
-    mock_client = MagicMock()
-    return ClaudeManager(client=mock_client)
+def mock_claude_client():
+    return MockClaudeClient()
+
+@pytest.fixture
+def claude_manager(mock_claude_client):
+    return ClaudeManager(client=mock_claude_client)
 
 @pytest.fixture
 def llm_evaluator():
     return LLMEvaluator()
 
 @pytest.mark.fast
-def test_claude_api_call(claude_manager, llm_evaluator):
-    claude_manager.client.messages.create.return_value = MagicMock(content=[MagicMock(text="Claude by Anthropic")])
+def test_claude_api_call(claude_manager, mock_claude_client, llm_evaluator):
+    mock_claude_client.add_response("Introduce", "Claude by Anthropic")
 
     response = claude_manager.generate_response("Introduce")
     
