@@ -537,3 +537,15 @@ This structure provides a more comprehensive and organized set of requirements f
     22.3. The system shall support containerization for easy deployment in various environments.
     22.4. The system shall provide automated deployment scripts and configuration management tools.
     22.5. The system shall implement version checking and upgrade notification systems.
+
+23. LLM-Specific Testing
+    23.1. The system shall implement a MockClaudeClient for simulating Claude API responses in tests.
+    23.2. The system shall provide test fixtures for common LLM interaction scenarios.
+    23.3. The system shall implement parameterized tests for various LLM input and output scenarios.
+    23.4. The system shall include tests for proper handling of different Claude models (Haiku, Sonnet, Opus).
+    23.5. The system shall implement tests for the tiered LLM approach, including fallback mechanisms.
+    23.6. The system shall provide tests for LLM response parsing and error handling.
+    23.7. The system shall include tests for prompt generation and template rendering.
+    23.8. The system shall implement tests for context management and token limit handling.
+    23.9. The system shall provide tests for LLM-based evaluation and decision-making processes.
+    23.10. The system shall include performance tests specific to LLM interactions and response processing.
