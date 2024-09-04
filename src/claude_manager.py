@@ -27,7 +27,10 @@ class ClaudeManager:
             )
             return self.parse_response(response.content[0].text)
         except Exception as e:
-            if "rate_limit_error" in str(e):
+            if "404" in str(e):
+                print(f"Model not found: {self.select_model(prompt)}. Falling back to next tier.")
+                # Implement fallback logic here
+            elif "rate_limit_error" in str(e):
                 print(f"Rate limit error encountered: {str(e)}")
                 time.sleep(5)  # Wait for 5 seconds before retrying
             else:

@@ -43,6 +43,7 @@ class WorkflowDirector:
         self.documentation_health_checker = DocumentationHealthChecker()
         self.project_structure_manager = ProjectStructureManager()
         self.convention_manager = ConventionManager()
+        self.llm_manager = LLMManager()
         self.sufficiency_evaluator = SufficiencyEvaluator(self.llm_manager)
         self.priority_manager = PriorityManager()
         self.initialize_priorities()
