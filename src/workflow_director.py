@@ -24,16 +24,11 @@ from src.user_interaction_handler import UserInteractionHandler
 
 
 class WorkflowDirector:
-    def __init__(self, config_path='src/workflow_config.yaml', user_interaction_handler=None, llm_manager=None):
+    def __init__(self, config_path='src/workflow_config.yaml', state_manager=None, claude_manager=None):
         self._setup_logging()
-        self.state_manager = StateManager()
-        self.vector_store = VectorStore()
-        self.constraint_engine = ConstraintEngine()
-        self.logger.info("ConstraintEngine initialized")
-        self.llm_manager = llm_manager or LLMManager()
-        self.error_handler = ErrorHandler()
-        self.user_interaction_handler = user_interaction_handler or UserInteractionHandler()
-        self.sufficiency_evaluator = SufficiencyEvaluator(self.llm_manager)
+        self.state_manager = state_manager or StateManager()
+        self.claude_manager = claude_manager or ClaudeManager()
+        self.config = self._load_config(config_path)
         self.config = self.load_config(config_path)
         self.current_stage = self.config['stages'][0]['name'] if self.config else "Default Stage"
         self.stages = {stage['name']: stage for stage in self.config['stages']}
