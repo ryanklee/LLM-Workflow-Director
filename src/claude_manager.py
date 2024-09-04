@@ -30,12 +30,17 @@ class ClaudeManager:
             if "404" in str(e):
                 print(f"Model not found: {self.select_model(prompt)}. Falling back to next tier.")
                 # Implement fallback logic here
+                return self.fallback_response(prompt)
             elif "rate_limit_error" in str(e):
                 print(f"Rate limit error encountered: {str(e)}")
                 time.sleep(5)  # Wait for 5 seconds before retrying
             else:
                 print(f"Error in generate_response: {str(e)}")
             raise  # Re-raise the exception to trigger the retry mechanism
+
+    def fallback_response(self, prompt):
+        # Implement a simple fallback response
+        return f"<response>Fallback response for: {prompt}</response>"
 
     def select_model(self, task_description):
         if "simple" in task_description.lower():
