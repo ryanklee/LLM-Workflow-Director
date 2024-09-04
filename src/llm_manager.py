@@ -156,17 +156,18 @@ class LLMManager:
                         messages=[{"role": "user", "content": enhanced_prompt}]
                     )
                     response_content = response.content[0].text if response.content else ""
+                except anthropic.NotFoundError as e:
+                    self.logger.error(f"Error using Claude API: {str(e)}")
+                    if tier == 'fast':
+                        return self._fallback_response(prompt, context, tier)
+                    elif tier == 'balanced':
+                        tier = 'fast'
+                    elif tier == 'powerful':
+                        tier = 'balanced'
+                    max_retries -= 1
+                    continue
                 except Exception as e:
                     self.logger.error(f"Error using Claude API: {str(e)}")
-                    if "404" in str(e):
-                        if tier == 'fast':
-                            raise  # No more fallback options
-                        elif tier == 'balanced':
-                            tier = 'fast'
-                        elif tier == 'powerful':
-                            tier = 'balanced'
-                        max_retries -= 1
-                        continue
                     raise
                     raise
 
