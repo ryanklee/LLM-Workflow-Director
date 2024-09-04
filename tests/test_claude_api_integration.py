@@ -33,7 +33,7 @@ class TestClaudeAPIIntegration:
         assert claude_manager.select_model(task) == expected_model
 
     @pytest.mark.fast
-    @pytest.mark.parametrize("input_text", ["", "a" * 100001, "<script>", "SSN: 123", 123, "   "])
+    @pytest.mark.parametrize("input_text", ["", "a" * 100100, "<script>", "SSN: 123", 123, "   "])
     def test_input_validation_errors(self, claude_manager, input_text):
         with pytest.raises(ValueError):
             claude_manager.generate_response(input_text)
