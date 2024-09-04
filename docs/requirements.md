@@ -67,7 +67,7 @@
       2.2.5. The system shall provide clear instructions on how the LLM should format its responses for easy parsing and integration into the workflow.
       2.2.6. The system shall implement error handling and retry mechanisms for cases where LLM responses are unclear or off-topic.
       2.2.7. The system shall utilize the LLM CLI's built-in caching capabilities to optimize performance and reduce API costs.
-      2.2.8. The system shall support multiple LLM models through the LLM CLI, including but not limited to OpenAI and Anthropic models.
+      2.2.8. The system shall support Anthropic's Claude models through direct API integration.
       2.2.9. The system shall implement a tiered LLM approach, using faster, cheaper models for initial processing and more powerful models for complex tasks.
       2.2.10. The system shall leverage Claude's 200k token context window for handling large amounts of context in prompts.
 

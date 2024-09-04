@@ -1,13 +1,13 @@
 # LLM-Workflow Director
 
-LLM-Workflow Director is a Python-based tool designed to assist in AI-driven software development. It aims to provide a structured approach to leveraging Large Language Models (LLMs) throughout the development lifecycle.
+LLM-Workflow Director is a Python-based tool designed to assist in AI-driven software development. It aims to provide a structured approach to leveraging Anthropic's Claude models throughout the development lifecycle.
 
 ## Project Goals
 
-- Streamline the integration of LLMs in software development processes
+- Streamline the integration of Claude models in software development processes
 - Provide a configurable workflow system for AI-assisted development
 - Maintain project state and progress across different development stages
-- Offer a simple interface for developers to interact with LLMs in their workflow
+- Offer a simple interface for developers to interact with Claude models in their workflow
 - Implement a robust constraint system to enforce workflow rules and best practices
 
 ## Project Status
@@ -20,24 +20,27 @@ The LLM-Workflow Director has reached significant milestones:
 ## Key Features
 
 - Configurable workflow stages and transitions
-- Integration with LLM microservice for enhanced context-aware prompts and sufficiency evaluation
+- Direct integration with Anthropic's Claude API for enhanced context-aware prompts and sufficiency evaluation
 - State management for tracking project progress
 - Command-line interface for easy interaction
-- Extensible architecture for custom plugins and LLM models
+- Extensible architecture for custom plugins
 - Coding conventions management and integration with Aider
-- Improved error handling and retry mechanism for LLM queries
-- Efficient caching system for LLM responses
-- Tiered LLM approach for optimized performance and cost management
+- Improved error handling and retry mechanism for Claude API queries
+- Efficient caching system for Claude API responses
+- Tiered Claude model approach for optimized performance and cost management
 - Sophisticated prompt generation based on workflow configuration
 - Enhanced logging for better debugging and monitoring
-- Detailed project structure and coding conventions integration in LLM prompts
+- Detailed project structure and coding conventions integration in Claude prompts
 - Advanced logging system with:
   - Separate console and file handlers
   - Structured JSON logging with detailed context
   - Timestamped log files for easy tracking
 - Comprehensive project state reporting with workflow visualization
-- Dynamic context enhancement for LLM prompts based on current workflow state
+- Dynamic context enhancement for Claude prompts based on current workflow state
 - Detailed progress tracking and reporting
+- Exclusive use of Anthropic's Claude models (Haiku, Sonnet, and Opus) for all LLM interactions
+- Optimized prompt engineering techniques for Claude models
+- Utilization of Claude's 200k token context window for handling large amounts of context
 
 ## Installation
 
@@ -56,6 +59,7 @@ The LLM-Workflow Director has reached significant milestones:
 3. Install dependencies:
    ```
    pip install -r requirements.txt
+   export ANTHROPIC_API_KEY=your_api_key_here
    ```
 
 ## Usage
@@ -157,6 +161,19 @@ transitions:
     condition: All initial setup tasks completed
 ```
 
+## Claude API Configuration
+
+Ensure you have set your Anthropic API key as an environment variable:
+
+```
+export ANTHROPIC_API_KEY=your_api_key_here
+```
+
+The system uses the following Claude models:
+- Claude 3 Haiku: Fast and cost-effective
+- Claude 3 Sonnet: Balance of speed and intelligence
+- Claude 3 Opus: Excels at writing and complex tasks
+
 ## Contributing
 
 This project is currently a collaboration between a human developer and an AI assistant. External contributions are not being accepted at this time.
@@ -168,4 +185,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - Open-source community for providing essential tools and libraries
-- Developers of the LLM models and APIs used in this project
+- Anthropic for developing the Claude models used in this project

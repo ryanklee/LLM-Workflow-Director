@@ -11,7 +11,7 @@ from pydantic import Field, validator
 import anthropic
 import os
 import itertools
-import openai
+# Remove this line entirely
 
 def safe_time():
     try:
@@ -113,8 +113,8 @@ class LLMManager:
             'balanced': {'model': 'claude-3-sonnet-20240229', 'max_tokens': 4000},
             'powerful': {'model': 'claude-3-opus-20240229', 'max_tokens': 4000}
         })
-        # Fallback to OpenAI models if Claude models are not available
-        # Removed OpenAI tiers as we're fully committed to Claude API
+# Remove this comment entirely
+# We are fully committed to using Claude API
         self.prompt_templates = self.config.get('prompt_templates', {})
         self.llm_client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
