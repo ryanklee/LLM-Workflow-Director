@@ -29,7 +29,7 @@ class ClaudeManager:
                     {"role": "user", "content": prompt}
                 ]
             )
-            return self.parse_response(response.content[0].text)
+            return self.parse_response(response['content'][0]['text'])
         except Exception as e:
             self.logger.error(f"Error in generate_response: {str(e)}")
             if isinstance(e, NotFoundError):
