@@ -160,15 +160,11 @@ class LLMManager:
                     self.logger.error(f"Error using Claude API: {str(e)}")
                     if tier == 'fast':
                         return self._fallback_response(prompt, context, tier)
-                    elif tier == 'balanced':
-                        tier = 'fast'
-                    elif tier == 'powerful':
-                        tier = 'balanced'
+                    tier = self._get_fallback_tier(tier)
                     max_retries -= 1
                     continue
                 except Exception as e:
                     self.logger.error(f"Error using Claude API: {str(e)}")
-                    raise
                     raise
 
                 result = self._process_response(response_content, tier, start_time)
@@ -176,35 +172,14 @@ class LLMManager:
                 tokens = len(response_content.split()) if response_content else 0
                 self.cost_optimizer.update_usage(tier, tokens, safe_time() - start_time, True)
                 return result
-            except Exception as e:
-                if isinstance(e, anthropic.NotFoundError):
-                    return self._handle_error(prompt, context, tier, e)
-                if isinstance(e, anthropic.APIError):
-                    if e.status_code == 429:
-                        self.logger.warning("Rate limit exceeded. Implementing exponential backoff.")
-                        time.sleep(2 ** (3 - max_retries))  # Exponential backoff
-                        max_retries -= 1
-                        continue
+            except anthropic.APIError as e:
+                if e.status_code == 429:
+                    self.logger.warning("Rate limit exceeded. Implementing exponential backoff.")
+                    time.sleep(2 ** (3 - max_retries))  # Exponential backoff
+                    max_retries -= 1
+                    continue
                 result = self._handle_error(prompt, context, tier, e)
                 return result
-            except Exception as e:
-                self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
-                self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
-                max_retries -= 1
-                if max_retries == 0:
-                    self.logger.error(f"Max retries reached. Returning error message.")
-                    error_response = {
-                        "error": f"Error querying LLM: {str(e)}",
-                        "response": str(e),
-                        "tier": original_tier,
-                        "task_progress": 0,
-                        "state_updates": {},
-                        "actions": [],
-                        "suggestions": []
-                    }
-                    return self._add_unique_id(error_response)
-                tier = self._get_fallback_tier(tier)
-                self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
             except Exception as e:
                 self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
                 self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
@@ -509,18 +484,17 @@ class LLMManager:
         self.logger.error(f"Error in LLM query: {str(error)}")
         self.cost_optimizer.update_usage(tier, 0, 0, False)
         if isinstance(error, anthropic.NotFoundError):
-            if tier == 'fast':
-                return self._fallback_response(prompt, context, tier)
-            elif tier == 'balanced':
-                return self.query(prompt, context, tier='fast')
-            elif tier == 'powerful':
-                return self.query(prompt, context, tier='balanced')
+            tier = self._get_fallback_tier(tier)
+            if tier:
+                return self.query(prompt, context, tier=tier)
         return self._fallback_response(prompt, context, tier)
     def _fallback_response(self, prompt: str, context: Optional[Dict[str, Any]], tier: str) -> Dict[str, Any]:
         self.logger.warning(f"Fallback response triggered for tier: {tier}")
         return {
             "error": "All LLM tiers failed. Using fallback response.",
             "response": "I apologize, but I'm unable to process your request at the moment. Please try again later.",
+            "tier": tier,
+            "task_progress": 0,
             "state_updates": {},
             "actions": [],
             "suggestions": ["Please try rephrasing your query.", "Check your internet connection.", "Contact support if the issue persists."]
