@@ -102,16 +102,13 @@ def test_llm_manager_get_optimization_suggestion(llm_manager):
     ('powerful', "Powerful response"),
 ])
 def test_llm_manager_query_with_tiers(llm_manager, tier, expected_response):
-    with patch('anthropic.Anthropic') as mock_anthropic, \
-         patch('openai.ChatCompletion.create') as mock_openai:
-        mock_anthropic.return_value.messages.create.side_effect = Exception("Claude API error")
-        mock_openai.return_value = {'choices': [{'message': {'content': expected_response}}]}
-            
+    with patch('anthropic.Anthropic') as mock_anthropic:
+        mock_anthropic.return_value.messages.create.return_value = type('obj', (object,), {'content': [type('obj', (object,), {'text': expected_response})]})()
+        
         result = llm_manager.query(f"{tier} prompt", tier=tier)
         
         assert isinstance(result, dict) and expected_response in result.get("response", "")
         mock_anthropic.return_value.messages.create.assert_called_once()
-        mock_openai.create.assert_called_once()
 
 @pytest.mark.fast
 @pytest.mark.parametrize("query,expected_tier", [

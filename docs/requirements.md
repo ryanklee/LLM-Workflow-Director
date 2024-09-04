@@ -47,53 +47,58 @@
       1.8.3. The system shall implement caching mechanisms to optimize performance for frequently accessed data.
       1.8.4. The system shall support horizontal scaling for handling large projects and multiple concurrent users.
 
-2. LLM Integration and Interaction
-   2.1. LLM Direction
-      2.1.1. The system shall generate clear, actionable directions for the LLM based on the current workflow step, project state, and priorities.
-      2.1.2. The system shall format its output in a way that is optimized for the LLM's comprehension and processing capabilities.
-      2.1.3. The system shall provide context and rationale for each direction given to the LLM, including relevant project history and decision-making factors.
-      2.1.4. The system shall emphasize DDD and TDD practices in the generated directions, explaining their importance in the current context.
-      2.1.5. The system shall generate output that leverages the LLM's strengths in natural language understanding and generation.
-      2.1.6. The system shall include prompts and questions in its output to encourage the LLM to think critically about the task at hand.
-      2.1.7. The system shall utilize XML tags for structured outputs when interacting with Claude models.
-      2.1.8. The system shall employ chain-of-thought prompting for complex reasoning tasks.
-      2.1.9. The system shall assign specific roles to guide Claude's responses when appropriate.
+2. Claude API Integration and Interaction
 
-   2.2. LLM Integration
-      2.2.1. The system shall integrate the LLM CLI (https://github.com/simonw/llm) for communication with LLM models.
-      2.2.2. The system shall maintain a library of effective prompt templates for common tasks and scenarios.
-      2.2.3. The system shall dynamically generate and refine prompts based on the current project state, task requirements, and previous interactions.
-      2.2.4. The system shall implement a feedback loop to improve prompt effectiveness based on LLM responses and task outcomes.
-      2.2.5. The system shall provide clear instructions on how the LLM should format its responses for easy parsing and integration into the workflow.
-      2.2.6. The system shall implement error handling and retry mechanisms for cases where LLM responses are unclear or off-topic.
-      2.2.7. The system shall utilize the LLM CLI's built-in caching capabilities to optimize performance and reduce API costs.
-      2.2.8. The system shall support Anthropic's Claude models through direct API integration.
-      2.2.9. The system shall implement a tiered LLM approach, using faster, cheaper models for initial processing and more powerful models for complex tasks.
-      2.2.10. The system shall leverage Claude's 200k token context window for handling large amounts of context in prompts.
+   2.1 Claude API Integration
+      2.1.1 The system shall integrate directly with Anthropic's Claude API.
+      2.1.2 The system shall support all available Claude models (Haiku, Sonnet, Opus).
+      2.1.3 The system shall implement a tiered approach using different Claude models based on task complexity.
+      2.1.4 The system shall provide an interface for managing and configuring Claude API settings.
+      2.1.5 The system shall implement secure handling and storage of Claude API keys.
+      2.1.6 The system shall handle rate limiting and implement appropriate retry mechanisms for API calls.
 
-   2.3. LLM Context Awareness
-      2.3.1. The system shall provide a clear context header at the beginning of each interaction with the LLM.
-      2.3.2. The context header shall inform the LLM about its role, the nature of the interaction, and the fact that it's being directed by an automated workflow system.
-      2.3.3. The system shall ensure that the context header is formatted in a way that the LLM recognizes and prioritizes.
-      2.3.4. The system shall utilize the LLM CLI's context management features to maintain conversation history when appropriate.
-      2.3.5. The system shall implement context summarization techniques for long-running workflows to efficiently use the large context window.
+   2.2 Prompt Engineering for Claude
+      2.2.1 The system shall generate prompts optimized for Claude models.
+      2.2.2 The system shall utilize XML tags for structured outputs when interacting with Claude.
+      2.2.3 The system shall implement chain-of-thought prompting for complex reasoning tasks.
+      2.2.4 The system shall maintain a library of effective prompt templates for common tasks and scenarios.
+      2.2.5 The system shall dynamically generate and refine prompts based on the current project state, task requirements, and previous interactions.
+      2.2.6 The system shall implement a feedback loop to improve prompt effectiveness based on Claude responses and task outcomes.
+      2.2.7 The system shall assign specific roles to guide Claude's responses when appropriate.
 
-   2.4. LLM Model Management
-      2.4.1. The system shall provide an interface for managing and switching between different LLM models supported by the LLM CLI.
-      2.4.2. The system shall allow for easy configuration of model-specific parameters such as temperature, top_p, and max_tokens.
-      2.4.3. The system shall implement a mechanism to select the most appropriate LLM model based on the task requirements and complexity.
-      2.4.4. The system shall implement fallback mechanisms for when higher-tier LLMs are unavailable or rate-limited.
+   2.3 Context Management
+      2.3.1 The system shall leverage Claude's 200k token context window for handling large amounts of context.
+      2.3.2 The system shall implement efficient context summarization techniques for long-running workflows.
+      2.3.3 The system shall provide a clear context header at the beginning of each interaction with Claude.
+      2.3.4 The system shall ensure that the context header informs Claude about its role, the nature of the interaction, and the fact that it's being directed by an automated workflow system.
+      2.3.5 The system shall format the context header in a way that Claude recognizes and prioritizes.
 
-   2.5. LLM Response Processing
-      2.5.1. The system shall implement parsers to extract structured information from LLM responses.
-      2.5.2. The system shall validate LLM responses against expected formats and schemas.
-      2.5.3. The system shall handle and process both synchronous and asynchronous LLM responses as supported by the LLM CLI.
-      2.5.4. The system shall implement techniques to reduce hallucinations in LLM responses, such as providing clear context and setting explicit expectations.
+   2.4 Claude-Specific Features
+      2.4.1 The system shall utilize Claude's tool use capabilities for enhanced task completion.
+      2.4.2 The system shall leverage Claude's multi-modal capabilities for processing text and image inputs.
+      2.4.3 The system shall implement techniques to reduce hallucinations in Claude responses, such as providing clear context and setting explicit expectations.
 
-   2.6. External Tool Integration
-      2.6.1. The system shall support the integration of external tools and APIs that Claude can use during the workflow process.
-      2.6.2. The system shall provide a mechanism for defining and managing external tool integrations.
-      2.6.3. The system shall generate appropriate prompts for Claude to utilize external tools effectively.
+   2.5 Claude Response Processing
+      2.5.1 The system shall implement parsers to extract structured information from Claude responses.
+      2.5.2 The system shall validate Claude responses against expected formats and schemas.
+      2.5.3 The system shall handle and process both synchronous and asynchronous Claude responses.
+      2.5.4 The system shall implement error handling and retry mechanisms for cases where Claude responses are unclear or off-topic.
+
+   2.6 External Tool Integration
+      2.6.1 The system shall support the integration of external tools and APIs that Claude can use during the workflow process.
+      2.6.2 The system shall provide a mechanism for defining and managing external tool integrations.
+      2.6.3 The system shall generate appropriate prompts for Claude to utilize external tools effectively.
+
+   2.7 Performance Optimization
+      2.7.1 The system shall implement caching mechanisms to optimize Claude API usage and reduce costs.
+      2.7.2 The system shall provide mechanisms to invalidate and update cached information when necessary.
+      2.7.3 The system shall implement strategies for efficient cache management in long-running workflows.
+      2.7.4 The system shall utilize a vector database for efficient storage and retrieval of project-related information to enhance context retrieval for Claude interactions.
+
+   2.8 Monitoring and Analytics
+      2.8.1 The system shall implement monitoring and analytics for Claude API usage and performance.
+      2.8.2 The system shall provide detailed logging of all Claude interactions for debugging and optimization purposes.
+      2.8.3 The system shall generate reports on Claude model usage, effectiveness, and cost optimization suggestions.
 
 3. Project Structure and Documentation
    3.1. Project Structure
