@@ -5,20 +5,16 @@ from src.llm_evaluator import LLMEvaluator
 
 @pytest.fixture
 def claude_manager():
-    return ClaudeManager()
+    mock_client = MagicMock()
+    return ClaudeManager(client=mock_client)
 
 @pytest.fixture
 def llm_evaluator():
     return LLMEvaluator()
 
 @pytest.mark.fast
-@patch('anthropic.Anthropic')
-def test_claude_api_call(mock_anthropic, claude_manager, llm_evaluator):
-    mock_client = MagicMock()
-    mock_anthropic.return_value = mock_client
-    mock_response = MagicMock()
-    mock_response.content = [MagicMock(text="Claude by Anthropic")]
-    mock_client.messages.create.return_value = mock_response
+def test_claude_api_call(claude_manager, llm_evaluator):
+    claude_manager.client.messages.create.return_value = MagicMock(content=[MagicMock(text="Claude by Anthropic")])
 
     response = claude_manager.generate_response("Introduce")
     
@@ -36,6 +32,8 @@ def test_tiered_model_selection(claude_manager, task, expected_model):
 
 @pytest.mark.fast
 def test_input_validation(claude_manager):
+    claude_manager.client.messages.create.return_value = MagicMock(content=[MagicMock(text="Valid response")])
+    
     response = claude_manager.generate_response("Valid")
     assert isinstance(response, str)
 
@@ -58,13 +56,8 @@ def test_input_validation(claude_manager):
         assert len(response) > 0
 
 @pytest.mark.fast
-@patch('anthropic.Anthropic')
-def test_response_parsing(mock_anthropic, claude_manager, llm_evaluator):
-    mock_client = MagicMock()
-    mock_anthropic.return_value = mock_client
-    mock_response = MagicMock()
-    mock_response.content = [MagicMock(text="<response>Parsed</response>")]
-    mock_client.messages.create.return_value = mock_response
+def test_response_parsing(claude_manager, llm_evaluator):
+    claude_manager.client.messages.create.return_value = MagicMock(content=[MagicMock(text="Parsed")])
 
     response = claude_manager.generate_response("Test")
     
@@ -72,11 +65,8 @@ def test_response_parsing(mock_anthropic, claude_manager, llm_evaluator):
     assert llm_evaluator.evaluate_response(response, "Wrapped in <response> tags")
 
 @pytest.mark.slow
-@patch('anthropic.Anthropic')
-def test_retry_mechanism(mock_anthropic, claude_manager):
-    mock_client = MagicMock()
-    mock_anthropic.return_value = mock_client
-    mock_client.messages.create.side_effect = [
+def test_retry_mechanism(claude_manager):
+    claude_manager.client.messages.create.side_effect = [
         Exception("Error"),
         MagicMock(content=[MagicMock(text="Success")])
     ]
@@ -84,18 +74,15 @@ def test_retry_mechanism(mock_anthropic, claude_manager):
     response = claude_manager.generate_response("Test")
     
     assert "Success" in response
-    assert mock_client.messages.create.call_count == 2
+    assert claude_manager.client.messages.create.call_count == 2
 
 @pytest.mark.slow
-@patch('anthropic.Anthropic')
-def test_consistency(mock_anthropic, claude_manager, llm_evaluator):
-    mock_client = MagicMock()
-    mock_anthropic.return_value = mock_client
+def test_consistency(claude_manager, llm_evaluator):
     mock_responses = [
         MagicMock(content=[MagicMock(text="Paris, France")]),
         MagicMock(content=[MagicMock(text="Paris, capital of France")])
     ]
-    mock_client.messages.create.side_effect = mock_responses
+    claude_manager.client.messages.create.side_effect = mock_responses
 
     response1 = claude_manager.generate_response("Capital of France?")
     response2 = claude_manager.generate_response("France capital?")

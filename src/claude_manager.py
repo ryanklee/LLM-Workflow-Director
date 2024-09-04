@@ -4,8 +4,8 @@ from tenacity import retry, stop_after_attempt, wait_exponential, RetryError
 import time
 
 class ClaudeManager:
-    def __init__(self):
-        self.client = Anthropic()
+    def __init__(self, client=None):
+        self.client = client or Anthropic()
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
     def generate_response(self, prompt):
