@@ -47,6 +47,7 @@ class MockClaudeClient:
         self.rate_limit_reached = False
         self.error_mode = False
         self.responses = {}
+        self.messages = self
 
     def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
@@ -62,19 +63,22 @@ class MockClaudeClient:
         self.error_mode = False
         self.responses = {}
 
-    def completion(self, prompt: str, model: str, max_tokens_to_sample: int, **kwargs) -> Dict[str, Any]:
+    def create(self, model: str, max_tokens: int, messages: list) -> Dict[str, Any]:
         if self.rate_limit_reached:
             raise Exception("Rate limit exceeded")
         if self.error_mode:
             raise Exception("API error")
         
+        prompt = messages[0]['content']
         response = self.responses.get(prompt, "Default mock response")
         return {
-            "completion": response,
-            "stop_reason": "stop_sequence",
+            "content": [{"text": response}],
             "model": model,
-            "truncated": False,
+            "usage": {"total_tokens": len(response.split())}
         }
+
+    def completion(self, prompt: str, model: str, max_tokens_to_sample: int, **kwargs) -> Dict[str, Any]:
+        return self.create(model, max_tokens_to_sample, [{"role": "user", "content": prompt}])
 
     def completions(self, prompt: str, model: str, max_tokens_to_sample: int, **kwargs) -> Dict[str, Any]:
         return self.completion(prompt, model, max_tokens_to_sample, **kwargs)

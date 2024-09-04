@@ -1,4 +1,5 @@
 import re
+import logging
 from anthropic import Anthropic, NotFoundError
 from tenacity import retry, stop_after_attempt, wait_exponential, RetryError
 import time
@@ -7,6 +8,7 @@ class ClaudeManager:
     def __init__(self, client=None):
         self.client = client or self.create_client()
         self.messages = self.client.messages
+        self.logger = logging.getLogger(__name__)
 
     @staticmethod
     def create_client():
@@ -52,3 +54,13 @@ class ClaudeManager:
     def parse_response(self, response_text):
         # The response is the message content, so we just need to wrap it
         return f"<response>{response_text.strip()}</response>"
+
+    def _fallback_to_lower_tier(self, prompt, current_tier):
+        tiers = ['powerful', 'balanced', 'fast']
+        current_index = tiers.index(current_tier)
+        if current_index < len(tiers) - 1:
+            next_tier = tiers[current_index + 1]
+            self.logger.info(f"Falling back to {next_tier} tier")
+            return self.generate_response(prompt)
+        else:
+            return self.fallback_response(prompt)

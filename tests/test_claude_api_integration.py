@@ -13,6 +13,14 @@ def claude_manager(mock_claude_client):
     return ClaudeManager(client=mock_claude_client)
 
 @pytest.fixture
+def mock_claude_client():
+    client = MockClaudeClient()
+    client.set_response("Intro", "Claude AI")
+    client.set_response("France capital", "Paris")
+    client.set_response("Test", "Test response")
+    return client
+
+@pytest.fixture
 def llm_evaluator():
     return LLMEvaluator()
 
