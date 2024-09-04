@@ -37,6 +37,7 @@ class WorkflowDirector:
         self.transitions = self.config['transitions']
         self.stage_progress = {stage: 0.0 for stage in self.stages}
         self.completed_stages = set()
+        self.constraint_engine = ConstraintEngine()
         self.initialize_constraints()
         self.project_state_reporter = ProjectStateReporter(self)
         self.documentation_health_checker = DocumentationHealthChecker()

@@ -11,5 +11,8 @@ class MockClaudeClient:
         response = self.responses.get(prompt, "Default mock response")
         return MagicMock(content=[MagicMock(text=response)])
 
+    def create(self, model, max_tokens, messages):
+        return self.mock_create(model, max_tokens, messages)
+
     def add_response(self, prompt, response):
         self.responses[prompt] = response
