@@ -119,16 +119,20 @@
 9.2. Mocking and Stubbing:
    - Use unittest.mock or pytest-mock to replace slow external calls with fast, controlled responses.
    - Implement mock servers (e.g., using the responses library) to simulate API responses.
+   - Create a MockClaudeClient class to simulate Claude API responses without making actual API calls.
 
 9.3. Parameterized Testing:
    - Use pytest.mark.parametrize to combine similar tests and reduce setup/teardown overhead.
+   - Implement parameterized tests for different input scenarios, model selections, and error conditions.
 
 9.4. Efficient Setup and Teardown:
    - Utilize pytest fixtures for efficient setup and teardown operations.
    - Consider session-scoped fixtures for expensive setup operations that can be reused across multiple tests.
+   - Implement a fixture for creating a mocked ClaudeManager instance.
 
 9.5. Parallel Test Execution:
-   - Use pytest-xdist to run tests in parallel when appropriate.
+   - Use pytest-xdist to run tests in parallel: pytest -n auto
+   - Ensure tests are designed to be independent and can run concurrently.
 
 9.6. Test Data Management:
    - Use smaller datasets for tests where possible.
@@ -145,9 +149,52 @@
 
 9.9. Timeout Management:
    - Use pytest-timeout to set time limits on tests and prevent hanging.
+   - Apply timeouts particularly to tests involving API calls or potentially long-running operations.
 
 9.10. Continuous Monitoring:
     - Implement test timing in CI/CD pipelines to track test performance over time.
     - Set performance budgets for tests and alert if they exceed thresholds.
+
+## 10. API Rate Limiting Mitigation
+
+10.1. Implement Robust Mocking:
+    - Create comprehensive mock responses for all API calls to avoid hitting rate limits during testing.
+    - Simulate various API response scenarios, including successful calls, errors, and edge cases.
+
+10.2. Rate Limit Aware Testing:
+    - Implement tests that specifically check the system's behavior when rate limits are encountered.
+    - Use mocks to simulate rate limit responses and verify proper handling.
+
+10.3. CI/CD Considerations:
+    - In CI/CD pipelines, use exclusively mocked API calls to prevent rate limit issues during automated testing.
+    - Implement separate, controlled tests for actual API integration that run less frequently.
+
+## 11. Input Validation Testing
+
+11.1. Comprehensive Input Scenarios:
+    - Test a wide range of input types, including empty strings, extremely long inputs, and various edge cases.
+    - Use parameterized tests to efficiently cover multiple input scenarios.
+
+11.2. Error Handling Verification:
+    - Ensure that appropriate exceptions are raised for invalid inputs.
+    - Verify that error messages are clear and informative.
+
+11.3. Boundary Testing:
+    - Test inputs at and around the boundary conditions (e.g., maximum allowed length).
+    - Verify system behavior with inputs just below, at, and just above these boundaries.
+
+## 12. Test Suite Organization
+
+12.1. Logical Grouping:
+    - Organize tests into logical groups based on functionality or component.
+    - Use pytest's directory and file structure to reflect the system's architecture.
+
+12.2. Test Isolation:
+    - Ensure each test is independent and does not rely on the state from other tests.
+    - Use setup and teardown methods or fixtures to create a clean state for each test.
+
+12.3. Configuration Management:
+    - Use configuration files or environment variables to manage test settings.
+    - Implement different configurations for local development, CI/CD, and production environments.
 
 By following these comprehensive testing best practices, we can ensure a robust, reliable, and high-performance LLM-Workflow Director system that maintains quality and dependability throughout its development and operation, while also optimizing test execution time and resource usage.
