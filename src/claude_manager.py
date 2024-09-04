@@ -6,6 +6,7 @@ import time
 class ClaudeManager:
     def __init__(self, client=None):
         self.client = client or self.create_client()
+        self.messages = self.client.messages
 
     @staticmethod
     def create_client():

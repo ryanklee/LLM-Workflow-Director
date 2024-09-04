@@ -25,11 +25,12 @@ from src.claude_manager import ClaudeManager
 
 
 class WorkflowDirector:
-    def __init__(self, config_path='src/workflow_config.yaml', state_manager=None, claude_manager=None):
+    def __init__(self, config_path='src/workflow_config.yaml', state_manager=None, claude_manager=None, user_interaction_handler=None):
         self._setup_logging()
         self.state_manager = state_manager or StateManager()
         self.claude_manager = claude_manager or ClaudeManager()
-        self.config = self._load_config(config_path)
+        self.user_interaction_handler = user_interaction_handler or UserInteractionHandler()
+        self.config = self.load_config(config_path)
         self.config = self.load_config(config_path)
         self.current_stage = self.config['stages'][0]['name'] if self.config else "Default Stage"
         self.stages = {stage['name']: stage for stage in self.config['stages']}

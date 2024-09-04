@@ -103,7 +103,7 @@ def test_llm_manager_get_optimization_suggestion(llm_manager):
 ])
 def test_llm_manager_query_with_tiers(llm_manager, tier, expected_response):
     with patch('anthropic.Anthropic') as mock_anthropic:
-        mock_anthropic.return_value.messages.create.return_value = type('obj', (object,), {'content': [type('obj', (object,), {'text': expected_response})]})()
+        mock_anthropic.return_value.create.return_value = type('obj', (object,), {'content': [type('obj', (object,), {'text': expected_response})]})()
         
         result = llm_manager.query(f"{tier} prompt", tier=tier)
         
