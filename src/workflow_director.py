@@ -464,6 +464,9 @@ class WorkflowDirector:
         self.stage_progress[self.current_stage] = 1.0
         self.completed_stages.add(self.current_stage)
         
+        # Set the completion state for the current stage
+        self.state_manager.set(f"{self.current_stage.lower().replace(' ', '_')}_completed", True)
+        
         if not is_sufficient:
             self.logger.warning(f"Stage {self.current_stage} is not sufficient for completion, but marked as completed. Reason: {reasoning}")
             self.user_interaction_handler.display_message(f"Stage {self.current_stage} is marked as complete, but may need further attention. Reason: {reasoning}")
