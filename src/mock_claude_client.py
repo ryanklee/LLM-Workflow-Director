@@ -39,3 +39,42 @@ class MockClaudeClient:
     def reset_call_count(self):
         self.call_count = 0
         self.last_reset = time.time()
+from typing import Dict, Any, Optional
+from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
+
+class MockClaudeClient:
+    def __init__(self):
+        self.rate_limit_reached = False
+        self.error_mode = False
+        self.responses = {}
+
+    def set_response(self, prompt: str, response: str):
+        self.responses[prompt] = response
+
+    def set_rate_limit(self, limit_reached: bool):
+        self.rate_limit_reached = limit_reached
+
+    def set_error_mode(self, error_mode: bool):
+        self.error_mode = error_mode
+
+    def reset(self):
+        self.rate_limit_reached = False
+        self.error_mode = False
+        self.responses = {}
+
+    def completion(self, prompt: str, model: str, max_tokens_to_sample: int, **kwargs) -> Dict[str, Any]:
+        if self.rate_limit_reached:
+            raise Exception("Rate limit exceeded")
+        if self.error_mode:
+            raise Exception("API error")
+        
+        response = self.responses.get(prompt, "Default mock response")
+        return {
+            "completion": response,
+            "stop_reason": "stop_sequence",
+            "model": model,
+            "truncated": False,
+        }
+
+    def completions(self, prompt: str, model: str, max_tokens_to_sample: int, **kwargs) -> Dict[str, Any]:
+        return self.completion(prompt, model, max_tokens_to_sample, **kwargs)

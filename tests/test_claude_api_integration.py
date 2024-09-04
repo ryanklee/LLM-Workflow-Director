@@ -84,3 +84,33 @@ class TestClaudeAPIIntegration:
             claude_manager.generate_response("Test")
         claude_manager.client.reset_call_count()
         claude_manager.generate_response("Test")  # Should work after reset
+import pytest
+from src.claude_manager import ClaudeManager
+from src.mock_claude_client import MockClaudeClient
+
+# ... (previous code)
+
+def test_mock_claude_client_response(mock_claude_client, claude_manager):
+    mock_claude_client.set_response("Test prompt", "Test response")
+    response = claude_manager.get_completion("Test prompt", "claude-3-haiku-20240307", 100)
+    assert response == "Test response"
+
+def test_mock_claude_client_rate_limit(mock_claude_client, claude_manager):
+    mock_claude_client.set_rate_limit(True)
+    with pytest.raises(Exception, match="Rate limit exceeded"):
+        claude_manager.get_completion("Test prompt", "claude-3-haiku-20240307", 100)
+
+def test_mock_claude_client_error_mode(mock_claude_client, claude_manager):
+    mock_claude_client.set_error_mode(True)
+    with pytest.raises(Exception, match="API error"):
+        claude_manager.get_completion("Test prompt", "claude-3-haiku-20240307", 100)
+
+def test_mock_claude_client_reset(mock_claude_client, claude_manager):
+    mock_claude_client.set_rate_limit(True)
+    mock_claude_client.set_error_mode(True)
+    mock_claude_client.set_response("Test prompt", "Test response")
+    
+    mock_claude_client.reset()
+    
+    response = claude_manager.get_completion("Test prompt", "claude-3-haiku-20240307", 100)
+    assert response == "Default mock response"
