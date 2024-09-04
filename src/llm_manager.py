@@ -158,9 +158,9 @@ class LLMManager:
                     response_content = response.content[0].text if response.content else ""
                 except anthropic.NotFoundError as e:
                     self.logger.error(f"Error using Claude API: {str(e)}")
-                    if tier == 'fast':
-                        return self._fallback_response(prompt, context, tier)
                     tier = self._get_fallback_tier(tier)
+                    if tier is None:
+                        return self._fallback_response(prompt, context, original_tier)
                     max_retries -= 1
                     continue
                 except Exception as e:
@@ -186,29 +186,13 @@ class LLMManager:
                 max_retries -= 1
                 if max_retries == 0:
                     self.logger.error(f"Max retries reached. Returning error message.")
-                    error_response = {
-                        "error": f"Error querying LLM: {str(e)}",
-                        "response": str(e),
-                        "tier": original_tier,
-                        "task_progress": 0,
-                        "state_updates": {},
-                        "actions": [],
-                        "suggestions": []
-                    }
-                    return self._add_unique_id(error_response)
+                    return self._fallback_response(prompt, context, original_tier)
                 tier = self._get_fallback_tier(tier)
+                if tier is None:
+                    return self._fallback_response(prompt, context, original_tier)
                 self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
         
-        error_response = {
-            "error": "Failed to query LLM after all retries",
-            "response": "Failed to query LLM after all retries",
-            "tier": original_tier,
-            "task_progress": 0,
-            "state_updates": {},
-            "actions": [],
-            "suggestions": []
-        }
-        return self._add_unique_id(error_response)
+        return self._fallback_response(prompt, context, original_tier)
 
     def _process_response(self, response_content: str, tier: str, start_time: float) -> Dict[str, Any]:
         end_time = safe_time()
@@ -490,7 +474,7 @@ class LLMManager:
         return self._fallback_response(prompt, context, tier)
     def _fallback_response(self, prompt: str, context: Optional[Dict[str, Any]], tier: str) -> Dict[str, Any]:
         self.logger.warning(f"Fallback response triggered for tier: {tier}")
-        return {
+        return self._add_unique_id({
             "error": "All LLM tiers failed. Using fallback response.",
             "response": "I apologize, but I'm unable to process your request at the moment. Please try again later.",
             "tier": tier,
@@ -498,4 +482,4 @@ class LLMManager:
             "state_updates": {},
             "actions": [],
             "suggestions": ["Please try rephrasing your query.", "Check your internet connection.", "Contact support if the issue persists."]
-        }
+        })

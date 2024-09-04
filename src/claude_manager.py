@@ -14,8 +14,10 @@ class ClaudeManager:
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
     def generate_response(self, prompt):
-        if not prompt or len(prompt) > 100000:
-            raise ValueError("Invalid prompt length")
+        if not prompt or not isinstance(prompt, str):
+            raise ValueError("Invalid prompt: must be a non-empty string")
+        if len(prompt) > 100000:
+            raise ValueError("Invalid prompt length: exceeds 100,000 characters")
 
         try:
             response = self.messages.create(
