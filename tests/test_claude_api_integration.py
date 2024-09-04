@@ -36,9 +36,9 @@ def test_tiered_model_selection(claude_manager, task, expected_model):
 
 @pytest.mark.fast
 def test_input_validation(claude_manager):
-    with patch.object(claude_manager.messages, 'create') as mock_create:
+    with patch.object(claude_manager.client.messages, 'create') as mock_create:
         mock_create.return_value = MagicMock(content=[MagicMock(text="Valid response")])
-    
+        
     response = claude_manager.generate_response("Valid")
     assert isinstance(response, str)
 

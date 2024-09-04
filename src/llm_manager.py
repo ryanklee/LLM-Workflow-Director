@@ -156,8 +156,14 @@ class LLMManager:
                         messages=[{"role": "user", "content": enhanced_prompt}]
                     )
                     response_content = response.content[0].text if response.content else ""
-                except anthropic.NotFoundError as e:
+                except (anthropic.NotFoundError, AttributeError) as e:
                     self.logger.error(f"Error using Claude API: {str(e)}")
+                    max_retries -= 1
+                    if max_retries > 0:
+                        tier = self._fallback_to_lower_tier(tier)
+                        continue
+                    else:
+                        return self._fallback_response(prompt, context, tier)
                     tier = self._get_fallback_tier(tier)
                     if tier is None:
                         return self._fallback_response(prompt, context, original_tier)
