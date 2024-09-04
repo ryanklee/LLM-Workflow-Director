@@ -18,7 +18,7 @@ class ClaudeManager:
             raise ValueError("Invalid prompt length")
 
         try:
-            response = self.client.create(
+            response = self.messages.create(
                 model=self.select_model(prompt),
                 max_tokens=1000,
                 messages=[
