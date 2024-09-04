@@ -507,6 +507,13 @@ class LLMManager:
     def _handle_error(self, prompt: str, context: Optional[Dict[str, Any]], tier: str, error: Exception) -> Dict[str, Any]:
         self.logger.error(f"Error in LLM query: {str(error)}")
         self.cost_optimizer.update_usage(tier, 0, 0, False)
+        if isinstance(error, anthropic.NotFoundError):
+            if tier == 'fast':
+                return self._fallback_response(prompt, context, tier)
+            elif tier == 'balanced':
+                return self.query(prompt, context, tier='fast')
+            elif tier == 'powerful':
+                return self.query(prompt, context, tier='balanced')
         return {
             "error": f"Error querying LLM: {str(error)}",
             "response": str(error),
