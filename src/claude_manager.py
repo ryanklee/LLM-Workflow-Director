@@ -1,5 +1,5 @@
 import re
-from anthropic import Anthropic
+from anthropic import Anthropic, NotFoundError
 from tenacity import retry, stop_after_attempt, wait_exponential, RetryError
 import time
 
@@ -28,7 +28,7 @@ class ClaudeManager:
             return self.parse_response(response.content[0].text)
         except Exception as e:
             self.logger.error(f"Error in generate_response: {str(e)}")
-            if isinstance(e, anthropic.NotFoundError):
+            if isinstance(e, NotFoundError):
                 return self.fallback_response(prompt)
             elif "rate_limit_error" in str(e):
                 self.logger.warning(f"Rate limit error encountered: {str(e)}")
