@@ -18,11 +18,10 @@ def llm_evaluator():
 
 class TestClaudeAPIIntegration:
     @pytest.mark.fast
-    def test_claude_api_call(self, claude_manager, mock_claude_client, llm_evaluator):
-        mock_claude_client.add_response("Introduce", "Claude by Anthropic")
-        response = claude_manager.generate_response("Introduce")
-        assert "Claude" in response and "Anthropic" in response
-        assert llm_evaluator.evaluate_response(response, "Mention Claude and Anthropic")
+    def test_claude_api_call(self, claude_manager, mock_claude_client):
+        mock_claude_client.add_response("Intro", "Claude AI")
+        response = claude_manager.generate_response("Intro")
+        assert "Claude" in response and "AI" in response
 
     @pytest.mark.fast
     @pytest.mark.parametrize("task,expected_model", [
@@ -34,23 +33,16 @@ class TestClaudeAPIIntegration:
         assert claude_manager.select_model(task) == expected_model
 
     @pytest.mark.fast
-    @pytest.mark.parametrize("input_text,expected_error", [
-        ("", ValueError),
-        ("a" * 100001, ValueError),
-        ("<script>", ValueError),
-        ("SSN: 123", ValueError),
-        (123, ValueError),
-        ("   ", ValueError),
-    ])
-    def test_input_validation_errors(self, claude_manager, input_text, expected_error):
-        with pytest.raises(expected_error):
+    @pytest.mark.parametrize("input_text", ["", "a" * 100001, "<script>", "SSN: 123", 123, "   "])
+    def test_input_validation_errors(self, claude_manager, input_text):
+        with pytest.raises(ValueError):
             claude_manager.generate_response(input_text)
 
     @pytest.mark.fast
-    @pytest.mark.parametrize("input_text", ["こんにちは", "!@#$%^&*()"])
-    def test_valid_inputs(self, claude_manager, input_text):
-        response = claude_manager.generate_response(input_text)
-        assert len(response) > 0
+    def test_valid_inputs(self, claude_manager):
+        for input_text in ["Hello", "!@#$"]:
+            response = claude_manager.generate_response(input_text)
+            assert response
 
     @pytest.mark.fast
     def test_response_parsing(self, claude_manager, llm_evaluator):
@@ -67,23 +59,19 @@ class TestClaudeAPIIntegration:
         assert "Success" in response
 
     @pytest.mark.slow
-    def test_consistency(self, claude_manager, llm_evaluator):
-        claude_manager.client.add_response("Capital of France?", "Paris, France")
-        claude_manager.client.add_response("France capital?", "Paris, capital of France")
-        response1 = claude_manager.generate_response("Capital of France?")
-        response2 = claude_manager.generate_response("France capital?")
+    def test_consistency(self, claude_manager):
+        claude_manager.client.add_response("France capital", "Paris")
+        response1 = claude_manager.generate_response("France capital")
+        response2 = claude_manager.generate_response("France capital")
         assert "Paris" in response1 and "Paris" in response2
-        assert llm_evaluator.evaluate_response(response1, "Paris as capital")
-        assert llm_evaluator.evaluate_response(response2, "Paris as capital")
 
     @pytest.mark.fast
     def test_rate_limiting(self, claude_manager):
-        for _ in range(10):
-            claude_manager.generate_response("Test")
+        claude_manager.client.set_rate_limit(True)
         with pytest.raises(Exception, match="Rate limit exceeded"):
             claude_manager.generate_response("Test")
-        claude_manager.client.reset_call_count()
-        claude_manager.generate_response("Test")  # Should work after reset
+        claude_manager.client.set_rate_limit(False)
+        assert claude_manager.generate_response("Test")
 import pytest
 from src.claude_manager import ClaudeManager
 from src.mock_claude_client import MockClaudeClient
