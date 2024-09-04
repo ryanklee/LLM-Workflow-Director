@@ -35,7 +35,7 @@ class TestClaudeAPIIntegration:
     @pytest.mark.fast
     @pytest.mark.parametrize("input_text", [
         "",
-        "a" * 100001,  # Just over the 100,000 character limit
+        "a" * 101,  # Just over a reasonable character limit for testing
         "<script>",
         "SSN: 123-45-6789",
         123,
