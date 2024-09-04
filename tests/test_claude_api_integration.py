@@ -36,7 +36,8 @@ def test_tiered_model_selection(claude_manager, task, expected_model):
 
 @pytest.mark.fast
 def test_input_validation(claude_manager):
-    claude_manager.messages.create.return_value = MagicMock(content=[MagicMock(text="Valid response")])
+    with patch.object(claude_manager.messages, 'create') as mock_create:
+        mock_create.return_value = MagicMock(content=[MagicMock(text="Valid response")])
     
     response = claude_manager.generate_response("Valid")
     assert isinstance(response, str)
@@ -61,7 +62,8 @@ def test_input_validation(claude_manager):
 
 @pytest.mark.fast
 def test_response_parsing(claude_manager, llm_evaluator):
-    claude_manager.messages.create.return_value = MagicMock(content=[MagicMock(text="Parsed")])
+    with patch.object(claude_manager.messages, 'create') as mock_create:
+        mock_create.return_value = MagicMock(content=[MagicMock(text="Parsed")])
 
     response = claude_manager.generate_response("Test")
     
@@ -70,10 +72,11 @@ def test_response_parsing(claude_manager, llm_evaluator):
 
 @pytest.mark.slow
 def test_retry_mechanism(claude_manager):
-    claude_manager.messages.create.side_effect = [
-        Exception("Error"),
-        MagicMock(content=[MagicMock(text="Success")])
-    ]
+    with patch.object(claude_manager.messages, 'create') as mock_create:
+        mock_create.side_effect = [
+            Exception("Error"),
+            MagicMock(content=[MagicMock(text="Success")])
+        ]
 
     response = claude_manager.generate_response("Test")
     
@@ -86,7 +89,8 @@ def test_consistency(claude_manager, llm_evaluator):
         MagicMock(content=[MagicMock(text="Paris, France")]),
         MagicMock(content=[MagicMock(text="Paris, capital of France")])
     ]
-    claude_manager.messages.create.side_effect = mock_responses
+    with patch.object(claude_manager.messages, 'create') as mock_create:
+        mock_create.side_effect = mock_responses
 
     response1 = claude_manager.generate_response("Capital of France?")
     response2 = claude_manager.generate_response("France capital?")
