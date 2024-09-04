@@ -38,6 +38,10 @@ class ClaudeManager:
             raise  # Re-raise the exception to trigger the retry mechanism
 
     def fallback_response(self, prompt):
+        # Implement fallback logic here
+        return "<response>Fallback response: Unable to process the request at this time.</response>"
+
+    def fallback_response(self, prompt):
         # Implement a simple fallback response
         return f"<response>Fallback response for: {prompt}</response>"
 

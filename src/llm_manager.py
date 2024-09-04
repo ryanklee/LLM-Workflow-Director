@@ -128,13 +128,13 @@ class LLMManager:
 
     def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: Optional[str] = None) -> Dict[str, Any]:
         self.logger.debug(f"Querying LLM with prompt: {prompt[:50]}...")
-        
+
         if tier is None:
             query_complexity = self._estimate_query_complexity(prompt)
             tier = self.cost_optimizer.select_optimal_tier(query_complexity)
-        
+
         self.logger.debug(f"Selected tier: {tier}")
-        
+
         cache_key = self._generate_cache_key(prompt, context, tier)
         if cache_key in self.cache:
             self.logger.info(f"Using cached response for prompt: {prompt[:50]}... (tier: {tier})")
@@ -143,12 +143,12 @@ class LLMManager:
         max_retries = 3
         start_time = safe_time()
         original_tier = tier
-        
+
         while max_retries > 0:
             try:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
-                
+
                 try:
                     response = self.llm_client.messages.create(
                         model=tier_config['model'],
@@ -158,6 +158,16 @@ class LLMManager:
                     response_content = response.content[0].text if response.content else ""
                 except Exception as e:
                     self.logger.error(f"Error using Claude API: {str(e)}")
+                    if "404" in str(e):
+                        if tier == 'fast':
+                            raise  # No more fallback options
+                        elif tier == 'balanced':
+                            tier = 'fast'
+                        elif tier == 'powerful':
+                            tier = 'balanced'
+                        max_retries -= 1
+                        continue
+                    raise
                     raise
 
                 result = self._process_response(response_content, tier, start_time)
@@ -505,4 +515,13 @@ class LLMManager:
             "state_updates": {},
             "actions": [],
             "suggestions": []
+        }
+    def _fallback_response(self, prompt: str, context: Optional[Dict[str, Any]], tier: str) -> Dict[str, Any]:
+        self.logger.warning(f"Fallback response triggered for tier: {tier}")
+        return {
+            "error": "All LLM tiers failed. Using fallback response.",
+            "response": "I apologize, but I'm unable to process your request at the moment. Please try again later.",
+            "state_updates": {},
+            "actions": [],
+            "suggestions": ["Please try rephrasing your query.", "Check your internet connection.", "Contact support if the issue persists."]
         }
