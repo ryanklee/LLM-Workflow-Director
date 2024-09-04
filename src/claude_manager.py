@@ -27,23 +27,17 @@ class ClaudeManager:
             )
             return self.parse_response(response.content[0].text)
         except Exception as e:
-            if "404" in str(e):
-                print(f"Model not found: {self.select_model(prompt)}. Falling back to next tier.")
+            self.logger.error(f"Error in generate_response: {str(e)}")
+            if isinstance(e, anthropic.NotFoundError):
                 return self.fallback_response(prompt)
             elif "rate_limit_error" in str(e):
-                print(f"Rate limit error encountered: {str(e)}")
+                self.logger.warning(f"Rate limit error encountered: {str(e)}")
                 time.sleep(5)  # Wait for 5 seconds before retrying
-            else:
-                print(f"Error in generate_response: {str(e)}")
             raise  # Re-raise the exception to trigger the retry mechanism
 
     def fallback_response(self, prompt):
-        # Implement fallback logic here
-        return "<response>Fallback response: Unable to process the request at this time.</response>"
-
-    def fallback_response(self, prompt):
-        # Implement a simple fallback response
-        return f"<response>Fallback response for: {prompt}</response>"
+        self.logger.warning(f"Fallback response triggered for prompt: {prompt[:50]}...")
+        return "<response>Fallback response: Unable to process the request at this time. Please try again later.</response>"
 
     def select_model(self, task_description):
         if "simple" in task_description.lower():

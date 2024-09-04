@@ -514,15 +514,7 @@ class LLMManager:
                 return self.query(prompt, context, tier='fast')
             elif tier == 'powerful':
                 return self.query(prompt, context, tier='balanced')
-        return {
-            "error": f"Error querying LLM: {str(error)}",
-            "response": str(error),
-            "tier": tier,
-            "task_progress": 0,
-            "state_updates": {},
-            "actions": [],
-            "suggestions": []
-        }
+        return self._fallback_response(prompt, context, tier)
     def _fallback_response(self, prompt: str, context: Optional[Dict[str, Any]], tier: str) -> Dict[str, Any]:
         self.logger.warning(f"Fallback response triggered for tier: {tier}")
         return {
