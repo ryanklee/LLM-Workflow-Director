@@ -21,6 +21,7 @@ from src.project_structure_manager import ProjectStructureManager
 from src.convention_manager import ConventionManager
 from src.priority_manager import PriorityManager
 from src.user_interaction_handler import UserInteractionHandler
+from src.claude_manager import ClaudeManager
 
 
 class WorkflowDirector:
