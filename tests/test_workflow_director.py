@@ -389,3 +389,65 @@ def test_workflow_director_llm_integration(mock_convention_manager, mock_llm_man
     print("Mock user interaction handler method calls:")
     for call in mock_user_interaction_handler.mock_calls:
         print(call)
+import pytest
+from src.workflow_director import WorkflowDirector
+from src.state_manager import StateManager
+from src.claude_manager import ClaudeManager
+from unittest.mock import MagicMock, patch
+
+# ... (previous test code remains unchanged)
+
+def test_execute_stage_with_condition(workflow_director, mock_state_manager):
+    mock_state_manager.get_state.return_value = {"feature_flag": True}
+    workflow_director.config = {
+        "stages": {
+            "Project Initialization": {
+                "tasks": {
+                    "Create project directory": {},
+                    "Initialize git repository": {"condition": "state['feature_flag']"},
+                    "Setup virtual environment": {"condition": "not state['feature_flag']"}
+                }
+            }
+        }
+    }
+    workflow_director.execute_stage("Project Initialization")
+    assert mock_state_manager.update_state.call_count == 2
+    mock_state_manager.update_state.assert_any_call("Project Initialization.Create project directory", "completed")
+    mock_state_manager.update_state.assert_any_call("Project Initialization.Initialize git repository", "completed")
+
+def test_execute_stage_with_error(workflow_director, mock_state_manager):
+    workflow_director.config = {
+        "stages": {
+            "Project Initialization": {
+                "tasks": {"Create project directory": {}}
+            }
+        }
+    }
+    mock_state_manager.update_state.side_effect = Exception("Test error")
+    
+    with pytest.raises(Exception):
+        workflow_director.execute_stage("Project Initialization")
+
+def test_transition_to_next_stage_no_valid_transition(workflow_director, mock_state_manager):
+    mock_state_manager.get_state.return_value = {"current_stage": "Final Stage"}
+    workflow_director.config = {"transitions": []}
+    
+    with pytest.warns(UserWarning, match="No valid transition found"):
+        workflow_director.transition_to_next_stage()
+
+def test_evaluate_transition_condition_invalid_condition(workflow_director, mock_state_manager):
+    mock_state_manager.get_state.return_value = {}
+    transition = {"condition": "invalid_condition"}
+    
+    with pytest.raises(NameError):
+        workflow_director.evaluate_transition_condition(transition)
+
+@pytest.mark.parametrize("current_stage,is_complete", [
+    ("Project Initialization", False),
+    ("Requirements Gathering", False),
+    ("Domain Modeling", False),
+    ("Design", True),
+])
+def test_is_workflow_complete(workflow_director, mock_state_manager, current_stage, is_complete):
+    mock_state_manager.get_state.return_value = {"current_stage": current_stage}
+    assert workflow_director.is_workflow_complete() == is_complete
