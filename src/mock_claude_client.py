@@ -71,6 +71,10 @@ class MockClaudeClient:
             raise Exception("Rate limit exceeded")
         if self.error_mode:
             raise Exception("API error")
+        content = self.responses.get(messages[0]['content'], "Default mock response")
+        return {
+            'content': [{'text': f"<response>{content}</response>"}]
+        }
         if self.error_mode:
             raise Exception("API error")
         

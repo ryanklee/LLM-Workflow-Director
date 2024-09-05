@@ -47,6 +47,8 @@ class ClaudeManager:
             raise ValueError("Invalid prompt: must be a string")
         if len(prompt) > self.max_test_tokens:
             raise ValueError(f"Invalid prompt length: exceeds {self.max_test_tokens} tokens")
+        if not prompt.strip():
+            raise ValueError("Invalid prompt: cannot be empty or only whitespace")
         if not isinstance(prompt, str):
             raise ValueError("Invalid prompt: must be a string")
         if len(prompt) > self.max_test_tokens:

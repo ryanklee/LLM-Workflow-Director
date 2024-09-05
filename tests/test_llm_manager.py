@@ -107,7 +107,8 @@ def test_llm_manager_query_with_tiers(llm_manager, tier, expected_response):
         
         result = llm_manager.query(f"{tier} prompt", tier=tier)
         
-        assert isinstance(result, dict) and expected_response in result.get("response", "")
+        assert isinstance(result, dict)
+        assert expected_response in result.get("response", "").replace("<response>", "").replace("</response>", "")
         mock_anthropic.return_value.messages.create.assert_called_once()
 
 @pytest.mark.fast

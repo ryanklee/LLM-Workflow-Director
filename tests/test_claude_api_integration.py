@@ -145,17 +145,19 @@ class TestPerformance:
 def test_mock_claude_client_response(mock_claude_client, claude_manager):
     mock_claude_client.set_response("Test prompt", "Test response")
     response = claude_manager.get_completion("Test prompt", "claude-3-haiku-20240307", 100)
-    assert response == "Test response"
+    assert response == "<response>Test response</response>"
 
 def test_mock_claude_client_rate_limit(mock_claude_client, claude_manager):
     mock_claude_client.set_rate_limit(True)
-    with pytest.raises(Exception, match="Rate limit exceeded"):
+    with pytest.raises(tenacity.RetryError) as excinfo:
         claude_manager.get_completion("Test prompt", "claude-3-haiku-20240307", 100)
+    assert "Rate limit exceeded" in str(excinfo.value)
 
 def test_mock_claude_client_error_mode(mock_claude_client, claude_manager):
     mock_claude_client.set_error_mode(True)
-    with pytest.raises(Exception, match="API error"):
+    with pytest.raises(tenacity.RetryError) as excinfo:
         claude_manager.get_completion("Test prompt", "claude-3-haiku-20240307", 100)
+    assert "API error" in str(excinfo.value)
 
 def test_mock_claude_client_reset(mock_claude_client, claude_manager):
     mock_claude_client.set_rate_limit(True)
