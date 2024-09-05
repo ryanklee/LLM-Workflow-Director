@@ -18,13 +18,16 @@ def test_token_usage_efficiency(claude_manager: ClaudeManager, benchmark: Benchm
         context = "a" * size
         prompt = f"Summarize the following text in one sentence: {context}"
         response = claude_manager.generate_response(prompt)
-        return len(response) / size
+        total_tokens = claude_manager.count_tokens(prompt + response)
+        useful_tokens = claude_manager.count_tokens(response)
+        return useful_tokens / total_tokens
 
     results = benchmark.pedantic(measure_efficiency, args=(max(context_sizes),), iterations=5, rounds=3)
     
     for size in context_sizes:
         efficiency = measure_efficiency(size)
-        print(f"Efficiency for context size {size}: {efficiency:.4f}")
+        print(f"Token usage efficiency for context size {size}: {efficiency:.4f}")
+        assert 0 < efficiency <= 1, f"Efficiency {efficiency} is out of expected range (0, 1]"
 
 def test_response_time_vs_context_size(claude_manager: ClaudeManager, benchmark: BenchmarkFixture):
     context_sizes = [1000, 10000, 50000, 100000, 150000]

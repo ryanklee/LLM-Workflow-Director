@@ -102,21 +102,34 @@ async def test_concurrent_request_handling(claude_manager):
 async def test_sustained_load_performance(claude_manager):
     start_time = asyncio.get_event_loop().time()
     request_count = 0
+    error_count = 0
     
     async def make_request():
-        return await claude_manager.generate_response("Tell me a short joke.")
-    
-    while asyncio.get_event_loop().time() - start_time < 60:  # Run for 1 minute
-        tasks = [make_request() for _ in range(5)]
-        responses = await asyncio.gather(*tasks)
-        request_count += 5
-        
-        for response in responses:
+        try:
+            response = await claude_manager.generate_response("Tell me a short joke.")
             assert isinstance(response, str)
             assert len(response) > 0
+            return True
+        except Exception:
+            return False
     
-    print(f"Processed {request_count} requests in 1 minute")
-    assert request_count > 100, f"Expected to process more than 100 requests, but processed {request_count}"
+    while asyncio.get_event_loop().time() - start_time < 300:  # Run for 5 minutes
+        tasks = [make_request() for _ in range(10)]
+        results = await asyncio.gather(*tasks)
+        request_count += 10
+        error_count += results.count(False)
+        
+        # Check system stability every minute
+        if (asyncio.get_event_loop().time() - start_time) % 60 < 1:
+            error_rate = error_count / request_count
+            print(f"Current error rate: {error_rate:.2%}")
+            assert error_rate < 0.05, f"Error rate {error_rate:.2%} exceeds 5% threshold"
+    
+    print(f"Processed {request_count} requests in 5 minutes")
+    assert request_count > 1000, f"Expected to process more than 1000 requests, but processed {request_count}"
+    
+    final_error_rate = error_count / request_count
+    assert final_error_rate < 0.01, f"Final error rate {final_error_rate:.2%} exceeds 1% threshold"
 
 @pytest.mark.asyncio
 async def test_recovery_time(claude_manager):
