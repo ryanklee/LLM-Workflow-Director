@@ -98,7 +98,7 @@ class TestRateLimiting:
     @pytest.mark.fast
     def test_rate_limiting(self, claude_manager):
         claude_manager.client.set_rate_limit(True)
-        with pytest.raises(Exception, match="Rate limit exceeded"):
+        with pytest.raises(tenacity.RetryError):
             claude_manager.generate_response("Test")
         claude_manager.client.set_rate_limit(False)
         assert claude_manager.generate_response("Test")
