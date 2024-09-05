@@ -1,4 +1,5 @@
 import pytest
+import tenacity
 from src.claude_manager import ClaudeManager
 from src.mock_claude_client import MockClaudeClient
 from src.llm_manager import LLMManager
