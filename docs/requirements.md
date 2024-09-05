@@ -197,6 +197,9 @@
       6.2.3. The system shall include tests for handling concurrent requests.
       6.2.4. The system shall implement performance tests for the vector database and tiered LLM approach.
       6.2.5. The system shall implement performance profiling as part of the testing process to catch performance regressions early.
+      6.2.6. The system shall implement benchmarks for context window utilization efficiency.
+      6.2.7. The system shall develop tests for performance under various load conditions.
+      6.2.8. The system shall implement benchmarks for token efficiency and cost optimization.
 
    6.3. Mocking and Simulation
       6.3.1. The system shall implement a MockClaudeClient to simulate Claude API responses.
@@ -231,6 +234,11 @@
       6.7.5. The system shall include tests for adaptive learning mechanisms in LLM tier selection.
       6.7.6. The system shall implement security-focused tests, including input validation, sanitization, and secure handling of sensitive information.
       6.7.7. The system shall implement penetration testing and regular vulnerability scanning.
+      6.7.8. The system shall implement tests for semantic consistency across multiple runs and model versions.
+      6.7.9. The system shall develop tests for hallucination detection and measurement in LLM outputs.
+      6.7.10. The system shall implement tests for robustness, including adversarial inputs and edge cases.
+      6.7.11. The system shall develop tests for version compatibility across different model versions.
+      6.7.12. The system shall implement tests for long-term consistency in extended LLM operations.
 
    6.8. Test Suite Structure and Maintenance
       6.8.1. The system shall organize tests into logical groupings based on functionality and test type.
@@ -243,6 +251,39 @@
       6.9.2. The system shall maintain up-to-date documentation on MockClaudeClient usage and capabilities.
       6.9.3. The system shall provide examples of writing effective tests for different components and scenarios.
       6.9.4. The system shall create and maintain documentation for all new testing tools and utilities.
+
+   6.10. Prompt Engineering Testing
+      6.10.1. The system shall implement a systematic prompt testing framework.
+      6.10.2. The system shall include tests for prompt variants, edge cases, and different input formats.
+      6.10.3. The system shall implement automated prompt quality assessment using metrics like perplexity and coherence.
+
+   6.11. Context Window Testing
+      6.11.1. The system shall implement tests for large context windows (200k+ tokens).
+      6.11.2. The system shall develop tests for context retention and relevance over long conversations.
+
+   6.12. Multi-modal Testing
+      6.12.1. The system shall implement tests for image understanding and text-image correlation.
+      6.12.2. The system shall develop benchmarks for multi-modal task performance.
+
+   6.13. Semantic Consistency Testing
+      6.13.1. The system shall implement automated semantic similarity checks for outputs.
+      6.13.2. The system shall develop tests for maintaining consistent persona and knowledge across conversations.
+
+   6.14. Hallucination Detection
+      6.14.1. The system shall implement automated fact-checking against a trusted knowledge base.
+      6.14.2. The system shall develop tests to measure and quantify hallucinations in model outputs.
+
+   6.15. Integration Testing
+      6.15.1. The system shall implement end-to-end tests for complex workflows involving multiple components.
+      6.15.2. The system shall develop tests for error handling and recovery in integrated systems.
+
+   6.16. Version Compatibility Testing
+      6.16.1. The system shall implement regression tests to ensure consistent behavior across updates.
+      6.16.2. The system shall develop migration tests for smooth transitions between model versions.
+
+   6.17. Long-term Consistency Testing
+      6.17.1. The system shall implement tests for maintaining consistent performance and outputs over time.
+      6.17.2. The system shall develop benchmarks for long-running conversations and tasks.
 
 7. Documentation
    7.1. The system shall provide comprehensive documentation on the workflow stages and steps.
