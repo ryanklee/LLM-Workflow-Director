@@ -11,6 +11,27 @@ class ClaudeManager:
         self.messages = self.client.messages
         self.logger = logging.getLogger(__name__)
         self.llm_manager = LLMManager()
+        self.max_test_tokens = 100  # Add this line
+
+    def evaluate_sufficiency(self, project_state):
+        # Implement the evaluation logic here
+        return True  # Placeholder implementation
+
+    def make_decision(self, project_state):
+        # Implement the decision-making logic here
+        return "Next step"  # Placeholder implementation
+
+    def evaluate_with_context(self, context, project_state):
+        # Implement the evaluation with context logic here
+        return "Evaluation result"  # Placeholder implementation
+
+    def evaluate_project_state(self, project_data):
+        # Implement the project state evaluation logic here
+        return "Project evaluation result"  # Placeholder implementation
+
+    def render_prompt_template(self, template, context):
+        # Implement the prompt template rendering logic here
+        return template.format(**context)
         self.max_test_tokens = self.llm_manager.config.get('test_settings', {}).get('max_test_tokens', 100)
 
     def get_completion(self, prompt, model, max_tokens):
@@ -22,6 +43,10 @@ class ClaudeManager:
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
     def generate_response(self, prompt):
+        if not isinstance(prompt, str):
+            raise ValueError("Invalid prompt: must be a string")
+        if len(prompt) > self.max_test_tokens:
+            raise ValueError(f"Invalid prompt length: exceeds {self.max_test_tokens} tokens")
         if not isinstance(prompt, str):
             raise ValueError("Invalid prompt: must be a string")
         if len(prompt) > self.max_test_tokens:

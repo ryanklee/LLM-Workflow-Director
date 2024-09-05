@@ -158,6 +158,7 @@ class LLMManager:
                     response_content = response.content[0].text if response.content else ""
                 except (anthropic.NotFoundError, AttributeError) as e:
                     self.logger.error(f"Error using Claude API: {str(e)}")
+                    return self._fallback_response(prompt, context, tier)
                     max_retries -= 1
                     if max_retries > 0:
                         tier = self._fallback_to_lower_tier(tier)
@@ -489,3 +490,13 @@ class LLMManager:
             "actions": [],
             "suggestions": ["Please try rephrasing your query.", "Check your internet connection.", "Contact support if the issue persists."]
         })
+    def _fallback_response(self, prompt: str, context: Optional[Dict[str, Any]], tier: str) -> Dict[str, Any]:
+        self.logger.warning(f"Fallback response triggered for tier: {tier}")
+        return {
+            "response": "I apologize, but I'm unable to process your request at the moment. Please try again later.",
+            "error": "All LLM tiers failed. Using fallback response.",
+            "id": f"(ID: {random.randint(1, 10**16)})",
+            "actions": [],
+            "suggestions": [],
+            "state_updates": {}
+        }

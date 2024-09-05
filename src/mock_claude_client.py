@@ -71,6 +71,8 @@ class MockClaudeClient:
             raise Exception("Rate limit exceeded")
         if self.error_mode:
             raise Exception("API error")
+        if self.error_mode:
+            raise Exception("API error")
         
         prompt = messages[0]['content']
         if len(prompt) > self.max_test_tokens:
