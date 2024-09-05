@@ -15,7 +15,17 @@ def claude_manager(mock_claude_client):
 def llm_manager():
     return LLMManager()
 
-class TestClaudeAPIIntegration:
+@pytest.fixture(scope="module")
+def cached_responses(request):
+    cache = {}
+    def _cached_response(prompt, response):
+        if prompt not in cache:
+            cache[prompt] = response
+        return cache[prompt]
+    request.addfinalizer(cache.clear)
+    return _cached_response
+
+class TestClaudeAPIBasics:
     @pytest.mark.fast
     def test_claude_api_call(self, claude_manager, mock_claude_client):
         mock_claude_client.set_response("Intro", "Claude AI")
@@ -31,6 +41,7 @@ class TestClaudeAPIIntegration:
     def test_tiered_model_selection(self, claude_manager, task, expected_model):
         assert claude_manager.select_model(task) == expected_model
 
+class TestInputValidation:
     @pytest.mark.fast
     @pytest.mark.parametrize("input_text", [
         "",
@@ -54,6 +65,7 @@ class TestClaudeAPIIntegration:
             response = claude_manager.generate_response(input_text)
             assert response
 
+class TestResponseHandling:
     @pytest.mark.fast
     def test_response_parsing(self, claude_manager, llm_manager):
         max_test_tokens = llm_manager.config.get('test_settings', {}).get('max_test_tokens', 100)
@@ -82,6 +94,7 @@ class TestClaudeAPIIntegration:
         response2 = claude_manager.generate_response("France capital")
         assert "Paris" in response1 and "Paris" in response2
 
+class TestRateLimiting:
     @pytest.mark.fast
     def test_rate_limiting(self, claude_manager):
         claude_manager.client.set_rate_limit(True)
@@ -89,6 +102,14 @@ class TestClaudeAPIIntegration:
             claude_manager.generate_response("Test")
         claude_manager.client.set_rate_limit(False)
         assert claude_manager.generate_response("Test")
+
+@pytest.mark.benchmark
+def test_claude_api_performance(claude_manager, benchmark):
+    def api_call():
+        return claude_manager.generate_response("Test performance")
+    
+    result = benchmark(api_call)
+    assert result  # Ensure we got a response
 import pytest
 from src.claude_manager import ClaudeManager
 from src.mock_claude_client import MockClaudeClient
