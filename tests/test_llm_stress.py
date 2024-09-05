@@ -84,6 +84,53 @@ async def test_llm_stress_extended(claude_manager):
         for _ in range(1000):
             tasks.append(executor.submit(claude_manager.generate_response, "This is an extended stress test."))
         await asyncio.gather(*[asyncio.to_thread(task.result) for task in tasks])
+
+@pytest.mark.asyncio
+async def test_concurrent_request_handling(claude_manager):
+    async def make_request():
+        return await claude_manager.generate_response("Hello, how are you?")
+    
+    tasks = [make_request() for _ in range(10)]
+    responses = await asyncio.gather(*tasks)
+    
+    assert len(responses) == 10
+    for response in responses:
+        assert isinstance(response, str)
+        assert len(response) > 0
+
+@pytest.mark.asyncio
+async def test_sustained_load_performance(claude_manager):
+    start_time = asyncio.get_event_loop().time()
+    request_count = 0
+    
+    async def make_request():
+        return await claude_manager.generate_response("Tell me a short joke.")
+    
+    while asyncio.get_event_loop().time() - start_time < 60:  # Run for 1 minute
+        tasks = [make_request() for _ in range(5)]
+        responses = await asyncio.gather(*tasks)
+        request_count += 5
+        
+        for response in responses:
+            assert isinstance(response, str)
+            assert len(response) > 0
+    
+    print(f"Processed {request_count} requests in 1 minute")
+    assert request_count > 100, f"Expected to process more than 100 requests, but processed {request_count}"
+
+@pytest.mark.asyncio
+async def test_recovery_time(claude_manager):
+    # Simulate high load
+    high_load_tasks = [claude_manager.generate_response("Tell me a long story.") for _ in range(20)]
+    await asyncio.gather(*high_load_tasks)
+    
+    # Measure recovery time
+    start_time = asyncio.get_event_loop().time()
+    response = await claude_manager.generate_response("Hello, how are you?")
+    recovery_time = asyncio.get_event_loop().time() - start_time
+    
+    print(f"Recovery time after high load: {recovery_time:.2f} seconds")
+    assert recovery_time < 5, f"Recovery time {recovery_time:.2f}s exceeds 5 seconds threshold"
 import asyncio
 import pytest
 from unittest.mock import Mock
