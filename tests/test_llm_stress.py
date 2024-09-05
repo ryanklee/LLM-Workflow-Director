@@ -48,3 +48,39 @@ def test_llm_extended_stress(claude_manager):
     # Check for rate limiting
     rate_limited = claude_manager.client.rate_limit_reached
     assert not rate_limited, "Rate limit was reached during extended stress test"
+import pytest
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+from src.claude_manager import ClaudeManager
+from src.mock_claude_client import MockClaudeClient
+
+@pytest.fixture
+def claude_manager():
+    mock_client = MockClaudeClient()
+    return ClaudeManager(client=mock_client)
+
+@pytest.mark.stress
+async def test_llm_stress_regular(claude_manager):
+    """
+    Regular stress test for LLM-related functionality.
+    Sends 100 concurrent requests to the LLM.
+    """
+    tasks = []
+    with ThreadPoolExecutor(max_workers=100) as executor:
+        for _ in range(100):
+            tasks.append(executor.submit(claude_manager.generate_response, "This is a stress test."))
+        await asyncio.gather(*[asyncio.to_thread(task.result) for task in tasks])
+
+@pytest.mark.stress
+@pytest.mark.slow
+async def test_llm_stress_extended(claude_manager):
+    """
+    Extended stress test for LLM-related functionality.
+    Sends 1000 concurrent requests to the LLM.
+    """
+    tasks = []
+    with ThreadPoolExecutor(max_workers=1000) as executor:
+        for _ in range(1000):
+            tasks.append(executor.submit(claude_manager.generate_response, "This is an extended stress test."))
+        await asyncio.gather(*[asyncio.to_thread(task.result) for task in tasks])
