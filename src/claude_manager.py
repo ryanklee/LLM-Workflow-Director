@@ -55,13 +55,15 @@ class ClaudeManager:
             raise ValueError("Invalid prompt: cannot be empty or only whitespace")
 
         try:
-            response = self.messages.create(
-                model=self.select_model(prompt) if model is None else model,
-                max_tokens=self.max_test_tokens,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
-            )
+            with self.rate_limiter:
+                response = self.messages.create(
+                    model=self.select_model(prompt) if model is None else model,
+                    max_tokens=self.max_test_tokens,
+                    messages=[
+                        {"role": "user", "content": prompt}
+                    ]
+                )
+            self.token_tracker.add_tokens("generate_response", prompt, response.content[0].text)
             return self.parse_response(response.content[0].text)
         except Exception as e:
             self.logger.error(f"Error in generate_response: {str(e)}")
