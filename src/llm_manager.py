@@ -3,13 +3,13 @@ import time
 import yaml
 import os
 import ast
+import random
 from typing import Dict, Any, Optional, List
 from unittest.mock import MagicMock
 from .error_handler import ErrorHandler
 from .llm_microservice_client import LLMMicroserviceClient
 from pydantic import Field, validator
 import anthropic
-import os
 import itertools
 # Remove this line entirely
 
