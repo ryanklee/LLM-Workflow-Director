@@ -3,12 +3,15 @@ import logging
 from anthropic import Anthropic, NotFoundError
 from tenacity import retry, stop_after_attempt, wait_exponential, RetryError
 import time
+from src.llm_manager import LLMManager
 
 class ClaudeManager:
     def __init__(self, client=None):
         self.client = client or self.create_client()
         self.messages = self.client.messages
         self.logger = logging.getLogger(__name__)
+        self.llm_manager = LLMManager()
+        self.max_test_tokens = self.llm_manager.config.get('test_settings', {}).get('max_test_tokens', 100)
 
     @staticmethod
     def create_client():
@@ -18,13 +21,13 @@ class ClaudeManager:
     def generate_response(self, prompt):
         if not prompt or not isinstance(prompt, str):
             raise ValueError("Invalid prompt: must be a non-empty string")
-        if len(prompt) > 100000:
-            raise ValueError("Invalid prompt length: exceeds 100,000 characters")
+        if len(prompt) > self.max_test_tokens:
+            raise ValueError(f"Invalid prompt length: exceeds {self.max_test_tokens} tokens")
 
         try:
             response = self.messages.create(
                 model=self.select_model(prompt),
-                max_tokens=1000,
+                max_tokens=self.max_test_tokens,
                 messages=[
                     {"role": "user", "content": prompt}
                 ]
@@ -52,7 +55,9 @@ class ClaudeManager:
             return "claude-3-sonnet-20240229"
 
     def parse_response(self, response_text):
-        # The response is the message content, so we just need to wrap it
+        # Truncate the response if it exceeds the max_test_tokens
+        if len(response_text) > self.max_test_tokens:
+            response_text = response_text[:self.max_test_tokens] + "..."
         return f"<response>{response_text.strip()}</response>"
 
     def _fallback_to_lower_tier(self, prompt, current_tier):

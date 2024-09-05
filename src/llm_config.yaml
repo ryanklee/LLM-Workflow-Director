@@ -9,6 +9,9 @@ tiers:
     model: claude-3-opus-20240229
     max_tokens: 4000
 
+test_settings:
+  max_test_tokens: 100
+
 prompt_templates:
   default: |
     Process this command: {command}

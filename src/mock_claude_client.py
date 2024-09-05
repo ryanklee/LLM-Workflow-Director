@@ -41,6 +41,7 @@ class MockClaudeClient:
         self.last_reset = time.time()
 from typing import Dict, Any, Optional
 from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
+from src.llm_manager import LLMManager
 
 class MockClaudeClient:
     def __init__(self):
@@ -48,6 +49,8 @@ class MockClaudeClient:
         self.error_mode = False
         self.responses = {}
         self.messages = self
+        self.llm_manager = LLMManager()
+        self.max_test_tokens = self.llm_manager.config.get('test_settings', {}).get('max_test_tokens', 100)
 
     def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
@@ -70,7 +73,13 @@ class MockClaudeClient:
             raise Exception("API error")
         
         prompt = messages[0]['content']
+        if len(prompt) > self.max_test_tokens:
+            raise ValueError(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
+        
         response = self.responses.get(prompt, "Default mock response")
+        if len(response) > self.max_test_tokens:
+            response = response[:self.max_test_tokens] + "..."
+        
         return {
             "content": [{"text": response}],
             "model": model,

@@ -186,3 +186,22 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Open-source community for providing essential tools and libraries
 - Anthropic for developing the Claude models used in this project
+## Testing
+
+### Token Limits in Tests
+
+To ensure consistent and efficient testing, we've implemented a token limit for test inputs and outputs. This limit is defined in the `src/llm_config.yaml` file under the `test_settings` section:
+
+```yaml
+test_settings:
+  max_test_tokens: 100
+```
+
+This limit is enforced in both the `MockClaudeClient` and the actual `ClaudeManager` to simulate real-world constraints and prevent unnecessarily long inputs or outputs in our tests.
+
+Key points:
+- Inputs exceeding the token limit will raise a `ValueError`.
+- Outputs exceeding the token limit will be truncated and appended with "...".
+- This limit applies only to test environments and does not affect production behavior.
+
+When writing tests, keep this limit in mind and design your test cases accordingly. If you need to test with longer inputs or outputs, you may need to adjust the `max_test_tokens` value in the configuration file.
