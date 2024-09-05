@@ -198,8 +198,17 @@
       6.2.4. The system shall implement performance tests for the vector database and tiered LLM approach.
       6.2.5. The system shall implement performance profiling as part of the testing process to catch performance regressions early.
       6.2.6. The system shall implement benchmarks for context window utilization efficiency.
+         6.2.6.1. The system shall measure the ratio of useful tokens to total tokens in the context window.
+         6.2.6.2. The system shall benchmark response times for varying context sizes.
+         6.2.6.3. The system shall evaluate the relevance and coherence of responses as context size increases.
       6.2.7. The system shall develop tests for performance under various load conditions.
+         6.2.7.1. The system shall test handling of multiple simultaneous requests.
+         6.2.7.2. The system shall measure system stability and performance over extended periods of high load.
+         6.2.7.3. The system shall test the system's recovery time after periods of high load.
       6.2.8. The system shall implement benchmarks for token efficiency and cost optimization.
+         6.2.8.1. The system shall measure and compare token consumption for different query categories.
+         6.2.8.2. The system shall compare the cost-performance ratio of different Claude models.
+         6.2.8.3. The system shall test the effectiveness of strategies for reducing token usage and cost.
 
    6.3. Mocking and Simulation
       6.3.1. The system shall implement a MockClaudeClient to simulate Claude API responses.
