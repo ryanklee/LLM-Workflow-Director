@@ -31,7 +31,7 @@ def test_cost_effectiveness_of_models(llm_manager: LLMManager, benchmark: Benchm
     query = "Explain the theory of relativity in simple terms."
     
     def measure_cost_effectiveness(model):
-        response = llm_manager.query(query, model=model)
+        response = llm_manager.query(query, tier=model)
         tokens = llm_manager.count_tokens(query + response)
         cost = llm_manager.calculate_cost(model, tokens)
         return len(response) / cost  # characters per unit of cost

@@ -14,7 +14,7 @@ class ClaudeManager:
         self.logger = logging.getLogger(__name__)
         self.llm_manager = LLMManager()
         self.max_test_tokens = 100
-        self.rate_limiter = RateLimiter(requests_per_minute, requests_per_hour)
+        self.rate_limiter = RateLimiter.from_limits(requests_per_minute, requests_per_hour)
         self.token_tracker = TokenTracker()
         self.token_optimizer = TokenOptimizer()
 

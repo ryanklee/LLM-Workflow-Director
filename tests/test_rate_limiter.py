@@ -3,7 +3,7 @@ from src.rate_limiter import RateLimiter
 import time
 
 def test_rate_limiter_initialization():
-    rate_limiter = RateLimiter(requests_per_minute=60, requests_per_hour=1000)
+    rate_limiter = RateLimiter.from_limits(requests_per_minute=60, requests_per_hour=1000)
     assert rate_limiter.requests_per_minute == 60
     assert rate_limiter.requests_per_hour == 1000
 
