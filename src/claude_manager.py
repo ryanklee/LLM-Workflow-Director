@@ -4,14 +4,19 @@ from anthropic import Anthropic, NotFoundError
 from tenacity import retry, stop_after_attempt, wait_exponential, RetryError
 import time
 from src.llm_manager import LLMManager
+from .rate_limiter import RateLimiter
+from .token_tracker import TokenTracker, TokenOptimizer
 
 class ClaudeManager:
-    def __init__(self, client=None):
+    def __init__(self, client=None, requests_per_minute: int = 60, requests_per_hour: int = 3600):
         self.client = client or self.create_client()
         self.messages = self.client.messages
         self.logger = logging.getLogger(__name__)
         self.llm_manager = LLMManager()
-        self.max_test_tokens = 100  # Add this line
+        self.max_test_tokens = 100
+        self.rate_limiter = RateLimiter(requests_per_minute, requests_per_hour)
+        self.token_tracker = TokenTracker()
+        self.token_optimizer = TokenOptimizer()
 
     def evaluate_sufficiency(self, project_state):
         # Implement the evaluation logic here
@@ -32,7 +37,6 @@ class ClaudeManager:
     def render_prompt_template(self, template, context):
         # Implement the prompt template rendering logic here
         return template.format(**context)
-        self.max_test_tokens = self.llm_manager.config.get('test_settings', {}).get('max_test_tokens', 100)
 
     def get_completion(self, prompt, model, max_tokens):
         return self.generate_response(prompt)

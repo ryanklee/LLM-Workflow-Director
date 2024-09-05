@@ -22,6 +22,7 @@ from src.convention_manager import ConventionManager
 from src.priority_manager import PriorityManager
 from src.user_interaction_handler import UserInteractionHandler
 from src.claude_manager import ClaudeManager
+from src.cost_analyzer import CostAnalyzer
 
 
 class WorkflowDirector:
@@ -45,8 +46,21 @@ class WorkflowDirector:
         self.llm_manager = llm_manager or LLMManager()
         self.sufficiency_evaluator = SufficiencyEvaluator(self.llm_manager)
         self.priority_manager = PriorityManager()
+        self.cost_analyzer = CostAnalyzer()
         self.initialize_priorities()
         self.logger.debug(f"WorkflowDirector initialized with LLMManager: {self.llm_manager}")
+
+    def get_token_usage(self, task_id: str = None) -> int:
+        return self.claude_manager.get_token_usage(task_id)
+
+    def analyze_cost(self, model: str, tokens: int) -> float:
+        return self.cost_analyzer.calculate_cost(model, tokens)
+
+    def log_usage(self):
+        total_tokens = self.get_token_usage()
+        total_cost = self.analyze_cost("claude-3-opus-20240229", total_tokens)
+        self.logger.info(f"Total token usage: {total_tokens}")
+        self.logger.info(f"Estimated cost: ${total_cost:.2f}")
 
     def load_config(self, config_path):
         try:
