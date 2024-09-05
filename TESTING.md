@@ -51,3 +51,31 @@ We use pytest-cov for coverage reporting. Coverage reports are generated automat
 
 ## Updating Tests
 When adding new features or modifying existing ones, always update or add corresponding tests. Follow the existing patterns and conventions in the test files.
+
+## LLM-Specific Testing
+1. Prompt Generation Testing
+   - Test prompt template rendering with various contexts
+   - Verify handling of missing context variables
+   - Test complex prompt scenarios
+
+2. Context Management Testing
+   - Test proper utilization of context window
+   - Verify handling of context overflow situations
+   - Test context summarization techniques (if implemented)
+
+3. LLM-Based Evaluation Testing
+   - Test sufficiency evaluation for different project states
+   - Verify decision-making processes based on LLM outputs
+   - Test handling of complex project evaluations
+
+4. Performance Testing for LLM Interactions
+   - Benchmark response times for different types of LLM queries
+   - Test token usage optimization
+   - Verify performance under various load conditions
+
+5. Error Handling and Edge Cases
+   - Test rate limiting scenarios
+   - Verify proper handling of API errors
+   - Test fallback mechanisms and retry logic
+
+Remember to update these guidelines as new testing practices or requirements are introduced to the project.

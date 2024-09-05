@@ -111,11 +111,36 @@ def test_claude_api_performance(claude_manager, benchmark):
     
     result = benchmark(api_call)
     assert result  # Ensure we got a response
-import pytest
-from src.claude_manager import ClaudeManager
-from src.mock_claude_client import MockClaudeClient
 
-# ... (previous code)
+class TestContextManagement:
+    @pytest.mark.fast
+    def test_context_window_utilization(self, claude_manager, llm_manager):
+        max_tokens = llm_manager.config.get('test_settings', {}).get('max_test_tokens', 100)
+        long_input = "a" * (max_tokens - 10)  # Leave some room for system message
+        response = claude_manager.generate_response(long_input)
+        assert len(response) <= max_tokens
+
+    @pytest.mark.fast
+    def test_context_overflow_handling(self, claude_manager, llm_manager):
+        max_tokens = llm_manager.config.get('test_settings', {}).get('max_test_tokens', 100)
+        overflow_input = "a" * (max_tokens + 50)
+        with pytest.raises(ValueError, match="Invalid prompt length"):
+            claude_manager.generate_response(overflow_input)
+
+class TestPerformance:
+    @pytest.mark.benchmark
+    def test_response_time(self, claude_manager, benchmark):
+        result = benchmark(claude_manager.generate_response, "Quick response test")
+        assert result  # Ensure we got a response
+
+    @pytest.mark.benchmark
+    def test_token_usage(self, claude_manager, benchmark):
+        def token_usage_test():
+            response = claude_manager.generate_response("Token usage test")
+            return len(response.split())  # Rough estimate of token count
+        
+        result = benchmark(token_usage_test)
+        assert 0 < result <= 100  # Assuming max_tokens is 100
 
 def test_mock_claude_client_response(mock_claude_client, claude_manager):
     mock_claude_client.set_response("Test prompt", "Test response")
