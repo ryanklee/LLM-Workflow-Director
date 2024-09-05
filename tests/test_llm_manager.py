@@ -30,13 +30,13 @@ def test_llm_manager_initialization(llm_manager):
 @pytest.mark.fast
 @patch('src.llm_manager.LLMMicroserviceClient')
 @patch('anthropic.Anthropic')
-@patch('time.time', side_effect=[0, 1])  # Mock start and end times
-def test_llm_manager_query(mock_time, mock_anthropic, mock_client, llm_manager):
+def test_llm_manager_query(mock_anthropic, mock_client, llm_manager):
     mock_response = type('obj', (object,), {'content': [type('obj', (object,), {'text': "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response"})]})()
     mock_anthropic.return_value.messages.create.return_value = mock_response
     with patch.object(llm_manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
         with patch.object(llm_manager.cost_optimizer, 'update_usage') as mock_update_usage:
-            response = llm_manager.query("Test prompt")
+            with patch('time.time', side_effect=[0, 1]):
+                response = llm_manager.query("Test prompt")
         assert isinstance(response, dict)
         assert 'response' in response
         assert response['response'] == "Test response"

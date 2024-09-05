@@ -13,14 +13,17 @@ class ClaudeManager:
         self.llm_manager = LLMManager()
         self.max_test_tokens = self.llm_manager.config.get('test_settings', {}).get('max_test_tokens', 100)
 
+    def get_completion(self, prompt, model, max_tokens):
+        return self.generate_response(prompt)
+
     @staticmethod
     def create_client():
         return Anthropic()
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
     def generate_response(self, prompt):
-        if not prompt or not isinstance(prompt, str):
-            raise ValueError("Invalid prompt: must be a non-empty string")
+        if not isinstance(prompt, str):
+            raise ValueError("Invalid prompt: must be a string")
         if len(prompt) > self.max_test_tokens:
             raise ValueError(f"Invalid prompt length: exceeds {self.max_test_tokens} tokens")
 
