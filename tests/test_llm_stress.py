@@ -84,3 +84,33 @@ async def test_llm_stress_extended(claude_manager):
         for _ in range(1000):
             tasks.append(executor.submit(claude_manager.generate_response, "This is an extended stress test."))
         await asyncio.gather(*[asyncio.to_thread(task.result) for task in tasks])
+import asyncio
+import pytest
+from unittest.mock import Mock
+from src.claude_manager import ClaudeManager
+from src.mock_claude_client import MockClaudeClient
+
+@pytest.mark.asyncio
+async def test_llm_stress_regular():
+    mock_client = MockClaudeClient()
+    claude_manager = ClaudeManager(client=mock_client)
+    
+    async def make_request():
+        response = await claude_manager.generate_response("Test prompt")
+        assert response is not None
+
+    tasks = [make_request() for _ in range(100)]
+    await asyncio.gather(*tasks)
+
+@pytest.mark.asyncio
+@pytest.mark.slow
+async def test_llm_stress_extended():
+    mock_client = MockClaudeClient()
+    claude_manager = ClaudeManager(client=mock_client)
+    
+    async def make_request():
+        response = await claude_manager.generate_response("Test prompt")
+        assert response is not None
+
+    tasks = [make_request() for _ in range(1000)]
+    await asyncio.gather(*tasks)
