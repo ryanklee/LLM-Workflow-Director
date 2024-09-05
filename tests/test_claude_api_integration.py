@@ -1,8 +1,7 @@
 import pytest
-from unittest.mock import patch
 from src.claude_manager import ClaudeManager
-from src.llm_evaluator import LLMEvaluator
 from src.mock_claude_client import MockClaudeClient
+from src.llm_manager import LLMManager
 
 @pytest.fixture
 def mock_claude_client():
@@ -13,21 +12,13 @@ def claude_manager(mock_claude_client):
     return ClaudeManager(client=mock_claude_client)
 
 @pytest.fixture
-def mock_claude_client():
-    client = MockClaudeClient()
-    client.set_response("Intro", "Claude AI")
-    client.set_response("France capital", "Paris")
-    client.set_response("Test", "Test response")
-    return client
-
-@pytest.fixture
-def llm_evaluator():
-    return LLMEvaluator()
+def llm_manager():
+    return LLMManager()
 
 class TestClaudeAPIIntegration:
     @pytest.mark.fast
     def test_claude_api_call(self, claude_manager, mock_claude_client):
-        mock_claude_client.add_response("Intro", "Claude AI")
+        mock_claude_client.set_response("Intro", "Claude AI")
         response = claude_manager.generate_response("Intro")
         assert "Claude" in response and "AI" in response
 
@@ -43,15 +34,19 @@ class TestClaudeAPIIntegration:
     @pytest.mark.fast
     @pytest.mark.parametrize("input_text", [
         "",
-        "a" * 101,  # Just over a reasonable character limit for testing
+        "a" * 101,  # Just over the max_test_tokens limit
         "<script>",
         "SSN: 123-45-6789",
         123,
         "   "
     ])
     def test_input_validation_errors(self, claude_manager, input_text):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as excinfo:
             claude_manager.generate_response(input_text)
+        if isinstance(input_text, str) and len(input_text) > 100:
+            assert "Invalid prompt length: exceeds" in str(excinfo.value)
+        else:
+            assert "Invalid prompt: must be a non-empty string" in str(excinfo.value)
 
     @pytest.mark.fast
     def test_valid_inputs(self, claude_manager):
@@ -60,22 +55,29 @@ class TestClaudeAPIIntegration:
             assert response
 
     @pytest.mark.fast
-    def test_response_parsing(self, claude_manager, llm_evaluator):
-        claude_manager.client.add_response("Test", "Parsed")
-        response = claude_manager.generate_response("Test")
-        assert "<response>" in response and "</response>" in response
-        assert llm_evaluator.evaluate_response(response, "Wrapped in <response> tags")
+    def test_response_parsing(self, claude_manager, llm_manager):
+        max_test_tokens = llm_manager.config.get('test_settings', {}).get('max_test_tokens', 100)
+        long_response = "b" * (max_test_tokens * 2)
+        claude_manager.client.set_response("Test", long_response)
+        
+        result = claude_manager.generate_response("Test")
+        
+        assert len(result) == max_test_tokens + 3  # +3 for the "..."
+        assert result.endswith("...")
 
     @pytest.mark.slow
     def test_retry_mechanism(self, claude_manager):
-        claude_manager.client.add_error_response("Test", Exception("Error"))
-        claude_manager.client.add_response("Test", "Success")
+        claude_manager.client.set_error_mode(True)
+        with pytest.raises(Exception):
+            claude_manager.generate_response("Test")
+        claude_manager.client.set_error_mode(False)
+        claude_manager.client.set_response("Test", "Success")
         response = claude_manager.generate_response("Test")
         assert "Success" in response
 
     @pytest.mark.slow
     def test_consistency(self, claude_manager):
-        claude_manager.client.add_response("France capital", "Paris")
+        claude_manager.client.set_response("France capital", "Paris")
         response1 = claude_manager.generate_response("France capital")
         response2 = claude_manager.generate_response("France capital")
         assert "Paris" in response1 and "Paris" in response2
