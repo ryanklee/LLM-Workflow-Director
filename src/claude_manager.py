@@ -46,17 +46,13 @@ class ClaudeManager:
         return Anthropic()
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
-    def generate_response(self, prompt):
+    def generate_response(self, prompt, model=None):
         if not isinstance(prompt, str):
             raise ValueError("Invalid prompt: must be a string")
         if len(prompt) > self.max_test_tokens:
             raise ValueError(f"Invalid prompt length: exceeds {self.max_test_tokens} tokens")
         if not prompt.strip():
             raise ValueError("Invalid prompt: cannot be empty or only whitespace")
-        if not isinstance(prompt, str):
-            raise ValueError("Invalid prompt: must be a string")
-        if len(prompt) > self.max_test_tokens:
-            raise ValueError(f"Invalid prompt length: exceeds {self.max_test_tokens} tokens")
 
         try:
             response = self.messages.create(
