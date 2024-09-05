@@ -56,13 +56,13 @@ class ClaudeManager:
 
         try:
             response = self.messages.create(
-                model=self.select_model(prompt),
+                model=self.select_model(prompt) if model is None else model,
                 max_tokens=self.max_test_tokens,
                 messages=[
                     {"role": "user", "content": prompt}
                 ]
             )
-            return self.parse_response(response['content'][0]['text'])
+            return self.parse_response(response.content[0].text)
         except Exception as e:
             self.logger.error(f"Error in generate_response: {str(e)}")
             if isinstance(e, NotFoundError):
