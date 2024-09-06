@@ -26,7 +26,7 @@ class ClaudeManager:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=4, max=10),
-        retry=retry_if_exception_type((APIError, APIConnectionError, RateLimitError)),
+        retry=retry_if_exception_type((APIError, APIConnectionError)),
         reraise=True
     )
     def generate_response(self, prompt, model=None):

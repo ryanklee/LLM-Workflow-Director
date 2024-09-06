@@ -1,9 +1,8 @@
 import pytest
 from pytest_benchmark.fixture import BenchmarkFixture
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from src.claude_manager import ClaudeManager
 from src.llm_manager import LLMManager
-import anthropic
 
 @pytest.fixture
 def claude_manager():

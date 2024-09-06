@@ -41,10 +41,9 @@ def test_llm_manager_query(mock_anthropic, mock_client, llm_manager):
     assert isinstance(response, dict)
     assert "Test response" in response.get("response", "")
     mock_update_usage.assert_called_once()
-    assert isinstance(response, dict)
     assert 'response' in response
     assert response['response'] == "Test response"
-    assert all(key in response for key in ['task_progress', 'state_updates', 'actions', 'suggestions', 'response', 'id'])
+    assert all(key in response for key in ['task_progress', 'state_updates', 'actions', 'suggestions', 'response'])
     assert 'id' in response
     mock_anthropic.return_value.messages.create.assert_called_once_with(
         model='claude-3-sonnet-20240229',
