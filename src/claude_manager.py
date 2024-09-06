@@ -63,8 +63,12 @@ class ClaudeManager:
                     {"role": "user", "content": prompt}
                 ]
             )
-            self.token_tracker.add_tokens("generate_response", prompt, response.content[0].text)
-            return self.parse_response(response.content[0].text)
+            if isinstance(response, dict) and 'content' in response:
+                response_text = response['content'][0]['text']
+            else:
+                response_text = response.content[0].text
+            self.token_tracker.add_tokens("generate_response", prompt, response_text)
+            return self.parse_response(response_text)
         except Exception as e:
             self.logger.error(f"Error in generate_response: {str(e)}")
             if isinstance(e, NotFoundError):
