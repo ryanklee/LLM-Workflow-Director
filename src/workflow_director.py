@@ -78,6 +78,7 @@ class WorkflowDirector:
                     continue
             self.state_manager.update_state(f"{stage_name}.{task_name}", "completed")
             self.logger.info(f"Completed task: {task_name} in stage: {stage_name}")
+        self.stage_progress[stage_name] = 1.0
         self.logger.info(f"Executed stage: {stage_name}")
         return True
 
@@ -93,12 +94,12 @@ class WorkflowDirector:
             return False
 
     def transition_to_next_stage(self) -> bool:
-        for transition in self.transitions:
-            if transition['from'] == self.current_stage:
-                if self.evaluate_transition_condition(transition):
-                    self.current_stage = transition['to']
-                    self.logger.info(f"Transitioned to stage: {self.current_stage}")
-                    return True
+        valid_transitions = [t for t in self.transitions if t['from'] == self.current_stage]
+        for transition in valid_transitions:
+            if self.evaluate_transition_condition(transition):
+                self.current_stage = transition['to']
+                self.logger.info(f"Transitioned to stage: {self.current_stage}")
+                return True
         self.logger.info("No valid transition found")
         return False
 
