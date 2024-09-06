@@ -16,7 +16,7 @@ class ClaudeManager:
         self.rate_limiter = RateLimiter(requests_per_minute, requests_per_hour)
         self.token_tracker = TokenTracker()
         self.token_optimizer = TokenOptimizer()
-        self.max_context_length = 100000
+        self.max_context_length = 200000  # Updated to 200k tokens
         self.messages = self.client.messages
 
     def evaluate_response_quality(self, prompt):
