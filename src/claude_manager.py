@@ -37,7 +37,7 @@ class ClaudeManager:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=4, max=10),
-        retry=retry_if_exception_type((APIError, APIConnectionError)),
+        retry=retry_if_exception_type((APIError, APIConnectionError, TimeoutError)),
         reraise=True
     )
     def generate_response(self, prompt, model=None):
@@ -53,8 +53,6 @@ class ClaudeManager:
             prompt = self._truncate_prompt(prompt, self.max_test_tokens)
         if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
             raise ValueError("Invalid prompt: contains potentially sensitive information")
-        if self.count_tokens(prompt) > self.max_context_length:
-            raise ValueError(f"Context overflow: prompt length {self.count_tokens(prompt)} tokens exceeds maximum context length {self.max_context_length}")
         
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         self.logger.debug(f"Using model: {model if model else 'default'}")
@@ -162,20 +160,22 @@ class ClaudeManager:
         self.logger.error(f"Error in generate_response: {str(error)}")
         if isinstance(error, anthropic.NotFoundError):
             return self.fallback_response(prompt, "Model not found")
+        elif isinstance(error, anthropic.RateLimitError):
+            self.logger.warning(f"Rate limit error encountered: {str(error)}")
+            time.sleep(5)
+            return self.fallback_response(prompt, "Rate limit exceeded")
         elif isinstance(error, anthropic.APIError):
-            if "rate_limit" in str(error).lower():
-                self.logger.warning(f"Rate limit error encountered: {str(error)}")
-                time.sleep(5)
-                return self.fallback_response(prompt, "Rate limit exceeded")
-            else:
-                self.logger.error(f"API error: {str(error)}")
-                return self.fallback_response(prompt, "API error")
+            self.logger.error(f"API error: {str(error)}")
+            return self.fallback_response(prompt, "API error")
         elif isinstance(error, anthropic.APIConnectionError):
             self.logger.warning(f"API Connection error encountered: {str(error)}")
             time.sleep(5)
             return self.fallback_response(prompt, "API Connection error")
         elif isinstance(error, ValueError):
             return self.fallback_response(prompt, str(error))
+        elif isinstance(error, TimeoutError):
+            self.logger.warning(f"Timeout error encountered: {str(error)}")
+            return self.fallback_response(prompt, "Request timed out")
         else:
             return self.fallback_response(prompt, "Unknown error")
 

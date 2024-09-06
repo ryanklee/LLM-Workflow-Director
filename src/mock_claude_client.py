@@ -57,6 +57,8 @@ class MockClaudeClient:
         self.call_count = 0
         self.rate_limit_threshold = 5  # Number of calls before rate limiting
         self.last_call_time = 0
+        self.error_count = 0
+        self.max_errors = 3
         self.rate_limit_reset_time = 60  # seconds
 
     def set_response(self, prompt: str, response: str):
