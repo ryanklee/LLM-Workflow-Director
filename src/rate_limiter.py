@@ -2,6 +2,9 @@ import time
 from typing import Dict
 from src.domain_models import RateLimit, RateLimitPolicy
 
+class RateLimitError(Exception):
+    pass
+
 class RateLimiter(RateLimitPolicy):
     def __init__(self, requests_per_minute: int, requests_per_hour: int):
         self.requests_per_minute = requests_per_minute
