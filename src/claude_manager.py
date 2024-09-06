@@ -40,6 +40,10 @@ class ClaudeManager:
         if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
             raise ValueError("Invalid prompt: contains potentially sensitive information")
         
+        total_tokens = token_count
+        if total_tokens > self.max_test_tokens:
+            raise ValueError(f"Total tokens ({total_tokens}) exceeds maximum allowed ({self.max_test_tokens})")
+        
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         self.logger.debug(f"Using model: {model if model else 'default'}")
 
@@ -61,10 +65,14 @@ class ClaudeManager:
         self.logger.error(f"Error in generate_response: {str(error)}")
         if isinstance(error, NotFoundError):
             return self.fallback_response(prompt, "Model not found")
-        elif isinstance(error, APIError) and "rate_limit" in str(error).lower():
-            self.logger.warning(f"Rate limit error encountered: {str(error)}")
-            time.sleep(5)
-            return self.fallback_response(prompt, "Rate limit exceeded")
+        elif isinstance(error, APIError):
+            if "rate_limit" in str(error).lower():
+                self.logger.warning(f"Rate limit error encountered: {str(error)}")
+                time.sleep(5)
+                return self.fallback_response(prompt, "Rate limit exceeded")
+            else:
+                self.logger.error(f"API error: {str(error)}")
+                return self.fallback_response(prompt, "API error")
         elif isinstance(error, APIConnectionError):
             self.logger.warning(f"API Connection error encountered: {str(error)}")
             time.sleep(5)
