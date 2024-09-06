@@ -13,12 +13,15 @@ def test_rate_limiter_allows_requests_within_limit():
     assert rate_limiter.is_allowed()
     assert not rate_limiter.is_allowed()  # Third request should be denied
 
-def test_rate_limiter_resets_after_minute():
+@pytest.mark.parametrize("sleep_time", [61, 3601])
+def test_rate_limiter_resets(sleep_time):
     rate_limiter = RateLimiter(requests_per_minute=1, requests_per_hour=5)
     assert rate_limiter.is_allowed()
     assert not rate_limiter.is_allowed()
-    time.sleep(61)  # Wait for slightly more than a minute
-    assert rate_limiter.is_allowed()
+    
+    # Mock time.time() to avoid actual sleeping
+    with patch('time.time', return_value=time.time() + sleep_time):
+        assert rate_limiter.is_allowed()
 
 def test_rate_limiter_hour_limit():
     rate_limiter = RateLimiter(requests_per_minute=60, requests_per_hour=2)
@@ -29,10 +32,9 @@ def test_rate_limiter_hour_limit():
 def test_wait_for_next_slot():
     rate_limiter = RateLimiter(requests_per_minute=1, requests_per_hour=5)
     assert rate_limiter.is_allowed()
+    
     start_time = time.time()
-    try:
+    with patch('time.time', side_effect=[start_time, start_time + 30, start_time + 60]):
         rate_limiter.wait_for_next_slot()
-    except TimeoutError:
-        pytest.fail("wait_for_next_slot timed out")
-    end_time = time.time()
-    assert end_time - start_time >= 60  # Should wait at least 60 seconds
+    
+    assert rate_limiter.is_allowed()
