@@ -19,7 +19,12 @@ class ClaudeManager:
     def create_client():
         return Anthropic()
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10), retry=retry_if_exception_type(Exception), reraise=True)
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        retry=retry_if_exception_type((APIError, APIConnectionError)),
+        reraise=True
+    )
     def generate_response(self, prompt, model=None):
         if not isinstance(prompt, str) or not prompt.strip():
             raise ValueError("Invalid prompt: must be a non-empty string")
@@ -27,6 +32,9 @@ class ClaudeManager:
             raise ValueError(f"Invalid prompt length: exceeds {self.max_test_tokens} tokens")
         if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
             raise ValueError("Invalid prompt: contains potentially sensitive information")
+        
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        self.logger.debug(f"Using model: {model if model else 'default'}")
 
         try:
             self.rate_limiter.wait_for_next_slot()
@@ -49,6 +57,10 @@ class ClaudeManager:
             self.logger.warning(f"Rate limit error encountered: {str(error)}")
             time.sleep(5)
             return self.fallback_response(prompt, "Rate limit exceeded")
+        elif isinstance(error, APIConnectionError):
+            self.logger.warning(f"API Connection error encountered: {str(error)}")
+            time.sleep(5)
+            return self.fallback_response(prompt, "API Connection error")
         elif isinstance(error, ValueError):
             return self.fallback_response(prompt, str(error))
         else:
@@ -61,11 +73,11 @@ class ClaudeManager:
 
     def select_model(self, task_description):
         if "simple" in task_description.lower():
-            return "claude-3-haiku-20240307"
+            return "claude-2.1"
         elif "complex" in task_description.lower():
-            return "claude-3-opus-20240229"
+            return "claude-2.1"
         else:
-            return "claude-3-sonnet-20240229"
+            return "claude-2.1"
 
     def parse_response(self, response_text):
         truncated_text = response_text[:self.max_test_tokens] + "..." if len(response_text) > self.max_test_tokens else response_text
