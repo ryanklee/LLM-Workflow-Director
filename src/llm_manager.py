@@ -10,6 +10,7 @@ from .error_handler import ErrorHandler
 from pydantic import Field, validator
 from anthropic import Anthropic, NotFoundError, APIError, APIConnectionError
 import itertools
+from .claude_manager import ClaudeManager
 
 def safe_time():
     try:
