@@ -108,7 +108,7 @@ class TestResponseHandling:
 class TestRateLimiting:
     @pytest.mark.fast
     def test_rate_limiting(self, claude_manager):
-        claude_manager.client.messages.create.side_effect = anthropic.APIError("Rate limit exceeded", status_code=429)
+        claude_manager.client.messages.create.side_effect = anthropic.APIError("Rate limit exceeded")
         response = claude_manager.generate_response("Test")
         assert "Rate limit exceeded" in response
         claude_manager.client.messages.create.side_effect = None

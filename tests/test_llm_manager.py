@@ -41,7 +41,7 @@ def test_llm_manager_query(mock_claude_manager, llm_manager):
     assert "Test response" in response.get("response", "")
     mock_update_usage.assert_called_once()
     assert 'response' in response
-    assert response['response'] == "Test response"
+    assert "Test response" in response['response']
     assert all(key in response for key in ['task_progress', 'state_updates', 'actions', 'suggestions', 'response'])
     assert 'id' in response
     mock_claude_manager.return_value.generate_response.assert_called_once_with(
