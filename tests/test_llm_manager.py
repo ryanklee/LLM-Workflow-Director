@@ -42,6 +42,7 @@ def test_llm_manager_query(mock_anthropic, mock_client, llm_manager):
         assert response['response'] == "Test response"
     assert isinstance(response, dict)
     assert all(key in response for key in ['task_progress', 'state_updates', 'actions', 'suggestions', 'response', 'id'])
+    assert 'id' in response
     mock_anthropic.return_value.messages.create.assert_called_once_with(
         model='claude-3-sonnet-20240229',
         max_tokens=4000,
@@ -59,6 +60,7 @@ def test_llm_manager_query_with_error(mock_time, mock_anthropic, mock_client, ll
         with patch.object(llm_manager.cost_optimizer, 'update_usage') as mock_update_usage:
             response = llm_manager.query("Test prompt")
     assert 'error' in response
+    assert "Error querying LLM:" in response["error"]
     assert mock_update_usage.call_count == 3  # One for each tier: powerful, balanced, fast
     mock_update_usage.assert_any_call('fast', ANY, ANY, False)
 
