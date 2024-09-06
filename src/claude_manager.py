@@ -42,11 +42,6 @@ class ClaudeManager:
         if len(prompt) > 10000:  # Add a character limit check
             raise ValueError(f"Invalid prompt length: {len(prompt)} characters exceeds maximum of 10000")
         
-        # Remove redundant check
-        # total_tokens = token_count
-        # if total_tokens > self.max_test_tokens:
-        #     raise ValueError(f"Total tokens ({total_tokens}) exceeds maximum allowed ({self.max_test_tokens})")
-        
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         self.logger.debug(f"Using model: {model if model else 'default'}")
 
@@ -82,6 +77,8 @@ class ClaudeManager:
             return self.fallback_response(prompt, "API Connection error")
         elif isinstance(error, ValueError):
             return self.fallback_response(prompt, str(error))
+        elif isinstance(error, RetryError):
+            return self.fallback_response(prompt, "Rate limit exceeded after multiple retries")
         else:
             return self.fallback_response(prompt, "Unknown error")
 
