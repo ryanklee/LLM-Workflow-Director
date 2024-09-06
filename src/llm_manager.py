@@ -10,7 +10,6 @@ from .error_handler import ErrorHandler
 from pydantic import Field, validator
 from anthropic import Anthropic, NotFoundError, APIError, APIConnectionError
 import itertools
-from .claude_manager import ClaudeManager
 
 def safe_time():
     try:
@@ -125,7 +124,7 @@ class LLMManager:
             self.logger.error(f"Error loading LLM configuration: {str(e)}")
             return {}
 
-    def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: Optional[str] = None) -> Dict[str, Any]:
+    def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: Optional[str] = None, model: Optional[str] = None) -> Dict[str, Any]:
         self.logger.debug(f"Querying LLM with prompt: {prompt[:50]}...")
 
         if tier is None:
@@ -148,7 +147,10 @@ class LLMManager:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
 
-                response = self.claude_manager.generate_response(enhanced_prompt, model=tier_config['model'])
+                if model is None:
+                    model = tier_config['model']
+
+                response = self.claude_manager.generate_response(enhanced_prompt, model=model)
                 result = self._process_response(response, tier, start_time)
                 self.cache[cache_key] = result
                 tokens = len(response.split()) if response else 0

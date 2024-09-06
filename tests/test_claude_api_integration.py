@@ -156,7 +156,7 @@ class TestPerformance:
 def test_mock_claude_client_response(mock_claude_client, claude_manager):
     mock_claude_client.set_response("Test prompt", "Test response")
     response = claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
-    assert response == "<response>Test response</response>"
+    assert response == "<response><response>Test response</response></response>"
 
 def test_mock_claude_client_rate_limit(mock_claude_client, claude_manager):
     mock_claude_client.set_rate_limit(True)

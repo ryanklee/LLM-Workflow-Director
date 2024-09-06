@@ -24,7 +24,7 @@ def test_token_usage_per_query_type(claude_manager: ClaudeManager, benchmark: Be
     
     for query_type, query in query_types.items():
         result = benchmark.pedantic(measure_token_usage, args=(query,), iterations=5, rounds=3)
-        print(f"Token usage for {query_type} query: {result.average:.0f} tokens")
+        print(f"Token usage for {query_type} query: {result:.0f} tokens")
 
 def test_cost_effectiveness_of_models(llm_manager: LLMManager, benchmark: BenchmarkFixture):
     models = ["claude-3-haiku-20240307", "claude-3-sonnet-20240229", "claude-3-opus-20240229"]

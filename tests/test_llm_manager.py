@@ -237,11 +237,12 @@ def test_llm_manager_query_with_tiers_and_models(llm_manager, tier, expected_res
     with patch('anthropic.Anthropic') as mock_anthropic, \
          patch('time.time', side_effect=[0, 1, 2, 3, 4, 5, 6, 7]):  # Mock start and end times
         mock_anthropic.return_value.messages.create.return_value = type('obj', (object,), {'content': [type('obj', (object,), {'text': expected_response})()] })()
-        
+    
         with patch.object(llm_manager.cost_optimizer, 'update_usage'):
             result = llm_manager.query(f"{tier} prompt", tier=tier)
-        
-        assert isinstance(result, dict) and expected_response in result.get("response", "")
+    
+        assert isinstance(result, dict)
+        assert expected_response in str(result.get("response", ""))
         
         mock_anthropic.return_value.messages.create.assert_called_once_with(
             model=ANY,

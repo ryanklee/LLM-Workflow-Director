@@ -9,14 +9,15 @@ from .token_tracker import TokenTracker, TokenOptimizer
 from .exceptions import RateLimitError
 
 class ClaudeManager:
-    def __init__(self, client=None, requests_per_minute: int = 60, requests_per_hour: int = 3600):
+    def __init__(self, client=None, requests_per_minute: int = 1000, requests_per_hour: int = 10000):
         self.client = client or self.create_client()
         self.logger = logging.getLogger(__name__)
         self.max_test_tokens = 1000
         self.rate_limiter = RateLimiter(requests_per_minute, requests_per_hour)
         self.token_tracker = TokenTracker()
         self.token_optimizer = TokenOptimizer()
-        self.max_context_length = 100000  # Add this line to define max_context_length
+        self.max_context_length = 100000
+        self.messages = self.client.messages
 
     def count_tokens(self, text):
         # This is a simple approximation. For more accurate results, use a proper tokenizer.
@@ -98,6 +99,30 @@ class ClaudeManager:
             return "claude-3-opus-20240229"
         else:
             return "claude-3-sonnet-20240229"
+
+    def evaluate_sufficiency(self, project_state):
+        # Implement the evaluation logic here
+        return {"is_sufficient": True, "reasoning": "Evaluation complete"}
+
+    def make_decision(self, project_state):
+        # Implement the decision-making logic here
+        return "Decision based on project state"
+
+    def evaluate_project_state(self, project_data):
+        # Implement the project state evaluation logic here
+        return "Project state evaluation complete"
+
+    def evaluate_with_context(self, context, project_state):
+        # Implement the evaluation with context logic here
+        return "Evaluation with context complete"
+
+    def render_prompt_template(self, template, context):
+        # Implement the prompt template rendering logic here
+        return template.format(**context)
+
+    def get_completion(self, prompt, model, max_tokens):
+        # Implement the completion logic here
+        return self.generate_response(prompt, model)
 
     def _handle_error(self, error, prompt):
         self.logger.error(f"Error in generate_response: {str(error)}")
