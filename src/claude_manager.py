@@ -1,7 +1,7 @@
 import logging
 import json
 import anthropic
-from anthropic import Anthropic, NotFoundError, APIError, APIConnectionError, APIStatusError
+from anthropic import Anthropic, NotFoundError, APIError, APIConnectionError, APIStatusError, RateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, RetryError
 import time
 from .rate_limiter import RateLimiter, RateLimitError
@@ -89,14 +89,13 @@ class ClaudeManager:
         self.logger.error(f"Error in generate_response: {str(error)}")
         if isinstance(error, NotFoundError):
             return self.fallback_response(prompt, "Model not found")
-        elif isinstance(error, APIError) or isinstance(error, APIStatusError):
-            if "rate_limit" in str(error).lower():
-                self.logger.warning(f"Rate limit error encountered: {str(error)}")
-                time.sleep(5)
-                return self.fallback_response(prompt, "Rate limit exceeded")
-            else:
-                self.logger.error(f"API error: {str(error)}")
-                return self.fallback_response(prompt, f"API error: {str(error)}")
+        elif isinstance(error, RateLimitError):
+            self.logger.warning(f"Rate limit error encountered: {str(error)}")
+            time.sleep(5)
+            return self.fallback_response(prompt, "Rate limit exceeded")
+        elif isinstance(error, (APIError, APIStatusError)):
+            self.logger.error(f"API error: {str(error)}")
+            return self.fallback_response(prompt, f"API error: {str(error)}")
         elif isinstance(error, APIConnectionError):
             self.logger.warning(f"API Connection error encountered: {str(error)}")
             time.sleep(5)
@@ -106,10 +105,7 @@ class ClaudeManager:
         elif isinstance(error, RetryError):
             return self.fallback_response(prompt, "Rate limit exceeded after multiple retries")
         elif isinstance(error, TypeError):
-            if "missing 2 required keyword-only arguments: 'response' and 'body'" in str(error):
-                return self.fallback_response(prompt, "API response format error")
-            else:
-                return self.fallback_response(prompt, f"TypeError: {str(error)}")
+            return self.fallback_response(prompt, f"TypeError: {str(error)}")
         else:
             return self.fallback_response(prompt, f"Unknown error: {str(error)}")
 

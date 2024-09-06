@@ -35,7 +35,6 @@ class WorkflowDirector:
         self.user_interaction_handler = user_interaction_handler or UserInteractionHandler()
         self.config = self.load_config(config_path)
         self.error_handler = ErrorHandler()
-        self.error_handler = ErrorHandler()
         self.current_stage = self.config['stages'][0]['name'] if self.config['stages'] else "Default Stage"
         self.stages = {stage['name']: stage for stage in self.config['stages']}
         self.transitions = self.config['transitions']
