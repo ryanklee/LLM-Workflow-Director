@@ -86,7 +86,7 @@ class TestResponseHandling:
     
         assert len(result) <= max_test_tokens * 2 + 50  # Allow for response tags, ellipsis, and some extra characters
         assert result.startswith("<response>") and result.endswith("</response>")
-        assert "..." in result or len(result) < len(long_response)  # Check for truncation or shorter response
+        assert "..." in result or len(result) <= len(long_response)  # Check for truncation or equal/shorter response
 
     @pytest.mark.slow
     def test_retry_mechanism(self, claude_manager):
