@@ -51,8 +51,8 @@ def test_optimization_strategies(claude_manager: ClaudeManager, benchmark: Bench
     
     def measure_token_efficiency(query):
         response = claude_manager.generate_response(query)
-        tokens = claude_manager.count_tokens(query + response)
-        return len(response) / tokens  # characters per token
+        tokens = claude_manager.count_tokens(query + str(response))
+        return len(str(response)) / tokens  # characters per token
     
     for strategy, query in strategies.items():
         result = benchmark.pedantic(measure_token_efficiency, args=(query,), iterations=5, rounds=3)

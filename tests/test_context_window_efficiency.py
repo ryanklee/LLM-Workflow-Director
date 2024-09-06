@@ -37,8 +37,7 @@ def test_response_time_vs_context_size(claude_manager: ClaudeManager, benchmark:
     def measure_response_time(size):
         context = "a" * size
         prompt = f"Summarize the following text in one sentence: {context}"
-        with patch.object(claude_manager.messages, 'create') as mock_create:
-            mock_create.return_value.content = [anthropic.types.ContentBlock(text="Test response", type="text")]
+        with patch.object(claude_manager, 'generate_response', return_value="Test response"):
             return benchmark.pedantic(claude_manager.generate_response, args=(prompt,), iterations=3, rounds=1)
 
     for size in context_sizes:
