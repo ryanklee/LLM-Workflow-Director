@@ -37,6 +37,10 @@ def test_llm_manager_query(mock_anthropic, mock_client, llm_manager):
         with patch.object(llm_manager.cost_optimizer, 'update_usage') as mock_update_usage:
             with patch('time.time', side_effect=[0, 1]):
                 response = llm_manager.query("Test prompt")
+        
+    assert isinstance(response, dict)
+    assert "Test response" in response.get("response", "")
+    mock_update_usage.assert_called_once()
         assert isinstance(response, dict)
         assert 'response' in response
         assert response['response'] == "Test response"
