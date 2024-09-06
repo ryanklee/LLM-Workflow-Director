@@ -19,6 +19,13 @@ class ClaudeManager:
         self.max_context_length = 100000
         self.messages = self.client.messages
 
+    def evaluate_response_quality(self, prompt):
+        # Implement the evaluation logic here
+        # This is a placeholder implementation
+        response = self.generate_response(prompt)
+        # You might want to implement a more sophisticated evaluation method
+        return len(response) / 100  # Simple quality metric based on response length
+
     def count_tokens(self, text):
         # This is a simple approximation. For more accurate results, use a proper tokenizer.
         return len(text)

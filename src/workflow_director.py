@@ -5,6 +5,7 @@ import sys
 import os
 from typing import Dict, Any, List
 from datetime import datetime
+from .error_handler import ErrorHandler
 
 # Add the project root directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -33,6 +34,7 @@ class WorkflowDirector:
         self.llm_manager = llm_manager or LLMManager()
         self.user_interaction_handler = user_interaction_handler or UserInteractionHandler()
         self.config = self.load_config(config_path)
+        self.error_handler = ErrorHandler()
         self.current_stage = self.config['stages'][0]['name'] if self.config['stages'] else "Default Stage"
         self.stages = {stage['name']: stage for stage in self.config['stages']}
         self.transitions = self.config['transitions']
