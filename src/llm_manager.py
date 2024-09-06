@@ -140,7 +140,19 @@ class LLMManager:
         cache_key = self._generate_cache_key(prompt, context, tier)
         if cache_key in self.cache:
             self.logger.info(f"Using cached response for prompt: {prompt[:50]}... (tier: {tier})")
-            return self.cache[cache_key]
+            cached_result = self.cache[cache_key]
+            # Ensure the cached result has all expected fields
+            if 'response' not in cached_result:
+                cached_result['response'] = "Cached response"
+            if 'task_progress' not in cached_result:
+                cached_result['task_progress'] = 0
+            if 'state_updates' not in cached_result:
+                cached_result['state_updates'] = {}
+            if 'actions' not in cached_result:
+                cached_result['actions'] = []
+            if 'suggestions' not in cached_result:
+                cached_result['suggestions'] = []
+            return cached_result
 
         max_retries = 3
         start_time = safe_time()
@@ -189,6 +201,10 @@ class LLMManager:
         if 'response' not in response_with_id or not response_with_id['response']:
             response_with_id['response'] = response_content or "No response content"
         elif isinstance(response_with_id['response'], MagicMock):
+            response_with_id['response'] = str(response_with_id['response'])
+        
+        # Ensure 'response' is always a string
+        if isinstance(response_with_id['response'], dict):
             response_with_id['response'] = str(response_with_id['response'])
 
         return response_with_id
@@ -470,6 +486,7 @@ class LLMManager:
             "error": "All LLM tiers failed. Using fallback response.",
             "id": f"(ID: {random.randint(1, 10**16)})",
             "actions": [],
-            "suggestions": [],
-            "state_updates": {}
+            "suggestions": ["Please try rephrasing your query.", "Check your internet connection.", "Contact support if the issue persists."],
+            "state_updates": {},
+            "task_progress": 0
         }
