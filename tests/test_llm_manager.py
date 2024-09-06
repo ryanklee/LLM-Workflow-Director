@@ -33,6 +33,7 @@ def test_llm_manager_initialization(llm_manager):
 def test_llm_manager_query(mock_anthropic, mock_client, llm_manager):
     mock_response = type('obj', (object,), {'content': [type('obj', (object,), {'text': "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response"})]})()
     mock_anthropic.return_value.messages.create.return_value = mock_response
+    mock_anthropic.return_value.messages.create.side_effect = [mock_response] * 10  # Provide multiple responses
     with patch.object(llm_manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
         with patch.object(llm_manager.cost_optimizer, 'update_usage') as mock_update_usage:
             with patch('time.time', side_effect=[0, 1]):
@@ -124,7 +125,9 @@ def test_llm_manager_get_optimization_suggestion(llm_manager):
 ])
 def test_llm_manager_query_with_tiers(llm_manager, tier, expected_response):
     with patch('anthropic.Anthropic') as mock_anthropic:
-        mock_anthropic.return_value.create.return_value = type('obj', (object,), {'content': [type('obj', (object,), {'text': expected_response})]})()
+        mock_response = type('obj', (object,), {'content': [type('obj', (object,), {'text': expected_response})]})()
+        mock_anthropic.return_value.messages.create.return_value = mock_response
+        mock_anthropic.return_value.messages.create.side_effect = [mock_response] * 10  # Provide multiple responses
         
         result = llm_manager.query(f"{tier} prompt", tier=tier)
         

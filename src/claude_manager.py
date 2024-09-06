@@ -26,14 +26,17 @@ class ClaudeManager:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=4, max=10),
-        retry=retry_if_exception_type((APIError, APIConnectionError)),
+        retry=retry_if_exception_type((APIError, APIConnectionError, RateLimitError)),
         reraise=True
     )
     def generate_response(self, prompt, model=None):
+        if not self.rate_limiter.is_allowed():
+            raise RateLimitError("Rate limit exceeded")
         if not isinstance(prompt, str) or not prompt.strip():
             raise ValueError("Invalid prompt: must be a non-empty string")
-        if self.count_tokens(prompt) > self.max_test_tokens:
-            raise ValueError(f"Invalid prompt length: exceeds {self.max_test_tokens} tokens")
+        token_count = self.count_tokens(prompt)
+        if token_count > self.max_test_tokens:
+            raise ValueError(f"Invalid prompt length: {token_count} tokens exceeds maximum of {self.max_test_tokens}")
         if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
             raise ValueError("Invalid prompt: contains potentially sensitive information")
         
@@ -85,7 +88,8 @@ class ClaudeManager:
             return "claude-3-sonnet-20240229"
 
     def parse_response(self, response_text):
-        truncated_text = response_text[:self.max_test_tokens - 21] + "..." if len(response_text) > self.max_test_tokens - 21 else response_text
+        max_length = self.max_test_tokens - 21
+        truncated_text = response_text[:max_length] + "..." if len(response_text) > max_length else response_text
         return f"<response>{truncated_text.strip()}</response>"
 
     def _extract_response_text(self, response):
