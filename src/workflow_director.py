@@ -84,6 +84,7 @@ class WorkflowDirector:
                     self.logger.error(f"Error evaluating condition for task {task_name}: {str(e)}")
                     should_execute = False
             
+            # Always update the state, regardless of whether the task is executed or skipped
             self.state_manager.update_state(f"{stage_name}.{task_name}", "completed" if should_execute else "skipped")
             if should_execute:
                 self.logger.info(f"Completed task: {task_name} in stage: {stage_name}")
@@ -132,7 +133,8 @@ class WorkflowDirector:
         try:
             state = self.state_manager.get_state()
             result = eval(condition, {"state": state})
-            self.logger.debug(f"Evaluated condition: {condition} = {result}")
+            debug_message = f"Evaluated condition: {condition} = {result}"
+            self.logger.debug(debug_message)
             return bool(result)
         except KeyError as e:
             self.logger.warning(f"Condition evaluation failed due to missing key: {e}")
