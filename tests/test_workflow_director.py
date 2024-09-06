@@ -460,9 +460,10 @@ def test_execute_stage_with_condition(workflow_director, mock_state_manager):
     workflow_director.stages = workflow_director.config["stages"]
     result = workflow_director.execute_stage("Project Initialization")
     assert result == True
-    assert mock_state_manager.update_state.call_count == 2
+    assert mock_state_manager.update_state.call_count == 3
     mock_state_manager.update_state.assert_any_call("Project Initialization.Create project directory", "completed")
     mock_state_manager.update_state.assert_any_call("Project Initialization.Initialize git repository", "completed")
+    mock_state_manager.update_state.assert_any_call("Project Initialization.Setup virtual environment", "skipped")
     workflow_director.logger.info.assert_called_with("Executed stage: Project Initialization")
 
 def test_execute_stage_with_error(workflow_director, mock_state_manager):
@@ -529,27 +530,33 @@ def test_execute_stage(workflow_director, mock_state_manager, mock_logger):
         }
     ]
     mock_state_manager.get_state.return_value = {"flag": True}
-        
+    
     assert workflow_director.execute_stage("Test Stage") == True
     mock_state_manager.update_state.assert_any_call("Test Stage.Task 1", "completed")
     mock_state_manager.update_state.assert_any_call("Test Stage.Task 2", "completed")
-    assert mock_state_manager.update_state.call_count == 2
+    mock_state_manager.update_state.assert_any_call("Test Stage.Task 3", "skipped")
+    assert mock_state_manager.update_state.call_count == 3
     mock_logger.info.assert_called_with("Executed stage: Test Stage")
     mock_logger.info.assert_any_call("Completed task: Task 1 in stage: Test Stage")
     mock_logger.info.assert_any_call("Completed task: Task 2 in stage: Test Stage")
+    mock_logger.info.assert_any_call("Skipped task: Task 3 in stage: Test Stage due to condition")
 
-def test_evaluate_transition_condition(workflow_director, mock_state_manager):
+def test_evaluate_transition_condition(workflow_director, mock_state_manager, mock_logger):
+    workflow_director.logger = mock_logger
     mock_state_manager.get_state.return_value = {"flag": True}
     transition_with_condition = {"condition": "state.get('flag', False)"}
     transition_without_condition = {}
 
     result = workflow_director.evaluate_transition_condition(transition_with_condition)
     assert result == True, f"Expected True, got {result}. State: {mock_state_manager.get_state.return_value}"
+    mock_logger.debug.assert_called_with("Evaluated transition condition: state.get('flag', False) = True")
+
     assert workflow_director.evaluate_transition_condition(transition_without_condition) == True
 
     # Test with missing key
     mock_state_manager.get_state.return_value = {}
     assert workflow_director.evaluate_transition_condition(transition_with_condition) == False
+    mock_logger.warning.assert_called_with("Transition condition evaluation failed due to missing key: 'flag'")
 
     # Reset mock_state_manager for other tests
     mock_state_manager.get_state.return_value = {}
