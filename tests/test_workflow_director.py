@@ -25,7 +25,12 @@ from src.main import cli
 def test_workflow_director_initialization():
     director = WorkflowDirector()
     assert hasattr(director, 'state_manager')
+    assert hasattr(director, 'claude_manager')
     assert hasattr(director, 'llm_manager')
+    assert hasattr(director, 'user_interaction_handler')
+    assert hasattr(director, 'error_handler')
+    assert hasattr(director, 'config')
+    assert hasattr(director, 'current_stage')
     assert hasattr(director, 'stages')
     assert hasattr(director, 'transitions')
     assert hasattr(director, 'logger')
@@ -99,25 +104,34 @@ def test_workflow_director_can_transition_to(mock_workflow_director):
     assert not mock_workflow_director.can_transition_to("Non-existent Stage")
 
 def test_workflow_director_transition_to(mock_workflow_director, mocker):
-    mocker.patch.object(mock_workflow_director.sufficiency_evaluator, 'evaluate_stage_sufficiency', return_value={'is_sufficient': True, 'reasoning': 'All tasks completed'})
-    assert mock_workflow_director.transition_to("Requirements Gathering")
-    assert not mock_workflow_director.transition_to("Non-existent Stage")
+    mocker.patch.object(mock_workflow_director, 'evaluate_transition_condition', return_value=True)
+    assert mock_workflow_director.transition_to_next_stage()
+    assert not mock_workflow_director.transition_to_next_stage()  # Assuming no more valid transitions
 
 def test_workflow_director_move_to_next_stage(mock_workflow_director):
+    initial_stage = mock_workflow_director.current_stage
     assert mock_workflow_director.move_to_next_stage()
+    assert mock_workflow_director.current_stage != initial_stage
+    # Assuming "Requirements Gathering" is the second stage
     assert mock_workflow_director.current_stage == "Requirements Gathering"
 
 @pytest.mark.fast
-def test_workflow_director_complete_current_stage(mocker):
+def test_workflow_director_execute_stage(mocker):
     director = WorkflowDirector()
-    mocker.patch.object(director.sufficiency_evaluator, 'evaluate_stage_sufficiency', return_value={'is_sufficient': True, 'reasoning': 'All tasks completed'})
-    director.current_stage = "Requirements Gathering"
-    director.state_manager.set("requirements_documented", True)
-    result = director.complete_current_stage()
-    assert result == True, "Expected complete_current_stage to return True"
-    assert director.current_stage == "Domain Modeling"
-    assert director.state_manager.get("requirements_gathering_completed") == True
-    assert director.is_stage_completed("Requirements Gathering") == True
+    mocker.patch.object(director, 'get_stage_by_name', return_value={
+        'name': 'Requirements Gathering',
+        'tasks': {
+            'Document requirements': {},
+            'Review requirements': {'condition': "state.get('requirements_documented', False)"}
+        }
+    })
+    mocker.patch.object(director.state_manager, 'get_state', return_value={'requirements_documented': True})
+    mocker.patch.object(director.state_manager, 'update_state')
+
+    result = director.execute_stage("Requirements Gathering")
+    assert result == True, "Expected execute_stage to return True"
+    director.state_manager.update_state.assert_any_call("Requirements Gathering.Document requirements", "completed")
+    director.state_manager.update_state.assert_any_call("Requirements Gathering.Review requirements", "completed")
 
 def test_workflow_director_get_workflow_status(mock_workflow_director):
     status = mock_workflow_director.get_workflow_status()
