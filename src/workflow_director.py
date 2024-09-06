@@ -74,8 +74,12 @@ class WorkflowDirector:
         for task_name, task in stage['tasks'].items():
             if 'condition' in task:
                 state = self.state_manager.get_state()
-                if not eval(task['condition'], {"state": state}):
-                    self.logger.info(f"Skipped task: {task_name} in stage: {stage_name} due to condition")
+                try:
+                    if not eval(task['condition'], {"state": state}):
+                        self.logger.info(f"Skipped task: {task_name} in stage: {stage_name} due to condition")
+                        continue
+                except KeyError as e:
+                    self.logger.warning(f"Condition evaluation failed due to missing key: {e}")
                     continue
             self.state_manager.update_state(f"{stage_name}.{task_name}", "completed")
             self.logger.info(f"Completed task: {task_name} in stage: {stage_name}")
@@ -92,6 +96,9 @@ class WorkflowDirector:
             condition_result = eval(transition['condition'], {"state": state})
             self.logger.debug(f"Evaluated transition condition: {transition['condition']} = {condition_result}")
             return bool(condition_result)
+        except KeyError as e:
+            self.logger.warning(f"Transition condition evaluation failed due to missing key: {e}")
+            return False
         except Exception as e:
             self.logger.error(f"Error evaluating transition condition: {str(e)}")
             return False
@@ -108,6 +115,9 @@ class WorkflowDirector:
         self.logger.info("No valid transition found")
         return False
 
+    def can_transition_to(self, next_stage):
+        return any(t['to'] == next_stage for t in self.transitions if t['from'] == self.current_stage)
+
     def is_workflow_complete(self) -> bool:
         return self.current_stage == self.stages[-1]['name']
 
@@ -117,6 +127,9 @@ class WorkflowDirector:
             result = eval(condition, {"state": state})
             self.logger.debug(f"Evaluated condition: {condition} = {result}")
             return bool(result)
+        except KeyError as e:
+            self.logger.warning(f"Condition evaluation failed due to missing key: {e}")
+            return False
         except Exception as e:
             self.logger.error(f"Error evaluating condition '{condition}': {str(e)}")
             return False

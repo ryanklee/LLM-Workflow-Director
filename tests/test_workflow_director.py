@@ -106,10 +106,11 @@ def test_workflow_director_can_transition_to(mock_workflow_director):
 def test_workflow_director_transition_to(mock_workflow_director, mocker):
     mock_workflow_director.transitions = [
         {"from": "Stage 1", "to": "Stage 2"},
-        {"from": "Stage 2", "to": "Stage 3", "condition": "state['flag']"}
+        {"from": "Stage 2", "to": "Stage 3", "condition": "state.get('flag', False)"}
     ]
     mock_workflow_director.current_stage = "Stage 1"
     mocker.patch.object(mock_workflow_director, 'evaluate_condition', return_value=True)
+    mocker.patch.object(mock_workflow_director.state_manager, 'get_state', return_value={"flag": True})
     assert mock_workflow_director.transition_to_next_stage()
     assert mock_workflow_director.current_stage == "Stage 2"
     assert mock_workflow_director.transition_to_next_stage()
@@ -446,8 +447,8 @@ def test_execute_stage_with_condition(workflow_director, mock_state_manager):
                 "name": "Project Initialization",
                 "tasks": {
                     "Create project directory": {},
-                    "Initialize git repository": {"condition": "state['feature_flag']"},
-                    "Setup virtual environment": {"condition": "not state['feature_flag']"}
+                    "Initialize git repository": {"condition": "state.get('feature_flag', False)"},
+                    "Setup virtual environment": {"condition": "not state.get('feature_flag', False)"}
                 }
             }
         ]
@@ -518,13 +519,13 @@ def test_execute_stage(workflow_director, mock_state_manager, mock_logger):
             "name": "Test Stage",
             "tasks": {
                 "Task 1": {},
-                "Task 2": {"condition": "state['flag']"},
-                "Task 3": {"condition": "not state['flag']"}
+                "Task 2": {"condition": "state.get('flag', False)"},
+                "Task 3": {"condition": "not state.get('flag', False)"}
             }
         }
     ]
     mock_state_manager.get_state.return_value = {"flag": True}
-    
+        
     assert workflow_director.execute_stage("Test Stage") == True
     mock_state_manager.update_state.assert_any_call("Test Stage.Task 1", "completed")
     mock_state_manager.update_state.assert_any_call("Test Stage.Task 2", "completed")
@@ -535,11 +536,15 @@ def test_execute_stage(workflow_director, mock_state_manager, mock_logger):
 
 def test_evaluate_transition_condition(workflow_director, mock_state_manager):
     mock_state_manager.get_state.return_value = {"flag": True}
-    transition_with_condition = {"condition": "state['flag']"}
+    transition_with_condition = {"condition": "state.get('flag', False)"}
     transition_without_condition = {}
     
     assert workflow_director.evaluate_transition_condition(transition_with_condition) == True
     assert workflow_director.evaluate_transition_condition(transition_without_condition) == True
+    
+    # Test with missing key
+    mock_state_manager.get_state.return_value = {}
+    assert workflow_director.evaluate_transition_condition(transition_with_condition) == False
 
 @pytest.fixture
 def mock_logger():
@@ -566,14 +571,17 @@ def test_evaluate_condition(workflow_director, mock_state_manager, mock_logger):
     workflow_director.logger = mock_logger
     mock_state_manager.get_state.return_value = {"flag": True, "count": 5}
     
-    assert workflow_director.evaluate_condition("state['flag']") == True
-    mock_logger.debug.assert_called_with("Evaluated condition: state['flag'] = True")
+    assert workflow_director.evaluate_condition("state.get('flag', False)") == True
+    mock_logger.debug.assert_called_with("Evaluated condition: state.get('flag', False) = True")
     
-    assert workflow_director.evaluate_condition("state['count'] > 3") == True
-    mock_logger.debug.assert_called_with("Evaluated condition: state['count'] > 3 = True")
+    assert workflow_director.evaluate_condition("state.get('count', 0) > 3") == True
+    mock_logger.debug.assert_called_with("Evaluated condition: state.get('count', 0) > 3 = True")
     
-    assert workflow_director.evaluate_condition("state['count'] < 3") == False
-    mock_logger.debug.assert_called_with("Evaluated condition: state['count'] < 3 = False")
+    assert workflow_director.evaluate_condition("state.get('count', 0) < 3") == False
+    mock_logger.debug.assert_called_with("Evaluated condition: state.get('count', 0) < 3 = False")
+    
+    assert workflow_director.evaluate_condition("state.get('missing_key', False)") == False
+    mock_logger.warning.assert_called_with("Condition evaluation failed due to missing key: 'missing_key'")
     
     assert workflow_director.evaluate_condition("invalid_condition") == False
     mock_logger.error.assert_called_with("Error evaluating condition 'invalid_condition': name 'invalid_condition' is not defined")
