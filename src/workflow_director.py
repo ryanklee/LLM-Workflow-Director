@@ -72,7 +72,7 @@ class WorkflowDirector:
         if not stage:
             return False
         for task_name, task in stage['tasks'].items():
-            if 'condition' in task:
+            if isinstance(task, dict) and 'condition' in task:
                 state = self.state_manager.get_state()
                 try:
                     if not eval(task['condition'], {"state": state}):
