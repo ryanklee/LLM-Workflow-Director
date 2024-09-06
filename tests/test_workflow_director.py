@@ -496,6 +496,61 @@ def test_is_workflow_complete(workflow_director, mock_state_manager, current_sta
     workflow_director.current_stage = current_stage
     assert workflow_director.is_workflow_complete() == is_complete
 
+def test_get_stage_by_name(workflow_director):
+    workflow_director.stages = [
+        {"name": "Project Initialization"},
+        {"name": "Requirements Gathering"},
+    ]
+    assert workflow_director.get_stage_by_name("Project Initialization") == {"name": "Project Initialization"}
+    assert workflow_director.get_stage_by_name("Non-existent Stage") is None
+
+def test_execute_stage(workflow_director, mock_state_manager):
+    workflow_director.stages = [
+        {
+            "name": "Test Stage",
+            "tasks": {
+                "Task 1": {},
+                "Task 2": {"condition": "state['flag']"},
+                "Task 3": {"condition": "not state['flag']"}
+            }
+        }
+    ]
+    mock_state_manager.get_state.return_value = {"flag": True}
+    
+    assert workflow_director.execute_stage("Test Stage") == True
+    mock_state_manager.update_state.assert_any_call("Test Stage.Task 1", "completed")
+    mock_state_manager.update_state.assert_any_call("Test Stage.Task 2", "completed")
+    assert mock_state_manager.update_state.call_count == 2
+
+def test_evaluate_transition_condition(workflow_director, mock_state_manager):
+    mock_state_manager.get_state.return_value = {"flag": True}
+    transition_with_condition = {"condition": "state['flag']"}
+    transition_without_condition = {}
+    
+    assert workflow_director.evaluate_transition_condition(transition_with_condition) == True
+    assert workflow_director.evaluate_transition_condition(transition_without_condition) == True
+
+def test_transition_to_next_stage(workflow_director):
+    workflow_director.current_stage = "Stage 1"
+    workflow_director.transitions = [
+        {"from": "Stage 1", "to": "Stage 2"},
+        {"from": "Stage 2", "to": "Stage 3", "condition": "False"}
+    ]
+    
+    assert workflow_director.transition_to_next_stage() == True
+    assert workflow_director.current_stage == "Stage 2"
+    
+    assert workflow_director.transition_to_next_stage() == False
+    assert workflow_director.current_stage == "Stage 2"
+
+def test_evaluate_condition(workflow_director, mock_state_manager):
+    mock_state_manager.get_state.return_value = {"flag": True, "count": 5}
+    
+    assert workflow_director.evaluate_condition("state['flag']") == True
+    assert workflow_director.evaluate_condition("state['count'] > 3") == True
+    assert workflow_director.evaluate_condition("state['count'] < 3") == False
+    assert workflow_director.evaluate_condition("invalid_condition") == False
+
 def test_execute_stage_with_condition(workflow_director, mock_state_manager):
     mock_state_manager.get_state.return_value = {"feature_flag": True}
     workflow_director.config = {
