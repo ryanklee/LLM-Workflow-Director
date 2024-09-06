@@ -18,3 +18,9 @@ class StateManager:
 
     def get_all(self):
         return self.vector_store.GetAll()
+
+    def get_state(self):
+        return self.get_all()
+
+    def update_state(self, key, value):
+        self.set(key, value)
