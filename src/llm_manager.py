@@ -156,6 +156,7 @@ class LLMManager:
 
                 response = self.claude_manager.generate_response(enhanced_prompt, model=model)
                 result = self._process_response(response, tier, start_time)
+                result['raw_response'] = response  # Add this line to include the raw response
                 self.cache[cache_key] = result
                 tokens = self.count_tokens(response)  # Count tokens of the response, not the prompt
                 self.cost_optimizer.update_usage(tier, tokens, safe_time() - start_time, True)

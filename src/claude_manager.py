@@ -1,7 +1,7 @@
 import logging
 import json
 import anthropic
-from anthropic import Anthropic, NotFoundError, APIError, APIConnectionError
+from anthropic import Anthropic, NotFoundError, APIError, APIConnectionError, ContentBlock
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, RetryError
 import time
 from .rate_limiter import RateLimiter, RateLimitError
