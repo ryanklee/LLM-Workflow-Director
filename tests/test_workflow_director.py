@@ -621,13 +621,13 @@ def test_transition_to_next_stage_no_valid_transition(workflow_director, mock_st
     result = workflow_director.transition_to_next_stage()
     assert result == False
 
-def test_evaluate_transition_condition_invalid_condition(workflow_director, mock_state_manager):
+def test_evaluate_transition_condition_invalid_condition(workflow_director, mock_state_manager, caplog):
     mock_state_manager.get_state.return_value = {}
     transition = {"condition": "invalid_condition"}
     
     result = workflow_director.evaluate_transition_condition(transition)
     assert result == False
-    workflow_director.logger.debug.assert_called_with("Evaluated transition condition: invalid_condition = False")
+    assert "Error evaluating transition condition: name 'invalid_condition' is not defined" in caplog.text
 
 @pytest.mark.parametrize("current_stage,is_complete", [
     ("Project Initialization", False),
