@@ -105,8 +105,14 @@ class ClaudeManager:
         return {"is_sufficient": True, "reasoning": "Evaluation complete"}
 
     def make_decision(self, project_state):
-        # Implement the decision-making logic here
-        return "Decision based on project state"
+        prompt = f"Make decision based on: {project_state}"
+        response = self.generate_response(prompt)
+        return self.parse_decision(response)
+
+    def parse_decision(self, response):
+        # Extract the decision from the response
+        # This is a simple implementation and might need to be adjusted based on the actual response format
+        return response.strip()
 
     def evaluate_project_state(self, project_data):
         # Implement the project state evaluation logic here

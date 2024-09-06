@@ -114,6 +114,9 @@ class LLMManager:
         self.prompt_templates = self.config.get('prompt_templates', {})
         self.claude_manager = self._create_claude_manager()
 
+    def count_tokens(self, text: str) -> int:
+        return self.claude_manager.count_tokens(text)
+
     def _create_claude_manager(self):
         return ClaudeManager()
 
