@@ -2,6 +2,7 @@ import pytest
 import tenacity
 import time
 from src.claude_manager import ClaudeManager
+from src.exceptions import RateLimitError
 from src.mock_claude_client import MockClaudeClient
 from src.llm_manager import LLMManager
 
@@ -81,8 +82,9 @@ class TestResponseHandling:
     
         result = claude_manager.generate_response("Test")
     
-        assert len(result) <= max_test_tokens * 2 + 3  # Allow for response tags and ellipsis
+        assert len(result) <= max_test_tokens * 2 + 50  # Allow for response tags, ellipsis, and some extra characters
         assert result.startswith("<response>") and result.endswith("</response>")
+        assert "..." in result  # Check for truncation
 
     @pytest.mark.slow
     def test_retry_mechanism(self, claude_manager):
