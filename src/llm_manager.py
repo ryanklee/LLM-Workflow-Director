@@ -140,19 +140,7 @@ class LLMManager:
         cache_key = self._generate_cache_key(prompt, context, tier)
         if cache_key in self.cache:
             self.logger.info(f"Using cached response for prompt: {prompt[:50]}... (tier: {tier})")
-            cached_result = self.cache[cache_key]
-            # Ensure the cached result has all expected fields
-            if 'response' not in cached_result:
-                cached_result['response'] = "Cached response"
-            if 'task_progress' not in cached_result:
-                cached_result['task_progress'] = 0
-            if 'state_updates' not in cached_result:
-                cached_result['state_updates'] = {}
-            if 'actions' not in cached_result:
-                cached_result['actions'] = []
-            if 'suggestions' not in cached_result:
-                cached_result['suggestions'] = []
-            return cached_result
+            return self.cache[cache_key]
 
         max_retries = 3
         start_time = safe_time()
@@ -172,17 +160,21 @@ class LLMManager:
                 tokens = self.count_tokens(response)  # Count tokens of the response, not the prompt
                 self.cost_optimizer.update_usage(tier, tokens, safe_time() - start_time, True)
                 return result
-            except Exception as e:
-                self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
-                self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
+            except RateLimitError:
+                self.logger.warning(f"Rate limit reached for tier: {tier}")
                 max_retries -= 1
                 if max_retries == 0:
-                    self.logger.error(f"Max retries reached. Returning error message.")
                     return self._fallback_response(prompt, context, original_tier)
                 tier = self._get_fallback_tier(tier)
                 if tier is None:
                     return self._fallback_response(prompt, context, original_tier)
                 self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
+            except Exception as e:
+                self.logger.error(f"Error querying LLM: {str(e)} (tier: {tier})")
+                self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
+                max_retries -= 1
+                if max_retries == 0:
+                    return self._fallback_response(prompt, context, original_tier)
         
         return self._fallback_response(prompt, context, original_tier)
 

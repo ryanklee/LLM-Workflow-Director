@@ -41,19 +41,8 @@ def test_llm_manager_query(mock_claude_manager, llm_manager):
                 response = llm_manager.query("Test prompt")
 
     assert isinstance(response, dict)
-    assert "Test response" in str(response.get("response", ""))
+    assert "Test response" in response.get("response", "")
     mock_update_usage.assert_called_once()
-    assert 'response' in response
-    assert "Test response" in str(response['response'])
-    assert all(key in response for key in ['task_progress', 'state_updates', 'actions', 'suggestions', 'response'])
-    assert 'id' in response
-    mock_claude_manager.return_value.generate_response.assert_called_once()
-        
-    assert isinstance(response, dict)
-    assert "Test response" in response.get("response", "") or isinstance(response.get("response"), MagicMock)
-    mock_update_usage.assert_called_once()
-    assert 'response' in response
-    assert "Test response" in response['response'] or isinstance(response['response'], MagicMock)
     assert all(key in response for key in ['task_progress', 'state_updates', 'actions', 'suggestions', 'response'])
     assert 'id' in response
     mock_claude_manager.return_value.generate_response.assert_called_once()
@@ -61,6 +50,19 @@ def test_llm_manager_query(mock_claude_manager, llm_manager):
     assert call_args is not None
     assert call_args[1]['model'] == 'claude-3-sonnet-20240229'
     mock_update_usage.assert_called_once_with('balanced', ANY, ANY, True)
+
+def test_llm_manager_query_with_rate_limit(mock_claude_manager, llm_manager):
+    mock_claude_manager.return_value.generate_response.side_effect = [
+        RateLimitError("Rate limit exceeded"),
+        RateLimitError("Rate limit exceeded"),
+        "<response>Test response</response>"
+    ]
+    with patch.object(llm_manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
+        response = llm_manager.query("Test prompt")
+
+    assert isinstance(response, dict)
+    assert "Test response" in response.get("response", "")
+    assert mock_claude_manager.return_value.generate_response.call_count == 3
 
 @pytest.mark.fast
 @patch('src.claude_manager.ClaudeManager')
