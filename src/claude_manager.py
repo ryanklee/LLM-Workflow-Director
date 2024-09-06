@@ -39,6 +39,8 @@ class ClaudeManager:
             raise ValueError(f"Invalid prompt length: {token_count} tokens exceeds maximum of {self.max_test_tokens}")
         if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
             raise ValueError("Invalid prompt: contains potentially sensitive information")
+        if len(prompt) > 10000:  # Add a character limit check
+            raise ValueError(f"Invalid prompt length: {len(prompt)} characters exceeds maximum of 10000")
         
         # Remove redundant check
         # total_tokens = token_count
