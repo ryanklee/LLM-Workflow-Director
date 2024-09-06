@@ -30,10 +30,10 @@ class WorkflowDirector:
         self._setup_logging()
         self.state_manager = state_manager or StateManager()
         self.claude_manager = claude_manager or ClaudeManager()
-        self.llm_manager = llm_manager or self.claude_manager.llm_manager
+        self.llm_manager = llm_manager or LLMManager()
         self.user_interaction_handler = user_interaction_handler or UserInteractionHandler()
         self.config = self.load_config(config_path)
-        self.current_stage = self.config['stages'][0]['name'] if self.config else "Default Stage"
+        self.current_stage = self.config['stages'][0]['name'] if self.config['stages'] else "Default Stage"
         self.stages = {stage['name']: stage for stage in self.config['stages']}
         self.transitions = self.config['transitions']
         self.stage_progress = {stage: 0.0 for stage in self.stages}
@@ -44,7 +44,6 @@ class WorkflowDirector:
         self.documentation_health_checker = DocumentationHealthChecker()
         self.project_structure_manager = ProjectStructureManager()
         self.convention_manager = ConventionManager()
-        self.llm_manager = llm_manager or LLMManager()
         self.sufficiency_evaluator = SufficiencyEvaluator(self.llm_manager)
         self.priority_manager = PriorityManager()
         self.cost_analyzer = CostAnalyzer()

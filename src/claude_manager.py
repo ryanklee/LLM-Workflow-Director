@@ -13,8 +13,8 @@ class ClaudeManager:
         self.messages = self.client.messages
         self.logger = logging.getLogger(__name__)
         self.llm_manager = LLMManager()
-        self.max_test_tokens = 100
-        self.rate_limiter = RateLimiter.from_limits(requests_per_minute, requests_per_hour)
+        self.max_test_tokens = 1000  # Increased from 100 to 1000
+        self.rate_limiter = RateLimiter(requests_per_minute, requests_per_hour)
         self.token_tracker = TokenTracker()
         self.token_optimizer = TokenOptimizer()
 
@@ -55,14 +55,14 @@ class ClaudeManager:
             raise ValueError("Invalid prompt: cannot be empty or only whitespace")
 
         try:
-            with self.rate_limiter:
-                response = self.messages.create(
-                    model=self.select_model(prompt) if model is None else model,
-                    max_tokens=self.max_test_tokens,
-                    messages=[
-                        {"role": "user", "content": prompt}
-                    ]
-                )
+            self.rate_limiter.wait_for_next_slot()
+            response = self.messages.create(
+                model=self.select_model(prompt) if model is None else model,
+                max_tokens=self.max_test_tokens,
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
+            )
             self.token_tracker.add_tokens("generate_response", prompt, response.content[0].text)
             return self.parse_response(response.content[0].text)
         except Exception as e:

@@ -149,30 +149,12 @@ class LLMManager:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
 
-                try:
-                    response = self.llm_client.messages.create(
-                        model=tier_config['model'],
-                        max_tokens=tier_config['max_tokens'],
-                        messages=[{"role": "user", "content": enhanced_prompt}]
-                    )
-                    response_content = response.content[0].text if response.content else ""
-                except (anthropic.NotFoundError, AttributeError) as e:
-                    self.logger.error(f"Error using Claude API: {str(e)}")
-                    return self._fallback_response(prompt, context, tier)
-                    max_retries -= 1
-                    if max_retries > 0:
-                        tier = self._fallback_to_lower_tier(tier)
-                        continue
-                    else:
-                        return self._fallback_response(prompt, context, tier)
-                    tier = self._get_fallback_tier(tier)
-                    if tier is None:
-                        return self._fallback_response(prompt, context, original_tier)
-                    max_retries -= 1
-                    continue
-                except Exception as e:
-                    self.logger.error(f"Error using Claude API: {str(e)}")
-                    raise
+                response = self.llm_client.messages.create(
+                    model=tier_config['model'],
+                    max_tokens=tier_config['max_tokens'],
+                    messages=[{"role": "user", "content": enhanced_prompt}]
+                )
+                response_content = response.content[0].text if response.content else ""
 
                 result = self._process_response(response_content, tier, start_time)
                 self.cache[cache_key] = result
