@@ -177,9 +177,8 @@ def test_evaluate_sufficiency_error(llm_manager):
 
 @pytest.mark.slow
 def test_llm_manager_query_with_context(llm_manager):
-    with patch('anthropic.Anthropic') as mock_anthropic, \
+    with patch.object(llm_manager.claude_manager, 'generate_response', return_value="Test response"), \
          patch('time.time', side_effect=[0, 1]):  # Mock start and end times
-        mock_anthropic.return_value.messages.create.return_value.content = [type('obj', (object,), {'text': "Test response"})()]
         context = {
             "key1": "value1",
             "key2": "value2",

@@ -79,6 +79,7 @@ class WorkflowDirector:
             self.state_manager.update_state(f"{stage_name}.{task_name}", "completed")
             self.logger.info(f"Completed task: {task_name} in stage: {stage_name}")
         self.stage_progress[stage_name] = 1.0
+        self.completed_stages.add(stage_name)
         self.logger.info(f"Executed stage: {stage_name}")
         return True
 
@@ -86,7 +87,8 @@ class WorkflowDirector:
         if 'condition' not in transition:
             return True
         try:
-            condition_result = self.evaluate_condition(transition['condition'])
+            state = self.state_manager.get_state()
+            condition_result = eval(transition['condition'], {"state": state})
             self.logger.debug(f"Evaluated transition condition: {transition['condition']} = {condition_result}")
             return condition_result
         except Exception as e:
@@ -97,7 +99,9 @@ class WorkflowDirector:
         valid_transitions = [t for t in self.transitions if t['from'] == self.current_stage]
         for transition in valid_transitions:
             if self.evaluate_transition_condition(transition):
+                previous_stage = self.current_stage
                 self.current_stage = transition['to']
+                self.completed_stages.add(previous_stage)
                 self.logger.info(f"Transitioned to stage: {self.current_stage}")
                 return True
         self.logger.info("No valid transition found")
