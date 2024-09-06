@@ -51,6 +51,8 @@ class MockClaudeClient:
         self.messages = self
         self.llm_manager = LLMManager()
         self.max_test_tokens = self.llm_manager.config.get('test_settings', {}).get('max_test_tokens', 100)
+        self.call_count = 0
+        self.rate_limit_threshold = 5  # Number of calls before rate limiting
 
     def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
@@ -65,9 +67,12 @@ class MockClaudeClient:
         self.rate_limit_reached = False
         self.error_mode = False
         self.responses = {}
+        self.call_count = 0
 
     def create(self, model: str, max_tokens: int, messages: list) -> Dict[str, Any]:
-        if self.rate_limit_reached:
+        self.call_count += 1
+        
+        if self.rate_limit_reached or self.call_count > self.rate_limit_threshold:
             raise Exception("Rate limit exceeded")
         if self.error_mode:
             raise Exception("API error")
