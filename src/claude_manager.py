@@ -63,8 +63,13 @@ class ClaudeManager:
                     {"role": "user", "content": prompt}
                 ]
             )
-            if isinstance(response, dict) and 'content' in response:
-                response_text = response['content'][0]['text']
+            if isinstance(response, dict):
+                if 'content' in response:
+                    response_text = response['content'][0]['text']
+                elif 'choices' in response and len(response['choices']) > 0:
+                    response_text = response['choices'][0]['message']['content']
+                else:
+                    raise ValueError("Unexpected response structure")
             else:
                 response_text = response.content[0].text
             self.token_tracker.add_tokens("generate_response", prompt, response_text)
@@ -72,15 +77,19 @@ class ClaudeManager:
         except Exception as e:
             self.logger.error(f"Error in generate_response: {str(e)}")
             if isinstance(e, NotFoundError):
-                return self.fallback_response(prompt)
+                return self.fallback_response(prompt, e)
             elif "rate_limit_error" in str(e):
                 self.logger.warning(f"Rate limit error encountered: {str(e)}")
                 time.sleep(5)  # Wait for 5 seconds before retrying
-            raise  # Re-raise the exception to trigger the retry mechanism
+                return self.fallback_response(prompt, e)
+            else:
+                return self.fallback_response(prompt, e)
 
-    def fallback_response(self, prompt):
+    def fallback_response(self, prompt, error=None):
         self.logger.warning(f"Fallback response triggered for prompt: {prompt[:50]}...")
-        return "<response>Fallback response: Unable to process the request at this time. Please try again later.</response>"
+        if error:
+            self.logger.error(f"Error details: {str(error)}")
+        return f"<response>Fallback response: Unable to process the request at this time. Please try again later. Error: {str(error) if error else 'Unknown'}</response>"
 
     def select_model(self, task_description):
         if "simple" in task_description.lower():
