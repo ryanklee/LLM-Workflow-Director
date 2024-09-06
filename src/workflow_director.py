@@ -74,6 +74,7 @@ class WorkflowDirector:
         for task_name, task in stage['tasks'].items():
             if 'condition' in task:
                 if not self.evaluate_condition(task['condition']):
+                    self.logger.info(f"Skipped task: {task_name} in stage: {stage_name} due to condition")
                     continue
             self.state_manager.update_state(f"{stage_name}.{task_name}", "completed")
             self.logger.info(f"Completed task: {task_name} in stage: {stage_name}")
@@ -94,7 +95,7 @@ class WorkflowDirector:
     def transition_to_next_stage(self) -> bool:
         for transition in self.transitions:
             if transition['from'] == self.current_stage:
-                if 'condition' not in transition or self.evaluate_transition_condition(transition):
+                if self.evaluate_transition_condition(transition):
                     self.current_stage = transition['to']
                     self.logger.info(f"Transitioned to stage: {self.current_stage}")
                     return True
@@ -107,8 +108,11 @@ class WorkflowDirector:
     def evaluate_condition(self, condition: str) -> bool:
         try:
             state = self.state_manager.get_state()
-            return eval(condition, {"state": state})
-        except:
+            result = eval(condition, {"state": state})
+            self.logger.debug(f"Evaluated condition: {condition} = {result}")
+            return result
+        except Exception as e:
+            self.logger.error(f"Error evaluating condition '{condition}': {str(e)}")
             return False
 
     def load_config(self, config_path):
