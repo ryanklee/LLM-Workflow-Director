@@ -157,7 +157,7 @@ class LLMManager:
                 response = self.claude_manager.generate_response(enhanced_prompt, model=model)
                 result = self._process_response(response, tier, start_time)
                 self.cache[cache_key] = result
-                tokens = self.count_tokens(enhanced_prompt + result['response'])
+                tokens = self.count_tokens(response)  # Count tokens of the response, not the prompt
                 self.cost_optimizer.update_usage(tier, tokens, safe_time() - start_time, True)
                 return result
             except Exception as e:
@@ -177,7 +177,7 @@ class LLMManager:
     def _process_response(self, response_content: str, tier: str, start_time: float) -> Dict[str, Any]:
         end_time = safe_time()
         response_time = end_time - start_time
-        tokens = len(response_content.split()) if response_content else 0  # Simple token count estimation
+        tokens = self.count_tokens(response_content) if response_content else 0
 
         self.logger.debug(f"Received response from LLM: {response_content[:50]}...")
         structured_response = self._parse_structured_response(response_content)
