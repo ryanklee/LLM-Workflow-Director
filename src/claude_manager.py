@@ -15,6 +15,7 @@ class ClaudeManager:
         self.rate_limiter = RateLimiter(requests_per_minute, requests_per_hour)
         self.token_tracker = TokenTracker()
         self.token_optimizer = TokenOptimizer()
+        self.max_context_length = 100000  # Add this line to define max_context_length
 
     def count_tokens(self, text):
         # This is a simple approximation. For more accurate results, use a proper tokenizer.
@@ -66,8 +67,11 @@ class ClaudeManager:
             response_text = self._extract_response_text(response)
             self.token_tracker.add_tokens("generate_response", prompt, response_text)
             return self.parse_response(response_text)
-        except Exception as e:
+        except (NotFoundError, APIError, APIConnectionError) as e:
             return self._handle_error(e, prompt)
+        except Exception as e:
+            self.logger.error(f"Unexpected error in generate_response: {str(e)}")
+            return self.fallback_response(prompt, "Unexpected error")
 
     def _handle_error(self, error, prompt):
         self.logger.error(f"Error in generate_response: {str(error)}")
