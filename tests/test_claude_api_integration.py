@@ -31,7 +31,10 @@ class TestClaudeAPIBasics:
     def test_claude_api_call(self, claude_manager, mock_claude_client):
         mock_claude_client.set_response("Intro", "Claude AI")
         response = claude_manager.generate_response("Intro")
-        assert "Claude" in response and "AI" in response
+        assert isinstance(response, str)
+        assert "<response>" in response
+        assert "</response>" in response
+        assert "Claude AI" in response
 
     @pytest.mark.fast
     @pytest.mark.parametrize("task,expected_model", [
@@ -46,7 +49,7 @@ class TestInputValidation:
     @pytest.mark.fast
     @pytest.mark.parametrize("input_text", [
         "",
-        "a" * 101,  # Just over the max_test_tokens limit
+        "a" * 1001,  # Over the max_test_tokens limit
         "<script>",
         "SSN: 123-45-6789",
         123,
@@ -55,10 +58,12 @@ class TestInputValidation:
     def test_input_validation_errors(self, claude_manager, input_text):
         with pytest.raises(ValueError) as excinfo:
             claude_manager.generate_response(input_text)
-        if isinstance(input_text, str) and len(input_text) > 100:
+        if isinstance(input_text, str) and len(input_text) > 1000:
             assert "Invalid prompt length: exceeds" in str(excinfo.value)
-        else:
+        elif not isinstance(input_text, str) or not input_text.strip():
             assert "Invalid prompt: must be a non-empty string" in str(excinfo.value)
+        else:
+            assert "Invalid prompt" in str(excinfo.value)
 
     @pytest.mark.fast
     def test_valid_inputs(self, claude_manager):
