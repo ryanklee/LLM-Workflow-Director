@@ -7,11 +7,10 @@ import random
 from typing import Dict, Any, Optional, List
 from unittest.mock import MagicMock
 from .error_handler import ErrorHandler
-from .llm_microservice_client import LLMMicroserviceClient
 from pydantic import Field, validator
-import anthropic
+from anthropic import Anthropic, NotFoundError, APIError, APIConnectionError
 import itertools
-# Remove this line entirely
+from .claude_manager import ClaudeManager
 
 def safe_time():
     try:
@@ -105,7 +104,6 @@ class LLMManager:
         self.error_handler = ErrorHandler()
         self.logger = logging.getLogger(__name__)
         self.cache = {}
-        self.client = LLMMicroserviceClient()
         self.cost_optimizer = LLMCostOptimizer()
         self.config = self._load_config(config_path)
         self.tiers = self.config.get('tiers', {
@@ -113,10 +111,8 @@ class LLMManager:
             'balanced': {'model': 'claude-3-sonnet-20240229', 'max_tokens': 4000},
             'powerful': {'model': 'claude-3-opus-20240229', 'max_tokens': 4000}
         })
-# Remove this comment entirely
-# We are fully committed to using Claude API
         self.prompt_templates = self.config.get('prompt_templates', {})
-        self.llm_client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+        self.claude_manager = ClaudeManager()
 
     def _load_config(self, config_path):
         try:
@@ -149,25 +145,11 @@ class LLMManager:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
 
-                response = self.llm_client.messages.create(
-                    model=tier_config['model'],
-                    max_tokens=tier_config['max_tokens'],
-                    messages=[{"role": "user", "content": enhanced_prompt}]
-                )
-                response_content = response.content[0].text if response.content else ""
-
-                result = self._process_response(response_content, tier, start_time)
+                response = self.claude_manager.generate_response(enhanced_prompt, model=tier_config['model'])
+                result = self._process_response(response, tier, start_time)
                 self.cache[cache_key] = result
-                tokens = len(response_content.split()) if response_content else 0
+                tokens = len(response.split()) if response else 0
                 self.cost_optimizer.update_usage(tier, tokens, safe_time() - start_time, True)
-                return result
-            except anthropic.APIError as e:
-                if e.status_code == 429:
-                    self.logger.warning("Rate limit exceeded. Implementing exponential backoff.")
-                    time.sleep(2 ** (3 - max_retries))  # Exponential backoff
-                    max_retries -= 1
-                    continue
-                result = self._handle_error(prompt, context, tier, e)
                 return result
             except Exception as e:
                 self.logger.warning(f"Error querying LLM: {str(e)} (tier: {tier})")
