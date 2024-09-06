@@ -65,6 +65,9 @@ class WorkflowDirector:
         self.logger.info(f"Estimated cost: ${total_cost:.2f}")
 
     def load_config(self, config_path):
+        if isinstance(config_path, StateManager):
+            # Use a default config path if StateManager is passed
+            config_path = 'src/workflow_config.yaml'
         try:
             with open(config_path, 'r') as config_file:
                 return yaml.safe_load(config_file)
