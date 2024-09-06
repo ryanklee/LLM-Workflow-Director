@@ -44,8 +44,6 @@ class ClaudeManager:
             prompt = self._truncate_prompt(prompt, self.max_test_tokens)
         if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
             raise ValueError("Invalid prompt: contains potentially sensitive information")
-        if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
-            raise ValueError("Invalid prompt: contains potentially sensitive information")
         if self.count_tokens(prompt) > self.max_context_length:
             raise ValueError(f"Context overflow: prompt length {self.count_tokens(prompt)} tokens exceeds maximum context length {self.max_context_length}")
         
