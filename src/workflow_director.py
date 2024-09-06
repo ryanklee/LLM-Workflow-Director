@@ -672,12 +672,14 @@ class WorkflowDirector:
 
     def get_workflow_status(self):
         self.logger.info("Generating workflow status report")
+        current_state = self.state_manager.get_state()
         status = f"Current Stage: {self.current_stage}\n"
         status += f"Completed Stages: {', '.join(self.completed_stages)}\n"
         status += f"Current Stage Progress: {self.stage_progress[self.current_stage]:.2%}\n"
         status += "Available Transitions:\n"
         for transition in self.get_available_transitions():
             status += f"  - {transition['to']}\n"
+        status += f"Current State: {current_state}\n"
         self.logger.debug(f"Workflow status report generated: {status}")
         return status
     def initialize_constraints(self):
