@@ -72,17 +72,24 @@ class WorkflowDirector:
         if not stage:
             return False
         for task_name, task in stage['tasks'].items():
+            should_execute = True
             if isinstance(task, dict) and 'condition' in task:
                 state = self.state_manager.get_state()
                 try:
-                    if not eval(task['condition'], {"state": state}):
-                        self.logger.info(f"Skipped task: {task_name} in stage: {stage_name} due to condition")
-                        continue
+                    should_execute = eval(task['condition'], {"state": state})
                 except KeyError as e:
                     self.logger.warning(f"Condition evaluation failed due to missing key: {e}")
-                    continue
-            self.state_manager.update_state(f"{stage_name}.{task_name}", "completed")
-            self.logger.info(f"Completed task: {task_name} in stage: {stage_name}")
+                    should_execute = False
+                except Exception as e:
+                    self.logger.error(f"Error evaluating condition for task {task_name}: {str(e)}")
+                    should_execute = False
+            
+            if should_execute:
+                self.state_manager.update_state(f"{stage_name}.{task_name}", "completed")
+                self.logger.info(f"Completed task: {task_name} in stage: {stage_name}")
+            else:
+                self.logger.info(f"Skipped task: {task_name} in stage: {stage_name} due to condition")
+            
         self.stage_progress[stage_name] = 1.0
         self.completed_stages.add(stage_name)
         self.logger.info(f"Executed stage: {stage_name}")
