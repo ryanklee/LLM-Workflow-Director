@@ -10,12 +10,7 @@ class RateLimiter(RateLimitPolicy):
         self.requests_per_minute = requests_per_minute
         self.requests_per_hour = requests_per_hour
         self.minute_bucket: Dict[int, int] = {}
-
-    @classmethod
-    def from_limits(cls, requests_per_minute: int, requests_per_hour: int):
-        instance = cls(requests_per_minute, requests_per_hour)
-        instance.hour_bucket: Dict[int, int] = {}
-        return instance
+        self.hour_bucket: Dict[int, int] = {}
 
     def is_allowed(self) -> bool:
         current_minute = int(time.time() / 60)
