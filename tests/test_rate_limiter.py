@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 from src.rate_limiter import RateLimiter
 import time
 
