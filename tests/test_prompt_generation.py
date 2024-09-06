@@ -11,7 +11,7 @@ def test_prompt_template_rendering(claude_manager):
     template = "Hello, {name}! How are you feeling today?"
     context = {"name": "Alice"}
     rendered_prompt = claude_manager.render_prompt_template(template, context)
-    assert rendered_prompt == "Hello, Alice! How are you feeling today!"
+    assert rendered_prompt == "Hello, Alice! How are you feeling today?"
 
 @pytest.mark.parametrize("template,context,expected", [
     ("The capital of {country} is {capital}.", {"country": "France", "capital": "Paris"}, "The capital of France is Paris."),
