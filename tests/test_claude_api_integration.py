@@ -106,11 +106,12 @@ class TestResponseHandling:
 class TestRateLimiting:
     @pytest.mark.fast
     def test_rate_limiting(self, claude_manager):
-        claude_manager.client.set_rate_limit(True)
-        with pytest.raises(RateLimitError) as excinfo:
+        claude_manager.client.messages.create.side_effect = anthropic.APIError("Rate limit exceeded", status_code=429)
+        with pytest.raises(anthropic.APIError) as excinfo:
             claude_manager.generate_response("Test")
         assert "Rate limit exceeded" in str(excinfo.value)
-        claude_manager.client.set_rate_limit(False)
+        claude_manager.client.messages.create.side_effect = None
+        claude_manager.client.messages.create.return_value = MagicMock(content=[MagicMock(text="Test response")])
         response = claude_manager.generate_response("Test")
         assert response is not None
 
@@ -134,7 +135,7 @@ class TestContextManagement:
     def test_context_overflow_handling(self, claude_manager, llm_manager):
         max_tokens = llm_manager.config.get('test_settings', {}).get('max_test_tokens', 100)
         overflow_input = "a" * (max_tokens * 10)  # Ensure it's well over the limit
-        with pytest.raises(ValueError, match="Invalid prompt length"):
+        with pytest.raises(ValueError, match="Prompt length exceeds maximum"):
             claude_manager.generate_response(overflow_input)
 
 class TestPerformance:

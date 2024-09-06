@@ -28,9 +28,8 @@ def test_llm_manager_initialization(llm_manager):
     assert 'sufficiency_evaluation' in llm_manager.prompt_templates
 
 @pytest.mark.fast
-@patch('src.llm_manager.LLMMicroserviceClient')
 @patch('anthropic.Anthropic')
-def test_llm_manager_query(mock_anthropic, mock_client, llm_manager):
+def test_llm_manager_query(mock_anthropic, llm_manager):
     mock_response = type('obj', (object,), {'content': [type('obj', (object,), {'text': "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response"})]})()
     mock_anthropic.return_value.messages.create.return_value = mock_response
     with patch.object(llm_manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
