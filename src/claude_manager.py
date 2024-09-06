@@ -67,6 +67,18 @@ class ClaudeManager:
             self.logger.error(f"Unexpected error in generate_response: {str(e)}")
             return self.fallback_response(prompt, "Unexpected error")
 
+    def _truncate_prompt(self, prompt, max_tokens):
+        words = prompt.split()
+        truncated_prompt = ""
+        current_tokens = 0
+        for word in words:
+            word_tokens = self.count_tokens(word)
+            if current_tokens + word_tokens > max_tokens:
+                break
+            truncated_prompt += word + " "
+            current_tokens += word_tokens
+        return truncated_prompt.strip()
+
     def _handle_error(self, error, prompt):
         self.logger.error(f"Error in generate_response: {str(error)}")
         if isinstance(error, NotFoundError):
