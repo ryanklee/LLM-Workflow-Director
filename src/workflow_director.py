@@ -537,7 +537,7 @@ class WorkflowDirector:
             state = self.state_manager.get_state()
             result = eval(condition, {"state": state})
             self.logger.debug(f"Evaluated condition: {condition} = {result}")
-            return result
+            return bool(result)
         except Exception as e:
             self.logger.error(f"Error evaluating condition '{condition}': {str(e)}")
             return False

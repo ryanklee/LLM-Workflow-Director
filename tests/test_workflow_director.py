@@ -538,8 +538,16 @@ def test_evaluate_transition_condition(workflow_director, mock_state_manager):
     mock_state_manager.get_state.return_value = {"flag": True}
     transition_with_condition = {"condition": "state.get('flag', False)"}
     transition_without_condition = {}
-    
+
     assert workflow_director.evaluate_transition_condition(transition_with_condition) == True
+    assert workflow_director.evaluate_transition_condition(transition_without_condition) == True
+
+    # Test with missing key
+    mock_state_manager.get_state.return_value = {}
+    assert workflow_director.evaluate_transition_condition(transition_with_condition) == False
+
+    # Reset mock_state_manager for other tests
+    mock_state_manager.get_state.return_value = {}
     assert workflow_director.evaluate_transition_condition(transition_without_condition) == True
     
     # Test with missing key
@@ -573,9 +581,24 @@ def test_transition_to_next_stage(workflow_director, mock_state_manager, mock_lo
 def test_evaluate_condition(workflow_director, mock_state_manager, mock_logger):
     workflow_director.logger = mock_logger
     mock_state_manager.get_state.return_value = {"flag": True, "count": 5}
-    
+
     assert workflow_director.evaluate_condition("state.get('flag', False)") == True
     mock_logger.debug.assert_called_with("Evaluated condition: state.get('flag', False) = True")
+
+    assert workflow_director.evaluate_condition("state.get('count', 0) > 3") == True
+    mock_logger.debug.assert_called_with("Evaluated condition: state.get('count', 0) > 3 = True")
+
+    assert workflow_director.evaluate_condition("state.get('count', 0) < 3") == False
+    mock_logger.debug.assert_called_with("Evaluated condition: state.get('count', 0) < 3 = False")
+
+    assert workflow_director.evaluate_condition("state.get('missing_key', False)") == False
+    mock_logger.warning.assert_called_with("Condition evaluation failed due to missing key: 'missing_key'")
+
+    assert workflow_director.evaluate_condition("invalid_condition") == False
+    mock_logger.error.assert_called_with("Error evaluating condition 'invalid_condition': name 'invalid_condition' is not defined")
+
+    # Reset mock_logger for other tests
+    mock_logger.reset_mock()
     
     assert workflow_director.evaluate_condition("state.get('count', 0) > 3") == True
     mock_logger.debug.assert_called_with("Evaluated condition: state.get('count', 0) > 3 = True")
