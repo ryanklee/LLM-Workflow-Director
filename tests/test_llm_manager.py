@@ -1,16 +1,17 @@
 import pytest
 from unittest.mock import patch, MagicMock, ANY
 from src.llm_manager import LLMManager, LLMCostOptimizer
+from src.claude_manager import ClaudeManager
 
 @pytest.fixture
 def llm_manager():
-    with patch('src.llm_manager.LLMMicroserviceClient'), \
+    with patch('src.llm_manager.ClaudeManager') as mock_claude_manager, \
          patch('src.llm_manager.yaml.safe_load') as mock_yaml_load:
         mock_yaml_load.return_value = {
             'tiers': {
-                'fast': {'model': 'gpt-3.5-turbo', 'max_tokens': 100},
-                'balanced': {'model': 'gpt-3.5-turbo', 'max_tokens': 500},
-                'powerful': {'model': 'gpt-4', 'max_tokens': 1000}
+                'fast': {'model': 'claude-3-haiku-20240307', 'max_tokens': 100},
+                'balanced': {'model': 'claude-3-sonnet-20240229', 'max_tokens': 500},
+                'powerful': {'model': 'claude-3-opus-20240229', 'max_tokens': 1000}
             },
             'prompt_templates': {
                 'default': 'Default template',

@@ -1,6 +1,7 @@
 import pytest
 import tenacity
 import time
+import anthropic
 from src.claude_manager import ClaudeManager
 from src.exceptions import RateLimitError
 from src.mock_claude_client import MockClaudeClient

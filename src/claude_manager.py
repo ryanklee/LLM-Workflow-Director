@@ -38,27 +38,16 @@ class ClaudeManager:
             raise ValueError("Invalid prompt: must be a non-empty string")
         token_count = self.count_tokens(prompt)
         if token_count > self.max_test_tokens:
-            raise ValueError(f"Invalid prompt length: {token_count} tokens exceeds maximum of {self.max_test_tokens}")
+            raise ValueError(f"Prompt length exceeds maximum: {token_count} tokens > {self.max_test_tokens}")
         if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
             raise ValueError("Invalid prompt: contains potentially sensitive information")
-        if len(prompt) > 10000:  # Add a character limit check
-            raise ValueError(f"Invalid prompt length: {len(prompt)} characters exceeds maximum of 10000")
-        
-        # Add a more stringent character limit
-        if len(prompt) > 5000:
-            raise ValueError(f"Invalid prompt length: {len(prompt)} characters exceeds maximum of 5000")
+        if len(prompt) > self.max_context_length:
+            raise ValueError(f"Context overflow: prompt length {len(prompt)} exceeds maximum context length {self.max_context_length}")
         
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         self.logger.debug(f"Using model: {model if model else 'default'}")
 
         try:
-            if not self.rate_limiter.is_allowed():
-                raise RateLimitError("Rate limit exceeded")
-            
-            # Add context overflow check
-            if len(prompt) > self.max_context_length:
-                raise ValueError(f"Context overflow: prompt length {len(prompt)} exceeds maximum context length {self.max_context_length}")
-            
             response = self.client.messages.create(
                 model=self.select_model(prompt) if model is None else model,
                 max_tokens=self.max_test_tokens,
