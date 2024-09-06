@@ -499,17 +499,20 @@ def test_is_workflow_complete(workflow_director, mock_state_manager, current_sta
 def test_execute_stage_with_condition(workflow_director, mock_state_manager):
     mock_state_manager.get_state.return_value = {"feature_flag": True}
     workflow_director.config = {
-        "stages": {
-            "Project Initialization": {
+        "stages": [
+            {
+                "name": "Project Initialization",
                 "tasks": {
                     "Create project directory": {},
                     "Initialize git repository": {"condition": "state['feature_flag']"},
                     "Setup virtual environment": {"condition": "not state['feature_flag']"}
                 }
             }
-        }
+        ]
     }
-    workflow_director.execute_stage("Project Initialization")
+    workflow_director.stages = workflow_director.config["stages"]
+    result = workflow_director.execute_stage("Project Initialization")
+    assert result == True
     assert mock_state_manager.update_state.call_count == 2
     mock_state_manager.update_state.assert_any_call("Project Initialization.Create project directory", "completed")
     mock_state_manager.update_state.assert_any_call("Project Initialization.Initialize git repository", "completed")
@@ -531,6 +534,7 @@ def test_transition_to_next_stage_no_valid_transition(workflow_director, mock_st
     mock_state_manager.get_state.return_value = {"current_stage": "Final Stage"}
     workflow_director.config = {"transitions": []}
     workflow_director.transitions = []
+    workflow_director.current_stage = "Final Stage"
     
     result = workflow_director.transition_to_next_stage()
     assert result == False
@@ -549,5 +553,11 @@ def test_evaluate_transition_condition_invalid_condition(workflow_director, mock
     ("Design", True),
 ])
 def test_is_workflow_complete(workflow_director, mock_state_manager, current_stage, is_complete):
-    mock_state_manager.get_state.return_value = {"current_stage": current_stage}
+    workflow_director.stages = [
+        {"name": "Project Initialization"},
+        {"name": "Requirements Gathering"},
+        {"name": "Domain Modeling"},
+        {"name": "Design"}
+    ]
+    workflow_director.current_stage = current_stage
     assert workflow_director.is_workflow_complete() == is_complete
