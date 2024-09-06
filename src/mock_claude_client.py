@@ -87,7 +87,12 @@ class MockClaudeClient:
         if self.rate_limit_reached or self.call_count > self.rate_limit_threshold:
             raise RateLimitError("Rate limit exceeded")
         if self.error_mode:
-            raise APIError("API error")
+            self.error_count += 1
+            if self.error_count <= self.max_errors:
+                raise APIError("API error")
+            else:
+                self.error_mode = False
+                self.error_count = 0
         
         prompt = messages[0]['content']
         if len(prompt) > self.max_test_tokens:
