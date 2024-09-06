@@ -3,7 +3,7 @@ import json
 from anthropic import Anthropic, NotFoundError, APIError, APIConnectionError
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, RetryError
 import time
-from .rate_limiter import RateLimiter
+from .rate_limiter import RateLimiter, RateLimitError
 from .token_tracker import TokenTracker, TokenOptimizer
 
 class ClaudeManager:
