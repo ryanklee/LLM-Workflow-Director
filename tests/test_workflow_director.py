@@ -511,7 +511,8 @@ def test_get_stage_by_name(workflow_director):
     assert workflow_director.get_stage_by_name("Project Initialization") == {"name": "Project Initialization"}
     assert workflow_director.get_stage_by_name("Non-existent Stage") is None
 
-def test_execute_stage(workflow_director, mock_state_manager):
+def test_execute_stage(workflow_director, mock_state_manager, mock_logger):
+    workflow_director.logger = mock_logger
     workflow_director.stages = [
         {
             "name": "Test Stage",
@@ -528,7 +529,9 @@ def test_execute_stage(workflow_director, mock_state_manager):
     mock_state_manager.update_state.assert_any_call("Test Stage.Task 1", "completed")
     mock_state_manager.update_state.assert_any_call("Test Stage.Task 2", "completed")
     assert mock_state_manager.update_state.call_count == 2
-    workflow_director.logger.info.assert_called_with("Executed stage: Test Stage")
+    mock_logger.info.assert_called_with("Executed stage: Test Stage")
+    mock_logger.info.assert_any_call("Completed task: Task 1 in stage: Test Stage")
+    mock_logger.info.assert_any_call("Completed task: Task 2 in stage: Test Stage")
 
 def test_evaluate_transition_condition(workflow_director, mock_state_manager):
     mock_state_manager.get_state.return_value = {"flag": True}
@@ -538,7 +541,12 @@ def test_evaluate_transition_condition(workflow_director, mock_state_manager):
     assert workflow_director.evaluate_transition_condition(transition_with_condition) == True
     assert workflow_director.evaluate_transition_condition(transition_without_condition) == True
 
-def test_transition_to_next_stage(workflow_director, mock_state_manager):
+@pytest.fixture
+def mock_logger():
+    return MagicMock()
+
+def test_transition_to_next_stage(workflow_director, mock_state_manager, mock_logger):
+    workflow_director.logger = mock_logger
     workflow_director.current_stage = "Stage 1"
     workflow_director.transitions = [
         {"from": "Stage 1", "to": "Stage 2"},
@@ -548,26 +556,27 @@ def test_transition_to_next_stage(workflow_director, mock_state_manager):
     
     assert workflow_director.transition_to_next_stage() == True
     assert workflow_director.current_stage == "Stage 2"
-    workflow_director.logger.info.assert_called_with("Transitioned to stage: Stage 2")
+    mock_logger.info.assert_called_with("Transitioned to stage: Stage 2")
     
     assert workflow_director.transition_to_next_stage() == False
     assert workflow_director.current_stage == "Stage 2"
-    workflow_director.logger.info.assert_called_with("No valid transition found")
+    mock_logger.info.assert_called_with("No valid transition found")
 
-def test_evaluate_condition(workflow_director, mock_state_manager):
+def test_evaluate_condition(workflow_director, mock_state_manager, mock_logger):
+    workflow_director.logger = mock_logger
     mock_state_manager.get_state.return_value = {"flag": True, "count": 5}
     
     assert workflow_director.evaluate_condition("state['flag']") == True
-    workflow_director.logger.debug.assert_called_with("Evaluated condition: state['flag'] = True")
+    mock_logger.debug.assert_called_with("Evaluated condition: state['flag'] = True")
     
     assert workflow_director.evaluate_condition("state['count'] > 3") == True
-    workflow_director.logger.debug.assert_called_with("Evaluated condition: state['count'] > 3 = True")
+    mock_logger.debug.assert_called_with("Evaluated condition: state['count'] > 3 = True")
     
     assert workflow_director.evaluate_condition("state['count'] < 3") == False
-    workflow_director.logger.debug.assert_called_with("Evaluated condition: state['count'] < 3 = False")
+    mock_logger.debug.assert_called_with("Evaluated condition: state['count'] < 3 = False")
     
     assert workflow_director.evaluate_condition("invalid_condition") == False
-    workflow_director.logger.error.assert_called_with("Error evaluating condition 'invalid_condition': name 'invalid_condition' is not defined")
+    mock_logger.error.assert_called_with("Error evaluating condition 'invalid_condition': name 'invalid_condition' is not defined")
 
 def test_execute_stage_with_condition(workflow_director, mock_state_manager):
     mock_state_manager.get_state.return_value = {"feature_flag": True}
