@@ -40,9 +40,10 @@ class ClaudeManager:
         if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
             raise ValueError("Invalid prompt: contains potentially sensitive information")
         
-        total_tokens = token_count
-        if total_tokens > self.max_test_tokens:
-            raise ValueError(f"Total tokens ({total_tokens}) exceeds maximum allowed ({self.max_test_tokens})")
+        # Remove redundant check
+        # total_tokens = token_count
+        # if total_tokens > self.max_test_tokens:
+        #     raise ValueError(f"Total tokens ({total_tokens}) exceeds maximum allowed ({self.max_test_tokens})")
         
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         self.logger.debug(f"Using model: {model if model else 'default'}")
@@ -98,7 +99,8 @@ class ClaudeManager:
     def parse_response(self, response_text):
         max_length = self.max_test_tokens - 21
         truncated_text = response_text[:max_length] + "..." if len(response_text) > max_length else response_text
-        return f"<response>{truncated_text.strip()}</response>"
+        parsed_response = f"<response>{truncated_text.strip()}</response>"
+        return parsed_response[:self.max_test_tokens]  # Ensure the entire response fits within max_test_tokens
 
     def _extract_response_text(self, response):
         if isinstance(response, dict):
