@@ -600,8 +600,8 @@ def test_execute_stage_with_condition(workflow_director, mock_state_manager):
                 "name": "Project Initialization",
                 "tasks": {
                     "Create project directory": {},
-                    "Initialize git repository": {"condition": "state['feature_flag']"},
-                    "Setup virtual environment": {"condition": "not state['feature_flag']"}
+                    "Initialize git repository": {"condition": "state.get('feature_flag', False)"},
+                    "Setup virtual environment": {"condition": "not state.get('feature_flag', False)"}
                 }
             }
         ]
@@ -612,6 +612,7 @@ def test_execute_stage_with_condition(workflow_director, mock_state_manager):
     assert mock_state_manager.update_state.call_count == 2
     mock_state_manager.update_state.assert_any_call("Project Initialization.Create project directory", "completed")
     mock_state_manager.update_state.assert_any_call("Project Initialization.Initialize git repository", "completed")
+    workflow_director.logger.info.assert_called_with("Executed stage: Project Initialization")
 
 def test_execute_stage_with_error(workflow_director, mock_state_manager):
     workflow_director.config = {
