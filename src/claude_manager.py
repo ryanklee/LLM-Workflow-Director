@@ -35,7 +35,8 @@ class ClaudeManager:
     )
     def generate_response(self, prompt, model=None):
         if not self.rate_limiter.is_allowed():
-            raise RateLimitError("Rate limit exceeded")
+            self.logger.warning("Rate limit reached, waiting for next available slot")
+            self.rate_limiter.wait_for_next_slot()
         if not isinstance(prompt, str) or not prompt.strip():
             raise ValueError("Invalid prompt: must be a non-empty string")
         token_count = self.count_tokens(prompt)

@@ -43,16 +43,21 @@ from typing import Dict, Any, Optional
 from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
 from src.llm_manager import LLMManager
 
+import time
+from typing import Dict, Any, List
+from anthropic import RateLimitError, APIError
+
 class MockClaudeClient:
     def __init__(self):
         self.rate_limit_reached = False
         self.error_mode = False
         self.responses = {}
         self.messages = self
-        self.llm_manager = LLMManager()
-        self.max_test_tokens = self.llm_manager.config.get('test_settings', {}).get('max_test_tokens', 100)
+        self.max_test_tokens = 1000
         self.call_count = 0
         self.rate_limit_threshold = 5  # Number of calls before rate limiting
+        self.last_call_time = 0
+        self.rate_limit_reset_time = 60  # seconds
 
     def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
@@ -68,20 +73,19 @@ class MockClaudeClient:
         self.error_mode = False
         self.responses = {}
         self.call_count = 0
+        self.last_call_time = 0
 
-    def create(self, model: str, max_tokens: int, messages: list) -> Dict[str, Any]:
+    def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+        current_time = time.time()
+        if current_time - self.last_call_time >= self.rate_limit_reset_time:
+            self.call_count = 0
+        self.last_call_time = current_time
         self.call_count += 1
         
         if self.rate_limit_reached or self.call_count > self.rate_limit_threshold:
-            raise Exception("Rate limit exceeded")
+            raise RateLimitError("Rate limit exceeded")
         if self.error_mode:
-            raise Exception("API error")
-        content = self.responses.get(messages[0]['content'], "Default mock response")
-        return {
-            'content': [{'text': f"<response>{content}</response>"}]
-        }
-        if self.error_mode:
-            raise Exception("API error")
+            raise APIError("API error")
         
         prompt = messages[0]['content']
         if len(prompt) > self.max_test_tokens:
@@ -92,7 +96,7 @@ class MockClaudeClient:
             response = response[:self.max_test_tokens] + "..."
         
         return {
-            "content": [{"text": response}],
+            "content": [{"text": f"<response>{response}</response>"}],
             "model": model,
             "usage": {"total_tokens": len(response.split())}
         }
