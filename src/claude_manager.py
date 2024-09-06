@@ -109,6 +109,27 @@ class ClaudeManager:
         else:
             return "claude-3-sonnet-20240229"
 
+    def _handle_error(self, error, prompt):
+        self.logger.error(f"Error in generate_response: {str(error)}")
+        if isinstance(error, anthropic.NotFoundError):
+            return self.fallback_response(prompt, "Model not found")
+        elif isinstance(error, anthropic.APIError):
+            if "rate_limit" in str(error).lower():
+                self.logger.warning(f"Rate limit error encountered: {str(error)}")
+                time.sleep(5)
+                return self.fallback_response(prompt, "Rate limit exceeded")
+            else:
+                self.logger.error(f"API error: {str(error)}")
+                return self.fallback_response(prompt, "API error")
+        elif isinstance(error, anthropic.APIConnectionError):
+            self.logger.warning(f"API Connection error encountered: {str(error)}")
+            time.sleep(5)
+            return self.fallback_response(prompt, "API Connection error")
+        elif isinstance(error, ValueError):
+            return self.fallback_response(prompt, str(error))
+        else:
+            return self.fallback_response(prompt, "Unknown error")
+
     def parse_response(self, response_text):
         max_length = self.max_test_tokens - 21
         truncated_text = response_text[:max_length] + "..." if len(response_text) > max_length else response_text

@@ -107,13 +107,12 @@ class TestRateLimiting:
     @pytest.mark.fast
     def test_rate_limiting(self, claude_manager):
         claude_manager.client.messages.create.side_effect = anthropic.APIError("Rate limit exceeded", status_code=429)
-        with pytest.raises(anthropic.APIError) as excinfo:
-            claude_manager.generate_response("Test")
-        assert "Rate limit exceeded" in str(excinfo.value)
+        response = claude_manager.generate_response("Test")
+        assert "Rate limit exceeded" in response
         claude_manager.client.messages.create.side_effect = None
         claude_manager.client.messages.create.return_value = MagicMock(content=[MagicMock(text="Test response")])
         response = claude_manager.generate_response("Test")
-        assert response is not None
+        assert "Test response" in response
 
 @pytest.mark.benchmark
 def test_claude_api_performance(claude_manager, benchmark):
