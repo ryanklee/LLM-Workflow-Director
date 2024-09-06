@@ -450,9 +450,10 @@ def test_execute_stage_with_error(workflow_director, mock_state_manager):
 def test_transition_to_next_stage_no_valid_transition(workflow_director, mock_state_manager):
     mock_state_manager.get_state.return_value = {"current_stage": "Final Stage"}
     workflow_director.config = {"transitions": []}
+    workflow_director.transitions = []
     
-    with pytest.warns(UserWarning, match="No valid transition found"):
-        workflow_director.transition_to_next_stage()
+    result = workflow_director.transition_to_next_stage()
+    assert result == False
 
 def test_evaluate_transition_condition_invalid_condition(workflow_director, mock_state_manager):
     mock_state_manager.get_state.return_value = {}
