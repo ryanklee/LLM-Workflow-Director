@@ -18,12 +18,14 @@ class ClaudeManager:
     def create_client():
         return Anthropic()
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10), retry=retry_if_exception_type(Exception), reraise=True)
     def generate_response(self, prompt, model=None):
         if not isinstance(prompt, str) or not prompt.strip():
             raise ValueError("Invalid prompt: must be a non-empty string")
         if len(prompt) > self.max_test_tokens:
             raise ValueError(f"Invalid prompt length: exceeds {self.max_test_tokens} tokens")
+        if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
+            raise ValueError("Invalid prompt: contains potentially sensitive information")
 
         try:
             self.rate_limiter.wait_for_next_slot()

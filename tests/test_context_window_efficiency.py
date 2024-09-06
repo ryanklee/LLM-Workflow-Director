@@ -1,5 +1,6 @@
 import pytest
 from pytest_benchmark.fixture import BenchmarkFixture
+from unittest.mock import patch
 from src.claude_manager import ClaudeManager
 from src.llm_manager import LLMManager
 

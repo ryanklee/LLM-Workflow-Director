@@ -87,7 +87,7 @@ class TestResponseHandling:
     @pytest.mark.slow
     def test_retry_mechanism(self, claude_manager):
         claude_manager.client.set_error_mode(True)
-        with pytest.raises(Exception):
+        with pytest.raises(tenacity.RetryError):
             claude_manager.generate_response("Test")
         claude_manager.client.set_error_mode(False)
         claude_manager.client.set_response("Test", "Success")
@@ -148,7 +148,7 @@ class TestPerformance:
 
 def test_mock_claude_client_response(mock_claude_client, claude_manager):
     mock_claude_client.set_response("Test prompt", "Test response")
-    response = claude_manager.get_completion("Test prompt", "claude-3-haiku-20240307", 100)
+    response = claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     assert response == "<response>Test response</response>"
 
 def test_mock_claude_client_rate_limit(mock_claude_client, claude_manager):
