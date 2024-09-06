@@ -136,11 +136,15 @@ def test_workflow_director_execute_stage(mocker):
     })
     mocker.patch.object(director.state_manager, 'get_state', return_value={'requirements_documented': True})
     mocker.patch.object(director.state_manager, 'update_state')
+    mocker.patch.object(director, 'logger')
 
     result = director.execute_stage("Requirements Gathering")
     assert result == True, "Expected execute_stage to return True"
     director.state_manager.update_state.assert_any_call("Requirements Gathering.Document requirements", "completed")
     director.state_manager.update_state.assert_any_call("Requirements Gathering.Review requirements", "completed")
+    director.logger.info.assert_any_call("Completed task: Document requirements in stage: Requirements Gathering")
+    director.logger.info.assert_any_call("Completed task: Review requirements in stage: Requirements Gathering")
+    director.logger.info.assert_called_with("Executed stage: Requirements Gathering")
 
 def test_workflow_director_get_workflow_status(mock_workflow_director):
     status = mock_workflow_director.get_workflow_status()
