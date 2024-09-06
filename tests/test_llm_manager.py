@@ -44,10 +44,9 @@ def test_llm_manager_query(mock_claude_manager, llm_manager):
     assert response['response'] == "Test response"
     assert all(key in response for key in ['task_progress', 'state_updates', 'actions', 'suggestions', 'response'])
     assert 'id' in response
-    mock_anthropic.return_value.messages.create.assert_called_once_with(
-        model='claude-3-sonnet-20240229',
-        max_tokens=4000,
-        messages=[{"role": "user", "content": ANY}]
+    mock_claude_manager.return_value.generate_response.assert_called_once_with(
+        ANY,
+        model='claude-3-sonnet-20240229'
     )
     mock_update_usage.assert_called_once_with('balanced', ANY, ANY, True)
 
