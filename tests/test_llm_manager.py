@@ -22,7 +22,7 @@ def llm_manager():
 
 @pytest.mark.fast
 def test_llm_manager_initialization(llm_manager):
-    assert isinstance(llm_manager.client, MagicMock)
+    assert isinstance(llm_manager.claude_manager, ClaudeManager)
     assert isinstance(llm_manager.cache, dict)
     assert isinstance(llm_manager.cost_optimizer, LLMCostOptimizer)
     assert 'default' in llm_manager.prompt_templates
@@ -72,10 +72,10 @@ def test_llm_manager_query_with_error(mock_time, mock_anthropic, mock_client, ll
 def test_llm_manager_tier_selection(llm_manager, query, expected_tier):
     with patch.object(llm_manager, '_process_response', return_value={}):
         with patch.object(llm_manager.cost_optimizer, 'select_optimal_tier', return_value=expected_tier):
-            with patch.object(llm_manager.llm_client, 'messages', create=MagicMock()) as mock_messages:
+            with patch.object(llm_manager.claude_manager, 'generate_response', return_value="<response>Test response</response>"):
                 with patch.object(llm_manager.cost_optimizer, 'update_usage'):
                     llm_manager.query(query)
-                    mock_messages.create.assert_called_with(model=ANY, max_tokens=ANY, messages=[{"role": "user", "content": ANY}])
+                    llm_manager.claude_manager.generate_response.assert_called_once()
     
     assert llm_manager.determine_query_tier(query) == expected_tier
 
@@ -120,16 +120,12 @@ def test_llm_manager_get_optimization_suggestion(llm_manager):
     ('powerful', "Powerful response"),
 ])
 def test_llm_manager_query_with_tiers(llm_manager, tier, expected_response):
-    with patch('anthropic.Anthropic') as mock_anthropic:
-        mock_response = type('obj', (object,), {'content': [type('obj', (object,), {'text': expected_response})]})()
-        mock_anthropic.return_value.messages.create.return_value = mock_response
-        mock_anthropic.return_value.messages.create.side_effect = [mock_response] * 10  # Provide multiple responses
-        
+    with patch.object(llm_manager.claude_manager, 'generate_response', return_value=f"<response>{expected_response}</response>"):
         result = llm_manager.query(f"{tier} prompt", tier=tier)
         
         assert isinstance(result, dict)
-        assert expected_response in result.get("response", "").replace("<response>", "").replace("</response>", "")
-        mock_anthropic.return_value.messages.create.assert_called_once()
+        assert expected_response in result.get("response", "")
+        llm_manager.claude_manager.generate_response.assert_called_once()
 
 @pytest.mark.fast
 @pytest.mark.parametrize("query,expected_tier", [
