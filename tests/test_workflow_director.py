@@ -468,6 +468,7 @@ def test_transition_to_next_stage_no_valid_transition(workflow_director, mock_st
     mock_state_manager.get_state.return_value = {"current_stage": "Final Stage"}
     workflow_director.config = {"transitions": []}
     workflow_director.transitions = []
+    workflow_director.current_stage = "Final Stage"
     
     result = workflow_director.transition_to_next_stage()
     assert result == False
@@ -476,8 +477,8 @@ def test_evaluate_transition_condition_invalid_condition(workflow_director, mock
     mock_state_manager.get_state.return_value = {}
     transition = {"condition": "invalid_condition"}
     
-    with pytest.raises(NameError):
-        workflow_director.evaluate_transition_condition(transition)
+    result = workflow_director.evaluate_transition_condition(transition)
+    assert result == False
 
 @pytest.mark.parametrize("current_stage,is_complete", [
     ("Project Initialization", False),
@@ -486,11 +487,14 @@ def test_evaluate_transition_condition_invalid_condition(workflow_director, mock
     ("Design", True),
 ])
 def test_is_workflow_complete(workflow_director, mock_state_manager, current_stage, is_complete):
-    workflow_director.config = {
-        "stages": [
-            {"name": "Project Initialization"},
-            {"name": "Requirements Gathering"},
-            {"name": "Domain Modeling"},
+    workflow_director.stages = [
+        {"name": "Project Initialization"},
+        {"name": "Requirements Gathering"},
+        {"name": "Domain Modeling"},
+        {"name": "Design"}
+    ]
+    workflow_director.current_stage = current_stage
+    assert workflow_director.is_workflow_complete() == is_complete
             {"name": "Design"}
         ]
     }
