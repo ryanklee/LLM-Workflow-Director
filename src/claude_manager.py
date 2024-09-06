@@ -1,6 +1,6 @@
 import logging
 from anthropic import Anthropic, NotFoundError, APIError
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 import time
 from .rate_limiter import RateLimiter
 from .token_tracker import TokenTracker, TokenOptimizer
