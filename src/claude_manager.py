@@ -98,8 +98,13 @@ class ClaudeManager:
             return self.fallback_response(prompt, str(error))
         elif isinstance(error, RetryError):
             return self.fallback_response(prompt, "Rate limit exceeded after multiple retries")
+        elif isinstance(error, TypeError):
+            if "missing 2 required keyword-only arguments: 'response' and 'body'" in str(error):
+                return self.fallback_response(prompt, "API response format error")
+            else:
+                return self.fallback_response(prompt, f"TypeError: {str(error)}")
         else:
-            return self.fallback_response(prompt, "Unknown error")
+            return self.fallback_response(prompt, f"Unknown error: {str(error)}")
 
     def fallback_response(self, prompt, error_type):
         self.logger.warning(f"Fallback response triggered for prompt: {prompt[:50]}...")
