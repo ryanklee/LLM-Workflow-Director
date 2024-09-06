@@ -41,11 +41,6 @@ class ClaudeManager:
         token_count = self.count_tokens(prompt)
         if token_count > self.max_test_tokens:
             prompt = self._truncate_prompt(prompt, self.max_test_tokens)
-
-    def _truncate_prompt(self, prompt: str, max_tokens: int) -> str:
-        while self.count_tokens(prompt) > max_tokens:
-            prompt = prompt[:int(len(prompt) * 0.9)]  # Reduce by 10% each iteration
-        return prompt
         if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
             raise ValueError("Invalid prompt: contains potentially sensitive information")
         if self.count_tokens(prompt) > self.max_context_length:
@@ -55,8 +50,9 @@ class ClaudeManager:
         self.logger.debug(f"Using model: {model if model else 'default'}")
 
         try:
+            selected_model = self.select_model(prompt) if model is None else model
             response = self.client.messages.create(
-                model=self.select_model(prompt) if model is None else model,
+                model=selected_model,
                 max_tokens=self.max_test_tokens,
                 messages=[{"role": "user", "content": prompt}]
             )
