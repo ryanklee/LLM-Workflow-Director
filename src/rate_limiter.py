@@ -43,6 +43,6 @@ class RateLimiter(RateLimitPolicy):
     def wait_for_next_slot(self) -> None:
         start_time = time.time()
         while not self.is_allowed():
-            if time.time() - start_time > 60:  # Timeout after 60 seconds
+            if time.time() - start_time > 5:  # Timeout after 5 seconds
                 raise TimeoutError("Waited too long for the next available slot")
-            time.sleep(0.1)  # Sleep for a shorter time to be more responsive
+            time.sleep(0.01)  # Sleep for a shorter time to be more responsive
