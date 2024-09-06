@@ -42,7 +42,7 @@ class ClaudeManager:
 
         try:
             if not self.rate_limiter.is_allowed():
-                raise tenacity.RetryError(last_attempt=None)
+                raise RetryError(last_attempt=None)
             response = self.client.messages.create(
                 model=self.select_model(prompt) if model is None else model,
                 max_tokens=self.max_test_tokens,
