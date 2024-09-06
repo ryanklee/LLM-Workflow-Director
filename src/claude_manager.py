@@ -20,7 +20,7 @@ class ClaudeManager:
 
     def count_tokens(self, text):
         # This is a simple approximation. For more accurate results, use a proper tokenizer.
-        return len(text.split())
+        return len(text)
 
     @staticmethod
     def create_client():
@@ -42,8 +42,8 @@ class ClaudeManager:
             raise ValueError(f"Prompt length exceeds maximum: {token_count} tokens > {self.max_test_tokens}")
         if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
             raise ValueError("Invalid prompt: contains potentially sensitive information")
-        if len(prompt) > self.max_context_length:
-            raise ValueError(f"Context overflow: prompt length {len(prompt)} exceeds maximum context length {self.max_context_length}")
+        if self.count_tokens(prompt) > self.max_context_length:
+            raise ValueError(f"Context overflow: prompt length {self.count_tokens(prompt)} tokens exceeds maximum context length {self.max_context_length}")
         
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         self.logger.debug(f"Using model: {model if model else 'default'}")
@@ -124,7 +124,7 @@ class ClaudeManager:
         max_length = self.max_test_tokens - 21
         truncated_text = response_text[:max_length] + "..." if len(response_text) > max_length else response_text
         parsed_response = f"<response>{truncated_text.strip()}</response>"
-        return parsed_response[:self.max_test_tokens]  # Ensure the entire response fits within max_test_tokens
+        return parsed_response
 
     def _extract_response_text(self, response):
         if isinstance(response, dict):

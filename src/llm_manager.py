@@ -112,7 +112,10 @@ class LLMManager:
             'powerful': {'model': 'claude-3-opus-20240229', 'max_tokens': 4000}
         })
         self.prompt_templates = self.config.get('prompt_templates', {})
-        self.claude_manager = ClaudeManager()
+        self.claude_manager = self._create_claude_manager()
+
+    def _create_claude_manager(self):
+        return ClaudeManager()
 
     def _load_config(self, config_path):
         try:

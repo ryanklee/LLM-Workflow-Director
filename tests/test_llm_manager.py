@@ -31,7 +31,7 @@ def test_llm_manager_initialization(llm_manager):
 @pytest.mark.fast
 @patch('src.claude_manager.ClaudeManager')
 def test_llm_manager_query(mock_claude_manager, llm_manager):
-    mock_claude_manager.return_value.generate_response.return_value = "task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response"
+    mock_claude_manager.return_value.generate_response.return_value = "<response>task_progress: 0.5\nstate_updates: {'key': 'value'}\nactions: action1, action2\nsuggestions: suggestion1, suggestion2\nresponse: Test response</response>"
     with patch.object(llm_manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
         with patch.object(llm_manager.cost_optimizer, 'update_usage') as mock_update_usage:
             with patch('time.time', side_effect=[0, 1]):
@@ -51,11 +51,10 @@ def test_llm_manager_query(mock_claude_manager, llm_manager):
     mock_update_usage.assert_called_once_with('balanced', ANY, ANY, True)
 
 @pytest.mark.fast
-@patch('src.llm_manager.LLMMicroserviceClient')
-@patch('anthropic.Anthropic')
+@patch('src.claude_manager.ClaudeManager')
 @patch('time.time', side_effect=[0, 1, 2, 3, 4, 5])  # Mock start and end times for multiple attempts
-def test_llm_manager_query_with_error(mock_time, mock_anthropic, mock_client, llm_manager):
-    mock_anthropic.return_value.messages.create.side_effect = Exception("Test error")
+def test_llm_manager_query_with_error(mock_time, mock_claude_manager, llm_manager):
+    mock_claude_manager.return_value.generate_response.side_effect = Exception("Test error")
     with patch.object(llm_manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
         with patch.object(llm_manager.cost_optimizer, 'update_usage') as mock_update_usage:
             response = llm_manager.query("Test prompt")
