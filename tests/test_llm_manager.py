@@ -78,6 +78,22 @@ def test_llm_manager_tier_selection(llm_manager, query, expected_tier):
     assert llm_manager.determine_query_tier(query) == expected_tier
 
 @pytest.mark.fast
+@pytest.mark.parametrize("tier,expected_model", [
+    ('fast', 'claude-3-haiku-20240307'),
+    ('balanced', 'claude-3-sonnet-20240229'),
+    ('powerful', 'claude-3-opus-20240229'),
+])
+def test_llm_manager_query_with_tiers(llm_manager, tier, expected_model):
+    with patch('anthropic.Anthropic') as mock_anthropic:
+        mock_anthropic.return_value.create.return_value = type('obj', (object,), {'content': [type('obj', (object,), {'text': f"{tier} response"})]})()
+        
+        result = llm_manager.query(f"{tier} prompt", tier=tier)
+        
+        assert isinstance(result, dict)
+        assert f"{tier} response" in result.get("response", "").replace("<response>", "").replace("</response>", "")
+        mock_anthropic.return_value.messages.create.assert_called_once()
+
+@pytest.mark.fast
 def test_llm_manager_get_usage_report(llm_manager):
     llm_manager.cost_optimizer.update_usage('fast', 100, 0.5, True)
     llm_manager.cost_optimizer.update_usage('balanced', 200, 1.0, True)
@@ -176,6 +192,8 @@ def test_llm_manager_query_with_context(llm_manager):
             "Coding Conventions:",
             "Stages:", "Transitions:"
         ])
+        assert "key1" in call_args and "value1" in call_args
+        assert "key2" in call_args and "value2" in call_args
 
 @pytest.mark.slow
 def test_llm_manager_error_handling(llm_manager):
@@ -254,3 +272,5 @@ def test_llm_manager_caching(llm_manager):
             result4 = llm_manager.query(prompt, context)
             assert "Response 3" in result4.get("response", "")
             assert result4 != result1
+        
+        assert mock_anthropic.return_value.messages.create.call_count == 3

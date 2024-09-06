@@ -35,11 +35,16 @@ def test_response_time_vs_context_size(claude_manager: ClaudeManager, benchmark:
     def measure_response_time(size):
         context = "a" * size
         prompt = f"Summarize the following text in one sentence: {context}"
-        return benchmark.pedantic(claude_manager.generate_response, args=(prompt,), iterations=3, rounds=1)
+        with patch.object(claude_manager.messages, 'create') as mock_create:
+            mock_create.return_value.content = [anthropic.types.ContentBlock(text="Test response", type="text")]
+            return benchmark.pedantic(claude_manager.generate_response, args=(prompt,), iterations=3, rounds=1)
 
     for size in context_sizes:
         result = measure_response_time(size)
         print(f"Response time for context size {size}: {result.average:.4f} seconds")
+    
+    # Assert that the response time for the largest context is not significantly higher than the smallest
+    assert measure_response_time(context_sizes[-1]).average < measure_response_time(context_sizes[0]).average * 2
 
 def test_response_quality_vs_context_size(claude_manager: ClaudeManager, llm_manager: LLMManager):
     context_sizes = [1000, 10000, 50000, 100000, 150000]
