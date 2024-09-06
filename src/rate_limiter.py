@@ -12,6 +12,10 @@ class RateLimiter(RateLimitPolicy):
         self.minute_bucket: Dict[int, int] = {}
         self.hour_bucket: Dict[int, int] = {}
 
+    @classmethod
+    def from_limits(cls, requests_per_minute: int, requests_per_hour: int):
+        return cls(requests_per_minute, requests_per_hour)
+
     def is_allowed(self) -> bool:
         current_minute = int(time.time() / 60)
         current_hour = int(time.time() / 3600)
@@ -37,5 +41,8 @@ class RateLimiter(RateLimitPolicy):
         return True
 
     def wait_for_next_slot(self) -> None:
+        start_time = time.time()
         while not self.is_allowed():
-            time.sleep(1)
+            if time.time() - start_time > 60:  # Timeout after 60 seconds
+                raise TimeoutError("Waited too long for the next available slot")
+            time.sleep(0.1)  # Sleep for a shorter time to be more responsive

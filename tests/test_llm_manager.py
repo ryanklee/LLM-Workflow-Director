@@ -38,6 +38,15 @@ def test_llm_manager_query(mock_claude_manager, llm_manager):
         with patch.object(llm_manager.cost_optimizer, 'update_usage') as mock_update_usage:
             with patch('time.time', side_effect=[0, 1]):
                 response = llm_manager.query("Test prompt")
+
+    assert isinstance(response, dict)
+    assert "Test response" in response.get("response", "")
+    mock_update_usage.assert_called_once()
+    assert 'response' in response
+    assert "Test response" in response['response']
+    assert all(key in response for key in ['task_progress', 'state_updates', 'actions', 'suggestions', 'response'])
+    assert 'id' in response
+    mock_claude_manager.return_value.generate_response.assert_called_once()
         
     assert isinstance(response, dict)
     assert "Test response" in response.get("response", "") or isinstance(response.get("response"), MagicMock)

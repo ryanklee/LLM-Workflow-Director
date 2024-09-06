@@ -40,7 +40,7 @@ class ClaudeManager:
             raise ValueError("Invalid prompt: must be a non-empty string")
         token_count = self.count_tokens(prompt)
         if token_count > self.max_test_tokens:
-            raise ValueError(f"Prompt length exceeds maximum: {token_count} tokens > {self.max_test_tokens}")
+            prompt = self.truncate_prompt(prompt, self.max_test_tokens)
         if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
             raise ValueError("Invalid prompt: contains potentially sensitive information")
         if self.count_tokens(prompt) > self.max_context_length:

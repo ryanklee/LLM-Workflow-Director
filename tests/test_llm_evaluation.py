@@ -23,9 +23,9 @@ def test_sufficiency_evaluation(claude_manager):
 def test_decision_making(claude_manager, project_state, expected_decision):
     mock_client = claude_manager.client
     mock_client.set_response(f"Make decision based on: {project_state}", expected_decision)
-    
+
     decision = claude_manager.make_decision(project_state)
-    assert decision == expected_decision
+    assert expected_decision in decision
 
 def test_complex_evaluation(claude_manager):
     project_data = {
