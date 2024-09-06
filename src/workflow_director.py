@@ -29,7 +29,7 @@ from src.cost_analyzer import CostAnalyzer
 class WorkflowDirector:
     def __init__(self, config_path='src/workflow_config.yaml', state_manager=None, claude_manager=None, user_interaction_handler=None, llm_manager=None):
         self._setup_logging()
-        self.state_manager = state_manager or StateManager()
+        self.state_manager = state_manager if isinstance(state_manager, StateManager) else StateManager()
         self.claude_manager = claude_manager or ClaudeManager()
         self.llm_manager = llm_manager or LLMManager()
         self.user_interaction_handler = user_interaction_handler or UserInteractionHandler()
@@ -85,9 +85,10 @@ class WorkflowDirector:
 
     def transition_to_next_stage(self) -> bool:
         for transition in self.transitions:
-            if transition['from'] == self.current_stage and self.evaluate_transition_condition(transition):
-                self.current_stage = transition['to']
-                return True
+            if transition['from'] == self.current_stage:
+                if 'condition' not in transition or self.evaluate_condition(transition['condition']):
+                    self.current_stage = transition['to']
+                    return True
         return False
 
     def is_workflow_complete(self) -> bool:
@@ -499,8 +500,11 @@ class WorkflowDirector:
         return True
 
     def evaluate_condition(self, condition):
-        # This is a placeholder. In a real implementation, you would evaluate the condition based on the current state.
-        return True
+        try:
+            state = self.state_manager.get_state()
+            return eval(condition, {"state": state})
+        except:
+            return False
 
     def complete_current_stage(self):
         self.logger.info(f"Attempting to complete stage: {self.current_stage}")

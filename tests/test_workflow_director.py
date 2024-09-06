@@ -104,9 +104,17 @@ def test_workflow_director_can_transition_to(mock_workflow_director):
     assert not mock_workflow_director.can_transition_to("Non-existent Stage")
 
 def test_workflow_director_transition_to(mock_workflow_director, mocker):
-    mocker.patch.object(mock_workflow_director, 'evaluate_transition_condition', return_value=True)
+    mock_workflow_director.transitions = [
+        {"from": "Stage 1", "to": "Stage 2"},
+        {"from": "Stage 2", "to": "Stage 3", "condition": "state['flag']"}
+    ]
+    mock_workflow_director.current_stage = "Stage 1"
+    mocker.patch.object(mock_workflow_director, 'evaluate_condition', return_value=True)
     assert mock_workflow_director.transition_to_next_stage()
-    assert not mock_workflow_director.transition_to_next_stage()  # Assuming no more valid transitions
+    assert mock_workflow_director.current_stage == "Stage 2"
+    assert mock_workflow_director.transition_to_next_stage()
+    assert mock_workflow_director.current_stage == "Stage 3"
+    assert not mock_workflow_director.transition_to_next_stage()  # No more valid transitions
 
 def test_workflow_director_move_to_next_stage(mock_workflow_director):
     initial_stage = mock_workflow_director.current_stage
@@ -475,9 +483,7 @@ def test_transition_to_next_stage_no_valid_transition(workflow_director, mock_st
 
 def test_evaluate_transition_condition_invalid_condition(workflow_director, mock_state_manager):
     mock_state_manager.get_state.return_value = {}
-    transition = {"condition": "invalid_condition"}
-    
-    result = workflow_director.evaluate_transition_condition(transition)
+    result = workflow_director.evaluate_condition("invalid_condition")
     assert result == False
 
 @pytest.mark.parametrize("current_stage,is_complete", [
@@ -530,12 +536,13 @@ def test_evaluate_transition_condition(workflow_director, mock_state_manager):
     assert workflow_director.evaluate_transition_condition(transition_with_condition) == True
     assert workflow_director.evaluate_transition_condition(transition_without_condition) == True
 
-def test_transition_to_next_stage(workflow_director):
+def test_transition_to_next_stage(workflow_director, mock_state_manager):
     workflow_director.current_stage = "Stage 1"
     workflow_director.transitions = [
         {"from": "Stage 1", "to": "Stage 2"},
-        {"from": "Stage 2", "to": "Stage 3", "condition": "False"}
+        {"from": "Stage 2", "to": "Stage 3", "condition": "state['flag']"}
     ]
+    mock_state_manager.get_state.return_value = {"flag": False}
     
     assert workflow_director.transition_to_next_stage() == True
     assert workflow_director.current_stage == "Stage 2"
