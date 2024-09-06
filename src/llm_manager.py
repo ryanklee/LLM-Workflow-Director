@@ -161,7 +161,14 @@ class LLMManager:
                 self.cache[cache_key] = result
                 tokens = self.count_tokens(response)  # Count tokens of the response, not the prompt
                 self.cost_optimizer.update_usage(tier, tokens, safe_time() - start_time, True)
-                return result
+                return {
+                    "response": result.get('response', ''),
+                    "task_progress": result.get('task_progress', 0),
+                    "state_updates": result.get('state_updates', {}),
+                    "actions": result.get('actions', []),
+                    "suggestions": result.get('suggestions', []),
+                    "raw_response": result.get('raw_response', '')
+                }
             except RateLimitError:
                 self.logger.warning(f"Rate limit reached for tier: {tier}")
                 max_retries -= 1
