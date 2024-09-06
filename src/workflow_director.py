@@ -84,12 +84,12 @@ class WorkflowDirector:
                     self.logger.error(f"Error evaluating condition for task {task_name}: {str(e)}")
                     should_execute = False
             
-            self.state_manager.update_state(f"{stage_name}.{task_name}", "completed")
+            self.state_manager.update_state(f"{stage_name}.{task_name}", "completed" if should_execute else "skipped")
             if should_execute:
                 self.logger.info(f"Completed task: {task_name} in stage: {stage_name}")
             else:
                 self.logger.info(f"Skipped task: {task_name} in stage: {stage_name} due to condition")
-            
+        
         self.stage_progress[stage_name] = 1.0
         self.completed_stages.add(stage_name)
         self.logger.info(f"Executed stage: {stage_name}")
