@@ -76,19 +76,24 @@ class WorkflowDirector:
                 if not self.evaluate_condition(task['condition']):
                     continue
             self.state_manager.update_state(f"{stage_name}.{task_name}", "completed")
+        self.logger.info(f"Executed stage: {stage_name}")
         return True
 
     def evaluate_transition_condition(self, transition: dict) -> bool:
         if 'condition' not in transition:
             return True
-        return self.evaluate_condition(transition['condition'])
+        condition_result = self.evaluate_condition(transition['condition'])
+        self.logger.debug(f"Evaluated transition condition: {transition['condition']} = {condition_result}")
+        return condition_result
 
     def transition_to_next_stage(self) -> bool:
         for transition in self.transitions:
             if transition['from'] == self.current_stage:
-                if 'condition' not in transition or self.evaluate_condition(transition['condition']):
+                if 'condition' not in transition or self.evaluate_transition_condition(transition):
                     self.current_stage = transition['to']
+                    self.logger.info(f"Transitioned to stage: {self.current_stage}")
                     return True
+        self.logger.info("No valid transition found")
         return False
 
     def is_workflow_complete(self) -> bool:
@@ -502,8 +507,11 @@ class WorkflowDirector:
     def evaluate_condition(self, condition):
         try:
             state = self.state_manager.get_state()
-            return eval(condition, {"state": state})
-        except:
+            result = eval(condition, {"state": state})
+            self.logger.debug(f"Evaluated condition: {condition} = {result}")
+            return result
+        except Exception as e:
+            self.logger.error(f"Error evaluating condition '{condition}': {str(e)}")
             return False
 
     def complete_current_stage(self):
