@@ -5,6 +5,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 import time
 from .rate_limiter import RateLimiter, RateLimitError
 from .token_tracker import TokenTracker, TokenOptimizer
+from .exceptions import RateLimitError
 
 class ClaudeManager:
     def __init__(self, client=None, requests_per_minute: int = 60, requests_per_hour: int = 3600):
@@ -42,12 +43,21 @@ class ClaudeManager:
         if len(prompt) > 10000:  # Add a character limit check
             raise ValueError(f"Invalid prompt length: {len(prompt)} characters exceeds maximum of 10000")
         
+        # Add a more stringent character limit
+        if len(prompt) > 5000:
+            raise ValueError(f"Invalid prompt length: {len(prompt)} characters exceeds maximum of 5000")
+        
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         self.logger.debug(f"Using model: {model if model else 'default'}")
 
         try:
             if not self.rate_limiter.is_allowed():
-                raise RetryError(last_attempt=None)
+                raise RateLimitError("Rate limit exceeded")
+            
+            # Add context overflow check
+            if len(prompt) > self.max_context_length:
+                raise ValueError(f"Context overflow: prompt length {len(prompt)} exceeds maximum context length {self.max_context_length}")
+            
             response = self.client.messages.create(
                 model=self.select_model(prompt) if model is None else model,
                 max_tokens=self.max_test_tokens,
