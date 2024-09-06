@@ -15,6 +15,10 @@ class ClaudeManager:
         self.token_tracker = TokenTracker()
         self.token_optimizer = TokenOptimizer()
 
+    def count_tokens(self, text):
+        # This is a simple approximation. For more accurate results, use a proper tokenizer.
+        return len(text.split())
+
     @staticmethod
     def create_client():
         return Anthropic()
@@ -28,7 +32,7 @@ class ClaudeManager:
     def generate_response(self, prompt, model=None):
         if not isinstance(prompt, str) or not prompt.strip():
             raise ValueError("Invalid prompt: must be a non-empty string")
-        if len(prompt) > self.max_test_tokens:
+        if self.count_tokens(prompt) > self.max_test_tokens:
             raise ValueError(f"Invalid prompt length: exceeds {self.max_test_tokens} tokens")
         if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
             raise ValueError("Invalid prompt: contains potentially sensitive information")
@@ -37,7 +41,8 @@ class ClaudeManager:
         self.logger.debug(f"Using model: {model if model else 'default'}")
 
         try:
-            self.rate_limiter.wait_for_next_slot()
+            if not self.rate_limiter.is_allowed():
+                raise tenacity.RetryError(last_attempt=None)
             response = self.client.messages.create(
                 model=self.select_model(prompt) if model is None else model,
                 max_tokens=self.max_test_tokens,
@@ -73,14 +78,14 @@ class ClaudeManager:
 
     def select_model(self, task_description):
         if "simple" in task_description.lower():
-            return "claude-2.1"
+            return "claude-3-haiku-20240307"
         elif "complex" in task_description.lower():
-            return "claude-2.1"
+            return "claude-3-opus-20240229"
         else:
-            return "claude-2.1"
+            return "claude-3-sonnet-20240229"
 
     def parse_response(self, response_text):
-        truncated_text = response_text[:self.max_test_tokens] + "..." if len(response_text) > self.max_test_tokens else response_text
+        truncated_text = response_text[:self.max_test_tokens - 21] + "..." if len(response_text) > self.max_test_tokens - 21 else response_text
         return f"<response>{truncated_text.strip()}</response>"
 
     def _extract_response_text(self, response):
