@@ -495,11 +495,6 @@ def test_is_workflow_complete(workflow_director, mock_state_manager, current_sta
     ]
     workflow_director.current_stage = current_stage
     assert workflow_director.is_workflow_complete() == is_complete
-            {"name": "Design"}
-        ]
-    }
-    workflow_director.current_stage = current_stage
-    assert workflow_director.is_workflow_complete() == is_complete
 
 def test_execute_stage_with_condition(workflow_director, mock_state_manager):
     mock_state_manager.get_state.return_value = {"feature_flag": True}
