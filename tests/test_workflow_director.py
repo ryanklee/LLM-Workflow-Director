@@ -433,17 +433,20 @@ def mock_state_manager(mocker):
 def test_execute_stage_with_condition(workflow_director, mock_state_manager):
     mock_state_manager.get_state.return_value = {"feature_flag": True}
     workflow_director.config = {
-        "stages": {
-            "Project Initialization": {
+        "stages": [
+            {
+                "name": "Project Initialization",
                 "tasks": {
                     "Create project directory": {},
                     "Initialize git repository": {"condition": "state['feature_flag']"},
                     "Setup virtual environment": {"condition": "not state['feature_flag']"}
                 }
             }
-        }
+        ]
     }
-    workflow_director.execute_stage("Project Initialization")
+    workflow_director.stages = workflow_director.config["stages"]
+    result = workflow_director.execute_stage("Project Initialization")
+    assert result == True
     assert mock_state_manager.update_state.call_count == 2
     mock_state_manager.update_state.assert_any_call("Project Initialization.Create project directory", "completed")
     mock_state_manager.update_state.assert_any_call("Project Initialization.Initialize git repository", "completed")
