@@ -135,9 +135,9 @@ class TestContextManagement:
 
     @pytest.mark.fast
     def test_context_overflow_handling(self, claude_manager, llm_manager):
-        max_tokens = claude_manager.max_test_tokens
-        overflow_input = "a" * (max_tokens * 10)  # Ensure it's well over the limit
-        with pytest.raises(ValueError, match="Prompt length exceeds maximum"):
+        max_tokens = claude_manager.max_context_length
+        overflow_input = "a" * (max_tokens + 1)  # Ensure it's just over the limit
+        with pytest.raises(ValueError, match="Prompt length exceeds maximum context length"):
             claude_manager.generate_response(overflow_input)
 
 class TestPerformance:
