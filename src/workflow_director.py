@@ -64,6 +64,42 @@ class WorkflowDirector:
         self.logger.info(f"Total token usage: {total_tokens}")
         self.logger.info(f"Estimated cost: ${total_cost:.2f}")
 
+    def get_stage_by_name(self, stage_name: str) -> dict:
+        return next((stage for stage in self.stages if stage['name'] == stage_name), None)
+
+    def execute_stage(self, stage_name: str) -> bool:
+        stage = self.get_stage_by_name(stage_name)
+        if not stage:
+            return False
+        for task_name, task in stage['tasks'].items():
+            if 'condition' in task:
+                if not self.evaluate_condition(task['condition']):
+                    continue
+            self.state_manager.update_state(f"{stage_name}.{task_name}", "completed")
+        return True
+
+    def evaluate_transition_condition(self, transition: dict) -> bool:
+        if 'condition' not in transition:
+            return True
+        return self.evaluate_condition(transition['condition'])
+
+    def transition_to_next_stage(self) -> bool:
+        for transition in self.transitions:
+            if transition['from'] == self.current_stage and self.evaluate_transition_condition(transition):
+                self.current_stage = transition['to']
+                return True
+        return False
+
+    def is_workflow_complete(self) -> bool:
+        return self.current_stage == self.stages[-1]['name']
+
+    def evaluate_condition(self, condition: str) -> bool:
+        try:
+            state = self.state_manager.get_state()
+            return eval(condition, {"state": state})
+        except:
+            return False
+
     def load_config(self, config_path):
         if isinstance(config_path, StateManager):
             # Use a default config path if StateManager is passed
