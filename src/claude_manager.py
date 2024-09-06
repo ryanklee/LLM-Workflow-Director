@@ -40,6 +40,8 @@ class ClaudeManager:
         if not isinstance(prompt, str) or not prompt.strip():
             raise ValueError("Invalid prompt: must be a non-empty string")
         token_count = self.count_tokens(prompt)
+        if token_count > self.max_context_length:
+            raise ValueError(f"Prompt length exceeds maximum context length of {self.max_context_length} tokens")
         if token_count > self.max_test_tokens:
             prompt = self._truncate_prompt(prompt, self.max_test_tokens)
         if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
