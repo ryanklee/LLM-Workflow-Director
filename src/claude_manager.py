@@ -63,33 +63,26 @@ class ClaudeManager:
                     {"role": "user", "content": prompt}
                 ]
             )
-            if isinstance(response, dict):
-                if 'content' in response:
-                    response_text = response['content'][0]['text']
-                elif 'choices' in response and len(response['choices']) > 0:
-                    response_text = response['choices'][0]['message']['content']
-                else:
-                    raise ValueError("Unexpected response structure")
-            else:
-                response_text = response.content[0].text
+            response_text = self._extract_response_text(response)
             self.token_tracker.add_tokens("generate_response", prompt, response_text)
             return self.parse_response(response_text)
         except Exception as e:
             self.logger.error(f"Error in generate_response: {str(e)}")
             if isinstance(e, NotFoundError):
-                return self.fallback_response(prompt, e)
-            elif "rate_limit_error" in str(e):
+                return self.fallback_response(prompt, "Model not found")
+            elif "rate_limit_error" in str(e).lower():
                 self.logger.warning(f"Rate limit error encountered: {str(e)}")
                 time.sleep(5)  # Wait for 5 seconds before retrying
-                return self.fallback_response(prompt, e)
+                return self.fallback_response(prompt, "Rate limit exceeded")
+            elif isinstance(e, ValueError) and "Unexpected response structure" in str(e):
+                return self.fallback_response(prompt, "Unexpected API response")
             else:
-                return self.fallback_response(prompt, e)
+                return self.fallback_response(prompt, "Unknown error")
 
-    def fallback_response(self, prompt, error=None):
+    def fallback_response(self, prompt, error_type):
         self.logger.warning(f"Fallback response triggered for prompt: {prompt[:50]}...")
-        if error:
-            self.logger.error(f"Error details: {str(error)}")
-        return f"<response>Fallback response: Unable to process the request at this time. Please try again later. Error: {str(error) if error else 'Unknown'}</response>"
+        self.logger.error(f"Error type: {error_type}")
+        return f"<response>Fallback response: Unable to process the request at this time. Please try again later. Error type: {error_type}</response>"
 
     def select_model(self, task_description):
         if "simple" in task_description.lower():
@@ -114,3 +107,15 @@ class ClaudeManager:
             return self.generate_response(prompt)
         else:
             return self.fallback_response(prompt)
+    def _extract_response_text(self, response):
+        if isinstance(response, dict):
+            if 'content' in response and isinstance(response['content'], list):
+                return response['content'][0]['text']
+            elif 'choices' in response and isinstance(response['choices'], list):
+                return response['choices'][0]['message']['content']
+            elif 'completion' in response:
+                return response['completion']
+        elif hasattr(response, 'content') and isinstance(response.content, list):
+            return response.content[0].text
+        
+        raise ValueError(f"Unexpected response structure: {response}")
