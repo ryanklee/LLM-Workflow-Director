@@ -2,7 +2,8 @@ import logging
 import json
 import asyncio
 import anthropic
-from anthropic import AsyncAnthropic, NotFoundError, APIError, APIConnectionError, APIStatusError, RateLimitError
+from anthropic import AsyncAnthropic, NotFoundError, APIError, APIConnectionError, APIStatusError
+from .exceptions import RateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, RetryError
 import time
 from .rate_limiter import RateLimiter, RateLimitError
@@ -77,8 +78,10 @@ class ClaudeManager:
             response_text = self._extract_response_text(response)
             self.token_tracker.add_tokens("generate_response", prompt, response_text)
             return self.parse_response(response_text)
-        except (NotFoundError, APIError, APIConnectionError, APIStatusError) as e:
+        except (NotFoundError, APIError, APIConnectionError, APIStatusError, RateLimitError) as e:
             self.logger.error(f"API error in generate_response: {str(e)}")
+            if isinstance(e, RateLimitError):
+                raise
             return await self._handle_error(e, prompt)
         except Exception as e:
             self.logger.error(f"Unexpected error in generate_response: {str(e)}")

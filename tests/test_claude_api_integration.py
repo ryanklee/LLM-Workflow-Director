@@ -9,7 +9,8 @@ from src.claude_manager import ClaudeManager
 from src.exceptions import RateLimitError
 from src.mock_claude_client import MockClaudeClient
 from src.llm_manager import LLMManager
-from anthropic import APIError
+from anthropic import APIError, APIStatusError
+from src.exceptions import RateLimitError
 
 @pytest.fixture
 def mock_claude_client():
@@ -49,7 +50,7 @@ async def test_claude_api_latency(claude_manager, mock_claude_client):
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
     mock_claude_client.set_rate_limit(True)
     mock_claude_client.rate_limit_threshold = 5  # Set a lower threshold for testing
-    with pytest.raises(RateLimitError):
+    with pytest.raises(RateLimitError) as excinfo:
         for i in range(10):  # Attempt to make 10 calls
             try:
                 await claude_manager.generate_response(f"Test prompt {i}")
@@ -61,7 +62,7 @@ async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
 @pytest.mark.asyncio
 async def test_claude_api_error_handling(claude_manager, mock_claude_client):
     mock_claude_client.set_error_mode(True)
-    with pytest.raises(anthropic.APIError):
+    with pytest.raises(APIStatusError):
         await claude_manager.generate_response("Test prompt")
 
 @pytest.mark.asyncio

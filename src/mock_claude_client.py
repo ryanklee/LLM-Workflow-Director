@@ -3,7 +3,8 @@ import time
 import logging
 from typing import Dict, Any, List
 from unittest.mock import MagicMock
-from anthropic import RateLimitError, APIError
+from anthropic import RateLimitError, APIError, APIStatusError
+from src.exceptions import RateLimitError as CustomRateLimitError
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
@@ -58,12 +59,12 @@ class MockClaudeClient:
             
             if self.rate_limit_reached or self.call_count > self.rate_limit_threshold:
                 self.logger.warning("Rate limit exceeded")
-                raise RateLimitError("Rate limit exceeded")
+                raise CustomRateLimitError("Rate limit exceeded")
             if self.error_mode:
                 self.error_count += 1
                 if self.error_count <= self.max_errors:
                     self.logger.error("API error (error mode)")
-                    raise APIError("API error", request=MagicMock())
+                    raise APIStatusError("API error", response=MagicMock(), body={})
                 else:
                     self.error_mode = False
                     self.error_count = 0
