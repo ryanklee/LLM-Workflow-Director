@@ -6,11 +6,10 @@ import anthropic
 import logging
 from unittest.mock import MagicMock, AsyncMock, patch
 from src.claude_manager import ClaudeManager
-from src.exceptions import RateLimitError
+from src.exceptions import RateLimitError, RateLimitError as CustomRateLimitError
 from src.mock_claude_client import MockClaudeClient
 from src.llm_manager import LLMManager
 from anthropic import APIError, APIStatusError
-from src.exceptions import RateLimitError
 
 @pytest.fixture
 def mock_claude_client():
