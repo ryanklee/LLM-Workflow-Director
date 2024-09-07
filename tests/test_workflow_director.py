@@ -553,17 +553,19 @@ def test_evaluate_transition_condition(workflow_director, mock_state_manager, mo
     assert result == True
     
     # Check for all expected log calls
-    mock_logger.debug.assert_any_call(f"Entering evaluate_transition_condition with transition: {transition_with_condition}")
-    mock_logger.debug.assert_any_call("Entering _evaluate_condition_internal with condition: state.get('flag', False), type: transition condition")
-    mock_logger.debug.assert_any_call("Current state: {'flag': True}")
-    mock_logger.debug.assert_any_call("Evaluating transition condition: state.get('flag', False)")
-    mock_logger.debug.assert_any_call("Evaluated transition condition: state.get('flag', False) = True")
-    mock_logger.debug.assert_any_call("Evaluation result type: <class 'bool'>")
-    mock_logger.debug.assert_any_call("Boolean conversion result: True")
-    mock_logger.debug.assert_any_call("Exiting _evaluate_condition_internal")
-    mock_logger.debug.assert_any_call("Exiting evaluate_transition_condition with result: True")
-
-    assert mock_logger.debug.call_count == 9
+    expected_calls = [
+        call(f"Entering evaluate_transition_condition with transition: {transition_with_condition}"),
+        call("Entering _evaluate_condition_internal with condition: state.get('flag', False), type: transition condition"),
+        call("Current state: {'flag': True}"),
+        call("Evaluating transition condition: state.get('flag', False)"),
+        call("Evaluated transition condition: state.get('flag', False) = True"),
+        call("Evaluation result type: <class 'bool'>"),
+        call("Boolean conversion result: True"),
+        call("Exiting _evaluate_condition_internal"),
+        call("Exiting evaluate_transition_condition with result: True")
+    ]
+    mock_logger.debug.assert_has_calls(expected_calls, any_order=False)
+    assert mock_logger.debug.call_count == len(expected_calls)
 
     mock_logger.reset_mock()
 
