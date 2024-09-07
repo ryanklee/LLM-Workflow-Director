@@ -556,6 +556,9 @@ def test_evaluate_transition_condition(workflow_director, mock_state_manager, mo
     # Reset mock_logger
     mock_logger.reset_mock()
 
+    # Reset mock_logger
+    mock_logger.reset_mock()
+
     # Test without condition
     transition_without_condition = {}
     assert workflow_director.evaluate_transition_condition(transition_without_condition) == True
@@ -628,6 +631,9 @@ def test_evaluate_condition(workflow_director, mock_state_manager, mock_logger):
     mock_state_manager.get_state.return_value = {"flag": True, "count": 5}
     assert workflow_director.evaluate_condition("state.get('flag', False)") == True
     mock_logger.debug.assert_called_with("Evaluated condition: state.get('flag', False) = True")
+
+    # Reset mock_logger
+    mock_logger.reset_mock()
 
     # Reset mock_logger
     mock_logger.reset_mock()
