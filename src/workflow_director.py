@@ -29,23 +29,36 @@ from src.cost_analyzer import CostAnalyzer
 
 class WorkflowDirector:
     def __init__(self, config_path='src/workflow_config.yaml', state_manager=None, claude_manager=None, user_interaction_handler=None, llm_manager=None, logger=None, test_mode=False):
+        self.config_path = config_path
         self.logger = logger if logger is not None else self._setup_logging()
         if self.logger is None:
-            raise ValueError("Failed to initialize logger")
-        self.logger.info("Initializing WorkflowDirector", extra={'test_mode': test_mode})
-        self.config = self.load_config(config_path)
-        self.logger.debug(f"Loaded config: {self.config}")
-        self.logger.debug(f"StateManager: {state_manager}")
-        self.logger.debug(f"ClaudeManager: {claude_manager}")
-        self.logger.debug(f"UserInteractionHandler: {user_interaction_handler}")
-        self.logger.debug(f"LLMManager: {llm_manager}")
+            print("Warning: Failed to initialize logger. Using print statements for logging.")
+        self._log("Initializing WorkflowDirector", extra={'test_mode': test_mode})
+        self.config = self.load_config(self.config_path)
+        self._log(f"Loaded config: {self.config}")
+        self._log(f"StateManager: {state_manager}")
+        self._log(f"ClaudeManager: {claude_manager}")
+        self._log(f"UserInteractionHandler: {user_interaction_handler}")
+        self._log(f"LLMManager: {llm_manager}")
+        self.state_manager = state_manager
+        self.claude_manager = claude_manager
+        self.user_interaction_handler = user_interaction_handler
+        self.llm_manager = llm_manager
+        self.test_mode = test_mode
+
+    def _log(self, message, level='info', extra=None):
+        if self.logger:
+            log_method = getattr(self.logger, level, self.logger.info)
+            log_method(message, extra=extra)
+        else:
+            print(f"[{level.upper()}] {message}")
 
     def load_config(self, config_path):
         try:
             with open(config_path, 'r') as config_file:
                 return yaml.safe_load(config_file)
         except Exception as e:
-            self.logger.error(f"Error loading configuration: {str(e)}")
+            self._log(f"Error loading configuration: {str(e)}", level='error')
             return {}
         self._test_mode = test_mode
         self.config_path = config_path
@@ -125,7 +138,7 @@ class WorkflowDirector:
         self.logger.debug(f"StateManager methods: {[method for method in dir(self.state_manager) if not method.startswith('_')]}")
 
     def initialize_for_testing(self):
-        self.logger.info("Initializing WorkflowDirector for testing")
+        self._log("Initializing WorkflowDirector for testing")
         self.config = self.load_config(self.config_path)
         self.current_stage = self.config['stages'][0]['name'] if self.config['stages'] else "Default Stage"
         self.stages = {stage['name']: stage for stage in self.config['stages']}
@@ -140,7 +153,7 @@ class WorkflowDirector:
             self.user_interaction_handler = UserInteractionHandler()
         if self.llm_manager is None:
             self.llm_manager = LLMManager()
-        self.logger.info(f"Test initialization complete. Current stage: {self.current_stage}")
+        self._log(f"Test initialization complete. Current stage: {self.current_stage}")
 
     def _setup_logging(self):
         logger = logging.getLogger(__name__)
