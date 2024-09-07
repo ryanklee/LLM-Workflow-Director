@@ -262,7 +262,7 @@ async def test_mock_claude_client_rate_limit(mock_claude_client, claude_manager)
 @pytest.mark.asyncio
 async def test_mock_claude_client_error_mode(mock_claude_client, claude_manager):
     mock_claude_client.set_error_mode(True)
-    with pytest.raises(APIError):
+    with pytest.raises(APIStatusError):
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
 
 @pytest.mark.asyncio
@@ -303,7 +303,7 @@ async def test_mock_claude_client_concurrent_calls(mock_claude_client):
     results = await mock_claude_client.simulate_concurrent_calls(10)
 
     successful_calls = [r for r in results if isinstance(r, dict)]
-    rate_limit_errors = [r for r in results if isinstance(r, RateLimitError)]
+    rate_limit_errors = [r for r in results if isinstance(r, CustomRateLimitError)]
 
     assert len(successful_calls) == 5
     assert len(rate_limit_errors) == 5
@@ -332,6 +332,40 @@ async def test_mock_claude_client_latency(mock_claude_client, claude_manager):
     end_time = time.time()
     
     assert end_time - start_time >= 0.5, "Response time should be at least 500ms"
+
+@pytest.mark.asyncio
+async def test_mock_claude_client_call_count(mock_claude_client, claude_manager):
+    for _ in range(3):
+        await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+    
+    assert mock_claude_client.get_call_count() == 3
+
+@pytest.mark.asyncio
+async def test_mock_claude_client_error_count(mock_claude_client, claude_manager):
+    mock_claude_client.set_error_mode(True)
+    
+    for _ in range(2):
+        with pytest.raises(APIStatusError):
+            await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+    
+    assert mock_claude_client.get_error_count() == 2
+
+@pytest.mark.asyncio
+async def test_claude_manager_fallback_response(mock_claude_client, claude_manager):
+    mock_claude_client.set_error_mode(True)
+    mock_claude_client.max_errors = 0  # Force immediate fallback
+    
+    response = await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+    assert "I apologize, but I'm unable to process your request at the moment" in response
+
+@pytest.mark.asyncio
+async def test_claude_manager_retry_mechanism(mock_claude_client, claude_manager):
+    mock_claude_client.set_error_mode(True)
+    mock_claude_client.max_errors = 2  # Allow 2 errors before success
+    
+    response = await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+    assert response == "<response>Default mock response</response>"
+    assert mock_claude_client.get_error_count() == 2
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_rate_limit_reset(mock_claude_client, claude_manager):

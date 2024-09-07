@@ -78,10 +78,11 @@ class ClaudeManager:
             response_text = self._extract_response_text(response)
             self.token_tracker.add_tokens("generate_response", prompt, response_text)
             return self.parse_response(response_text)
-        except (NotFoundError, APIError, APIConnectionError, APIStatusError, RateLimitError) as e:
+        except CustomRateLimitError as e:
+            self.logger.error(f"Rate limit error in generate_response: {str(e)}")
+            raise RateLimitError(str(e))
+        except (NotFoundError, APIError, APIConnectionError, APIStatusError) as e:
             self.logger.error(f"API error in generate_response: {str(e)}")
-            if isinstance(e, RateLimitError):
-                raise
             return await self._handle_error(e, prompt)
         except Exception as e:
             self.logger.error(f"Unexpected error in generate_response: {str(e)}")
