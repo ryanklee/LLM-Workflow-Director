@@ -554,25 +554,27 @@ class WorkflowDirector:
         self.logger.info(f"Transition to {next_stage} is allowed")
         return True
 
-    def evaluate_condition(self, condition):
-        try:
-            state = self.state_manager.get_state()
-            result = eval(condition, {"state": state})
-            self.logger.debug(f"Evaluated condition: {condition} = {result}")
-            return bool(result)
-        except KeyError as e:
-            self.logger.warning(f"Condition evaluation failed due to missing key: {str(e)}")
-            return False
-        except Exception as e:
-            self.logger.error(f"Error evaluating condition '{condition}': {str(e)}")
-            return False
+    def evaluate_condition(self, condition: str) -> bool:
+        return self._evaluate_condition_internal(condition, "condition")
 
     def evaluate_transition_condition(self, transition: dict) -> bool:
         if 'condition' not in transition:
             self.logger.debug("Transition condition not specified, assuming True")
             return True
-        condition = transition['condition']
-        return self.evaluate_condition(condition)
+        return self._evaluate_condition_internal(transition['condition'], "transition condition")
+
+    def _evaluate_condition_internal(self, condition: str, condition_type: str) -> bool:
+        try:
+            state = self.state_manager.get_state()
+            result = eval(condition, {"state": state})
+            self.logger.debug(f"Evaluated {condition_type}: {condition} = {result}")
+            return bool(result)
+        except KeyError as e:
+            self.logger.warning(f"{condition_type.capitalize()} evaluation failed due to missing key: '{e.args[0]}'")
+            return False
+        except Exception as e:
+            self.logger.error(f"Error evaluating {condition_type} '{condition}': {str(e)}")
+            return False
 
     def complete_current_stage(self):
         self.logger.info(f"Attempting to complete stage: {self.current_stage}")
