@@ -23,6 +23,7 @@ sys.modules['pkg.workflow.constraint.engine'] = mock_constraint_engine
 from src.workflow_director import WorkflowDirector
 from src.user_interaction_handler import UserInteractionHandler
 from src.main import cli
+from src.llm_manager import LLMManager
 
 logger.info("Test module initialized")
 
