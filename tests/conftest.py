@@ -47,6 +47,8 @@ def test_evaluate_transition_condition(workflow_director, mock_state_manager, mo
     mock_logger.debug.assert_any_call("Current state: {'flag': True}")
     mock_logger.debug.assert_any_call("Evaluating transition condition: state.get('flag', False)")
     mock_logger.debug.assert_any_call("Evaluated transition condition: state.get('flag', False) = True")
+    mock_logger.debug.assert_any_call("Evaluation result type: <class 'bool'>")
+    mock_logger.debug.assert_any_call("Boolean conversion result: True")
     mock_logger.debug.assert_any_call("Exiting _evaluate_condition_internal")
     mock_logger.debug.assert_any_call("Exiting evaluate_transition_condition with result: True")
 
@@ -66,6 +68,8 @@ def test_evaluate_condition(workflow_director, mock_state_manager, mock_logger):
     mock_logger.debug.assert_any_call("Current state: {'flag': True, 'count': 5}")
     mock_logger.debug.assert_any_call(f"Evaluating condition: {condition}")
     mock_logger.debug.assert_any_call(f"Evaluated condition: {condition} = True")
+    mock_logger.debug.assert_any_call("Evaluation result type: <class 'bool'>")
+    mock_logger.debug.assert_any_call("Boolean conversion result: True")
     mock_logger.debug.assert_any_call("Exiting _evaluate_condition_internal")
     mock_logger.debug.assert_any_call("Exiting evaluate_condition with result: True")
 
@@ -79,6 +83,8 @@ def test_evaluate_condition(workflow_director, mock_state_manager, mock_logger):
     mock_logger.debug.assert_any_call("Current state: {'flag': True, 'count': 5}")
     mock_logger.debug.assert_any_call(f"Evaluating condition: {condition}")
     mock_logger.debug.assert_any_call(f"Evaluated condition: {condition} = False")
+    mock_logger.debug.assert_any_call("Evaluation result type: <class 'bool'>")
+    mock_logger.debug.assert_any_call("Boolean conversion result: False")
     mock_logger.debug.assert_any_call("Exiting _evaluate_condition_internal")
     mock_logger.debug.assert_any_call("Exiting evaluate_condition with result: False")
 
@@ -97,6 +103,8 @@ def test_evaluate_condition_false(workflow_director, mock_state_manager, mock_lo
     mock_logger.debug.assert_any_call("Current state: {'flag': False, 'count': 3}")
     mock_logger.debug.assert_any_call(f"Evaluating condition: {condition}")
     mock_logger.debug.assert_any_call(f"Evaluated condition: {condition} = False")
+    mock_logger.debug.assert_any_call("Evaluation result type: <class 'bool'>")
+    mock_logger.debug.assert_any_call("Boolean conversion result: False")
     mock_logger.debug.assert_any_call("Exiting _evaluate_condition_internal")
     mock_logger.debug.assert_any_call("Exiting evaluate_condition with result: False")
     def test_evaluate_transition_condition(workflow_director, mock_state_manager, mock_logger):
