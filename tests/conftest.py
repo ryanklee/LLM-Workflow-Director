@@ -27,6 +27,8 @@ def workflow_director(mock_state_manager, llm_manager, mock_logger):
     yield director
     # Reset all mock calls after each test
     mock_logger.reset_mock()
+    # Ensure the logger is properly set after yield
+    director.logger = mock_logger
 
 @pytest.fixture
 def mock_state_manager():
