@@ -77,7 +77,7 @@ class ClaudeManager:
                 messages=[{"role": "user", "content": prompt}]
             )
             response_text = self._extract_response_text(response)
-            self.token_tracker.add_tokens("generate_response", prompt, response_text)
+            self.token_tracker.add_tokens("generate_response", token_count, self.count_tokens(response_text))
             return self.parse_response(response_text)
         except RateLimitError as e:
             self.logger.error(f"Rate limit error in generate_response: {str(e)}")

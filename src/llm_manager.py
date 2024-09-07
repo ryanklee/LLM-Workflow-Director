@@ -134,7 +134,7 @@ class LLMManager:
             self.logger.error(f"Error loading LLM configuration: {str(e)}")
             return {}
 
-    def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: Optional[str] = None, model: Optional[str] = None) -> Dict[str, Any]:
+    async def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: Optional[str] = None, model: Optional[str] = None) -> Dict[str, Any]:
         self.logger.debug(f"Querying LLM with prompt: {prompt[:50]}...")
 
         if tier is None:
@@ -160,7 +160,7 @@ class LLMManager:
                 if model is None:
                     model = tier_config['model']
 
-                response = self.claude_manager.generate_response(enhanced_prompt, model=model)
+                response = await self.claude_manager.generate_response(enhanced_prompt, model=model)
                 result = self._process_response(response, tier, start_time)
                 result['raw_response'] = response  # Add this line to include the raw response
                 self.cache[cache_key] = result

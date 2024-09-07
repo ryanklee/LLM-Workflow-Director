@@ -387,7 +387,7 @@ class WorkflowDirector:
                 if self.llm_manager:
                     try:
                         self.logger.debug(f"Querying LLM with prompt: {prompt[:100]}...")
-                        structured_response = self.llm_manager.query(prompt, context=context, tier=tier)
+                        structured_response = await self.llm_manager.query(prompt, context=context, tier=tier)
                         self.logger.debug(f"LLM response received: {structured_response}")
                         self.user_interaction_handler.display_message(f"LLM response: {structured_response}")
                         self._process_llm_response(structured_response)
@@ -400,7 +400,7 @@ class WorkflowDirector:
                 # Always call LLM query for testing purposes
                 if getattr(self, '_test_mode', False):
                     self.logger.debug("Test mode active. Forcing LLM query.")
-                    self.llm_manager.query(prompt, context=context, tier=tier)
+                    await self.llm_manager.query(prompt, context=context, tier=tier)
                 
                 if user_input.lower() == 'next':
                     self.move_to_next_stage()

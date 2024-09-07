@@ -61,6 +61,10 @@ class TokenTracker:
         self.total_tokens = 0
         self.logger.info("Token usage reset")
 
+    def count_tokens(self, text: str) -> int:
+        # This is a simple approximation. For more accurate results, use a proper tokenizer.
+        return len(text.split())
+
 class TokenOptimizer:
     def __init__(self, token_tracker: TokenTracker):
         self.token_tracker = token_tracker
