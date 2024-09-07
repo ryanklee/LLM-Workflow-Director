@@ -432,7 +432,7 @@ import pytest
 from src.workflow_director import WorkflowDirector
 from src.state_manager import StateManager
 from src.claude_manager import ClaudeManager
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, call
 
 @pytest.fixture
 def mock_state_manager(mocker):
