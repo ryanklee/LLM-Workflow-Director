@@ -1,7 +1,8 @@
 import logging
 import json
+import asyncio
 import anthropic
-from anthropic import Anthropic, NotFoundError, APIError, APIConnectionError, APIStatusError, RateLimitError
+from anthropic import AsyncAnthropic, NotFoundError, APIError, APIConnectionError, APIStatusError, RateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, RetryError
 import time
 from .rate_limiter import RateLimiter, RateLimitError
@@ -19,10 +20,10 @@ class ClaudeManager:
         self.max_context_length = 200000  # Updated to 200k tokens
         self.messages = self.client.messages
 
-    def evaluate_response_quality(self, prompt):
+    async def evaluate_response_quality(self, prompt):
         # Implement the evaluation logic here
         # This is a placeholder implementation
-        response = self.generate_response(prompt)
+        response = await self.generate_response(prompt)
         # You might want to implement a more sophisticated evaluation method
         return len(response) / 100  # Simple quality metric based on response length
 
@@ -32,7 +33,7 @@ class ClaudeManager:
 
     @staticmethod
     def create_client():
-        return Anthropic()
+        return AsyncAnthropic()
 
     @retry(
         stop=stop_after_attempt(3),
@@ -40,10 +41,10 @@ class ClaudeManager:
         retry=retry_if_exception_type((APIError, APIConnectionError, TimeoutError)),
         reraise=True
     )
-    def generate_response(self, prompt, model=None):
-        if not self.rate_limiter.is_allowed():
+    async def generate_response(self, prompt, model=None):
+        if not await self.rate_limiter.is_allowed():
             self.logger.warning("Rate limit reached, waiting for next available slot")
-            self.rate_limiter.wait_for_next_slot()
+            await self.rate_limiter.wait_for_next_slot()
         if not isinstance(prompt, str) or not prompt.strip():
             raise ValueError("Invalid prompt: must be a non-empty string")
         token_count = self.count_tokens(prompt)
@@ -59,7 +60,7 @@ class ClaudeManager:
 
         try:
             selected_model = self.select_model(prompt) if model is None else model
-            response = self.client.messages.create(
+            response = await self.client.messages.create(
                 model=selected_model,
                 max_tokens=self.max_test_tokens,
                 messages=[{"role": "user", "content": prompt}]
@@ -68,10 +69,10 @@ class ClaudeManager:
             self.token_tracker.add_tokens("generate_response", prompt, response_text)
             return self.parse_response(response_text)
         except (NotFoundError, APIError, APIConnectionError, APIStatusError) as e:
-            return self._handle_error(e, prompt)
+            return await self._handle_error(e, prompt)
         except Exception as e:
             self.logger.error(f"Unexpected error in generate_response: {str(e)}")
-            return self.fallback_response(prompt, f"Unexpected error: {str(e)}")
+            return await self.fallback_response(prompt, f"Unexpected error: {str(e)}")
 
     def _truncate_prompt(self, prompt, max_tokens):
         words = prompt.split()
@@ -85,31 +86,31 @@ class ClaudeManager:
             current_tokens += word_tokens
         return truncated_prompt.strip()
 
-    def _handle_error(self, error, prompt):
+    async def _handle_error(self, error, prompt):
         self.logger.error(f"Error in generate_response: {str(error)}")
         if isinstance(error, NotFoundError):
-            return self.fallback_response(prompt, "Model not found")
+            return await self.fallback_response(prompt, "Model not found")
         elif isinstance(error, RateLimitError):
             self.logger.warning(f"Rate limit error encountered: {str(error)}")
-            time.sleep(5)
-            return self.fallback_response(prompt, "Rate limit exceeded")
+            await asyncio.sleep(5)
+            return await self.fallback_response(prompt, "Rate limit exceeded")
         elif isinstance(error, (APIError, APIStatusError)):
             self.logger.error(f"API error: {str(error)}")
-            return self.fallback_response(prompt, f"API error: {str(error)}")
+            return await self.fallback_response(prompt, f"API error: {str(error)}")
         elif isinstance(error, APIConnectionError):
             self.logger.warning(f"API Connection error encountered: {str(error)}")
-            time.sleep(5)
-            return self.fallback_response(prompt, "API Connection error")
+            await asyncio.sleep(5)
+            return await self.fallback_response(prompt, "API Connection error")
         elif isinstance(error, ValueError):
-            return self.fallback_response(prompt, str(error))
+            return await self.fallback_response(prompt, str(error))
         elif isinstance(error, RetryError):
-            return self.fallback_response(prompt, "Rate limit exceeded after multiple retries")
+            return await self.fallback_response(prompt, "Rate limit exceeded after multiple retries")
         elif isinstance(error, TypeError):
-            return self.fallback_response(prompt, f"TypeError: {str(error)}")
+            return await self.fallback_response(prompt, f"TypeError: {str(error)}")
         else:
-            return self.fallback_response(prompt, f"Unknown error: {str(error)}")
+            return await self.fallback_response(prompt, f"Unknown error: {str(error)}")
 
-    def fallback_response(self, prompt, error_type):
+    async def fallback_response(self, prompt, error_type):
         self.logger.warning(f"Fallback response triggered for prompt: {prompt[:50]}...")
         self.logger.error(f"Error type: {error_type}")
         return f"<response>Fallback response: Unable to process the request. Error: {error_type}</response>"

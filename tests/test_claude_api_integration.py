@@ -1,8 +1,9 @@
 import pytest
+import asyncio
 import tenacity
 import time
 import anthropic
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, AsyncMock, patch
 from src.claude_manager import ClaudeManager
 from src.exceptions import RateLimitError
 from src.mock_claude_client import MockClaudeClient
@@ -13,8 +14,18 @@ def mock_claude_client():
     return MockClaudeClient()
 
 @pytest.fixture
+async def async_mock_claude_client():
+    client = AsyncMock()
+    client.messages.create = AsyncMock()
+    return client
+
+@pytest.fixture
 def claude_manager(mock_claude_client):
     return ClaudeManager(client=mock_claude_client)
+
+@pytest.fixture
+async def async_claude_manager(async_mock_claude_client):
+    return ClaudeManager(client=async_mock_claude_client)
 
 @pytest.fixture
 def llm_manager():
@@ -179,3 +190,17 @@ def test_mock_claude_client_reset(mock_claude_client, claude_manager):
     
     response = claude_manager.get_completion("Test prompt", "claude-3-haiku-20240307", 100)
     assert response == "Default mock response"
+
+@pytest.mark.asyncio
+async def test_concurrent_claude_api_calls(async_mock_claude_client, async_claude_manager):
+    num_concurrent_calls = 5
+    async_mock_claude_client.messages.create.return_value = AsyncMock(content=[AsyncMock(text="Test response")])
+
+    async def make_call():
+        return await async_claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+
+    tasks = [make_call() for _ in range(num_concurrent_calls)]
+    results = await asyncio.gather(*tasks)
+
+    assert all(result == "<response>Test response</response>" for result in results)
+    assert async_mock_claude_client.messages.create.call_count == num_concurrent_calls
