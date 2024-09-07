@@ -160,13 +160,19 @@ class WorkflowDirector:
         return self.current_stage == self.stages[-1]['name']
 
     def evaluate_transition_condition(self, transition: dict) -> bool:
+        self.logger.debug(f"Entering evaluate_transition_condition with transition: {transition}")
         if 'condition' not in transition:
             self.logger.debug("Transition condition not specified, assuming True")
             return True
-        return self._evaluate_condition_internal(transition['condition'], "condition")
+        result = self._evaluate_condition_internal(transition['condition'], "transition condition")
+        self.logger.debug(f"Exiting evaluate_transition_condition with result: {result}")
+        return result
 
     def evaluate_condition(self, condition: str) -> bool:
-        return self._evaluate_condition_internal(condition, "condition")
+        self.logger.debug(f"Entering evaluate_condition with condition: {condition}")
+        result = self._evaluate_condition_internal(condition, "condition")
+        self.logger.debug(f"Exiting evaluate_condition with result: {result}")
+        return result
 
     def _evaluate_condition_internal(self, condition: str, condition_type: str) -> bool:
         self.logger.debug(f"Entering _evaluate_condition_internal with condition: {condition}, type: {condition_type}")
@@ -176,7 +182,10 @@ class WorkflowDirector:
             self.logger.debug(f"Evaluating {condition_type}: {condition}")
             result = eval(condition, {"state": state})
             self.logger.debug(f"Evaluated {condition_type}: {condition} = {result}")
-            return bool(result)
+            self.logger.debug(f"Evaluation result type: {type(result)}")
+            bool_result = bool(result)
+            self.logger.debug(f"Boolean conversion result: {bool_result}")
+            return bool_result
         except KeyError as e:
             error_msg = f"{condition_type.capitalize()} evaluation failed due to missing key: '{e.args[0]}'"
             self.logger.warning(error_msg)

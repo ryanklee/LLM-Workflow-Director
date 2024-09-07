@@ -551,7 +551,19 @@ def test_evaluate_transition_condition(workflow_director, mock_state_manager, mo
     transition_with_condition = {"condition": "state.get('flag', False)"}
     result = workflow_director.evaluate_transition_condition(transition_with_condition)
     assert result == True
-    mock_logger.debug.assert_called_with("Evaluated condition: state.get('flag', False) = True")
+    
+    # Check for all expected log calls
+    mock_logger.debug.assert_any_call(f"Entering evaluate_transition_condition with transition: {transition_with_condition}")
+    mock_logger.debug.assert_any_call("Entering _evaluate_condition_internal with condition: state.get('flag', False), type: transition condition")
+    mock_logger.debug.assert_any_call("Current state: {'flag': True}")
+    mock_logger.debug.assert_any_call("Evaluating transition condition: state.get('flag', False)")
+    mock_logger.debug.assert_any_call("Evaluated transition condition: state.get('flag', False) = True")
+    mock_logger.debug.assert_any_call("Evaluation result type: <class 'bool'>")
+    mock_logger.debug.assert_any_call("Boolean conversion result: True")
+    mock_logger.debug.assert_any_call("Exiting _evaluate_condition_internal")
+    mock_logger.debug.assert_any_call("Exiting evaluate_transition_condition with result: True")
+
+    assert mock_logger.debug.call_count == 9
 
     mock_logger.reset_mock()
 
@@ -775,7 +787,48 @@ def test_state_management_consistency(workflow_director, mock_state_manager, moc
     assert mock_state_manager.get_state.return_value == initial_state
 
     # Check log calls
+    mock_logger.debug.assert_any_call(f"Entering evaluate_condition with condition: {condition}")
+    mock_logger.debug.assert_any_call(f"Entering _evaluate_condition_internal with condition: {condition}, type: condition")
     mock_logger.debug.assert_any_call(f"Current state: {initial_state}")
+    mock_logger.debug.assert_any_call(f"Evaluating condition: {condition}")
     mock_logger.debug.assert_any_call(f"Evaluated condition: {condition} = True")
     mock_logger.debug.assert_any_call("Evaluation result type: <class 'bool'>")
     mock_logger.debug.assert_any_call("Boolean conversion result: True")
+    mock_logger.debug.assert_any_call("Exiting _evaluate_condition_internal")
+    mock_logger.debug.assert_any_call(f"Exiting evaluate_condition with result: True")
+
+    assert mock_logger.debug.call_count == 9
+    mock_logger.debug.assert_any_call("Evaluation result type: <class 'bool'>")
+    mock_logger.debug.assert_any_call("Boolean conversion result: True")
+def test_state_management_consistency(workflow_director, mock_state_manager, mock_logger):
+    workflow_director.logger = mock_logger
+    workflow_director.state_manager = mock_state_manager
+
+    # Set up initial state
+    initial_state = {"flag": True, "count": 5}
+    mock_state_manager.get_state.return_value = initial_state
+
+    # Evaluate a condition
+    condition = "state.get('flag', False) and state.get('count', 0) > 3"
+    result = workflow_director.evaluate_condition(condition)
+    assert result == True
+
+    # Check that the state wasn't modified
+    assert mock_state_manager.get_state.return_value == initial_state
+
+    # Check log calls
+    mock_logger.debug.assert_any_call(f"Current state: {initial_state}")
+    mock_logger.debug.assert_any_call(f"Evaluated condition: {condition} = True")
+
+    # Ensure the state manager was only called once to get the state
+    mock_state_manager.get_state.assert_called_once()
+
+    # Modify the state and ensure it doesn't affect subsequent evaluations
+    modified_state = {"flag": False, "count": 2}
+    mock_state_manager.get_state.return_value = modified_state
+
+    result = workflow_director.evaluate_condition(condition)
+    assert result == False
+
+    mock_logger.debug.assert_any_call(f"Current state: {modified_state}")
+    mock_logger.debug.assert_any_call(f"Evaluated condition: {condition} = False")
