@@ -6,9 +6,11 @@ import subprocess
 import logging
 import json
 from click.testing import CliRunner
-
-# Add this import
 from logging import Handler
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Add the project root directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -21,6 +23,8 @@ sys.modules['pkg.workflow.constraint.engine'] = mock_constraint_engine
 from src.workflow_director import WorkflowDirector
 from src.user_interaction_handler import UserInteractionHandler
 from src.main import cli
+
+logger.info("Test module initialized")
 
 def test_workflow_director_initialization():
     director = WorkflowDirector()
