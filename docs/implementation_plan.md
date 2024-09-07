@@ -503,6 +503,9 @@ Throughout the implementation process, maintain regular communication with stake
     17.7. Add concurrent API calls testing [COMPLETED]
     17.8. Fix error handling in MockClaudeClient and ClaudeManager [COMPLETED]
     17.9. Update tests to expect correct error types [COMPLETED]
+    17.10. Implement configurable rate limit threshold and reset time [COMPLETED]
+    17.11. Add tests for error mode behavior [COMPLETED]
+    17.12. Implement and test latency simulation [COMPLETED]
 
 18. Performance Enhancements and LLM Usage Optimization (High)
     18.1. Implement selective parallel test execution for non-LLM tests [COMPLETED]

@@ -99,3 +99,13 @@ class MockClaudeClient:
     async def wait_for_rate_limit_reset(self):
         await asyncio.sleep(self.rate_limit_reset_time)
         self.call_count = 0
+
+    def set_rate_limit_threshold(self, threshold: int):
+        self.rate_limit_threshold = threshold
+
+    def set_rate_limit_reset_time(self, reset_time: int):
+        self.rate_limit_reset_time = reset_time
+
+    async def simulate_concurrent_calls(self, num_calls: int):
+        tasks = [self.create("test-model", 100, [{"role": "user", "content": "Test"}]) for _ in range(num_calls)]
+        return await asyncio.gather(*tasks, return_exceptions=True)

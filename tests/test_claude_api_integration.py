@@ -278,8 +278,8 @@ async def test_mock_claude_client_reset(mock_claude_client, claude_manager):
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_rate_limit_reset(mock_claude_client, claude_manager):
-    mock_claude_client.rate_limit_threshold = 3
-    mock_claude_client.rate_limit_reset_time = 1  # 1 second for faster testing
+    mock_claude_client.set_rate_limit_threshold(3)
+    mock_claude_client.set_rate_limit_reset_time(1)  # 1 second for faster testing
 
     # Make calls until rate limit is reached
     for _ in range(3):
@@ -297,20 +297,41 @@ async def test_mock_claude_client_rate_limit_reset(mock_claude_client, claude_ma
     assert response == "<response>Default mock response</response>"
 
 @pytest.mark.asyncio
-async def test_mock_claude_client_concurrent_calls(mock_claude_client, claude_manager):
-    mock_claude_client.rate_limit_threshold = 5
+async def test_mock_claude_client_concurrent_calls(mock_claude_client):
+    mock_claude_client.set_rate_limit_threshold(5)
 
-    async def make_call():
-        return await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+    results = await mock_claude_client.simulate_concurrent_calls(10)
 
-    tasks = [make_call() for _ in range(10)]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-
-    successful_calls = [r for r in results if isinstance(r, str)]
+    successful_calls = [r for r in results if isinstance(r, dict)]
     rate_limit_errors = [r for r in results if isinstance(r, RateLimitError)]
 
     assert len(successful_calls) == 5
     assert len(rate_limit_errors) == 5
+
+@pytest.mark.asyncio
+async def test_mock_claude_client_error_mode(mock_claude_client, claude_manager):
+    mock_claude_client.set_error_mode(True)
+    
+    with pytest.raises(APIStatusError):
+        await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+    
+    # After max_errors, it should return to normal
+    for _ in range(mock_claude_client.max_errors):
+        with pytest.raises(APIStatusError):
+            await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+    
+    response = await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+    assert response == "<response>Default mock response</response>"
+
+@pytest.mark.asyncio
+async def test_mock_claude_client_latency(mock_claude_client, claude_manager):
+    mock_claude_client.set_latency(0.5)  # Set a 500ms latency
+    
+    start_time = time.time()
+    await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+    end_time = time.time()
+    
+    assert end_time - start_time >= 0.5, "Response time should be at least 500ms"
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_rate_limit_reset(mock_claude_client, claude_manager):
