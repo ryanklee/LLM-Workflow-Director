@@ -241,35 +241,51 @@ async def test_mock_claude_client_reset(mock_claude_client, claude_manager):
     assert response == "<response>Default mock response</response>"
 
 @pytest.mark.asyncio
-async def test_concurrent_claude_api_calls(claude_manager, mock_claude_client):
+async def test_concurrent_claude_api_calls(claude_manager, mock_claude_client, caplog):
+    caplog.set_level(logging.DEBUG)
     num_concurrent_calls = 5
     mock_claude_client.set_response("Test prompt", "Test response")
 
-    async def make_call():
-        return await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+    async def make_call(i):
+        return await claude_manager.generate_response(f"Test prompt {i}", "claude-3-haiku-20240307")
 
-    tasks = [make_call() for _ in range(num_concurrent_calls)]
-    results = await asyncio.gather(*tasks)
+    tasks = [make_call(i) for i in range(num_concurrent_calls)]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    assert all(result == "<response><response>Test response</response></response>" for result in results)
+    successful_calls = [r for r in results if isinstance(r, str)]
+    rate_limit_errors = [r for r in results if isinstance(r, RateLimitError)]
+
+    assert len(successful_calls) + len(rate_limit_errors) == num_concurrent_calls
+    assert all(result == "<response><response>Test response</response></response>" for result in successful_calls)
     assert mock_claude_client.call_count == num_concurrent_calls
 
+    for i in range(num_concurrent_calls):
+        assert f"Generating response for prompt: Test prompt {i}" in caplog.text
+
+    if rate_limit_errors:
+        assert "Rate limit reached, waiting for next available slot" in caplog.text
+
 @pytest.mark.asyncio
-async def test_rate_limit_reset(claude_manager, mock_claude_client):
+async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
+    caplog.set_level(logging.DEBUG)
     mock_claude_client.rate_limit_threshold = 3
     mock_claude_client.rate_limit_reset_time = 1  # 1 second for faster testing
 
     # Make calls until rate limit is reached
-    for _ in range(3):
-        await claude_manager.generate_response("Test prompt")
+    for i in range(3):
+        response = await claude_manager.generate_response(f"Test prompt {i}")
+        assert response == f"<response>Default mock response</response>"
+        assert f"Generating response for prompt: Test prompt {i}" in caplog.text
 
     # Next call should raise RateLimitError
     with pytest.raises(RateLimitError):
-        await claude_manager.generate_response("Test prompt")
+        await claude_manager.generate_response("Test prompt 3")
+    assert "Rate limit reached, waiting for next available slot" in caplog.text
 
     # Wait for rate limit to reset
     await asyncio.sleep(1.1)
 
     # Should be able to make calls again
-    response = await claude_manager.generate_response("Test prompt")
+    response = await claude_manager.generate_response("Test prompt 4")
     assert response == "<response>Default mock response</response>"
+    assert "Generating response for prompt: Test prompt 4" in caplog.text

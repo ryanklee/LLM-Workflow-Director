@@ -42,21 +42,25 @@ class ClaudeManager:
         reraise=True
     )
     async def generate_response(self, prompt, model=None):
-        if not await self.rate_limiter.is_allowed():
-            self.logger.warning("Rate limit reached, waiting for next available slot")
-            await self.rate_limiter.wait_for_next_slot()
-        if not isinstance(prompt, str) or not prompt.strip():
-            raise ValueError("Invalid prompt: must be a non-empty string")
-        token_count = self.count_tokens(prompt)
-        if token_count > self.max_context_length:
-            raise ValueError(f"Prompt length exceeds maximum context length of {self.max_context_length} tokens")
-        if token_count > self.max_test_tokens:
-            prompt = self._truncate_prompt(prompt, self.max_test_tokens)
-        if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
-            raise ValueError("Invalid prompt: contains potentially sensitive information")
-        
-        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
-        self.logger.debug(f"Using model: {model if model else 'default'}")
+        self.logger.debug(f"Entering generate_response with prompt: {prompt[:50]}... and model: {model}")
+        try:
+            if not await self.rate_limiter.is_allowed():
+                self.logger.warning("Rate limit reached, waiting for next available slot")
+                await self.rate_limiter.wait_for_next_slot()
+            if not isinstance(prompt, str) or not prompt.strip():
+                raise ValueError("Invalid prompt: must be a non-empty string")
+            token_count = self.count_tokens(prompt)
+            self.logger.debug(f"Token count for prompt: {token_count}")
+            if token_count > self.max_context_length:
+                raise ValueError(f"Prompt length exceeds maximum context length of {self.max_context_length} tokens")
+            if token_count > self.max_test_tokens:
+                prompt = self._truncate_prompt(prompt, self.max_test_tokens)
+                self.logger.debug(f"Prompt truncated to {self.max_test_tokens} tokens")
+            if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
+                raise ValueError("Invalid prompt: contains potentially sensitive information")
+            
+            self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+            self.logger.debug(f"Using model: {model if model else 'default'}")
 
         try:
             selected_model = self.select_model(prompt) if model is None else model

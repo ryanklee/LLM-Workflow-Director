@@ -67,6 +67,8 @@ class MockClaudeClient:
             if len(response) > self.max_test_tokens:
                 response = response[:self.max_test_tokens] + "..."
             
+            await asyncio.sleep(0.1)  # Simulate some processing time
+            
             return {
                 "content": [{"text": f"<response>{response}</response>"}],
                 "model": model,
