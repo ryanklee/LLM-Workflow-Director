@@ -548,17 +548,20 @@ def test_evaluate_transition_condition(workflow_director, mock_state_manager, mo
     mock_state_manager.get_state.return_value = {"flag": True}
     transition_with_condition = {"condition": "state.get('flag', False)"}
     transition_without_condition = {}
-
+    
     result = workflow_director.evaluate_transition_condition(transition_with_condition)
     assert result == True, f"Expected True, got {result}. State: {mock_state_manager.get_state.return_value}"
     mock_logger.debug.assert_called_with("Evaluated transition condition: state.get('flag', False) = True")
-
+    
     assert workflow_director.evaluate_transition_condition(transition_without_condition) == True
-
+    
     # Test with missing key
     mock_state_manager.get_state.return_value = {}
     assert workflow_director.evaluate_transition_condition(transition_with_condition) == False
     mock_logger.warning.assert_called_with("Transition condition evaluation failed due to missing key: 'flag'")
+        
+    # Reset mock_logger for other tests
+    mock_logger.reset_mock()
         
     # Reset mock_logger for other tests
     mock_logger.reset_mock()
@@ -658,7 +661,7 @@ def test_execute_stage_with_condition(workflow_director, mock_state_manager):
     mock_state_manager.update_state.assert_any_call("Project Initialization.Create project directory", "completed")
     mock_state_manager.update_state.assert_any_call("Project Initialization.Initialize git repository", "completed")
     mock_state_manager.update_state.assert_any_call("Project Initialization.Setup virtual environment", "skipped")
-    workflow_director.logger.info.assert_called_with("Executed stage: Project Initialization")
+    mock_logger.info.assert_called_with("Executed stage: Project Initialization")
 
 def test_execute_stage_with_error(workflow_director, mock_state_manager):
     workflow_director.config = {
