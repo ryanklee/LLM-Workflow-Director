@@ -553,16 +553,25 @@ def test_evaluate_transition_condition(workflow_director, mock_state_manager, mo
     assert result == True
     mock_logger.debug.assert_called_with("Evaluated transition condition: state.get('flag', False) = True")
 
+    # Reset mock_logger
+    mock_logger.reset_mock()
+
     # Test without condition
     transition_without_condition = {}
     assert workflow_director.evaluate_transition_condition(transition_without_condition) == True
     mock_logger.debug.assert_called_with("Transition condition not specified, assuming True")
+
+    # Reset mock_logger
+    mock_logger.reset_mock()
 
     # Test with missing key
     mock_state_manager.get_state.return_value = {}
     result = workflow_director.evaluate_transition_condition(transition_with_condition)
     assert result == False
     mock_logger.warning.assert_called_with("Transition condition evaluation failed due to missing key: 'flag'")
+    
+    # Reset mock_logger for other tests
+    mock_logger.reset_mock()
 
     # Test with invalid condition
     transition_with_invalid_condition = {"condition": "invalid_condition"}
@@ -601,7 +610,11 @@ def test_evaluate_transition_condition(workflow_director, mock_state_manager, mo
 
 @pytest.fixture
 def mock_logger():
-    return MagicMock()
+    logger = MagicMock()
+    logger.debug = MagicMock()
+    logger.warning = MagicMock()
+    logger.error = MagicMock()
+    return logger
 
 def test_transition_to_next_stage(workflow_director, mock_state_manager, mock_logger):
     workflow_director.logger = mock_logger
@@ -628,6 +641,9 @@ def test_evaluate_condition(workflow_director, mock_state_manager, mock_logger):
     mock_state_manager.get_state.return_value = {"flag": True, "count": 5}
     assert workflow_director.evaluate_condition("state.get('flag', False)") == True
     mock_logger.debug.assert_called_with("Evaluated condition: state.get('flag', False) = True")
+
+    # Reset mock_logger
+    mock_logger.reset_mock()
 
     # Test with condition using count
     assert workflow_director.evaluate_condition("state.get('count', 0) > 3") == True
