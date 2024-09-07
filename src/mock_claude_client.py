@@ -115,3 +115,11 @@ class MockClaudeClient:
 
     def get_error_count(self):
         return self.error_count
+
+    def count_tokens(self, text: str) -> int:
+        # Simple token counting implementation
+        return len(text.split())
+
+    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+        response = await self.create(model, self.max_test_tokens, [{"role": "user", "content": prompt}])
+        return response['content'][0]['text']

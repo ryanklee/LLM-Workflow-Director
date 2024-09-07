@@ -501,7 +501,7 @@ Throughout the implementation process, maintain regular communication with stake
 
 ## Phase 3: Test Suite Optimization and Advanced Testing (High Priority)
 
-17. Refactoring and Mocking (Critical)
+17. Refactoring and Mocking (Critical) [COMPLETED]
     17.1. Update ClaudeManager for easier mocking [COMPLETED]
     17.2. Implement MockClaudeClient [COMPLETED]
     17.3. Update test fixtures [COMPLETED]
@@ -514,6 +514,8 @@ Throughout the implementation process, maintain regular communication with stake
     17.10. Implement configurable rate limit threshold and reset time [COMPLETED]
     17.11. Add tests for error mode behavior [COMPLETED]
     17.12. Implement and test latency simulation [COMPLETED]
+    17.13. Implement token counting functionality [COMPLETED]
+    17.14. Add generate_response method to MockClaudeClient [COMPLETED]
 
 18. Performance Enhancements and LLM Usage Optimization (High)
     18.1. Implement selective parallel test execution for non-LLM tests [COMPLETED]
@@ -535,10 +537,10 @@ Throughout the implementation process, maintain regular communication with stake
         18.6.3. Implement cost-effectiveness analysis using historical data [TODO]
         18.6.4. Implement optimization strategies benchmark with minimal live testing [TODO]
     18.7. Implement RateLimiter class for API call frequency control [COMPLETED]
-    18.8. Develop TokenTracker and TokenOptimizer classes [TODO]
-    18.9. Implement CostAnalyzer class for model comparison [TODO]
+    18.8. Develop TokenTracker and TokenOptimizer classes [COMPLETED]
+    18.9. Implement CostAnalyzer class for model comparison [COMPLETED]
 
-19. Test Optimization (High)
+19. Test Optimization (High) [COMPLETED]
     19.1. Refactor test_claude_api_integration.py for improved organization and readability [COMPLETED]
     19.2. Implement timeout management to prevent long-running tests [COMPLETED]
     19.3. Optimize test data generation and management [COMPLETED]
@@ -556,6 +558,8 @@ Throughout the implementation process, maintain regular communication with stake
     20.8. Implement tests for long-term consistency in extended LLM operations [TODO]
     20.9. Create tests for graceful degradation under rate limiting [COMPLETED]
     20.10. Implement tests for concurrent API calls and race conditions [COMPLETED]
+    20.11. Add tests for token counting functionality [COMPLETED]
+    20.12. Implement tests for generate_response method in MockClaudeClient [COMPLETED]
 
 21. Continuous Improvement and Monitoring (High)
     21.1. Set up test performance monitoring and alerting [IN PROGRESS]
@@ -579,109 +583,111 @@ Throughout the implementation process, maintain regular communication with stake
     23.2. Develop user guidelines for efficient LLM usage [TODO]
     23.3. Create documentation on rate limiting and token usage best practices [TODO]
 
-22. Unit Testing (High)
-    22.1. Identify all individual components requiring unit tests [TODO]
-    22.2. Implement new unit tests for identified components [TODO]
-    22.3. Expand existing unit tests for better coverage [TODO]
-    22.4. Review and update unit test documentation [TODO]
+24. Unit Testing (High)
+    24.1. Identify all individual components requiring unit tests [TODO]
+    24.2. Implement new unit tests for identified components [TODO]
+    24.3. Expand existing unit tests for better coverage [TODO]
+    24.4. Review and update unit test documentation [TODO]
 
-23. Asynchronous Testing (High)
-    23.1. Implement asyncio-based tests for all relevant components [TODO]
-    23.2. Create helpers and utilities to simplify writing asynchronous tests [TODO]
-    23.3. Update test runner configuration to handle asynchronous tests [TODO]
+25. Asynchronous Testing (High)
+    25.1. Implement asyncio-based tests for all relevant components [IN PROGRESS]
+    25.2. Create helpers and utilities to simplify writing asynchronous tests [TODO]
+    25.3. Update test runner configuration to handle asynchronous tests [TODO]
 
-24. Integration Testing (High)
-    24.1. Identify critical integration points in the system [TODO]
-    24.2. Design and implement integration tests for each identified point [TODO]
-    24.3. Set up test environments mimicking production for integration tests [TODO]
-    24.4. Implement end-to-end tests for complex workflows involving multiple components [TODO]
-    24.5. Develop tests for error handling and recovery in integrated systems [TODO]
+26. Integration Testing (High)
+    26.1. Identify critical integration points in the system [TODO]
+    26.2. Design and implement integration tests for each identified point [TODO]
+    26.3. Set up test environments mimicking production for integration tests [TODO]
+    26.4. Implement end-to-end tests for complex workflows involving multiple components [TODO]
+    26.5. Develop tests for error handling and recovery in integrated systems [TODO]
 
-25. Test Suite Structure Optimization (Medium)
-    25.1. Analyze current test suite structure and identify areas for improvement [TODO]
-    25.2. Reorganize tests into logical groupings based on functionality and test type [TODO]
-    25.3. Implement shared fixtures and utilities to reduce code duplication [TODO]
-    25.4. Create a style guide for writing and organizing tests [TODO]
+27. Test Suite Structure Optimization (Medium)
+    27.1. Analyze current test suite structure and identify areas for improvement [TODO]
+    27.2. Reorganize tests into logical groupings based on functionality and test type [TODO]
+    27.3. Implement shared fixtures and utilities to reduce code duplication [TODO]
+    27.4. Create a style guide for writing and organizing tests [TODO]
 
-26. Test Data Management (Medium)
-    26.1. Develop a strategy for consistent and reliable test data across all test types [TODO]
-    26.2. Implement test data generation tools and utilities [TODO]
-    26.3. Set up version control for test data [TODO]
+28. Test Data Management (Medium)
+    28.1. Develop a strategy for consistent and reliable test data across all test types [TODO]
+    28.2. Implement test data generation tools and utilities [TODO]
+    28.3. Set up version control for test data [TODO]
 
-27. Advanced Testing Techniques (High)
-    27.1. Implement property-based testing for suitable components [TODO]
-    27.2. Set up mutation testing to ensure test quality [TODO]
-    27.3. Implement performance profiling as part of the testing process [TODO]
-    27.4. Implement a systematic prompt testing framework [TODO]
-    27.5. Develop tests for large context windows (200k+ tokens) [TODO]
-    27.6. Implement automated semantic similarity checks for outputs [TODO]
-    27.7. Implement automated fact-checking against a trusted knowledge base [TODO]
+29. Advanced Testing Techniques (High)
+    29.1. Implement property-based testing for suitable components [TODO]
+    29.2. Set up mutation testing to ensure test quality [TODO]
+    29.3. Implement performance profiling as part of the testing process [TODO]
+    29.4. Implement a systematic prompt testing framework [TODO]
+    29.5. Develop tests for large context windows (200k+ tokens) [TODO]
+    29.6. Implement automated semantic similarity checks for outputs [TODO]
+    29.7. Implement automated fact-checking against a trusted knowledge base [TODO]
 
-28. Security Testing (High)
-    28.1. Implement penetration testing for the system [TODO]
-    28.2. Set up regular vulnerability scanning [TODO]
-    28.3. Integrate security testing into the CI/CD pipeline [TODO]
+30. Security Testing (High)
+    30.1. Implement penetration testing for the system [TODO]
+    30.2. Set up regular vulnerability scanning [TODO]
+    30.3. Integrate security testing into the CI/CD pipeline [TODO]
 
-29. MockClaudeClient Enhancements (High)
-    29.1. Implement rate limiting simulation [COMPLETED]
-    29.2. Add error response simulation [COMPLETED]
-    29.3. Implement reset functionality for testing [COMPLETED]
+31. MockClaudeClient Enhancements (High) [COMPLETED]
+    31.1. Implement rate limiting simulation [COMPLETED]
+    31.2. Add error response simulation [COMPLETED]
+    31.3. Implement reset functionality for testing [COMPLETED]
+    31.4. Add token counting functionality [COMPLETED]
+    31.5. Implement generate_response method [COMPLETED]
 
-30. Documentation and Guidelines
-    30.1. Create TESTING.md with testing guidelines and best practices [COMPLETED]
-    30.2. Update implementation plan to reflect testing improvements [COMPLETED]
-    30.3. Create documentation for new testing tools and utilities [TODO]
-    30.4. Document best practices for prompt engineering and testing [TODO]
-    30.5. Create guidelines for multi-modal testing strategies [TODO]
-    30.6. Document techniques for hallucination detection and mitigation [TODO]
+32. Documentation and Guidelines
+    32.1. Create TESTING.md with testing guidelines and best practices [COMPLETED]
+    32.2. Update implementation plan to reflect testing improvements [COMPLETED]
+    32.3. Create documentation for new testing tools and utilities [TODO]
+    32.4. Document best practices for prompt engineering and testing [TODO]
+    32.5. Create guidelines for multi-modal testing strategies [TODO]
+    32.6. Document techniques for hallucination detection and mitigation [TODO]
 
-31. LLM-Specific Testing (High)
-    31.1. Implement limited stress testing for critical LLM-related functionality [IN PROGRESS]
-    31.2. Develop selective asyncio-based tests for typical load scenarios [TODO]
-    31.3. Implement simulated tests for rate limiting behavior [TODO]
-    31.4. Create focused tests for error handling under common conditions [TODO]
-    31.5. Implement targeted tests for key prompt variants and input formats [TODO]
-    31.6. Develop limited tests for context retention in typical conversation lengths [TODO]
-    31.7. Implement minimal tests for image understanding capabilities [TODO]
-    31.8. Develop focused benchmarks for essential multi-modal tasks [TODO]
+33. LLM-Specific Testing (High)
+    33.1. Implement limited stress testing for critical LLM-related functionality [IN PROGRESS]
+    33.2. Develop selective asyncio-based tests for typical load scenarios [TODO]
+    33.3. Implement simulated tests for rate limiting behavior [TODO]
+    33.4. Create focused tests for error handling under common conditions [TODO]
+    33.5. Implement targeted tests for key prompt variants and input formats [TODO]
+    33.6. Develop limited tests for context retention in typical conversation lengths [TODO]
+    33.7. Implement minimal tests for image understanding capabilities [TODO]
+    33.8. Develop focused benchmarks for essential multi-modal tasks [TODO]
 
-32. Advanced Feature Testing
-    32.1. Implement vector database tests [TODO]
-        32.1.1. Develop unit tests for vector database operations
-        32.1.2. Create performance benchmarks for vector similarity searches
-        32.1.3. Implement integration tests for vector database usage in the workflow
-    32.2. Develop multi-modal input tests [TODO]
-        32.2.1. Create test cases for combined text and image inputs
-        32.2.2. Implement tests for multi-modal analysis tasks
-        32.2.3. Ensure proper handling and validation of different input types
-    32.3. Implement external tool integration tests [TODO]
-        32.3.1. Develop mock external tools for testing purposes
-        32.3.2. Create test cases for Claude's interaction with external tools
-        32.3.3. Implement tests for error handling in external tool usage
-    32.4. Create adaptive learning tests [TODO]
-        32.4.1. Develop test scenarios for different task complexities
-        32.4.2. Implement tests to verify appropriate LLM tier selection
-        32.4.3. Create long-running tests to check learning behavior over time
-    32.5. Implement version compatibility tests [TODO]
-        32.5.1. Develop regression tests for consistent behavior across updates
-        32.5.2. Create migration tests for smooth transitions between model versions
+34. Advanced Feature Testing
+    34.1. Implement vector database tests [TODO]
+        34.1.1. Develop unit tests for vector database operations
+        34.1.2. Create performance benchmarks for vector similarity searches
+        34.1.3. Implement integration tests for vector database usage in the workflow
+    34.2. Develop multi-modal input tests [TODO]
+        34.2.1. Create test cases for combined text and image inputs
+        34.2.2. Implement tests for multi-modal analysis tasks
+        34.2.3. Ensure proper handling and validation of different input types
+    34.3. Implement external tool integration tests [TODO]
+        34.3.1. Develop mock external tools for testing purposes
+        34.3.2. Create test cases for Claude's interaction with external tools
+        34.3.3. Implement tests for error handling in external tool usage
+    34.4. Create adaptive learning tests [TODO]
+        34.4.1. Develop test scenarios for different task complexities
+        34.4.2. Implement tests to verify appropriate LLM tier selection
+        34.4.3. Create long-running tests to check learning behavior over time
+    34.5. Implement version compatibility tests [TODO]
+        34.5.1. Develop regression tests for consistent behavior across updates
+        34.5.2. Create migration tests for smooth transitions between model versions
 
-33. Continuous Integration Enhancement
-    33.1. Integrate all new test types into CI/CD pipeline [TODO]
-    33.2. Set up performance benchmark tracking in CI [TODO]
-    33.3. Implement alerts for significant performance regressions [TODO]
-    33.4. Configure CI to run different test suites based on code changes [TODO]
+35. Continuous Integration Enhancement
+    35.1. Integrate all new test types into CI/CD pipeline [TODO]
+    35.2. Set up performance benchmark tracking in CI [TODO]
+    35.3. Implement alerts for significant performance regressions [TODO]
+    35.4. Configure CI to run different test suites based on code changes [TODO]
 
-34. Performance Optimization Testing
-    34.1. Implement comprehensive performance benchmarks [TODO]
-    34.2. Develop tests for response time optimization [TODO]
-    34.3. Create benchmarks for token efficiency [TODO]
-    34.4. Implement cost optimization tests [TODO]
+36. Performance Optimization Testing
+    36.1. Implement comprehensive performance benchmarks [TODO]
+    36.2. Develop tests for response time optimization [TODO]
+    36.3. Create benchmarks for token efficiency [TODO]
+    36.4. Implement cost optimization tests [TODO]
 
-35. Long-term Consistency Testing
-    35.1. Develop tests for maintaining consistent performance over time [TODO]
-    35.2. Implement benchmarks for long-running conversations and tasks [TODO]
-    35.3. Create tests for maintaining consistent outputs in extended operations [TODO]
+37. Long-term Consistency Testing
+    37.1. Develop tests for maintaining consistent performance over time [TODO]
+    37.2. Implement benchmarks for long-running conversations and tasks [TODO]
+    37.3. Create tests for maintaining consistent outputs in extended operations [TODO]
 
 ## Phase 4: Refinement and Advanced Features
 

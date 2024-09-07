@@ -534,3 +534,16 @@ async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
     # Log the entire captured log for debugging
     print("Captured log:")
     print(caplog.text)
+
+@pytest.mark.asyncio
+async def test_token_counting(mock_claude_client):
+    text = "This is a test sentence."
+    token_count = mock_claude_client.count_tokens(text)
+    assert token_count == 5, f"Expected 5 tokens, but got {token_count}"
+
+@pytest.mark.asyncio
+async def test_generate_response(mock_claude_client):
+    prompt = "Tell me a joke"
+    response = await mock_claude_client.generate_response(prompt)
+    assert isinstance(response, str), "Response should be a string"
+    assert len(response) > 0, "Response should not be empty"
