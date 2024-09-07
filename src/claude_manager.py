@@ -9,6 +9,8 @@ from .rate_limiter import RateLimiter, RateLimitError
 from .token_tracker import TokenTracker, TokenOptimizer
 from .exceptions import RateLimitError
 
+logging.getLogger(__name__).info(f"Imported modules in {__name__}")
+
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 class ClaudeManager:
@@ -64,7 +66,6 @@ class ClaudeManager:
             self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
             self.logger.debug(f"Using model: {model if model else 'default'}")
 
-            selected_model = self.select_model(prompt) if model is None else model
             selected_model = self.select_model(prompt) if model is None else model
             response = await self.client.messages.create(
                 model=selected_model,
