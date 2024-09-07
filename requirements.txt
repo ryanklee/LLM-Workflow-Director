@@ -98,6 +98,7 @@ pytest-mock==3.10.0
 pytest-timeout==2.3.1
 pytest-xdist==3.5.0
 pytest-testmon==1.4.5
+coverage==7.2.7
 python-apt==2.4.0+ubuntu3
 python-dateutil==2.9.0.post0
 python-dotenv==0.19.0

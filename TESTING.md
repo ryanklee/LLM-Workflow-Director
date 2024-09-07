@@ -50,7 +50,29 @@ Our CI pipeline runs tests automatically on each pull request. Ensure all tests 
 We use pytest-benchmark for performance testing. Benchmark tests are marked with `@pytest.mark.benchmark`.
 
 ## Coverage Reporting
-We use pytest-cov for coverage reporting. Coverage reports are generated automatically when running tests. Aim for a minimum of 90% code coverage.
+We use pytest-cov for coverage reporting. Coverage reports are generated automatically when running tests. We aim for a minimum of 90% code coverage.
+
+To run tests with coverage:
+
+```
+pytest --cov=src --cov-report=term-missing --cov-report=html
+```
+
+This will generate a terminal report and an HTML report in the `coverage_html_report` directory.
+
+Our CI/CD pipeline is configured to fail if the coverage falls below 90%. To check the current coverage without running all tests:
+
+```
+coverage report
+```
+
+To generate an HTML report:
+
+```
+coverage html
+```
+
+Remember to write tests for any new functionality you add to maintain our high coverage standards.
 
 ## Updating Tests
 When adding new features or modifying existing ones, always update or add corresponding tests. Follow the existing patterns and conventions in the test files.
