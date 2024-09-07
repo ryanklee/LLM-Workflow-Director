@@ -658,14 +658,39 @@ def test_evaluate_condition(workflow_director, mock_state_manager, mock_logger):
 
     # Test with existing keys
     mock_state_manager.get_state.return_value = {"flag": True, "count": 5}
-    assert workflow_director.evaluate_condition("state.get('flag', False)") == True
-    mock_logger.debug.assert_called_with("Evaluated condition: state.get('flag', False) = True")
+    result = workflow_director.evaluate_condition("state.get('flag', False)")
+    assert result == True
+    
+    # Check for all expected log calls
+    mock_logger.debug.assert_any_call("Entering evaluate_condition with condition: state.get('flag', False)")
+    mock_logger.debug.assert_any_call("Entering _evaluate_condition_internal with condition: state.get('flag', False), type: condition")
+    mock_logger.debug.assert_any_call("Current state: {'flag': True, 'count': 5}")
+    mock_logger.debug.assert_any_call("Evaluating condition: state.get('flag', False)")
+    mock_logger.debug.assert_any_call("Evaluated condition: state.get('flag', False) = True")
+    mock_logger.debug.assert_any_call("Evaluation result type: <class 'bool'>")
+    mock_logger.debug.assert_any_call("Boolean conversion result: True")
+    mock_logger.debug.assert_any_call("Exiting _evaluate_condition_internal")
+    mock_logger.debug.assert_any_call("Exiting evaluate_condition with result: True")
+
+    assert mock_logger.debug.call_count == 9
 
     mock_logger.reset_mock()
 
-    # Test with condition using count
-    assert workflow_director.evaluate_condition("state.get('count', 0) > 3") == True
-    mock_logger.debug.assert_called_with("Evaluated condition: state.get('count', 0) > 3 = True")
+    result = workflow_director.evaluate_condition("state.get('count', 0) > 3")
+    assert result == True
+    
+    # Check for all expected log calls
+    mock_logger.debug.assert_any_call("Entering evaluate_condition with condition: state.get('count', 0) > 3")
+    mock_logger.debug.assert_any_call("Entering _evaluate_condition_internal with condition: state.get('count', 0) > 3, type: condition")
+    mock_logger.debug.assert_any_call("Current state: {'flag': True, 'count': 5}")
+    mock_logger.debug.assert_any_call("Evaluating condition: state.get('count', 0) > 3")
+    mock_logger.debug.assert_any_call("Evaluated condition: state.get('count', 0) > 3 = True")
+    mock_logger.debug.assert_any_call("Evaluation result type: <class 'bool'>")
+    mock_logger.debug.assert_any_call("Boolean conversion result: True")
+    mock_logger.debug.assert_any_call("Exiting _evaluate_condition_internal")
+    mock_logger.debug.assert_any_call("Exiting evaluate_condition with result: True")
+
+    assert mock_logger.debug.call_count == 9
 
     mock_logger.reset_mock()
 
