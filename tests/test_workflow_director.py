@@ -638,7 +638,8 @@ def test_evaluate_condition(workflow_director, mock_state_manager, mock_logger):
     # Reset mock_logger for other tests
     mock_logger.reset_mock()
 
-def test_execute_stage_with_condition(workflow_director, mock_state_manager):
+def test_execute_stage_with_condition(workflow_director, mock_state_manager, mock_logger):
+    workflow_director.logger = mock_logger
     mock_state_manager.get_state.return_value = {"feature_flag": True}
     workflow_director.config = {
         "stages": [
