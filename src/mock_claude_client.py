@@ -86,3 +86,7 @@ class MockClaudeClient:
 
     async def completions(self, prompt: str, model: str, max_tokens_to_sample: int, **kwargs) -> Dict[str, Any]:
         return await self.completion(prompt, model, max_tokens_to_sample, **kwargs)
+
+    async def wait_for_rate_limit_reset(self):
+        await asyncio.sleep(self.rate_limit_reset_time)
+        self.call_count = 0
