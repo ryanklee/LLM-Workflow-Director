@@ -28,13 +28,14 @@ from src.cost_analyzer import CostAnalyzer
 
 class WorkflowDirector:
     def __init__(self, config_path='src/workflow_config.yaml', state_manager=None, claude_manager=None, user_interaction_handler=None, llm_manager=None, logger=None):
-        self.logger = self._setup_logging()
+        self.logger = logger or self._setup_logging()
         self.state_manager = state_manager if isinstance(state_manager, StateManager) else StateManager()
         self.claude_manager = claude_manager or ClaudeManager()
         self.llm_manager = llm_manager or LLMManager()
         self.user_interaction_handler = user_interaction_handler or UserInteractionHandler()
         self.error_handler = ErrorHandler()
         self.config = self.load_config(config_path)
+        self.logger.info("WorkflowDirector initialized")
         self.current_stage = self.config['stages'][0]['name'] if self.config['stages'] else "Default Stage"
         self.stages = {stage['name']: stage for stage in self.config['stages']}
         self.transitions = self.config['transitions']
@@ -185,11 +186,15 @@ class WorkflowDirector:
             config_path = 'src/workflow_config.yaml'
         try:
             with open(config_path, 'r') as config_file:
-                return yaml.safe_load(config_file)
+                config = yaml.safe_load(config_file)
+            if self.logger:
+                self.logger.info(f"Configuration loaded successfully from {config_path}")
+            return config
         except Exception as e:
             error_message = self.error_handler.handle_error(e)
-            self.logger.error(f"Error loading configuration: {error_message}")
-            self.logger.warning("Using default configuration")
+            if self.logger:
+                self.logger.error(f"Error loading configuration: {error_message}")
+                self.logger.warning("Using default configuration")
             return {
                 'stages': [{'name': 'Default Stage'}],
                 'transitions': []
@@ -849,11 +854,13 @@ class WorkflowDirector:
         return report
 
     def initialize_priorities(self):
-        self.logger.info("Initializing priorities for all stages")
+        if self.logger:
+            self.logger.info("Initializing priorities for all stages")
         for stage_name, stage_data in self.stages.items():
             priorities = stage_data.get('priorities', [])
             self.priority_manager.set_priorities(stage_name, priorities)
-        self.logger.debug("Priorities initialized for all stages")
+        if self.logger:
+            self.logger.debug("Priorities initialized for all stages")
     def _setup_logging(self):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
