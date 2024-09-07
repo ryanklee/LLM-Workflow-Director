@@ -605,23 +605,22 @@ def test_evaluate_condition(workflow_director, mock_state_manager, mock_logger):
 
     assert workflow_director.evaluate_condition("state.get('flag', False)") == True
     mock_logger.debug.assert_called_with("Evaluated condition: state.get('flag', False) = True")
-        
-    # Reset mock_logger for other tests
     mock_logger.reset_mock()
-
+    
     assert workflow_director.evaluate_condition("state.get('count', 0) > 3") == True
     mock_logger.debug.assert_called_with("Evaluated condition: state.get('count', 0) > 3 = True")
-
+    mock_logger.reset_mock()
+    
     assert workflow_director.evaluate_condition("state.get('count', 0) < 3") == False
     mock_logger.debug.assert_called_with("Evaluated condition: state.get('count', 0) < 3 = False")
-
+    mock_logger.reset_mock()
+    
     assert workflow_director.evaluate_condition("state.get('missing_key', False)") == False
     mock_logger.warning.assert_called_with("Condition evaluation failed due to missing key: 'missing_key'")
-
+    mock_logger.reset_mock()
+    
     assert workflow_director.evaluate_condition("invalid_condition") == False
     mock_logger.error.assert_called_with("Error evaluating condition 'invalid_condition': name 'invalid_condition' is not defined")
-
-    # Reset mock_logger for other tests
     mock_logger.reset_mock()
     
     assert workflow_director.evaluate_condition("state.get('count', 0) > 3") == True
