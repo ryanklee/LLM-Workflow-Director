@@ -32,30 +32,37 @@ class WorkflowDirector:
         self.logger = logger or self._setup_logging()
         self.logger.info("Initializing WorkflowDirector")
         self._test_mode = test_mode
+        self.config_path = config_path
+        self.state_manager = state_manager
+        self.claude_manager = claude_manager
+        self.user_interaction_handler = user_interaction_handler
+        self.llm_manager = llm_manager
         if not self._test_mode:
             self.initialize()
         
     def initialize(self):
-        # Move initialization logic here
-        self.state_manager = state_manager if isinstance(state_manager, StateManager) else StateManager()
-        self.logger.debug(f"StateManager: {self.state_manager}")
-        # ... (rest of the initialization code)
+        from src.state_manager import StateManager
+        from src.claude_manager import ClaudeManager
+        from src.llm_manager import LLMManager
+        from src.user_interaction_handler import UserInteractionHandler
+        from src.error_handler import ErrorHandler
+        from src.constraint_engine import ConstraintEngine
+        from src.project_state_reporter import ProjectStateReporter
+        from src.documentation_health_checker import DocumentationHealthChecker
+        from src.project_structure_manager import ProjectStructureManager
+        from src.convention_manager import ConventionManager
+        from src.sufficiency_evaluator import SufficiencyEvaluator
+        from src.priority_manager import PriorityManager
+        from src.cost_analyzer import CostAnalyzer
 
-    def initialize_for_testing(self):
-        # Initialize minimal state for testing
-        self.state_manager = MagicMock(spec=StateManager)
-        self.current_stage = "Project Initialization"
-        self.stages = {"Project Initialization": {"name": "Project Initialization", "tasks": []}}
-        self.transitions = []
-        self.stage_progress = {"Project Initialization": 0.0}
-        self.completed_stages = set()
-        self.state_manager = state_manager if isinstance(state_manager, StateManager) else StateManager()
+        # Move initialization logic here
+        self.state_manager = self.state_manager if isinstance(self.state_manager, StateManager) else StateManager()
         self.logger.debug(f"StateManager: {self.state_manager}")
-        self.claude_manager = claude_manager or ClaudeManager()
-        self.llm_manager = llm_manager or LLMManager()
-        self.user_interaction_handler = user_interaction_handler or UserInteractionHandler()
+        self.claude_manager = self.claude_manager or ClaudeManager()
+        self.llm_manager = self.llm_manager or LLMManager()
+        self.user_interaction_handler = self.user_interaction_handler or UserInteractionHandler()
         self.error_handler = ErrorHandler()
-        self.config = self.load_config(config_path)
+        self.config = self.load_config(self.config_path)
         self.current_stage = self.config['stages'][0]['name'] if self.config['stages'] else "Default Stage"
         self.stages = {stage['name']: stage for stage in self.config['stages']}
         self.transitions = self.config['transitions']
@@ -70,10 +77,20 @@ class WorkflowDirector:
         self.priority_manager = PriorityManager()
         self.cost_analyzer = CostAnalyzer()
         
-        self._test_mode = test_mode
-        if not self._test_mode:
-            self.initialize_constraints()
-            self.initialize_priorities()
+        self.initialize_constraints()
+        self.initialize_priorities()
+
+    def initialize_for_testing(self):
+        from unittest.mock import MagicMock
+        from src.state_manager import StateManager
+        
+        # Initialize minimal state for testing
+        self.state_manager = MagicMock(spec=StateManager)
+        self.current_stage = "Project Initialization"
+        self.stages = {"Project Initialization": {"name": "Project Initialization", "tasks": []}}
+        self.transitions = []
+        self.stage_progress = {"Project Initialization": 0.0}
+        self.completed_stages = set()
         
         self.logger.info("WorkflowDirector initialized")
         self.logger.debug(f"WorkflowDirector initialized with LLMManager: {self.llm_manager}")

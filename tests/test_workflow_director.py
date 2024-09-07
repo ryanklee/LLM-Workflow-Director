@@ -259,32 +259,32 @@ def test_workflow_director_is_stage_completed():
     assert director.is_stage_completed(initial_stage)
 
 def test_workflow_director_can_transition_to(workflow_director):
-    initial_stage = director.current_stage
-    next_stage = director.transitions[0]['to']
+    initial_stage = workflow_director.current_stage
+    next_stage = workflow_director.transitions[0]['to']
     print(f"Initial stage: {initial_stage}")
     print(f"Next stage: {next_stage}")
     
-    assert director.can_transition_to(next_stage), f"Should be able to transition from {initial_stage} to {next_stage}"
-    assert not director.can_transition_to("Non-existent Stage"), "Should not be able to transition to a non-existent stage"
+    assert workflow_director.can_transition_to(next_stage), f"Should be able to transition from {initial_stage} to {next_stage}"
+    assert not workflow_director.can_transition_to("Non-existent Stage"), "Should not be able to transition to a non-existent stage"
     
     print(f"Completing stage: {initial_stage}")
-    director.complete_current_stage()
-    print(f"Current stage after completion: {director.current_stage}")
-    print(f"Completed stages: {director.completed_stages}")
+    workflow_director.complete_current_stage()
+    print(f"Current stage after completion: {workflow_director.current_stage}")
+    print(f"Completed stages: {workflow_director.completed_stages}")
     
-    assert director.can_transition_to(next_stage), f"Should be able to transition to {next_stage} after completing {initial_stage}"
+    assert workflow_director.can_transition_to(next_stage), f"Should be able to transition to {next_stage} after completing {initial_stage}"
     
     print(f"Transitioning to: {next_stage}")
-    director.transition_to(next_stage)
-    print(f"Current stage after transition: {director.current_stage}")
+    workflow_director.transition_to(next_stage)
+    print(f"Current stage after transition: {workflow_director.current_stage}")
     
     # Check if we can transition to the current stage
-    assert director.can_transition_to(director.current_stage), f"Should be able to transition to the current stage {director.current_stage}"
+    assert workflow_director.can_transition_to(workflow_director.current_stage), f"Should be able to transition to the current stage {workflow_director.current_stage}"
     
-    if len(director.transitions) > 1:
-        next_next_stage = director.transitions[1]['to']
+    if len(workflow_director.transitions) > 1:
+        next_next_stage = workflow_director.transitions[1]['to']
         print(f"Next next stage: {next_next_stage}")
-        assert director.can_transition_to(next_next_stage), f"Should be able to transition from {next_stage} to {next_next_stage}"
+        assert workflow_director.can_transition_to(next_next_stage), f"Should be able to transition from {next_stage} to {next_next_stage}"
     else:
         print("No more transitions available")
 
