@@ -169,10 +169,11 @@ class WorkflowDirector:
         return self._evaluate_condition_internal(condition, "condition")
 
     def _evaluate_condition_internal(self, condition: str, condition_type: str) -> bool:
+        self.logger.debug(f"Entering _evaluate_condition_internal with condition: {condition}, type: {condition_type}")
         try:
             state = self.state_manager.get_state()
-            self.logger.debug(f"Evaluating {condition_type}: {condition}")
             self.logger.debug(f"Current state: {state}")
+            self.logger.debug(f"Evaluating {condition_type}: {condition}")
             result = eval(condition, {"state": state})
             self.logger.debug(f"Evaluated {condition_type}: {condition} = {result}")
             return bool(result)
@@ -184,6 +185,8 @@ class WorkflowDirector:
             error_msg = f"Error evaluating {condition_type} '{condition}': {str(e)}"
             self.logger.error(error_msg)
             return False
+        finally:
+            self.logger.debug(f"Exiting _evaluate_condition_internal")
 
     def load_config(self, config_path):
         if isinstance(config_path, StateManager):
@@ -588,13 +591,19 @@ class WorkflowDirector:
         return True
 
     def evaluate_condition(self, condition: str) -> bool:
-        return self._evaluate_condition_internal(condition, "condition")
+        self.logger.debug(f"Entering evaluate_condition with condition: {condition}")
+        result = self._evaluate_condition_internal(condition, "condition")
+        self.logger.debug(f"Exiting evaluate_condition with result: {result}")
+        return result
 
     def evaluate_transition_condition(self, transition: dict) -> bool:
+        self.logger.debug(f"Entering evaluate_transition_condition with transition: {transition}")
         if 'condition' not in transition:
             self.logger.debug("Transition condition not specified, assuming True")
             return True
-        return self._evaluate_condition_internal(transition['condition'], "condition")
+        result = self._evaluate_condition_internal(transition['condition'], "transition condition")
+        self.logger.debug(f"Exiting evaluate_transition_condition with result: {result}")
+        return result
 
     def _evaluate_condition_internal(self, condition: str, condition_type: str) -> bool:
         try:
