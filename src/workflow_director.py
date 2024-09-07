@@ -554,6 +554,13 @@ class WorkflowDirector:
             self.logger.error(f"Error evaluating condition '{condition}': {str(e)}")
             return False
 
+    def evaluate_transition_condition(self, transition: dict) -> bool:
+        if 'condition' not in transition:
+            self.logger.debug("Transition condition not specified, assuming True")
+            return True
+        condition = transition['condition']
+        return self.evaluate_condition(condition)
+
     def complete_current_stage(self):
         self.logger.info(f"Attempting to complete stage: {self.current_stage}")
         current_stage_data = self.stages[self.current_stage]
