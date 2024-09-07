@@ -28,7 +28,7 @@ from src.cost_analyzer import CostAnalyzer
 
 class WorkflowDirector:
     def __init__(self, config_path='src/workflow_config.yaml', state_manager=None, claude_manager=None, user_interaction_handler=None, llm_manager=None, logger=None):
-        self.logger = logger or self._setup_logging()
+        self.logger = self._setup_logging()
         self.state_manager = state_manager if isinstance(state_manager, StateManager) else StateManager()
         self.claude_manager = claude_manager or ClaudeManager()
         self.llm_manager = llm_manager or LLMManager()
@@ -53,8 +53,8 @@ class WorkflowDirector:
         self.logger.debug(f"WorkflowDirector initialized with LLMManager: {self.llm_manager}")
 
     def _setup_logging(self):
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.DEBUG)
         
         # Create a StreamHandler for console output
         console_handler = logging.StreamHandler()
@@ -70,8 +70,8 @@ class WorkflowDirector:
         file_handler.setFormatter(file_formatter)
         
         # Add both handlers to the logger
-        self.logger.addHandler(console_handler)
-        self.logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
+        logger.addHandler(file_handler)
         
         # Create a JSON formatter for structured logging
         json_formatter = jsonlogger.JsonFormatter('%(timestamp)s %(name)s %(levelname)s %(message)s %(filename)s %(funcName)s %(lineno)d')
@@ -79,15 +79,17 @@ class WorkflowDirector:
         json_handler = logging.FileHandler(json_file)
         json_handler.setFormatter(json_formatter)
         json_handler.setLevel(logging.DEBUG)
-        self.logger.addHandler(json_handler)
+        logger.addHandler(json_handler)
         
-        self.logger.info("Logging setup completed for WorkflowDirector", extra={
+        logger.info("Logging setup completed for WorkflowDirector", extra={
             'component': 'WorkflowDirector',
             'action': 'setup_logging',
             'status': 'completed',
             'log_file': log_file,
             'json_file': json_file
         })
+        
+        return logger
 
     def get_stage_by_name(self, stage_name: str) -> dict:
         return next((stage for stage in self.stages if stage['name'] == stage_name), None)
