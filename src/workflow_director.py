@@ -613,7 +613,10 @@ class WorkflowDirector:
             self.logger.debug(f"Evaluating {condition_type}: {condition}")
             result = eval(condition, {"state": state})
             self.logger.debug(f"Evaluated {condition_type}: {condition} = {result}")
-            return bool(result)
+            self.logger.debug(f"Evaluation result type: {type(result)}")
+            bool_result = bool(result)
+            self.logger.debug(f"Boolean conversion result: {bool_result}")
+            return bool_result
         except KeyError as e:
             error_msg = f"{condition_type.capitalize()} evaluation failed due to missing key: '{e.args[0]}'"
             self.logger.warning(error_msg)
