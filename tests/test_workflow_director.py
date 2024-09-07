@@ -258,8 +258,7 @@ def test_workflow_director_is_stage_completed():
     director.complete_current_stage()
     assert director.is_stage_completed(initial_stage)
 
-def test_workflow_director_can_transition_to():
-    director = WorkflowDirector()
+def test_workflow_director_can_transition_to(workflow_director):
     initial_stage = director.current_stage
     next_stage = director.transitions[0]['to']
     print(f"Initial stage: {initial_stage}")

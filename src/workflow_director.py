@@ -31,6 +31,24 @@ class WorkflowDirector:
     def __init__(self, config_path='src/workflow_config.yaml', state_manager=None, claude_manager=None, user_interaction_handler=None, llm_manager=None, logger=None, test_mode=False):
         self.logger = logger or self._setup_logging()
         self.logger.info("Initializing WorkflowDirector")
+        self._test_mode = test_mode
+        if not self._test_mode:
+            self.initialize()
+        
+    def initialize(self):
+        # Move initialization logic here
+        self.state_manager = state_manager if isinstance(state_manager, StateManager) else StateManager()
+        self.logger.debug(f"StateManager: {self.state_manager}")
+        # ... (rest of the initialization code)
+
+    def initialize_for_testing(self):
+        # Initialize minimal state for testing
+        self.state_manager = MagicMock(spec=StateManager)
+        self.current_stage = "Project Initialization"
+        self.stages = {"Project Initialization": {"name": "Project Initialization", "tasks": []}}
+        self.transitions = []
+        self.stage_progress = {"Project Initialization": 0.0}
+        self.completed_stages = set()
         self.state_manager = state_manager if isinstance(state_manager, StateManager) else StateManager()
         self.logger.debug(f"StateManager: {self.state_manager}")
         self.claude_manager = claude_manager or ClaudeManager()
