@@ -45,6 +45,7 @@ class WorkflowDirector:
         self.user_interaction_handler = user_interaction_handler
         self.llm_manager = llm_manager
         self.test_mode = test_mode
+        self._test_mode = test_mode
 
     def _log(self, message, level='info', extra=None):
         if self.logger:
@@ -60,26 +61,6 @@ class WorkflowDirector:
         except Exception as e:
             self._log(f"Error loading configuration: {str(e)}", level='error')
             return {}
-        self._test_mode = test_mode
-        self.config_path = config_path
-        self.state_manager = state_manager
-        self.claude_manager = claude_manager
-        self.user_interaction_handler = user_interaction_handler
-        self.llm_manager = llm_manager
-        self.config = self.load_config(self.config_path)
-        self.logger.debug(f"Loaded config: {self.config}")
-        if not self._test_mode:
-            self.initialize()
-        self.logger.info("WorkflowDirector initialization complete")
-        self._test_mode = test_mode
-        self.config_path = config_path
-        self.state_manager = state_manager
-        self.claude_manager = claude_manager
-        self.user_interaction_handler = user_interaction_handler
-        self.llm_manager = llm_manager
-        if not self._test_mode:
-            self.initialize()
-        
     def initialize(self):
         from src.state_manager import StateManager
         from src.claude_manager import ClaudeManager
