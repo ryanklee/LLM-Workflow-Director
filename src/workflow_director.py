@@ -34,7 +34,7 @@ class WorkflowDirector:
         self.config_path = config_path
         self.logger = logger if logger is not None else self._setup_logging()
         if self.logger is None:
-            print("Warning: Failed to initialize logger. Using print statements for logging.")
+            raise ValueError("Failed to initialize logger.")
         self._log("Initializing WorkflowDirector", extra={'test_mode': test_mode})
         self.config = self.load_config(self.config_path)
         self._log(f"Loaded config: {self.config}")
@@ -60,7 +60,7 @@ class WorkflowDirector:
             log_method = getattr(self.logger, level, self.logger.info)
             log_method(message, extra=extra)
         else:
-            print(f"[{level.upper()}] {message}")
+            raise ValueError(f"Logger not initialized. Message: [{level.upper()}] {message}")
 
     def load_config(self, config_path):
         try:

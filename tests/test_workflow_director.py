@@ -896,11 +896,19 @@ def test_state_management_consistency(workflow_director, mock_state_manager, moc
 
     mock_logger.debug.assert_any_call(f"Current state: {modified_state}")
     mock_logger.debug.assert_any_call(f"Evaluated condition: {condition} = False")
-def test_workflow_director_initialization(mock_state_manager, mock_logger):
-    director = WorkflowDirector(state_manager=mock_state_manager, logger=mock_logger, test_mode=True)
+def test_workflow_director_initialization(mock_state_manager, mock_llm_manager, mock_logger, mock_claude_manager, mock_user_interaction_handler):
+    director = WorkflowDirector(
+        state_manager=mock_state_manager,
+        llm_manager=mock_llm_manager,
+        logger=mock_logger,
+        claude_manager=mock_claude_manager,
+        user_interaction_handler=mock_user_interaction_handler,
+        test_mode=True
+    )
     assert director.state_manager == mock_state_manager
+    assert director.llm_manager == mock_llm_manager
     assert director.logger == mock_logger
+    assert director.claude_manager == mock_claude_manager
+    assert director.user_interaction_handler == mock_user_interaction_handler
     assert director._test_mode == True
-    mock_logger.info.assert_called_with("WorkflowDirector initialized")
-    mock_logger.debug.assert_any_call(f"WorkflowDirector initialized with LLMManager: {director.llm_manager}")
-    mock_logger.debug.assert_any_call("Test mode: True")
+    mock_logger.info.assert_called_with("Initializing WorkflowDirector", extra={'test_mode': True})
