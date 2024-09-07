@@ -1,79 +1,3 @@
-from unittest.mock import MagicMock
-import time
-
-from unittest.mock import MagicMock, AsyncMock
-
-class MockClaudeClient:
-    def __init__(self, responses=None):
-        self.responses = responses or {}
-        self.messages = AsyncMock()
-        self.messages.create = self.mock_create
-        self.call_count = 0
-        self.rate_limit = 10  # Example: 10 calls per minute
-        self.rate_limit_reached = False
-        self.error_mode = False
-        self.max_test_tokens = 1000
-
-    async def mock_create(self, model: str, max_tokens: int, messages: list):
-        self.call_count += 1
-        if self.rate_limit_reached:
-            raise RateLimitError("Rate limit exceeded")
-        if self.error_mode:
-            raise APIError("API error")
-        prompt = messages[0]['content']
-        if prompt in self.responses:
-            return AsyncMock(content=[AsyncMock(text=self.responses[prompt])])
-        return AsyncMock(content=[AsyncMock(text="Default mock response")])
-
-    def set_response(self, prompt: str, response: str):
-        self.responses[prompt] = response
-
-    def set_rate_limit(self, reached: bool):
-        self.rate_limit_reached = reached
-
-    def set_error_mode(self, error: bool):
-        self.error_mode = error
-
-    def reset(self):
-        self.responses = {}
-        self.call_count = 0
-        self.rate_limit_reached = False
-        self.error_mode = False
-        self.last_reset = time.time()
-
-    def mock_create(self, model, max_tokens, messages):
-        self.check_rate_limit()
-        prompt = messages[0]['content']
-        if prompt in self.responses:
-            response = self.responses[prompt]
-            if isinstance(response, Exception):
-                raise response
-            return MagicMock(content=[MagicMock(text=response)])
-        return MagicMock(content=[MagicMock(text="Default mock response")])
-
-    def add_response(self, prompt, response):
-        self.responses[prompt] = response
-
-    def add_error_response(self, prompt, error):
-        self.responses[prompt] = error
-
-    def check_rate_limit(self):
-        current_time = time.time()
-        if current_time - self.last_reset >= 60:
-            self.call_count = 0
-            self.last_reset = current_time
-        
-        self.call_count += 1
-        if self.call_count > self.rate_limit:
-            raise Exception("Rate limit exceeded")
-
-    def reset_call_count(self):
-        self.call_count = 0
-        self.last_reset = time.time()
-from typing import Dict, Any, Optional
-from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
-from src.llm_manager import LLMManager
-
 import time
 from typing import Dict, Any, List
 from anthropic import RateLimitError, APIError
@@ -91,6 +15,7 @@ class MockClaudeClient:
         self.error_count = 0
         self.max_errors = 3
         self.rate_limit_reset_time = 60  # seconds
+        self.latency = 0.1  # Default latency in seconds
 
     def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
@@ -101,14 +26,20 @@ class MockClaudeClient:
     def set_error_mode(self, error_mode: bool):
         self.error_mode = error_mode
 
+    def set_latency(self, latency: float):
+        self.latency = latency
+
     def reset(self):
         self.rate_limit_reached = False
         self.error_mode = False
         self.responses = {}
         self.call_count = 0
         self.last_call_time = 0
+        self.error_count = 0
+        self.latency = 0.1
 
-    def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+    async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+        await self._simulate_latency()
         current_time = time.time()
         if current_time - self.last_call_time >= self.rate_limit_reset_time:
             self.call_count = 0
@@ -139,8 +70,11 @@ class MockClaudeClient:
             "usage": {"total_tokens": len(response.split())}
         }
 
-    def completion(self, prompt: str, model: str, max_tokens_to_sample: int, **kwargs) -> Dict[str, Any]:
-        return self.create(model, max_tokens_to_sample, [{"role": "user", "content": prompt}])
+    async def _simulate_latency(self):
+        await asyncio.sleep(self.latency)
 
-    def completions(self, prompt: str, model: str, max_tokens_to_sample: int, **kwargs) -> Dict[str, Any]:
-        return self.completion(prompt, model, max_tokens_to_sample, **kwargs)
+    async def completion(self, prompt: str, model: str, max_tokens_to_sample: int, **kwargs) -> Dict[str, Any]:
+        return await self.create(model, max_tokens_to_sample, [{"role": "user", "content": prompt}])
+
+    async def completions(self, prompt: str, model: str, max_tokens_to_sample: int, **kwargs) -> Dict[str, Any]:
+        return await self.completion(prompt, model, max_tokens_to_sample, **kwargs)

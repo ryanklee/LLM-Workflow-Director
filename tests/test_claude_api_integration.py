@@ -14,22 +14,12 @@ def mock_claude_client():
     return MockClaudeClient()
 
 @pytest.fixture
-async def async_mock_claude_client():
-    client = AsyncMock()
-    client.messages.create = AsyncMock()
-    return client
-
-@pytest.fixture
 def claude_manager(mock_claude_client):
     return ClaudeManager(client=mock_claude_client)
 
 @pytest.fixture
-async def async_claude_manager(async_mock_claude_client):
-    return ClaudeManager(client=async_mock_claude_client)
-
-@pytest.fixture
-def llm_manager():
-    return LLMManager()
+def llm_manager(claude_manager):
+    return LLMManager(claude_manager=claude_manager)
 
 @pytest.fixture(scope="module")
 def cached_responses(request):
@@ -40,6 +30,49 @@ def cached_responses(request):
         return cache[prompt]
     request.addfinalizer(cache.clear)
     return _cached_response
+
+@pytest.mark.asyncio
+async def test_claude_api_latency(claude_manager, mock_claude_client):
+    mock_claude_client.set_latency(0.5)  # Set a 500ms latency
+    start_time = time.time()
+    await claude_manager.generate_response("Test prompt")
+    end_time = time.time()
+    assert end_time - start_time >= 0.5, "API call should take at least 500ms"
+
+@pytest.mark.asyncio
+async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
+    mock_claude_client.set_rate_limit(True)
+    with pytest.raises(RateLimitError):
+        for _ in range(10):  # Attempt to make 10 calls
+            await claude_manager.generate_response("Test prompt")
+
+@pytest.mark.asyncio
+async def test_claude_api_error_handling(claude_manager, mock_claude_client):
+    mock_claude_client.set_error_mode(True)
+    with pytest.raises(anthropic.APIError):
+        await claude_manager.generate_response("Test prompt")
+
+@pytest.mark.asyncio
+async def test_claude_api_max_tokens(claude_manager, mock_claude_client):
+    long_prompt = "a" * (mock_claude_client.max_test_tokens + 1)
+    with pytest.raises(ValueError, match="Test input exceeds maximum allowed tokens"):
+        await claude_manager.generate_response(long_prompt)
+
+@pytest.mark.asyncio
+async def test_claude_api_response_truncation(claude_manager, mock_claude_client):
+    long_response = "b" * (mock_claude_client.max_test_tokens * 2)
+    mock_claude_client.set_response("Test prompt", long_response)
+    response = await claude_manager.generate_response("Test prompt")
+    assert len(response) <= mock_claude_client.max_test_tokens + 50  # Allow for some overhead
+
+@pytest.mark.asyncio
+async def test_claude_api_concurrent_calls(claude_manager, mock_claude_client):
+    async def make_call():
+        return await claude_manager.generate_response("Test prompt")
+
+    tasks = [make_call() for _ in range(10)]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    assert any(isinstance(result, RateLimitError) for result in results), "Some calls should be rate limited"
 
 class TestClaudeAPIBasics:
     @pytest.mark.fast
