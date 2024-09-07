@@ -4,6 +4,10 @@ from src.workflow_director import WorkflowDirector
 from src.state_manager import StateManager
 from src.llm_manager import LLMManager
 from src.claude_manager import ClaudeManager
+from src.user_interaction_handler import UserInteractionHandler
+from src.workflow_director import WorkflowDirector
+from src.llm_manager import LLMManager
+import logging
 
 @pytest.fixture
 def mock_logger():
@@ -24,12 +28,19 @@ def reset_mocks(mock_logger, mock_state_manager):
 def workflow_director(mock_state_manager, llm_manager, mock_logger):
     director = WorkflowDirector(state_manager=mock_state_manager, llm_manager=llm_manager, logger=mock_logger, test_mode=True)
     assert director.logger is not None, "Logger is None in WorkflowDirector"
+    director.initialize_for_testing()
     yield director
     # Reset all mock calls after each test
     mock_logger.reset_mock()
     mock_state_manager.reset_mock()
     # Ensure the logger is properly set after yield
     director.logger = mock_logger
+    print("Debug: WorkflowDirector fixture torn down")
+    print(f"Debug: Logger calls: {mock_logger.debug.call_args_list}")
+    print(f"Debug: StateManager calls: {mock_state_manager.method_calls}")
+    print(f"Debug: Current stage: {director.current_stage}")
+    print(f"Debug: Completed stages: {director.completed_stages}")
+    print(f"Debug: Stage progress: {director.stage_progress}")
 
 @pytest.fixture(autouse=True)
 def reset_mocks(mock_logger, mock_state_manager):
@@ -39,25 +50,40 @@ def reset_mocks(mock_logger, mock_state_manager):
     mock_state_manager.get_state.return_value = {}
 
 @pytest.fixture
-def workflow_director(mock_state_manager, llm_manager, mock_logger):
-    director = WorkflowDirector(state_manager=mock_state_manager, llm_manager=llm_manager, logger=mock_logger, test_mode=True)
+def workflow_director(mock_state_manager, mock_llm_manager, mock_logger, mock_claude_manager, mock_user_interaction_handler):
+    director = WorkflowDirector(
+        state_manager=mock_state_manager,
+        llm_manager=mock_llm_manager,
+        logger=mock_logger,
+        claude_manager=mock_claude_manager,
+        user_interaction_handler=mock_user_interaction_handler,
+        test_mode=True
+    )
     director.initialize_for_testing()
     yield director
-    director.logger.debug("Tearing down WorkflowDirector fixture")
-    print("Debug: WorkflowDirector fixture torn down")
-    print(f"Debug: Logger calls: {mock_logger.debug.call_args_list}")
+    mock_logger.debug("Tearing down WorkflowDirector fixture")
+    mock_logger.debug(f"Logger calls: {mock_logger.method_calls}")
 
 @pytest.fixture
 def mock_state_manager():
     state_manager = MagicMock(spec=StateManager)
     state_manager.get_state.return_value = {}
     state_manager.set = MagicMock()
-    # Only add update if it's in the StateManager spec
-    if 'update' in dir(StateManager):
-        state_manager.update = MagicMock()
+    state_manager.update = MagicMock()
     yield state_manager
     state_manager.reset_mock()
-    print(f"StateManager mock methods: {dir(state_manager)}")  # Debug print
+
+@pytest.fixture
+def mock_llm_manager():
+    return MagicMock(spec=LLMManager)
+
+@pytest.fixture
+def mock_claude_manager():
+    return MagicMock(spec=ClaudeManager)
+
+@pytest.fixture
+def mock_user_interaction_handler():
+    return MagicMock(spec=UserInteractionHandler)
 
 @pytest.fixture(autouse=True)
 def reset_mocks(mock_logger, mock_state_manager):
