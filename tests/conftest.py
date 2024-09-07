@@ -44,6 +44,8 @@ def workflow_director(mock_state_manager, llm_manager, mock_logger):
     director.initialize_for_testing()
     yield director
     director.logger.debug("Tearing down WorkflowDirector fixture")
+    print("Debug: WorkflowDirector fixture torn down")
+    print(f"Debug: Logger calls: {mock_logger.debug.call_args_list}")
 
 @pytest.fixture
 def mock_state_manager():
@@ -59,14 +61,23 @@ def mock_state_manager():
 
 @pytest.fixture(autouse=True)
 def reset_mocks(mock_logger, mock_state_manager):
-    yield
+    print("Debug: Resetting mocks before test")
     mock_logger.reset_mock()
     mock_state_manager.reset_mock()
     mock_state_manager.get_state.return_value = {}
     mock_state_manager.set.reset_mock()
     if hasattr(mock_state_manager, 'update'):
         mock_state_manager.update.reset_mock()
-    print("Mocks reset after test")  # Debug print
+    yield
+    print("Debug: Resetting mocks after test")
+    mock_logger.reset_mock()
+    mock_state_manager.reset_mock()
+    mock_state_manager.get_state.return_value = {}
+    mock_state_manager.set.reset_mock()
+    if hasattr(mock_state_manager, 'update'):
+        mock_state_manager.update.reset_mock()
+    print(f"Debug: Logger calls after reset: {mock_logger.debug.call_args_list}")
+    print(f"Debug: StateManager calls after reset: {mock_state_manager.method_calls}")
 
 @pytest.fixture(autouse=True)
 def isolate_tests():

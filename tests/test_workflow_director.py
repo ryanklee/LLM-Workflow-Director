@@ -662,6 +662,7 @@ def test_transition_to_next_stage(workflow_director, mock_state_manager, mock_lo
     mock_logger.info.assert_called_with("No valid transition found")
 
 def test_evaluate_condition(workflow_director, mock_state_manager, mock_logger):
+    print("Debug: Starting test_evaluate_condition")
     workflow_director.logger = mock_logger
     workflow_director.state_manager = mock_state_manager
 
@@ -669,10 +670,16 @@ def test_evaluate_condition(workflow_director, mock_state_manager, mock_logger):
     mock_state_manager.get_state.return_value = {"flag": True, "count": 5}
     condition = "state.get('flag', False)"
     result = workflow_director.evaluate_condition(condition)
-    assert result == True
-        
+    assert result == True, f"Expected True, got {result}"
+    
+    print(f"Debug: Logger calls: {mock_logger.debug.call_args_list}")
+    print(f"Debug: StateManager calls: {mock_state_manager.method_calls}")
+    
     # Check for specific log calls
-    mock_logger.debug.assert_any_call(f"Entering evaluate_condition with condition: {condition}")
+    expected_call = call(f"Entering evaluate_condition with condition: {condition}")
+    assert expected_call in mock_logger.debug.call_args_list, f"Expected call {expected_call} not found in {mock_logger.debug.call_args_list}"
+    
+    print("Debug: Finished test_evaluate_condition")
     mock_logger.debug.assert_any_call("Current state: {'flag': True, 'count': 5}")
     mock_logger.debug.assert_any_call(f"Exiting evaluate_condition with result: True")
         
