@@ -53,21 +53,41 @@ class WorkflowDirector:
         self.logger.debug(f"WorkflowDirector initialized with LLMManager: {self.llm_manager}")
 
     def _setup_logging(self):
-        logger = logging.getLogger(__name__)
-        logger.setLevel(logging.DEBUG)  # Set to DEBUG to capture all log levels
-        return logger
-
-    def get_token_usage(self, task_id: str = None) -> int:
-        return self.claude_manager.get_token_usage(task_id)
-
-    def analyze_cost(self, model: str, tokens: int) -> float:
-        return self.cost_analyzer.calculate_cost(model, tokens)
-
-    def log_usage(self):
-        total_tokens = self.get_token_usage()
-        total_cost = self.analyze_cost("claude-3-opus-20240229", total_tokens)
-        self.logger.info(f"Total token usage: {total_tokens}")
-        self.logger.info(f"Estimated cost: ${total_cost:.2f}")
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        
+        # Create a StreamHandler for console output
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        console_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        console_handler.setFormatter(console_formatter)
+        
+        # Create a FileHandler for persistent logging
+        log_file = f'workflow_director_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(logging.DEBUG)
+        file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(file_formatter)
+        
+        # Add both handlers to the logger
+        self.logger.addHandler(console_handler)
+        self.logger.addHandler(file_handler)
+        
+        # Create a JSON formatter for structured logging
+        json_formatter = jsonlogger.JsonFormatter('%(timestamp)s %(name)s %(levelname)s %(message)s %(filename)s %(funcName)s %(lineno)d')
+        json_file = f'workflow_director_structured_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+        json_handler = logging.FileHandler(json_file)
+        json_handler.setFormatter(json_formatter)
+        json_handler.setLevel(logging.DEBUG)
+        self.logger.addHandler(json_handler)
+        
+        self.logger.info("Logging setup completed for WorkflowDirector", extra={
+            'component': 'WorkflowDirector',
+            'action': 'setup_logging',
+            'status': 'completed',
+            'log_file': log_file,
+            'json_file': json_file
+        })
 
     def get_stage_by_name(self, stage_name: str) -> dict:
         return next((stage for stage in self.stages if stage['name'] == stage_name), None)
