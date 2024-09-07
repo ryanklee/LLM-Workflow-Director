@@ -5,6 +5,7 @@ import sys
 import os
 from typing import Dict, Any, List
 from datetime import datetime
+import time
 from .error_handler import ErrorHandler
 
 # Add the project root directory to the Python path
@@ -57,6 +58,13 @@ class WorkflowDirector:
         self.logger.info("WorkflowDirector initialized")
         self.logger.debug(f"WorkflowDirector initialized with LLMManager: {self.llm_manager}")
         self.logger.debug(f"Test mode: {self._test_mode}")
+
+    def initialize_for_testing(self):
+        # Reset all mutable state
+        self.current_stage = self.config['stages'][0]['name'] if self.config['stages'] else "Default Stage"
+        self.stage_progress = {stage: 0.0 for stage in self.stages}
+        self.completed_stages = set()
+        # Add any other state resets here
 
     def _setup_logging(self):
         logger = logging.getLogger(__name__)
@@ -179,30 +187,33 @@ class WorkflowDirector:
         return result
 
     def _evaluate_condition_internal(self, condition: str, condition_type: str) -> bool:
-        self.logger.debug(f"Entering _evaluate_condition_internal with condition: {condition}, type: {condition_type}")
-        self.logger.debug(f"Logger id: {id(self.logger)}")  # Add this line to track logger identity
+        logger_id = id(self.logger)
+        start_time = time.time()
+        self.logger.debug(f"[{start_time}] Entering _evaluate_condition_internal with condition: {condition}, type: {condition_type}")
+        self.logger.debug(f"[{start_time}] Logger id: {logger_id}")
         try:
             state = self.state_manager.get_state()
-            self.logger.debug(f"Current state: {state}")
-            self.logger.debug(f"Evaluating {condition_type}: {condition}")
+            self.logger.debug(f"[{time.time()}] Current state: {state}")
+            self.logger.debug(f"[{time.time()}] Evaluating {condition_type}: {condition}")
             result = eval(condition, {"state": state})
-            self.logger.debug(f"Evaluated {condition_type}: {condition} = {result}")
-            self.logger.debug(f"Evaluation result type: {type(result)}")
+            self.logger.debug(f"[{time.time()}] Evaluated {condition_type}: {condition} = {result}")
+            self.logger.debug(f"[{time.time()}] Evaluation result type: {type(result)}")
             bool_result = bool(result)
-            self.logger.debug(f"Boolean conversion result: {bool_result}")
+            self.logger.debug(f"[{time.time()}] Boolean conversion result: {bool_result}")
             return bool_result
         except KeyError as e:
             error_msg = f"{condition_type.capitalize()} evaluation failed due to missing key: '{e.args[0]}'"
-            self.logger.warning(error_msg)
+            self.logger.warning(f"[{time.time()}] {error_msg}")
             return False
         except Exception as e:
             error_msg = f"Error evaluating {condition_type} '{condition}': {str(e)}"
-            self.logger.error(error_msg)
+            self.logger.error(f"[{time.time()}] {error_msg}")
             return False
         finally:
-            self.logger.debug(f"Exiting _evaluate_condition_internal")
-            self.logger.debug(f"Logger id: {id(self.logger)}")  # Add this line to track logger identity
-            self.logger.debug(f"Logger id: {id(self.logger)}")  # Add this line to track logger identity
+            end_time = time.time()
+            self.logger.debug(f"[{end_time}] Exiting _evaluate_condition_internal")
+            self.logger.debug(f"[{end_time}] Logger id: {logger_id}")
+            self.logger.debug(f"[{end_time}] Execution time: {end_time - start_time:.6f} seconds")
 
     def load_config(self, config_path):
         if isinstance(config_path, StateManager):
