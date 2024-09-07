@@ -30,6 +30,15 @@ def reset_mocks(mock_logger):
     # You can add any teardown code here if needed
 
 @pytest.fixture
+def mock_logger():
+    logger = MagicMock()
+    logger.debug = MagicMock()
+    logger.info = MagicMock()
+    logger.warning = MagicMock()
+    logger.error = MagicMock()
+    return logger
+
+@pytest.fixture
 def workflow_director(mock_state_manager, llm_manager, mock_logger):
     director = WorkflowDirector(state_manager=mock_state_manager, llm_manager=llm_manager, logger=mock_logger)
     assert director.logger is not None, "Logger is None in WorkflowDirector"
