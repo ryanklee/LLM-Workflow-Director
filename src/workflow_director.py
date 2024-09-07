@@ -30,7 +30,9 @@ from src.cost_analyzer import CostAnalyzer
 class WorkflowDirector:
     def __init__(self, config_path='src/workflow_config.yaml', state_manager=None, claude_manager=None, user_interaction_handler=None, llm_manager=None, logger=None, test_mode=False):
         self.logger = logger or self._setup_logging()
+        self.logger.info("Initializing WorkflowDirector")
         self.state_manager = state_manager if isinstance(state_manager, StateManager) else StateManager()
+        self.logger.debug(f"StateManager: {self.state_manager}")
         self.claude_manager = claude_manager or ClaudeManager()
         self.llm_manager = llm_manager or LLMManager()
         self.user_interaction_handler = user_interaction_handler or UserInteractionHandler()
@@ -58,6 +60,7 @@ class WorkflowDirector:
         self.logger.info("WorkflowDirector initialized")
         self.logger.debug(f"WorkflowDirector initialized with LLMManager: {self.llm_manager}")
         self.logger.debug(f"Test mode: {self._test_mode}")
+        self.logger.debug(f"StateManager methods: {[method for method in dir(self.state_manager) if not method.startswith('_')]}")
 
     def initialize_for_testing(self):
         # Reset all mutable state
@@ -182,6 +185,7 @@ class WorkflowDirector:
 
     def evaluate_condition(self, condition: str) -> bool:
         self.logger.debug(f"Entering evaluate_condition with condition: {condition}")
+        self.logger.debug(f"Current state: {self.state_manager.get_state()}")
         result = self._evaluate_condition_internal(condition, "condition")
         self.logger.debug(f"Exiting evaluate_condition with result: {result}")
         return result

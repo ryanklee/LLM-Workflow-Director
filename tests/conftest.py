@@ -50,9 +50,12 @@ def mock_state_manager():
     state_manager = MagicMock(spec=StateManager)
     state_manager.get_state.return_value = {}
     state_manager.set = MagicMock()
-    state_manager.update = MagicMock()
+    # Only add update if it's in the StateManager spec
+    if 'update' in dir(StateManager):
+        state_manager.update = MagicMock()
     yield state_manager
     state_manager.reset_mock()
+    print(f"StateManager mock methods: {dir(state_manager)}")  # Debug print
 
 @pytest.fixture(autouse=True)
 def reset_mocks(mock_logger, mock_state_manager):
@@ -61,7 +64,9 @@ def reset_mocks(mock_logger, mock_state_manager):
     mock_state_manager.reset_mock()
     mock_state_manager.get_state.return_value = {}
     mock_state_manager.set.reset_mock()
-    mock_state_manager.update.reset_mock()
+    if hasattr(mock_state_manager, 'update'):
+        mock_state_manager.update.reset_mock()
+    print("Mocks reset after test")  # Debug print
 
 @pytest.fixture(autouse=True)
 def isolate_tests():
