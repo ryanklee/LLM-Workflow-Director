@@ -54,3 +54,19 @@ def mock_state_manager():
 def llm_manager():
     claude_manager = ClaudeManager()
     return LLMManager(claude_manager)
+    def test_evaluate_condition_false(workflow_director, mock_state_manager, mock_logger):
+        workflow_director.logger = mock_logger
+        workflow_director.state_manager = mock_state_manager
+
+        mock_state_manager.get_state.return_value = {"flag": False, "count": 3}
+        condition = "state.get('flag', True) and state.get('count', 0) > 5"
+        result = workflow_director.evaluate_condition(condition)
+        assert result == False
+        
+        # Check all expected log calls
+        mock_logger.debug.assert_any_call(f"Entering evaluate_condition with condition: {condition}")
+        mock_logger.debug.assert_any_call(f"Entering _evaluate_condition_internal with condition: {condition}, type: condition")
+        mock_logger.debug.assert_any_call("Current state: {'flag': False, 'count': 3}")
+        mock_logger.debug.assert_any_call(f"Evaluating condition: {condition}")
+        mock_logger.debug.assert_any_call(f"Evaluated condition: {condition} = False")
+        mock_logger.debug.assert_any_call("Exiting evaluate_condition with result: False")
