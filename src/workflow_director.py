@@ -49,11 +49,14 @@ class WorkflowDirector:
         self.priority_manager = PriorityManager()
         self.cost_analyzer = CostAnalyzer()
         
-        if not test_mode:
+        self._test_mode = test_mode
+        if not self._test_mode:
             self.initialize_constraints()
             self.initialize_priorities()
-            self.logger.info("WorkflowDirector initialized")
-            self.logger.debug(f"WorkflowDirector initialized with LLMManager: {self.llm_manager}")
+        
+        self.logger.info("WorkflowDirector initialized")
+        self.logger.debug(f"WorkflowDirector initialized with LLMManager: {self.llm_manager}")
+        self.logger.debug(f"Test mode: {self._test_mode}")
 
     def _setup_logging(self):
         logger = logging.getLogger(__name__)
@@ -620,6 +623,7 @@ class WorkflowDirector:
 
     def _evaluate_condition_internal(self, condition: str, condition_type: str) -> bool:
         self.logger.debug(f"Entering _evaluate_condition_internal with condition: {condition}, type: {condition_type}")
+        self.logger.debug(f"Logger id: {id(self.logger)}")  # Add this line to track logger identity
         try:
             state = self.state_manager.get_state()
             self.logger.debug(f"Current state: {state}")
@@ -640,6 +644,7 @@ class WorkflowDirector:
             return False
         finally:
             self.logger.debug(f"Exiting _evaluate_condition_internal")
+            self.logger.debug(f"Logger id: {id(self.logger)}")  # Add this line to track logger identity
 
     def complete_current_stage(self):
         self.logger.info(f"Attempting to complete stage: {self.current_stage}")

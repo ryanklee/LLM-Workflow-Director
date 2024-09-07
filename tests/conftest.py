@@ -39,6 +39,12 @@ def reset_mocks(mock_logger, mock_state_manager):
     mock_state_manager.get_state.return_value = {}
 
 @pytest.fixture
+def workflow_director(mock_state_manager, llm_manager, mock_logger):
+    director = WorkflowDirector(state_manager=mock_state_manager, llm_manager=llm_manager, logger=mock_logger, test_mode=True)
+    yield director
+    director.logger.debug("Tearing down WorkflowDirector fixture")
+
+@pytest.fixture
 def mock_state_manager():
     state_manager = MagicMock(spec=StateManager)
     state_manager.get_state.return_value = {}
