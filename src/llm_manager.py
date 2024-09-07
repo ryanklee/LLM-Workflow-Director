@@ -113,7 +113,6 @@ class LLMManager:
             'powerful': {'model': 'claude-3-opus-20240229', 'max_tokens': 4000}
         })
         self.logger.info("LLMManager initialized with config: %s", self.config)
-        })
         self.prompt_templates = self.config.get('prompt_templates', {})
         self.claude_manager = self._create_claude_manager()
 
