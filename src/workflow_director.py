@@ -130,6 +130,23 @@ class WorkflowDirector:
     def is_workflow_complete(self) -> bool:
         return self.current_stage == self.stages[-1]['name']
 
+    def evaluate_transition_condition(self, transition: dict) -> bool:
+        if 'condition' not in transition:
+            self.logger.debug("Transition condition not specified, assuming True")
+            return True
+        try:
+            state = self.state_manager.get_state()
+            condition = transition['condition']
+            condition_result = eval(condition, {"state": state})
+            self.logger.debug(f"Evaluated transition condition: {condition} = {condition_result}")
+            return bool(condition_result)
+        except KeyError as e:
+            self.logger.warning(f"Transition condition evaluation failed due to missing key: '{e.args[0]}'")
+            return False
+        except Exception as e:
+            self.logger.error(f"Error evaluating transition condition: {str(e)}")
+            return False
+
     def evaluate_condition(self, condition: str) -> bool:
         try:
             state = self.state_manager.get_state()
