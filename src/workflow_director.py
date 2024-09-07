@@ -545,16 +545,13 @@ class WorkflowDirector:
         try:
             state = self.state_manager.get_state()
             result = eval(condition, {"state": state})
-            debug_message = f"Evaluated condition: {condition} = {result}"
-            self.logger.debug(debug_message)
+            self.logger.debug(f"Evaluated condition: {condition} = {result}")
             return bool(result)
         except KeyError as e:
-            warning_message = f"Condition evaluation failed due to missing key: {str(e)}"
-            self.logger.warning(warning_message)
+            self.logger.warning(f"Condition evaluation failed due to missing key: {str(e)}")
             return False
         except Exception as e:
-            error_message = f"Error evaluating condition '{condition}': {str(e)}"
-            self.logger.error(error_message)
+            self.logger.error(f"Error evaluating condition '{condition}': {str(e)}")
             return False
 
     def complete_current_stage(self):
