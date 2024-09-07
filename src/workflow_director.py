@@ -98,6 +98,7 @@ class WorkflowDirector:
 
     def evaluate_transition_condition(self, transition: dict) -> bool:
         if 'condition' not in transition:
+            self.logger.debug("Transition condition not specified, assuming True")
             return True
         try:
             state = self.state_manager.get_state()
