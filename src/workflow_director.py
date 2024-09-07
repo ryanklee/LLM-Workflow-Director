@@ -105,7 +105,7 @@ class WorkflowDirector:
             self.logger.debug(f"Evaluated transition condition: {transition['condition']} = {condition_result}")
             return bool(condition_result)
         except KeyError as e:
-            self.logger.warning(f"Transition condition evaluation failed due to missing key: {e}")
+            self.logger.warning(f"Transition condition evaluation failed due to missing key: {str(e)}")
             return False
         except Exception as e:
             self.logger.error(f"Error evaluating transition condition: {str(e)}")
@@ -137,7 +137,7 @@ class WorkflowDirector:
             self.logger.debug(debug_message)
             return bool(result)
         except KeyError as e:
-            self.logger.warning(f"Condition evaluation failed due to missing key: {e}")
+            self.logger.warning(f"Condition evaluation failed due to missing key: {str(e)}")
             return False
         except Exception as e:
             self.logger.error(f"Error evaluating condition '{condition}': {str(e)}")
