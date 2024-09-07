@@ -543,9 +543,6 @@ def test_execute_stage(workflow_director, mock_state_manager, mock_logger):
     mock_logger.info.assert_any_call("Skipped task: Task 3 in stage: Test Stage due to condition")
 
 def test_evaluate_transition_condition(workflow_director, mock_state_manager, mock_logger):
-    workflow_director.logger = mock_logger
-    workflow_director.state_manager = mock_state_manager
-
     # Test with existing key
     mock_state_manager.get_state.return_value = {"flag": True}
     transition_with_condition = {"condition": "state.get('flag', False)"}
@@ -566,6 +563,10 @@ def test_evaluate_transition_condition(workflow_director, mock_state_manager, mo
     ]
     mock_logger.debug.assert_has_calls(expected_calls, any_order=False)
     assert mock_logger.debug.call_count == len(expected_calls)
+
+    # Reset mocks for the next test
+    mock_logger.reset_mock()
+    mock_state_manager.reset_mock()
 
     mock_logger.reset_mock()
 
@@ -837,9 +838,6 @@ def test_state_management_consistency(workflow_director, mock_state_manager, moc
     # Ensure the state manager was only called once to get the state
     mock_state_manager.get_state.assert_called_once()
 def test_state_management_consistency(workflow_director, mock_state_manager, mock_logger):
-    workflow_director.logger = mock_logger
-    workflow_director.state_manager = mock_state_manager
-
     # Set up initial state
     initial_state = {"flag": True, "count": 5}
     mock_state_manager.get_state.return_value = initial_state
@@ -854,6 +852,17 @@ def test_state_management_consistency(workflow_director, mock_state_manager, moc
 
     # Check log calls
     mock_logger.debug.assert_any_call(f"Current state: {initial_state}")
+    
+    # Print all debug calls for inspection
+    print("All debug calls:")
+    for call in mock_logger.debug.call_args_list:
+        print(call)
+
+    # Check logger identity
+    logger_id_calls = [call for call in mock_logger.debug.call_args_list if "Logger id:" in str(call)]
+    assert len(logger_id_calls) > 0, "Logger id was not logged"
+    logger_ids = set(call.args[0].split(": ")[1] for call in logger_id_calls)
+    assert len(logger_ids) == 1, f"Multiple logger ids found: {logger_ids}"
     mock_logger.debug.assert_any_call(f"Evaluated condition: {condition} = True")
 
     # Ensure the state manager was only called once to get the state

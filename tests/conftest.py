@@ -22,7 +22,7 @@ def reset_mocks(mock_logger, mock_state_manager):
 
 @pytest.fixture
 def workflow_director(mock_state_manager, llm_manager, mock_logger):
-    director = WorkflowDirector(state_manager=mock_state_manager, llm_manager=llm_manager, logger=mock_logger)
+    director = WorkflowDirector(state_manager=mock_state_manager, llm_manager=llm_manager, logger=mock_logger, test_mode=True)
     assert director.logger is not None, "Logger is None in WorkflowDirector"
     yield director
     # Reset all mock calls after each test
@@ -34,7 +34,15 @@ def workflow_director(mock_state_manager, llm_manager, mock_logger):
 def mock_state_manager():
     state_manager = MagicMock(spec=StateManager)
     state_manager.get_state.return_value = {}
-    return state_manager
+    yield state_manager
+    state_manager.reset_mock()
+
+@pytest.fixture(autouse=True)
+def reset_mocks(mock_logger, mock_state_manager):
+    yield
+    mock_logger.reset_mock()
+    mock_state_manager.reset_mock()
+    mock_state_manager.get_state.return_value = {}
 
 @pytest.fixture
 def llm_manager():

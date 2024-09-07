@@ -27,23 +27,20 @@ from src.cost_analyzer import CostAnalyzer
 
 
 class WorkflowDirector:
-    def __init__(self, config_path='src/workflow_config.yaml', state_manager=None, claude_manager=None, user_interaction_handler=None, llm_manager=None, logger=None):
+    def __init__(self, config_path='src/workflow_config.yaml', state_manager=None, claude_manager=None, user_interaction_handler=None, llm_manager=None, logger=None, test_mode=False):
         self.logger = logger or self._setup_logging()
         self.state_manager = state_manager if isinstance(state_manager, StateManager) else StateManager()
         self.claude_manager = claude_manager or ClaudeManager()
         self.llm_manager = llm_manager or LLMManager()
-        self.logger.debug(f"WorkflowDirector initialized with LLMManager: {self.llm_manager}")
         self.user_interaction_handler = user_interaction_handler or UserInteractionHandler()
         self.error_handler = ErrorHandler()
         self.config = self.load_config(config_path)
-        self.logger.info("WorkflowDirector initialized")
         self.current_stage = self.config['stages'][0]['name'] if self.config['stages'] else "Default Stage"
         self.stages = {stage['name']: stage for stage in self.config['stages']}
         self.transitions = self.config['transitions']
         self.stage_progress = {stage: 0.0 for stage in self.stages}
         self.completed_stages = set()
         self.constraint_engine = ConstraintEngine()
-        self.initialize_constraints()
         self.project_state_reporter = ProjectStateReporter(self)
         self.documentation_health_checker = DocumentationHealthChecker()
         self.project_structure_manager = ProjectStructureManager()
@@ -51,8 +48,12 @@ class WorkflowDirector:
         self.sufficiency_evaluator = SufficiencyEvaluator(self.llm_manager)
         self.priority_manager = PriorityManager()
         self.cost_analyzer = CostAnalyzer()
-        self.initialize_priorities()
-        self.logger.debug(f"WorkflowDirector initialized with LLMManager: {self.llm_manager}")
+        
+        if not test_mode:
+            self.initialize_constraints()
+            self.initialize_priorities()
+            self.logger.info("WorkflowDirector initialized")
+            self.logger.debug(f"WorkflowDirector initialized with LLMManager: {self.llm_manager}")
 
     def _setup_logging(self):
         logger = logging.getLogger(__name__)
@@ -196,6 +197,7 @@ class WorkflowDirector:
             return False
         finally:
             self.logger.debug(f"Exiting _evaluate_condition_internal")
+            self.logger.debug(f"Logger id: {id(self.logger)}")  # Add this line to track logger identity
 
     def load_config(self, config_path):
         if isinstance(config_path, StateManager):
