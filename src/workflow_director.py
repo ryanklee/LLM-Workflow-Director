@@ -29,8 +29,19 @@ from src.cost_analyzer import CostAnalyzer
 
 class WorkflowDirector:
     def __init__(self, config_path='src/workflow_config.yaml', state_manager=None, claude_manager=None, user_interaction_handler=None, llm_manager=None, logger=None, test_mode=False):
-        self.logger = logger or self._setup_logging()
-        self.logger.info("Initializing WorkflowDirector")
+        self.logger = logger if logger is not None else self._setup_logging()
+        self.logger.info("Initializing WorkflowDirector", extra={'test_mode': test_mode})
+        self._test_mode = test_mode
+        self.config_path = config_path
+        self.state_manager = state_manager
+        self.claude_manager = claude_manager
+        self.user_interaction_handler = user_interaction_handler
+        self.llm_manager = llm_manager
+        self.config = self.load_config(self.config_path)
+        self.logger.debug(f"Loaded config: {self.config}")
+        if not self._test_mode:
+            self.initialize()
+        self.logger.info("WorkflowDirector initialization complete")
         self._test_mode = test_mode
         self.config_path = config_path
         self.state_manager = state_manager
@@ -98,11 +109,14 @@ class WorkflowDirector:
         self.logger.debug(f"StateManager methods: {[method for method in dir(self.state_manager) if not method.startswith('_')]}")
 
     def initialize_for_testing(self):
-        # Reset all mutable state
+        self.logger.info("Initializing WorkflowDirector for testing")
+        self.config = self.load_config(self.config_path)
         self.current_stage = self.config['stages'][0]['name'] if self.config['stages'] else "Default Stage"
+        self.stages = {stage['name']: stage for stage in self.config['stages']}
+        self.transitions = self.config['transitions']
         self.stage_progress = {stage: 0.0 for stage in self.stages}
         self.completed_stages = set()
-        # Add any other state resets here
+        self.logger.info(f"Test initialization complete. Current stage: {self.current_stage}")
 
     def _setup_logging(self):
         logger = logging.getLogger(__name__)
@@ -118,7 +132,7 @@ class WorkflowDirector:
         log_file = f'workflow_director_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.DEBUG)
-        file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
         file_handler.setFormatter(file_formatter)
         
         # Add both handlers to the logger
@@ -138,7 +152,8 @@ class WorkflowDirector:
             'action': 'setup_logging',
             'status': 'completed',
             'log_file': log_file,
-            'json_file': json_file
+            'json_file': json_file,
+            'python_version': sys.version
         })
         
         return logger

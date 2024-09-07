@@ -81,12 +81,11 @@ def test_workflow_director_logging_setup(mock_json_formatter, mock_stream_handle
         mock_logger.info.assert_called_with("Test log message", extra={'test_key': 'test_value'})
 
 @pytest.fixture
-def mock_workflow_director():
-    with patch('src.workflow_director.logging.getLogger') as mock_get_logger:
-        mock_logger = MagicMock()
-        mock_get_logger.return_value = mock_logger
-        director = WorkflowDirector()
-        yield director
+def mock_workflow_director(mocker):
+    mock_logger = mocker.Mock()
+    director = WorkflowDirector(logger=mock_logger, test_mode=True)
+    director.initialize_for_testing()
+    return director
 
 def test_workflow_director_get_current_stage(mock_workflow_director):
     current_stage = mock_workflow_director.get_current_stage()
