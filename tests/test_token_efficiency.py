@@ -2,45 +2,50 @@ import pytest
 from pytest_benchmark.fixture import BenchmarkFixture
 from src.claude_manager import ClaudeManager
 from src.llm_manager import LLMManager
+from src.mock_claude_client import MockClaudeClient
 
 @pytest.fixture
 def claude_manager():
-    return ClaudeManager()
+    mock_client = MockClaudeClient()
+    return ClaudeManager(client=mock_client)
 
 @pytest.fixture
-def llm_manager():
-    return LLMManager()
+def llm_manager(claude_manager):
+    return LLMManager(claude_manager=claude_manager)
 
-def test_token_usage_per_query_type(claude_manager: ClaudeManager, benchmark: BenchmarkFixture):
+@pytest.mark.asyncio
+async def test_token_usage_per_query_type(claude_manager: ClaudeManager, benchmark: BenchmarkFixture):
     query_types = {
         "short": "What's the capital of France?",
         "medium": "Explain the process of photosynthesis in plants.",
         "long": "Write a 500-word essay on the impact of artificial intelligence on modern society."
     }
     
-    def measure_token_usage(query):
-        response = claude_manager.generate_response(query)
+    async def measure_token_usage(query):
+        response = await claude_manager.generate_response(query)
         return claude_manager.count_tokens(query + response)
     
     for query_type, query in query_types.items():
-        result = benchmark.pedantic(measure_token_usage, args=(query,), iterations=5, rounds=3)
+        result = await benchmark.pedantic(measure_token_usage, args=(query,), iterations=5, rounds=3)
         print(f"Token usage for {query_type} query: {result:.0f} tokens")
 
-def test_cost_effectiveness_of_models(llm_manager: LLMManager, benchmark: BenchmarkFixture):
+@pytest.mark.asyncio
+async def test_cost_effectiveness_of_models(llm_manager: LLMManager, benchmark: BenchmarkFixture):
     models = ["claude-3-haiku-20240307", "claude-3-sonnet-20240229", "claude-3-opus-20240229"]
     query = "Explain the theory of relativity in simple terms."
     
-    def measure_cost_effectiveness(model):
-        response = llm_manager.query(query, tier=model)
-        tokens = llm_manager.count_tokens(query + response)
+    async def measure_cost_effectiveness(model):
+        response = await llm_manager.query(query, model=model)
+        tokens = llm_manager.count_tokens(query + response['response'])
         cost = llm_manager.calculate_cost(model, tokens)
-        return len(response) / cost  # characters per unit of cost
+        return len(response['response']) / cost  # characters per unit of cost
     
     for model in models:
-        result = benchmark.pedantic(measure_cost_effectiveness, args=(model,), iterations=3, rounds=1)
+        result = await benchmark.pedantic(measure_cost_effectiveness, args=(model,), iterations=3, rounds=1)
         print(f"Cost-effectiveness for {model}: {result.average:.2f} chars/$")
 
-def test_optimization_strategies(claude_manager: ClaudeManager, benchmark: BenchmarkFixture):
+@pytest.mark.asyncio
+async def test_optimization_strategies(claude_manager: ClaudeManager, benchmark: BenchmarkFixture):
     base_query = "Explain the process of photosynthesis in plants."
     strategies = {
         "base": base_query,
@@ -49,14 +54,72 @@ def test_optimization_strategies(claude_manager: ClaudeManager, benchmark: Bench
         "focused": "What are the key inputs and outputs of photosynthesis?",
     }
     
-    def measure_token_efficiency(query):
-        response = claude_manager.generate_response(query)
+    async def measure_token_efficiency(query):
+        response = await claude_manager.generate_response(query)
         tokens = claude_manager.count_tokens(query + str(response))
         return len(str(response)) / tokens  # characters per token
     
     for strategy, query in strategies.items():
-        result = benchmark.pedantic(measure_token_efficiency, args=(query,), iterations=5, rounds=3)
+        result = await benchmark.pedantic(measure_token_efficiency, args=(query,), iterations=5, rounds=3)
         print(f"Token efficiency for {strategy} strategy: {result.average:.2f} chars/token")
+
+@pytest.mark.asyncio
+async def test_token_usage_estimation(llm_manager: LLMManager):
+    query_types = {
+        "short": "What's the capital of France?",
+        "medium": "Explain the process of photosynthesis in plants.",
+        "long": "Write a 500-word essay on the impact of artificial intelligence on modern society."
+    }
+    
+    for query_type, query in query_types.items():
+        estimated_tokens = llm_manager.estimate_token_usage(query)
+        actual_tokens = llm_manager.count_tokens(query)
+        
+        print(f"Query type: {query_type}")
+        print(f"Estimated tokens: {estimated_tokens}")
+        print(f"Actual tokens: {actual_tokens}")
+        print(f"Estimation accuracy: {(estimated_tokens / actual_tokens) * 100:.2f}%")
+        
+        assert 0.8 <= (estimated_tokens / actual_tokens) <= 1.2, f"Token estimation for {query_type} query is off by more than 20%"
+
+@pytest.mark.asyncio
+async def test_cost_optimization_suggestions(llm_manager: LLMManager):
+    # Simulate some usage
+    await llm_manager.query("Short query 1", model="claude-3-haiku-20240307")
+    await llm_manager.query("Medium query 1", model="claude-3-sonnet-20240229")
+    await llm_manager.query("Long query 1", model="claude-3-opus-20240229")
+    await llm_manager.query("Long query 2", model="claude-3-opus-20240229")
+    
+    suggestions = llm_manager.get_cost_optimization_suggestions()
+    
+    print("Cost optimization suggestions:")
+    print(suggestions)
+    
+    assert isinstance(suggestions, str), "Cost optimization suggestions should be a string"
+    assert len(suggestions) > 0, "Cost optimization suggestions should not be empty"
+
+@pytest.mark.asyncio
+async def test_token_efficiency_over_time(claude_manager: ClaudeManager, benchmark: BenchmarkFixture):
+    query = "Explain the concept of machine learning in simple terms."
+    num_iterations = 10
+    
+    async def measure_efficiency_over_time():
+        total_tokens = 0
+        total_response_length = 0
+        
+        for i in range(num_iterations):
+            response = await claude_manager.generate_response(query)
+            tokens = claude_manager.count_tokens(query + response)
+            total_tokens += tokens
+            total_response_length += len(response)
+            
+            efficiency = total_response_length / total_tokens
+            print(f"Iteration {i+1} efficiency: {efficiency:.2f} chars/token")
+        
+        return total_response_length / total_tokens
+    
+    result = await benchmark.pedantic(measure_efficiency_over_time, iterations=1, rounds=1)
+    print(f"Average token efficiency over time: {result:.2f} chars/token")
 import pytest
 from pytest_benchmark.fixture import BenchmarkFixture
 from src.claude_manager import ClaudeManager

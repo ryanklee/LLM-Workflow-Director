@@ -24,6 +24,7 @@ We use pytest marks to categorize our tests:
 - `@pytest.mark.fast`: Quick tests that should run frequently
 - `@pytest.mark.slow`: Slower tests that might take more time
 - `@pytest.mark.benchmark`: Performance benchmark tests
+- `@pytest.mark.asyncio`: Asynchronous tests
 
 ## Fixtures
 We use fixtures for setting up test environments and sharing resources across tests. Key fixtures include:
@@ -39,6 +40,8 @@ We use fixtures for setting up test environments and sharing resources across te
 4. Use mocking to isolate the system under test
 5. Aim for high test coverage, but prioritize critical paths
 6. Regularly run the full test suite to catch regressions
+7. Use asynchronous testing for all LLM-related functionality
+8. Implement proper error handling and assertions in tests
 
 ## Continuous Integration
 Our CI pipeline runs tests automatically on each pull request. Ensure all tests pass before merging.
@@ -47,7 +50,7 @@ Our CI pipeline runs tests automatically on each pull request. Ensure all tests 
 We use pytest-benchmark for performance testing. Benchmark tests are marked with `@pytest.mark.benchmark`.
 
 ## Coverage Reporting
-We use pytest-cov for coverage reporting. Coverage reports are generated automatically when running tests.
+We use pytest-cov for coverage reporting. Coverage reports are generated automatically when running tests. Aim for a minimum of 90% code coverage.
 
 ## Updating Tests
 When adding new features or modifying existing ones, always update or add corresponding tests. Follow the existing patterns and conventions in the test files.
@@ -61,7 +64,7 @@ When adding new features or modifying existing ones, always update or add corres
 2. Context Management Testing
    - Test proper utilization of context window
    - Verify handling of context overflow situations
-   - Test context summarization techniques (if implemented)
+   - Test context summarization techniques
 
 3. LLM-Based Evaluation Testing
    - Test sufficiency evaluation for different project states
@@ -77,5 +80,30 @@ When adding new features or modifying existing ones, always update or add corres
    - Test rate limiting scenarios
    - Verify proper handling of API errors
    - Test fallback mechanisms and retry logic
+
+6. Asynchronous Testing
+   - Use `@pytest.mark.asyncio` for all asynchronous tests
+   - Test concurrent API calls and race conditions
+   - Verify proper handling of asynchronous operations
+
+7. Mock Claude Client Testing
+   - Use MockClaudeClient for all LLM-related tests
+   - Test different response scenarios using mock client
+   - Verify proper integration with ClaudeManager
+
+8. Token Efficiency Testing
+   - Test token usage estimation accuracy
+   - Verify cost optimization suggestions
+   - Test token efficiency over time
+
+9. Context Window Efficiency
+   - Test utilization of large context windows
+   - Verify handling of context overflow situations
+   - Test impact of context size on response quality
+
+10. Stress Testing
+    - Implement concurrent request handling tests
+    - Verify system behavior under high load
+    - Test rate limit recovery scenarios
 
 Remember to update these guidelines as new testing practices or requirements are introduced to the project.

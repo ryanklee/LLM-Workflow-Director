@@ -1,53 +1,127 @@
 import pytest
+import asyncio
 from src.claude_manager import ClaudeManager
 from src.mock_claude_client import MockClaudeClient
-import concurrent.futures
+from src.exceptions import RateLimitError
 
 @pytest.fixture
 def claude_manager():
     mock_client = MockClaudeClient()
     return ClaudeManager(client=mock_client)
 
-def test_llm_stress(claude_manager):
+@pytest.mark.asyncio
+async def test_llm_stress(claude_manager):
     num_requests = 100
-    max_workers = 10
+    max_concurrent = 10
 
-    def make_request(i):
+    async def make_request(i):
         prompt = f"Stress test request {i}"
-        response = claude_manager.generate_response(prompt)
-        assert response, f"Empty response for request {i}"
-        return response
+        try:
+            response = await claude_manager.generate_response(prompt)
+            assert response, f"Empty response for request {i}"
+            return response
+        except RateLimitError:
+            return "Rate limited"
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(make_request, i) for i in range(num_requests)]
-        responses = [future.result() for future in concurrent.futures.as_completed(futures)]
+    tasks = [make_request(i) for i in range(num_requests)]
+    responses = await asyncio.gather(*tasks)
 
     assert len(responses) == num_requests, f"Expected {num_requests} responses, got {len(responses)}"
 
-    # Check for rate limiting
-    rate_limited = claude_manager.client.rate_limit_reached
-    assert not rate_limited, "Rate limit was reached during stress test"
+    successful_responses = [r for r in responses if r != "Rate limited"]
+    rate_limited_responses = [r for r in responses if r == "Rate limited"]
 
+    print(f"Successful responses: {len(successful_responses)}")
+    print(f"Rate limited responses: {len(rate_limited_responses)}")
+
+    assert len(successful_responses) > 0, "No successful responses received"
+    assert len(rate_limited_responses) > 0, "No rate limiting occurred during stress test"
+
+@pytest.mark.asyncio
 @pytest.mark.slow
-def test_llm_extended_stress(claude_manager):
+async def test_llm_extended_stress(claude_manager):
     num_requests = 1000
-    max_workers = 20
+    max_concurrent = 50
 
-    def make_request(i):
+    async def make_request(i):
         prompt = f"Extended stress test request {i}"
-        response = claude_manager.generate_response(prompt)
-        assert response, f"Empty response for request {i}"
-        return response
+        try:
+            response = await claude_manager.generate_response(prompt)
+            assert response, f"Empty response for request {i}"
+            return response
+        except RateLimitError:
+            return "Rate limited"
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(make_request, i) for i in range(num_requests)]
-        responses = [future.result() for future in concurrent.futures.as_completed(futures)]
+    tasks = [make_request(i) for i in range(num_requests)]
+    responses = await asyncio.gather(*tasks)
 
     assert len(responses) == num_requests, f"Expected {num_requests} responses, got {len(responses)}"
 
-    # Check for rate limiting
-    rate_limited = claude_manager.client.rate_limit_reached
-    assert not rate_limited, "Rate limit was reached during extended stress test"
+    successful_responses = [r for r in responses if r != "Rate limited"]
+    rate_limited_responses = [r for r in responses if r == "Rate limited"]
+
+    print(f"Successful responses: {len(successful_responses)}")
+    print(f"Rate limited responses: {len(rate_limited_responses)}")
+
+    assert len(successful_responses) > 0, "No successful responses received"
+    assert len(rate_limited_responses) > 0, "No rate limiting occurred during extended stress test"
+
+@pytest.mark.asyncio
+async def test_rate_limit_recovery(claude_manager):
+    num_requests = 20
+    claude_manager.client.set_rate_limit_threshold(10)
+    claude_manager.client.set_rate_limit_reset_time(2)  # 2 seconds for faster testing
+
+    async def make_request(i):
+        prompt = f"Rate limit recovery test request {i}"
+        try:
+            response = await claude_manager.generate_response(prompt)
+            return "Success"
+        except RateLimitError:
+            return "Rate limited"
+
+    # First batch of requests
+    tasks = [make_request(i) for i in range(num_requests)]
+    responses = await asyncio.gather(*tasks)
+
+    rate_limited_count = responses.count("Rate limited")
+    assert rate_limited_count > 0, "No rate limiting occurred in the first batch"
+
+    # Wait for rate limit to reset
+    await asyncio.sleep(2.1)
+
+    # Second batch of requests
+    tasks = [make_request(i) for i in range(num_requests)]
+    responses = await asyncio.gather(*tasks)
+
+    success_count = responses.count("Success")
+    assert success_count > 0, "No successful requests after rate limit reset"
+
+@pytest.mark.asyncio
+async def test_concurrent_request_handling(claude_manager):
+    num_concurrent_requests = 50
+    claude_manager.client.set_rate_limit_threshold(30)
+
+    async def make_request(i):
+        prompt = f"Concurrent request {i}"
+        try:
+            response = await claude_manager.generate_response(prompt)
+            return "Success"
+        except RateLimitError:
+            return "Rate limited"
+
+    tasks = [make_request(i) for i in range(num_concurrent_requests)]
+    responses = await asyncio.gather(*tasks)
+
+    success_count = responses.count("Success")
+    rate_limited_count = responses.count("Rate limited")
+
+    print(f"Successful concurrent requests: {success_count}")
+    print(f"Rate limited concurrent requests: {rate_limited_count}")
+
+    assert success_count > 0, "No successful concurrent requests"
+    assert rate_limited_count > 0, "No rate limiting occurred during concurrent requests"
+    assert success_count + rate_limited_count == num_concurrent_requests, "Unexpected response count"
 import pytest
 import asyncio
 from concurrent.futures import ThreadPoolExecutor

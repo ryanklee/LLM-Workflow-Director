@@ -3,62 +3,94 @@ from pytest_benchmark.fixture import BenchmarkFixture
 from unittest.mock import patch, MagicMock
 from src.claude_manager import ClaudeManager
 from src.llm_manager import LLMManager
-import anthropic
+from src.mock_claude_client import MockClaudeClient
+import asyncio
 
 @pytest.fixture
 def claude_manager():
-    return ClaudeManager()
+    mock_client = MockClaudeClient()
+    return ClaudeManager(client=mock_client)
 
 @pytest.fixture
-def llm_manager():
-    return LLMManager()
+def llm_manager(claude_manager):
+    return LLMManager(claude_manager=claude_manager)
 
-def test_token_usage_efficiency(claude_manager: ClaudeManager, benchmark: BenchmarkFixture):
+@pytest.mark.asyncio
+async def test_token_usage_efficiency(claude_manager: ClaudeManager, benchmark: BenchmarkFixture):
     context_sizes = [1000, 10000, 50000, 100000, 150000]
     
-    def measure_efficiency(size):
+    async def measure_efficiency(size):
         context = "a" * size
         prompt = f"Summarize the following text in one sentence: {context}"
-        response = claude_manager.generate_response(prompt)
+        response = await claude_manager.generate_response(prompt)
         total_tokens = claude_manager.count_tokens(prompt + response)
         useful_tokens = claude_manager.count_tokens(response)
         return useful_tokens / total_tokens
 
-    results = benchmark.pedantic(measure_efficiency, args=(max(context_sizes),), iterations=5, rounds=3)
+    results = await benchmark.pedantic(measure_efficiency, args=(max(context_sizes),), iterations=5, rounds=3)
     
     for size in context_sizes:
-        efficiency = measure_efficiency(size)
+        efficiency = await measure_efficiency(size)
         print(f"Token usage efficiency for context size {size}: {efficiency:.4f}")
         assert 0 < efficiency <= 1, f"Efficiency {efficiency} is out of expected range (0, 1]"
 
-def test_response_time_vs_context_size(claude_manager: ClaudeManager, benchmark: BenchmarkFixture):
+@pytest.mark.asyncio
+async def test_response_time_vs_context_size(claude_manager: ClaudeManager, benchmark: BenchmarkFixture):
     context_sizes = [1000, 10000, 50000, 100000, 150000]
     
-    def measure_response_time(size):
+    async def measure_response_time(size):
         context = "a" * size
         prompt = f"Summarize the following text in one sentence: {context}"
-        with patch.object(claude_manager, 'generate_response', return_value="Test response"):
-            return benchmark.pedantic(claude_manager.generate_response, args=(prompt,), iterations=3, rounds=1)
+        start_time = asyncio.get_event_loop().time()
+        await claude_manager.generate_response(prompt)
+        end_time = asyncio.get_event_loop().time()
+        return end_time - start_time
 
     for size in context_sizes:
-        result = measure_response_time(size)
+        result = await benchmark.pedantic(measure_response_time, args=(size,), iterations=3, rounds=1)
         print(f"Response time for context size {size}: {result.average:.4f} seconds")
     
     # Assert that the response time for the largest context is not significantly higher than the smallest
-    assert measure_response_time(context_sizes[-1]).average < measure_response_time(context_sizes[0]).average * 2
+    large_context_time = await measure_response_time(context_sizes[-1])
+    small_context_time = await measure_response_time(context_sizes[0])
+    assert large_context_time < small_context_time * 2
 
-def test_response_quality_vs_context_size(claude_manager: ClaudeManager, llm_manager: LLMManager):
+@pytest.mark.asyncio
+async def test_response_quality_vs_context_size(claude_manager: ClaudeManager, llm_manager: LLMManager):
     context_sizes = [1000, 10000, 50000, 100000, 150000]
     base_text = "This is a test of the emergency broadcast system. " * 250
 
     for size in context_sizes:
         context = base_text[:size]
         prompt = f"Summarize the following text in one sentence: {context}"
-        response = claude_manager.generate_response(prompt)
+        response = await claude_manager.generate_response(prompt)
         
         quality_prompt = f"Evaluate the following summary for relevance and coherence on a scale of 1-10: '{response}'"
-        quality_score = llm_manager.evaluate_response_quality(quality_prompt)
+        quality_score = await llm_manager.evaluate_response_quality(quality_prompt)
         
         print(f"Quality score for context size {size}: {quality_score}")
 
         assert 1 <= quality_score <= 10, f"Quality score {quality_score} is out of expected range (1-10)"
+
+@pytest.mark.asyncio
+async def test_context_window_utilization(claude_manager: ClaudeManager):
+    max_context_size = 200000
+    context = "a" * max_context_size
+    prompt = f"Summarize the following text in one sentence: {context}"
+    
+    response = await claude_manager.generate_response(prompt)
+    total_tokens = claude_manager.count_tokens(prompt + response)
+    
+    utilization = total_tokens / max_context_size
+    print(f"Context window utilization: {utilization:.2%}")
+    
+    assert 0.9 <= utilization <= 1, f"Context window utilization {utilization:.2%} is out of expected range [90%, 100%]"
+
+@pytest.mark.asyncio
+async def test_context_overflow_handling(claude_manager: ClaudeManager):
+    max_context_size = 200000
+    overflow_context = "a" * (max_context_size + 1000)
+    prompt = f"Summarize the following text in one sentence: {overflow_context}"
+    
+    with pytest.raises(ValueError, match="Prompt length exceeds maximum context length"):
+        await claude_manager.generate_response(prompt)
