@@ -606,6 +606,7 @@ class WorkflowDirector:
         return result
 
     def _evaluate_condition_internal(self, condition: str, condition_type: str) -> bool:
+        self.logger.debug(f"Entering _evaluate_condition_internal with condition: {condition}, type: {condition_type}")
         try:
             state = self.state_manager.get_state()
             self.logger.debug(f"Current state: {state}")
@@ -621,6 +622,8 @@ class WorkflowDirector:
             error_msg = f"Error evaluating {condition_type} '{condition}': {str(e)}"
             self.logger.error(error_msg)
             return False
+        finally:
+            self.logger.debug(f"Exiting _evaluate_condition_internal")
 
     def complete_current_stage(self):
         self.logger.info(f"Attempting to complete stage: {self.current_stage}")
