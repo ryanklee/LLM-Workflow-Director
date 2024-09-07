@@ -8,6 +8,9 @@ import json
 from click.testing import CliRunner
 
 # Add this import
+from unittest.mock import call
+
+# Add this import
 from logging import Handler
 
 # Add the project root directory to the Python path
