@@ -102,16 +102,13 @@ class WorkflowDirector:
         try:
             state = self.state_manager.get_state()
             condition_result = eval(transition['condition'], {"state": state})
-            debug_message = f"Evaluated transition condition: {transition['condition']} = {condition_result}"
-            self.logger.debug(debug_message)
+            self.logger.debug(f"Evaluated transition condition: {transition['condition']} = {condition_result}")
             return bool(condition_result)
         except KeyError as e:
-            warning_message = f"Transition condition evaluation failed due to missing key: '{e.args[0]}'"
-            self.logger.warning(warning_message)
+            self.logger.warning(f"Transition condition evaluation failed due to missing key: '{e.args[0]}'")
             return False
         except Exception as e:
-            error_message = f"Error evaluating transition condition: {str(e)}"
-            self.logger.error(error_message)
+            self.logger.error(f"Error evaluating transition condition: {str(e)}")
             return False
 
     def transition_to_next_stage(self) -> bool:
@@ -136,16 +133,13 @@ class WorkflowDirector:
         try:
             state = self.state_manager.get_state()
             result = eval(condition, {"state": state})
-            debug_message = f"Evaluated condition: {condition} = {result}"
-            self.logger.debug(debug_message)
+            self.logger.debug(f"Evaluated condition: {condition} = {result}")
             return bool(result)
         except KeyError as e:
-            warning_message = f"Condition evaluation failed due to missing key: '{e.args[0]}'"
-            self.logger.warning(warning_message)
+            self.logger.warning(f"Condition evaluation failed due to missing key: '{e.args[0]}'")
             return False
         except Exception as e:
-            error_message = f"Error evaluating condition '{condition}': {str(e)}"
-            self.logger.error(error_message)
+            self.logger.error(f"Error evaluating condition '{condition}': {str(e)}")
             return False
 
     def load_config(self, config_path):

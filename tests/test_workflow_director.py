@@ -544,21 +544,30 @@ def test_execute_stage(workflow_director, mock_state_manager, mock_logger):
 
 def test_evaluate_transition_condition(workflow_director, mock_state_manager, mock_logger):
     workflow_director.logger = mock_logger
-    workflow_director.state_manager = mock_state_manager  # Ensure the mock is used
+    workflow_director.state_manager = mock_state_manager
+
+    # Test with existing key
     mock_state_manager.get_state.return_value = {"flag": True}
     transition_with_condition = {"condition": "state.get('flag', False)"}
-    transition_without_condition = {}
-    
     result = workflow_director.evaluate_transition_condition(transition_with_condition)
-    assert result == True, f"Expected True, got {result}. State: {mock_state_manager.get_state.return_value}"
+    assert result == True
     mock_logger.debug.assert_called_with("Evaluated transition condition: state.get('flag', False) = True")
-    
+
+    # Test without condition
+    transition_without_condition = {}
     assert workflow_director.evaluate_transition_condition(transition_without_condition) == True
-    
+
     # Test with missing key
     mock_state_manager.get_state.return_value = {}
-    assert workflow_director.evaluate_transition_condition(transition_with_condition) == False
+    result = workflow_director.evaluate_transition_condition(transition_with_condition)
+    assert result == False
     mock_logger.warning.assert_called_with("Transition condition evaluation failed due to missing key: 'flag'")
+
+    # Test with exception
+    transition_with_error = {"condition": "1/0"}
+    result = workflow_director.evaluate_transition_condition(transition_with_error)
+    assert result == False
+    mock_logger.error.assert_called_with("Error evaluating transition condition: division by zero")
     
     # Reset mock_logger for other tests
     mock_logger.reset_mock()
