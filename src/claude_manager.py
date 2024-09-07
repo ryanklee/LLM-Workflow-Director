@@ -123,13 +123,13 @@ class ClaudeManager:
         else:
             return "claude-3-sonnet-20240229"
 
-    def evaluate_sufficiency(self, project_state):
+    async def evaluate_sufficiency(self, project_state):
         # Implement the evaluation logic here
         return {"is_sufficient": True, "reasoning": "Evaluation complete"}
 
-    def make_decision(self, project_state):
+    async def make_decision(self, project_state):
         prompt = f"Make decision based on: {project_state}"
-        response = self.generate_response(prompt)
+        response = await self.generate_response(prompt)
         return self.parse_decision(response)
 
     def parse_decision(self, response):
@@ -137,11 +137,11 @@ class ClaudeManager:
         # This is a simple implementation and might need to be adjusted based on the actual response format
         return response.strip()
 
-    def evaluate_project_state(self, project_data):
+    async def evaluate_project_state(self, project_data):
         # Implement the project state evaluation logic here
         return "Project state evaluation complete"
 
-    def evaluate_with_context(self, context, project_state):
+    async def evaluate_with_context(self, context, project_state):
         # Implement the evaluation with context logic here
         return "Evaluation with context complete"
 
@@ -149,32 +149,9 @@ class ClaudeManager:
         # Implement the prompt template rendering logic here
         return template.format(**context)
 
-    def get_completion(self, prompt, model, max_tokens):
+    async def get_completion(self, prompt, model, max_tokens):
         # Implement the completion logic here
-        return self.generate_response(prompt, model)
-
-    def _handle_error(self, error, prompt):
-        self.logger.error(f"Error in generate_response: {str(error)}")
-        if isinstance(error, anthropic.NotFoundError):
-            return self.fallback_response(prompt, "Model not found")
-        elif isinstance(error, anthropic.RateLimitError):
-            self.logger.warning(f"Rate limit error encountered: {str(error)}")
-            time.sleep(5)
-            return self.fallback_response(prompt, "Rate limit exceeded")
-        elif isinstance(error, anthropic.APIError):
-            self.logger.error(f"API error: {str(error)}")
-            return self.fallback_response(prompt, "API error")
-        elif isinstance(error, anthropic.APIConnectionError):
-            self.logger.warning(f"API Connection error encountered: {str(error)}")
-            time.sleep(5)
-            return self.fallback_response(prompt, "API Connection error")
-        elif isinstance(error, ValueError):
-            return self.fallback_response(prompt, str(error))
-        elif isinstance(error, TimeoutError):
-            self.logger.warning(f"Timeout error encountered: {str(error)}")
-            return self.fallback_response(prompt, "Request timed out")
-        else:
-            return self.fallback_response(prompt, "Unknown error")
+        return await self.generate_response(prompt, model)
 
     def parse_response(self, response_text):
         max_length = self.max_test_tokens - 21

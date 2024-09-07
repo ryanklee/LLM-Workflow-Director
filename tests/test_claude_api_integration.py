@@ -43,9 +43,10 @@ def cached_responses(request):
 
 class TestClaudeAPIBasics:
     @pytest.mark.fast
-    def test_claude_api_call(self, claude_manager, mock_claude_client):
+    @pytest.mark.asyncio
+    async def test_claude_api_call(self, claude_manager, mock_claude_client):
         mock_claude_client.set_response("Intro", "Claude AI")
-        response = claude_manager.generate_response("Intro")
+        response = await claude_manager.generate_response("Intro")
         assert isinstance(response, str)
         assert "<response>" in response
         assert "</response>" in response
@@ -62,6 +63,7 @@ class TestClaudeAPIBasics:
 
 class TestInputValidation:
     @pytest.mark.fast
+    @pytest.mark.asyncio
     @pytest.mark.parametrize("input_text", [
         "",
         "a" * 1001,  # Over the max_test_tokens limit
@@ -70,9 +72,9 @@ class TestInputValidation:
         123,
         "   "
     ])
-    def test_input_validation_errors(self, claude_manager, input_text):
+    async def test_input_validation_errors(self, claude_manager, input_text):
         with pytest.raises(ValueError) as excinfo:
-            claude_manager.generate_response(input_text)
+            await claude_manager.generate_response(input_text)
         if isinstance(input_text, str) and len(input_text) > 1000:
             assert "Prompt length exceeds maximum" in str(excinfo.value)
         elif not isinstance(input_text, str) or not input_text.strip():
@@ -81,114 +83,128 @@ class TestInputValidation:
             assert "Invalid prompt" in str(excinfo.value)
 
     @pytest.mark.fast
-    def test_valid_inputs(self, claude_manager):
+    @pytest.mark.asyncio
+    async def test_valid_inputs(self, claude_manager):
         for input_text in ["Hello", "!@#$"]:
-            response = claude_manager.generate_response(input_text)
+            response = await claude_manager.generate_response(input_text)
             assert response
 
 class TestResponseHandling:
     @pytest.mark.fast
-    def test_response_parsing(self, claude_manager, llm_manager):
+    @pytest.mark.asyncio
+    async def test_response_parsing(self, claude_manager, llm_manager):
         max_test_tokens = llm_manager.config.get('test_settings', {}).get('max_test_tokens', 100)
         long_response = "b" * (max_test_tokens * 2)
         claude_manager.client.set_response("Test", long_response)
     
-        result = claude_manager.generate_response("Test")
+        result = await claude_manager.generate_response("Test")
     
         assert len(result) <= max_test_tokens * 2 + 50  # Allow for response tags, ellipsis, and some extra characters
         assert result.startswith("<response>") and result.endswith("</response>")
         assert "..." in result or len(result) <= len(long_response) + 21  # Check for truncation or equal/shorter response, allowing for XML tags
 
     @pytest.mark.slow
-    def test_retry_mechanism(self, claude_manager):
+    @pytest.mark.asyncio
+    async def test_retry_mechanism(self, claude_manager):
         claude_manager.client.set_error_mode(True)
         with pytest.raises(Exception):
-            claude_manager.generate_response("Test")
+            await claude_manager.generate_response("Test")
         claude_manager.client.set_error_mode(False)
         claude_manager.client.set_response("Test", "Success")
-        response = claude_manager.generate_response("Test")
+        response = await claude_manager.generate_response("Test")
         assert "Success" in response
 
     @pytest.mark.slow
-    def test_consistency(self, claude_manager):
+    @pytest.mark.asyncio
+    async def test_consistency(self, claude_manager):
         claude_manager.client.set_response("France capital", "Paris")
-        response1 = claude_manager.generate_response("France capital")
-        response2 = claude_manager.generate_response("France capital")
+        response1 = await claude_manager.generate_response("France capital")
+        response2 = await claude_manager.generate_response("France capital")
         assert "Paris" in response1 and "Paris" in response2
 
 class TestRateLimiting:
     @pytest.mark.fast
-    def test_rate_limiting(self, claude_manager):
+    @pytest.mark.asyncio
+    async def test_rate_limiting(self, claude_manager):
         with patch.object(claude_manager.client.messages, 'create') as mock_create:
             mock_create.side_effect = anthropic.APIError("Rate limit exceeded", request=MagicMock(), body={})
-            response = claude_manager.generate_response("Test")
+            response = await claude_manager.generate_response("Test")
             assert "Rate limit exceeded" in response or "Unable to process the request" in response
             mock_create.side_effect = None
             mock_create.return_value = MagicMock(content=[MagicMock(text="Test response")])
-            response = claude_manager.generate_response("Test")
+            response = await claude_manager.generate_response("Test")
             assert "Test response" in response
 
 @pytest.mark.benchmark
-def test_claude_api_performance(claude_manager, benchmark):
-    def api_call():
-        return claude_manager.generate_response("Test performance")
+@pytest.mark.asyncio
+async def test_claude_api_performance(claude_manager, benchmark):
+    async def api_call():
+        return await claude_manager.generate_response("Test performance")
     
-    result = benchmark(api_call)
+    result = await benchmark(api_call)
     assert result  # Ensure we got a response
 
 class TestContextManagement:
     @pytest.mark.fast
-    def test_context_window_utilization(self, claude_manager, llm_manager):
+    @pytest.mark.asyncio
+    async def test_context_window_utilization(self, claude_manager, llm_manager):
         max_tokens = llm_manager.config.get('test_settings', {}).get('max_test_tokens', 100)
         long_input = "a" * (max_tokens - 10)  # Leave some room for system message
-        response = claude_manager.generate_response(long_input)
+        response = await claude_manager.generate_response(long_input)
         assert len(response) <= max_tokens
 
     @pytest.mark.fast
-    def test_context_overflow_handling(self, claude_manager, llm_manager):
+    @pytest.mark.asyncio
+    async def test_context_overflow_handling(self, claude_manager, llm_manager):
         max_tokens = claude_manager.max_context_length
         overflow_input = "a" * (max_tokens + 1)  # Ensure it's just over the limit
         with pytest.raises(ValueError, match="Prompt length exceeds maximum context length"):
-            claude_manager.generate_response(overflow_input)
+            await claude_manager.generate_response(overflow_input)
 
 class TestPerformance:
     @pytest.mark.slow
-    def test_response_time(self, claude_manager):
+    @pytest.mark.asyncio
+    async def test_response_time(self, claude_manager):
         start_time = time.time()
-        claude_manager.generate_response("Quick response test")
+        await claude_manager.generate_response("Quick response test")
         end_time = time.time()
         assert end_time - start_time < 10  # Increased to 10 seconds for more lenient test
 
     @pytest.mark.slow
-    def test_token_usage(self, claude_manager):
-        response = claude_manager.generate_response("Token usage test")
+    @pytest.mark.asyncio
+    async def test_token_usage(self, claude_manager):
+        response = await claude_manager.generate_response("Token usage test")
         assert '<response>' in response and '</response>' in response  # Check if the response is properly formatted
 
-def test_mock_claude_client_response(mock_claude_client, claude_manager):
+@pytest.mark.asyncio
+async def test_mock_claude_client_response(mock_claude_client, claude_manager):
     mock_claude_client.set_response("Test prompt", "Test response")
-    response = claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+    response = await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     assert response == "<response><response>Test response</response></response>"
 
-def test_mock_claude_client_rate_limit(mock_claude_client, claude_manager):
+@pytest.mark.asyncio
+async def test_mock_claude_client_rate_limit(mock_claude_client, claude_manager):
     mock_claude_client.set_rate_limit(True)
     with pytest.raises(tenacity.RetryError) as excinfo:
-        claude_manager.get_completion("Test prompt", "claude-3-haiku-20240307", 100)
+        await claude_manager.get_completion("Test prompt", "claude-3-haiku-20240307", 100)
     assert "Rate limit exceeded" in str(excinfo.value)
 
-def test_mock_claude_client_error_mode(mock_claude_client, claude_manager):
+@pytest.mark.asyncio
+async def test_mock_claude_client_error_mode(mock_claude_client, claude_manager):
     mock_claude_client.set_error_mode(True)
     with pytest.raises(tenacity.RetryError) as excinfo:
-        claude_manager.get_completion("Test prompt", "claude-3-haiku-20240307", 100)
+        await claude_manager.get_completion("Test prompt", "claude-3-haiku-20240307", 100)
     assert "API error" in str(excinfo.value)
 
-def test_mock_claude_client_reset(mock_claude_client, claude_manager):
+@pytest.mark.asyncio
+async def test_mock_claude_client_reset(mock_claude_client, claude_manager):
     mock_claude_client.set_rate_limit(True)
     mock_claude_client.set_error_mode(True)
     mock_claude_client.set_response("Test prompt", "Test response")
     
     mock_claude_client.reset()
     
-    response = claude_manager.get_completion("Test prompt", "claude-3-haiku-20240307", 100)
+    response = await claude_manager.get_completion("Test prompt", "claude-3-haiku-20240307", 100)
     assert response == "Default mock response"
 
 @pytest.mark.asyncio
