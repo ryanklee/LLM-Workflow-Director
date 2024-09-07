@@ -106,7 +106,7 @@ class WorkflowDirector:
             self.logger.debug(debug_message)
             return bool(condition_result)
         except KeyError as e:
-            warning_message = f"Transition condition evaluation failed due to missing key: '{str(e)}'"
+            warning_message = f"Transition condition evaluation failed due to missing key: '{e.args[0]}'"
             self.logger.warning(warning_message)
             return False
         except Exception as e:
@@ -140,7 +140,7 @@ class WorkflowDirector:
             self.logger.debug(debug_message)
             return bool(result)
         except KeyError as e:
-            warning_message = f"Condition evaluation failed due to missing key: '{str(e)}'"
+            warning_message = f"Condition evaluation failed due to missing key: '{e.args[0]}'"
             self.logger.warning(warning_message)
             return False
         except Exception as e:
