@@ -32,6 +32,7 @@ class WorkflowDirector:
         self.state_manager = state_manager if isinstance(state_manager, StateManager) else StateManager()
         self.claude_manager = claude_manager or ClaudeManager()
         self.llm_manager = llm_manager or LLMManager()
+        self.logger.debug(f"WorkflowDirector initialized with LLMManager: {self.llm_manager}")
         self.user_interaction_handler = user_interaction_handler or UserInteractionHandler()
         self.error_handler = ErrorHandler()
         self.config = self.load_config(config_path)
@@ -171,13 +172,13 @@ class WorkflowDirector:
         try:
             state = self.state_manager.get_state()
             result = eval(condition, {"state": state})
-            self.logger.debug(f"Evaluated condition: {condition} = {result}")
+            self.logger.debug(f"Evaluated {condition_type}: {condition} = {result}")
             return bool(result)
         except KeyError as e:
-            self.logger.warning(f"Condition evaluation failed due to missing key: '{e.args[0]}'")
+            self.logger.warning(f"{condition_type.capitalize()} evaluation failed due to missing key: '{e.args[0]}'")
             return False
         except Exception as e:
-            self.logger.error(f"Error evaluating condition '{condition}': {str(e)}")
+            self.logger.error(f"Error evaluating {condition_type} '{condition}': {str(e)}")
             return False
 
     def load_config(self, config_path):

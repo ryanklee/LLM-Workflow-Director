@@ -124,8 +124,12 @@ class LLMManager:
 
     def _load_config(self, config_path):
         try:
-            with open(config_path, 'r') as config_file:
-                return yaml.safe_load(config_file)
+            if isinstance(config_path, str):
+                with open(config_path, 'r') as config_file:
+                    return yaml.safe_load(config_file)
+            else:
+                self.logger.warning(f"Invalid config_path type: {type(config_path)}. Using default configuration.")
+                return {}
         except Exception as e:
             self.logger.error(f"Error loading LLM configuration: {str(e)}")
             return {}

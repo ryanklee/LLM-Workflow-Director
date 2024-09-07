@@ -18,6 +18,7 @@ def mock_logger():
 def workflow_director(mock_state_manager, llm_manager, mock_logger):
     director = WorkflowDirector(state_manager=mock_state_manager, llm_manager=llm_manager, logger=mock_logger)
     assert director.logger is not None, "Logger is None in WorkflowDirector"
+    director.logger.debug.reset_mock()  # Reset mock to clear initialization logs
     return director
 
 @pytest.fixture
