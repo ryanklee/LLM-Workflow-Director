@@ -18,8 +18,8 @@ class RateLimiter(RateLimitPolicy):
         self.lock = asyncio.Lock()
         self.logger = logging.getLogger(__name__)
 
-    async def is_allowed(self) -> bool:
-        async with self.lock:
+    def is_allowed(self) -> bool:
+        with self.lock:
             current_time = time.time()
             self._reset_if_needed(current_time)
             current_minute = int(current_time / 60)

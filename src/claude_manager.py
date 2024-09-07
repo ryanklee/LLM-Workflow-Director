@@ -22,7 +22,7 @@ class ClaudeManager:
         self.max_test_tokens = 1000
         self.rate_limiter = RateLimiter(requests_per_minute, requests_per_hour)
         self.token_tracker = TokenTracker()
-        self.token_optimizer = TokenOptimizer()
+        self.token_optimizer = TokenOptimizer(self.token_tracker)
         self.max_context_length = 200000  # Updated to 200k tokens
         self.messages = self.client.messages
 

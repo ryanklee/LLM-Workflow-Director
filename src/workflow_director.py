@@ -34,7 +34,12 @@ class WorkflowDirector:
         self.config_path = config_path
         self.logger = logger if logger is not None else self._setup_logging()
         if self.logger is None:
-            raise ValueError("Failed to initialize logger.")
+            self.logger = logging.getLogger(__name__)
+            self.logger.setLevel(logging.INFO)
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
         self._log("Initializing WorkflowDirector", extra={'test_mode': test_mode})
         self.config = self.load_config(self.config_path)
         self._log(f"Loaded config: {self.config}")
