@@ -559,7 +559,7 @@ def test_evaluate_transition_condition(workflow_director, mock_state_manager, mo
     mock_state_manager.get_state.return_value = {}
     assert workflow_director.evaluate_transition_condition(transition_with_condition) == False
     mock_logger.warning.assert_called_with("Transition condition evaluation failed due to missing key: 'flag'")
-        
+    
     # Reset mock_logger for other tests
     mock_logger.reset_mock()
         
