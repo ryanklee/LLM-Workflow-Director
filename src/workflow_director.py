@@ -171,14 +171,18 @@ class WorkflowDirector:
     def _evaluate_condition_internal(self, condition: str, condition_type: str) -> bool:
         try:
             state = self.state_manager.get_state()
+            self.logger.debug(f"Evaluating {condition_type}: {condition}")
+            self.logger.debug(f"Current state: {state}")
             result = eval(condition, {"state": state})
             self.logger.debug(f"Evaluated {condition_type}: {condition} = {result}")
             return bool(result)
         except KeyError as e:
-            self.logger.warning(f"{condition_type.capitalize()} evaluation failed due to missing key: '{e.args[0]}'")
+            error_msg = f"{condition_type.capitalize()} evaluation failed due to missing key: '{e.args[0]}'"
+            self.logger.warning(error_msg)
             return False
         except Exception as e:
-            self.logger.error(f"Error evaluating {condition_type} '{condition}': {str(e)}")
+            error_msg = f"Error evaluating {condition_type} '{condition}': {str(e)}"
+            self.logger.error(error_msg)
             return False
 
     def load_config(self, config_path):
