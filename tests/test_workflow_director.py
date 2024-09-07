@@ -676,6 +676,7 @@ def test_evaluate_condition(workflow_director, mock_state_manager, mock_logger):
     print(f"Debug: StateManager calls: {mock_state_manager.method_calls}")
     
     # Check for specific log calls
+    from unittest.mock import call  # Add this line to ensure call is in scope
     expected_call = call(f"Entering evaluate_condition with condition: {condition}")
     assert expected_call in mock_logger.debug.call_args_list, f"Expected call {expected_call} not found in {mock_logger.debug.call_args_list}"
     
