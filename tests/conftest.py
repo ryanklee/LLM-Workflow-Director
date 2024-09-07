@@ -23,6 +23,12 @@ def workflow_director(mock_state_manager, llm_manager, mock_logger):
     director.logger.error.reset_mock()  # Reset error mock
     return director
 
+@pytest.fixture(autouse=True)
+def reset_mocks(mock_logger):
+    mock_logger.reset_mock()
+    yield
+    # You can add any teardown code here if needed
+
 @pytest.fixture
 def workflow_director(mock_state_manager, llm_manager, mock_logger):
     director = WorkflowDirector(state_manager=mock_state_manager, llm_manager=llm_manager, logger=mock_logger)
