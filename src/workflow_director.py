@@ -320,7 +320,7 @@ class WorkflowDirector:
                 'transitions': []
             }
 
-    def run(self):
+    async def run(self):
         self.logger.info("Starting LLM Workflow Director", extra={
             'action': 'start_workflow',
             'current_stage': self.current_stage

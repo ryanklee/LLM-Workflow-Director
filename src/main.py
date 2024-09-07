@@ -80,5 +80,11 @@ def transition(config, stage_name):
     else:
         click.echo(f"Failed to transition to stage: {stage_name}")
 
+import asyncio
+
+async def main():
+    director = WorkflowDirector(config_path='src/workflow_config.yaml')
+    await director.run()
+
 if __name__ == '__main__':
-    cli()
+    asyncio.run(main())
