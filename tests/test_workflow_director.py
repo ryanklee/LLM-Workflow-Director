@@ -758,3 +758,24 @@ def test_is_workflow_complete(workflow_director, mock_state_manager, current_sta
     ]
     workflow_director.current_stage = current_stage
     assert workflow_director.is_workflow_complete() == is_complete
+def test_state_management_consistency(workflow_director, mock_state_manager, mock_logger):
+    workflow_director.logger = mock_logger
+    workflow_director.state_manager = mock_state_manager
+
+    # Set up initial state
+    initial_state = {"flag": True, "count": 5}
+    mock_state_manager.get_state.return_value = initial_state
+
+    # Evaluate a condition
+    condition = "state.get('flag', False) and state.get('count', 0) > 3"
+    result = workflow_director.evaluate_condition(condition)
+    assert result == True
+
+    # Check that the state wasn't modified
+    assert mock_state_manager.get_state.return_value == initial_state
+
+    # Check log calls
+    mock_logger.debug.assert_any_call(f"Current state: {initial_state}")
+    mock_logger.debug.assert_any_call(f"Evaluated condition: {condition} = True")
+    mock_logger.debug.assert_any_call("Evaluation result type: <class 'bool'>")
+    mock_logger.debug.assert_any_call("Boolean conversion result: True")
