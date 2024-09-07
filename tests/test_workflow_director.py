@@ -551,7 +551,7 @@ def test_evaluate_transition_condition(workflow_director, mock_state_manager, mo
     transition_with_condition = {"condition": "state.get('flag', False)"}
     result = workflow_director.evaluate_transition_condition(transition_with_condition)
     assert result == True
-    mock_logger.debug.assert_called_with("Evaluated transition condition: state.get('flag', False) = True")
+    mock_logger.debug.assert_called_with("Evaluated condition: state.get('flag', False) = True")
 
     mock_logger.reset_mock()
 
@@ -566,7 +566,7 @@ def test_evaluate_transition_condition(workflow_director, mock_state_manager, mo
     mock_state_manager.get_state.return_value = {}
     result = workflow_director.evaluate_transition_condition(transition_with_condition)
     assert result == False
-    mock_logger.warning.assert_called_with("Transition condition evaluation failed due to missing key: 'flag'")
+    mock_logger.warning.assert_called_with("Condition evaluation failed due to missing key: 'flag'")
 
     mock_logger.reset_mock()
 
@@ -574,7 +574,7 @@ def test_evaluate_transition_condition(workflow_director, mock_state_manager, mo
     transition_with_invalid_condition = {"condition": "invalid_condition"}
     result = workflow_director.evaluate_transition_condition(transition_with_invalid_condition)
     assert result == False
-    mock_logger.error.assert_called_with("Error evaluating transition condition: name 'invalid_condition' is not defined")
+    mock_logger.error.assert_called_with("Error evaluating condition 'invalid_condition': name 'invalid_condition' is not defined")
     
     # Reset mock_logger for other tests
     mock_logger.reset_mock()
