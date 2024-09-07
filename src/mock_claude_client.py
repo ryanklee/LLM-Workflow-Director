@@ -21,6 +21,7 @@ class MockClaudeClient:
         self.rate_limit_reset_time = 60  # seconds
         self.latency = 0.1  # Default latency in seconds
         self.lock = asyncio.Lock()
+        self.logger = logging.getLogger(__name__)
 
     def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
@@ -52,18 +53,23 @@ class MockClaudeClient:
             self.last_call_time = current_time
             self.call_count += 1
             
+            self.logger.debug(f"Call count: {self.call_count}, Threshold: {self.rate_limit_threshold}")
+            
             if self.rate_limit_reached or self.call_count > self.rate_limit_threshold:
+                self.logger.warning("Rate limit exceeded")
                 raise RateLimitError("Rate limit exceeded")
             if self.error_mode:
                 self.error_count += 1
                 if self.error_count <= self.max_errors:
-                    raise APIError("API error")
+                    self.logger.error("API error (error mode)")
+                    raise APIError("API error", request=MagicMock())
                 else:
                     self.error_mode = False
                     self.error_count = 0
             
             prompt = messages[0]['content']
             if len(prompt) > self.max_test_tokens:
+                self.logger.warning(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
                 raise ValueError(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
             
             response = self.responses.get(prompt, "Default mock response")
@@ -72,8 +78,9 @@ class MockClaudeClient:
             
             await asyncio.sleep(0.1)  # Simulate some processing time
             
+            self.logger.debug(f"Returning response: {response[:50]}...")
             return {
-                "content": [{"text": f"<response>{response}</response>"}],
+                "content": [{"text": response}],
                 "model": model,
                 "usage": {"total_tokens": len(response.split())}
             }

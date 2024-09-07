@@ -23,6 +23,10 @@ def claude_manager(mock_claude_client):
 def llm_manager(claude_manager):
     return LLMManager(claude_manager=claude_manager)
 
+@pytest.fixture
+def mock_claude_manager():
+    return MagicMock(spec=ClaudeManager)
+
 @pytest.fixture(scope="module")
 def cached_responses(request):
     cache = {}
@@ -44,9 +48,15 @@ async def test_claude_api_latency(claude_manager, mock_claude_client):
 @pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
     mock_claude_client.set_rate_limit(True)
+    mock_claude_client.rate_limit_threshold = 5  # Set a lower threshold for testing
     with pytest.raises(RateLimitError):
-        for _ in range(10):  # Attempt to make 10 calls
-            await claude_manager.generate_response("Test prompt")
+        for i in range(10):  # Attempt to make 10 calls
+            try:
+                await claude_manager.generate_response(f"Test prompt {i}")
+            except RateLimitError:
+                assert i >= 5  # Should raise after 5 calls
+                raise
+    assert mock_claude_client.call_count == 6  # 5 successful + 1 that raises the error
 
 @pytest.mark.asyncio
 async def test_claude_api_error_handling(claude_manager, mock_claude_client):

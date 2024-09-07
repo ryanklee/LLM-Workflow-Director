@@ -101,7 +101,7 @@ class LLMCostOptimizer:
             return 'powerful'
 
 class LLMManager:
-    def __init__(self, config_path='src/llm_config.yaml'):
+    def __init__(self, config_path='src/llm_config.yaml', claude_manager=None):
         self.error_handler = ErrorHandler()
         self.logger = logging.getLogger(__name__)
         self.cache = {}
@@ -114,7 +114,7 @@ class LLMManager:
         })
         self.logger.info("LLMManager initialized with config: %s", self.config)
         self.prompt_templates = self.config.get('prompt_templates', {})
-        self.claude_manager = self._create_claude_manager()
+        self.claude_manager = claude_manager or self._create_claude_manager()
 
     def count_tokens(self, text: str) -> int:
         return self.claude_manager.count_tokens(text)

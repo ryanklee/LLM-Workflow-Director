@@ -51,7 +51,9 @@ class ClaudeManager:
             if not await self.rate_limiter.is_allowed():
                 self.logger.warning("Rate limit reached, waiting for next available slot")
                 await self.rate_limiter.wait_for_next_slot()
-            if not isinstance(prompt, str) or not prompt.strip():
+            if not isinstance(prompt, str):
+                raise ValueError(f"Invalid prompt type: {type(prompt)}. Must be a string.")
+            if not prompt.strip():
                 raise ValueError("Invalid prompt: must be a non-empty string")
             token_count = self.count_tokens(prompt)
             self.logger.debug(f"Token count for prompt: {token_count}")
@@ -95,7 +97,7 @@ class ClaudeManager:
         return truncated_prompt.strip()
 
     async def _handle_error(self, error, prompt):
-        self.logger.error(f"Error in generate_response: {str(error)}")
+        self.logger.error(f"Error in generate_response: {str(error)}", exc_info=True)
         if isinstance(error, NotFoundError):
             return await self.fallback_response(prompt, "Model not found")
         elif isinstance(error, RateLimitError):
@@ -110,12 +112,16 @@ class ClaudeManager:
             await asyncio.sleep(5)
             return await self.fallback_response(prompt, "API Connection error")
         elif isinstance(error, ValueError):
+            self.logger.warning(f"ValueError: {str(error)}")
             return await self.fallback_response(prompt, str(error))
         elif isinstance(error, RetryError):
+            self.logger.warning("Rate limit exceeded after multiple retries")
             return await self.fallback_response(prompt, "Rate limit exceeded after multiple retries")
         elif isinstance(error, TypeError):
+            self.logger.error(f"TypeError: {str(error)}", exc_info=True)
             return await self.fallback_response(prompt, f"TypeError: {str(error)}")
         else:
+            self.logger.error(f"Unknown error: {str(error)}", exc_info=True)
             return await self.fallback_response(prompt, f"Unknown error: {str(error)}")
 
     async def fallback_response(self, prompt, error_type):

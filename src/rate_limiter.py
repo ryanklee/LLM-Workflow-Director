@@ -15,6 +15,7 @@ class RateLimiter(RateLimitPolicy):
         self.hour_bucket: Dict[int, int] = {}
         self.last_reset_time = time.time()
         self.lock = asyncio.Lock()
+        self.logger = logging.getLogger(__name__)
 
     async def is_allowed(self) -> bool:
         async with self.lock:
@@ -23,13 +24,21 @@ class RateLimiter(RateLimitPolicy):
             current_minute = int(current_time / 60)
             current_hour = int(current_time / 3600)
         
-            if self.minute_bucket.get(current_minute, 0) >= self.requests_per_minute:
+            minute_requests = self.minute_bucket.get(current_minute, 0)
+            hour_requests = self.hour_bucket.get(current_hour, 0)
+        
+            self.logger.debug(f"Current requests: minute={minute_requests}, hour={hour_requests}")
+        
+            if minute_requests >= self.requests_per_minute:
+                self.logger.warning("Rate limit reached (per minute)")
                 return False
-            if self.hour_bucket.get(current_hour, 0) >= self.requests_per_hour:
+            if hour_requests >= self.requests_per_hour:
+                self.logger.warning("Rate limit reached (per hour)")
                 return False
         
-            self.minute_bucket[current_minute] = self.minute_bucket.get(current_minute, 0) + 1
-            self.hour_bucket[current_hour] = self.hour_bucket.get(current_hour, 0) + 1
+            self.minute_bucket[current_minute] = minute_requests + 1
+            self.hour_bucket[current_hour] = hour_requests + 1
+            self.logger.debug(f"Request allowed. New counts: minute={self.minute_bucket[current_minute]}, hour={self.hour_bucket[current_hour]}")
             return True
 
     def _reset_if_needed(self, current_time):
