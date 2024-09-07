@@ -23,14 +23,14 @@ class RateLimiter(RateLimitPolicy):
             current_minute = int(current_time / 60)
             current_hour = int(current_time / 3600)
         
-        if self.minute_bucket.get(current_minute, 0) >= self.requests_per_minute:
-            return False
-        if self.hour_bucket.get(current_hour, 0) >= self.requests_per_hour:
-            return False
+            if self.minute_bucket.get(current_minute, 0) >= self.requests_per_minute:
+                return False
+            if self.hour_bucket.get(current_hour, 0) >= self.requests_per_hour:
+                return False
         
-        self.minute_bucket[current_minute] = self.minute_bucket.get(current_minute, 0) + 1
-        self.hour_bucket[current_hour] = self.hour_bucket.get(current_hour, 0) + 1
-        return True
+            self.minute_bucket[current_minute] = self.minute_bucket.get(current_minute, 0) + 1
+            self.hour_bucket[current_hour] = self.hour_bucket.get(current_hour, 0) + 1
+            return True
 
     def _reset_if_needed(self, current_time):
         if current_time - self.last_reset_time >= 60:
