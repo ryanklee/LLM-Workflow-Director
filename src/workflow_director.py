@@ -177,6 +177,7 @@ class WorkflowDirector:
 
     def _evaluate_condition_internal(self, condition: str, condition_type: str) -> bool:
         self.logger.debug(f"Entering _evaluate_condition_internal with condition: {condition}, type: {condition_type}")
+        self.logger.debug(f"Logger id: {id(self.logger)}")  # Add this line to track logger identity
         try:
             state = self.state_manager.get_state()
             self.logger.debug(f"Current state: {state}")
@@ -197,6 +198,7 @@ class WorkflowDirector:
             return False
         finally:
             self.logger.debug(f"Exiting _evaluate_condition_internal")
+            self.logger.debug(f"Logger id: {id(self.logger)}")  # Add this line to track logger identity
             self.logger.debug(f"Logger id: {id(self.logger)}")  # Add this line to track logger identity
 
     def load_config(self, config_path):

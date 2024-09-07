@@ -543,6 +543,9 @@ def test_execute_stage(workflow_director, mock_state_manager, mock_logger):
     mock_logger.info.assert_any_call("Skipped task: Task 3 in stage: Test Stage due to condition")
 
 def test_evaluate_transition_condition(workflow_director, mock_state_manager, mock_logger):
+    workflow_director.logger = mock_logger
+    workflow_director.state_manager = mock_state_manager
+
     # Test with existing key
     mock_state_manager.get_state.return_value = {"flag": True}
     transition_with_condition = {"condition": "state.get('flag', False)"}
@@ -568,20 +571,23 @@ def test_evaluate_transition_condition(workflow_director, mock_state_manager, mo
     mock_logger.reset_mock()
     mock_state_manager.reset_mock()
 
-    mock_logger.reset_mock()
-
     # Test without condition
     transition_without_condition = {}
     assert workflow_director.evaluate_transition_condition(transition_without_condition) == True
     mock_logger.debug.assert_called_with("Transition condition not specified, assuming True")
 
     mock_logger.reset_mock()
+    mock_state_manager.reset_mock()
 
     # Test with missing key
     mock_state_manager.get_state.return_value = {}
     result = workflow_director.evaluate_transition_condition(transition_with_condition)
     assert result == False
     mock_logger.warning.assert_called_with("Condition evaluation failed due to missing key: 'flag'")
+
+    # Reset mocks after the test
+    mock_logger.reset_mock()
+    mock_state_manager.reset_mock()
 
     mock_logger.reset_mock()
 
