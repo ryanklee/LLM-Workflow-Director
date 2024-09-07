@@ -9,6 +9,8 @@ from .rate_limiter import RateLimiter, RateLimitError
 from .token_tracker import TokenTracker, TokenOptimizer
 from .exceptions import RateLimitError
 
+logging.getLogger(__name__).addHandler(logging.NullHandler())
+
 class ClaudeManager:
     def __init__(self, client=None, requests_per_minute: int = 1000, requests_per_hour: int = 10000):
         self.client = client or self.create_client()

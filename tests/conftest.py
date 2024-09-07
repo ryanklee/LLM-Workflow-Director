@@ -256,3 +256,26 @@ def test_evaluate_condition_false(workflow_director, mock_state_manager, mock_lo
         mock_logger.debug.assert_any_call(f"Evaluating condition: {condition}")
         mock_logger.debug.assert_any_call(f"Evaluated condition: {condition} = False")
         mock_logger.debug.assert_any_call("Exiting evaluate_condition with result: False")
+import pytest
+import sys
+import os
+import logging
+
+def pytest_configure(config):
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger()
+    logger.info("Test session started")
+    logger.info(f"Python version: {sys.version}")
+    logger.info(f"pytest version: {pytest.__version__}")
+    logger.info(f"Current working directory: {os.getcwd()}")
+    logger.info(f"sys.path: {sys.path}")
+
+def pytest_unconfigure(config):
+    logging.getLogger().info("Test session finished")
+
+@pytest.fixture(autouse=True)
+def log_test_info(request):
+    logger = logging.getLogger()
+    logger.info(f"Starting test: {request.node.name}")
+    yield
+    logger.info(f"Finished test: {request.node.name}")

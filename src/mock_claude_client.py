@@ -1,7 +1,10 @@
 import asyncio
 import time
+import logging
 from typing import Dict, Any, List
 from anthropic import RateLimitError, APIError
+
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 class MockClaudeClient:
     def __init__(self):
