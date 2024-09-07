@@ -15,6 +15,8 @@ from src.state_manager import StateManager
 from src.llm_manager import LLMManager
 from src.sufficiency_evaluator import SufficiencyEvaluator
 from src.error_handler import ErrorHandler
+from src.claude_manager import ClaudeManager
+from src.user_interaction_handler import UserInteractionHandler
 from src.vectorstore.vector_store import VectorStore
 from src.constraint_engine import ConstraintEngine, Constraint
 from src.project_state_reporter import ProjectStateReporter
@@ -40,12 +42,18 @@ class WorkflowDirector:
         self._log(f"ClaudeManager: {claude_manager}")
         self._log(f"UserInteractionHandler: {user_interaction_handler}")
         self._log(f"LLMManager: {llm_manager}")
-        self.state_manager = state_manager
-        self.claude_manager = claude_manager
-        self.user_interaction_handler = user_interaction_handler
-        self.llm_manager = llm_manager
+        self.state_manager = state_manager or StateManager()
+        self.claude_manager = claude_manager or ClaudeManager()
+        self.user_interaction_handler = user_interaction_handler or UserInteractionHandler()
+        self.llm_manager = llm_manager or LLMManager()
         self.test_mode = test_mode
         self._test_mode = test_mode
+        self.current_stage = self.config['stages'][0]['name'] if self.config['stages'] else "Default Stage"
+        self.stages = {stage['name']: stage for stage in self.config['stages']}
+        self.transitions = self.config['transitions']
+        self.stage_progress = {stage: 0.0 for stage in self.stages}
+        self.completed_stages = set()
+        self.sufficiency_evaluator = SufficiencyEvaluator(self.llm_manager)
 
     def _log(self, message, level='info', extra=None):
         if self.logger:
