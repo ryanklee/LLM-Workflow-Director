@@ -9,6 +9,7 @@ import time
 from .rate_limiter import RateLimiter, RateLimitError
 from .token_tracker import TokenTracker, TokenOptimizer
 from .exceptions import RateLimitError
+from anthropic import NotFoundError, APIError, APIConnectionError, APIStatusError
 
 logging.getLogger(__name__).info(f"Imported modules in {__name__}")
 
