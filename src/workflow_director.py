@@ -30,7 +30,23 @@ from src.cost_analyzer import CostAnalyzer
 class WorkflowDirector:
     def __init__(self, config_path='src/workflow_config.yaml', state_manager=None, claude_manager=None, user_interaction_handler=None, llm_manager=None, logger=None, test_mode=False):
         self.logger = logger if logger is not None else self._setup_logging()
+        if self.logger is None:
+            raise ValueError("Failed to initialize logger")
         self.logger.info("Initializing WorkflowDirector", extra={'test_mode': test_mode})
+        self.config = self.load_config(config_path)
+        self.logger.debug(f"Loaded config: {self.config}")
+        self.logger.debug(f"StateManager: {state_manager}")
+        self.logger.debug(f"ClaudeManager: {claude_manager}")
+        self.logger.debug(f"UserInteractionHandler: {user_interaction_handler}")
+        self.logger.debug(f"LLMManager: {llm_manager}")
+
+    def load_config(self, config_path):
+        try:
+            with open(config_path, 'r') as config_file:
+                return yaml.safe_load(config_file)
+        except Exception as e:
+            self.logger.error(f"Error loading configuration: {str(e)}")
+            return {}
         self._test_mode = test_mode
         self.config_path = config_path
         self.state_manager = state_manager
@@ -116,6 +132,14 @@ class WorkflowDirector:
         self.transitions = self.config['transitions']
         self.stage_progress = {stage: 0.0 for stage in self.stages}
         self.completed_stages = set()
+        if self.state_manager is None:
+            self.state_manager = StateManager()
+        if self.claude_manager is None:
+            self.claude_manager = ClaudeManager()
+        if self.user_interaction_handler is None:
+            self.user_interaction_handler = UserInteractionHandler()
+        if self.llm_manager is None:
+            self.llm_manager = LLMManager()
         self.logger.info(f"Test initialization complete. Current stage: {self.current_stage}")
 
     def _setup_logging(self):

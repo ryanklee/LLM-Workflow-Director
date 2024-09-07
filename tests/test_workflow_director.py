@@ -82,8 +82,20 @@ def test_workflow_director_logging_setup(mock_json_formatter, mock_stream_handle
 
 @pytest.fixture
 def mock_workflow_director(mocker):
-    mock_logger = mocker.Mock()
-    director = WorkflowDirector(logger=mock_logger, test_mode=True)
+    mock_logger = mocker.Mock(spec=logging.Logger)
+    mock_state_manager = mocker.Mock(spec=StateManager)
+    mock_claude_manager = mocker.Mock(spec=ClaudeManager)
+    mock_user_interaction_handler = mocker.Mock(spec=UserInteractionHandler)
+    mock_llm_manager = mocker.Mock(spec=LLMManager)
+    
+    director = WorkflowDirector(
+        state_manager=mock_state_manager,
+        claude_manager=mock_claude_manager,
+        user_interaction_handler=mock_user_interaction_handler,
+        llm_manager=mock_llm_manager,
+        logger=mock_logger,
+        test_mode=True
+    )
     director.initialize_for_testing()
     return director
 
