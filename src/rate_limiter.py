@@ -5,6 +5,8 @@ from src.domain_models import RateLimit, RateLimitPolicy
 class RateLimitError(Exception):
     pass
 
+import asyncio
+
 class RateLimiter(RateLimitPolicy):
     def __init__(self, requests_per_minute: int, requests_per_hour: int):
         self.requests_per_minute = requests_per_minute
@@ -12,12 +14,14 @@ class RateLimiter(RateLimitPolicy):
         self.minute_bucket: Dict[int, int] = {}
         self.hour_bucket: Dict[int, int] = {}
         self.last_reset_time = time.time()
+        self.lock = asyncio.Lock()
 
-    def is_allowed(self) -> bool:
-        current_time = time.time()
-        self._reset_if_needed(current_time)
-        current_minute = int(current_time / 60)
-        current_hour = int(current_time / 3600)
+    async def is_allowed(self) -> bool:
+        async with self.lock:
+            current_time = time.time()
+            self._reset_if_needed(current_time)
+            current_minute = int(current_time / 60)
+            current_hour = int(current_time / 3600)
         
         if self.minute_bucket.get(current_minute, 0) >= self.requests_per_minute:
             return False
