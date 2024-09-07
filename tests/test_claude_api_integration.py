@@ -244,16 +244,14 @@ async def test_mock_claude_client_response(mock_claude_client, claude_manager):
 @pytest.mark.asyncio
 async def test_mock_claude_client_rate_limit(mock_claude_client, claude_manager):
     mock_claude_client.set_rate_limit(True)
-    with pytest.raises(tenacity.RetryError) as excinfo:
-        await claude_manager.get_completion("Test prompt", "claude-3-haiku-20240307", 100)
-    assert "Rate limit exceeded" in str(excinfo.value)
+    with pytest.raises(RateLimitError):
+        await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_error_mode(mock_claude_client, claude_manager):
     mock_claude_client.set_error_mode(True)
-    with pytest.raises(tenacity.RetryError) as excinfo:
-        await claude_manager.get_completion("Test prompt", "claude-3-haiku-20240307", 100)
-    assert "API error" in str(excinfo.value)
+    with pytest.raises(APIError):
+        await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_reset(mock_claude_client, claude_manager):
@@ -263,8 +261,44 @@ async def test_mock_claude_client_reset(mock_claude_client, claude_manager):
     
     mock_claude_client.reset()
     
-    response = await claude_manager.get_completion("Test prompt", "claude-3-haiku-20240307", 100)
+    response = await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     assert response == "<response>Default mock response</response>"
+
+@pytest.mark.asyncio
+async def test_mock_claude_client_rate_limit_reset(mock_claude_client, claude_manager):
+    mock_claude_client.rate_limit_threshold = 3
+    mock_claude_client.rate_limit_reset_time = 1  # 1 second for faster testing
+
+    # Make calls until rate limit is reached
+    for _ in range(3):
+        await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+
+    # Next call should raise RateLimitError
+    with pytest.raises(RateLimitError):
+        await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+
+    # Wait for rate limit to reset
+    await asyncio.sleep(1.1)
+
+    # Should be able to make calls again
+    response = await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+    assert response == "<response>Default mock response</response>"
+
+@pytest.mark.asyncio
+async def test_mock_claude_client_concurrent_calls(mock_claude_client, claude_manager):
+    mock_claude_client.rate_limit_threshold = 5
+
+    async def make_call():
+        return await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+
+    tasks = [make_call() for _ in range(10)]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    successful_calls = [r for r in results if isinstance(r, str)]
+    rate_limit_errors = [r for r in results if isinstance(r, RateLimitError)]
+
+    assert len(successful_calls) == 5
+    assert len(rate_limit_errors) == 5
 
 @pytest.mark.asyncio
 async def test_concurrent_claude_api_calls(claude_manager, mock_claude_client, caplog):
