@@ -273,9 +273,12 @@ async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
 
     # Make calls until rate limit is reached
     for i in range(3):
-        response = await claude_manager.generate_response(f"Test prompt {i}")
-        assert response == f"<response>Default mock response</response>"
-        assert f"Generating response for prompt: Test prompt {i}" in caplog.text
+        try:
+            response = await claude_manager.generate_response(f"Test prompt {i}")
+            assert response == f"<response>Default mock response</response>"
+            assert f"Generating response for prompt: Test prompt {i}" in caplog.text
+        except Exception as e:
+            pytest.fail(f"Unexpected error during rate limit test: {str(e)}")
 
     # Next call should raise RateLimitError
     with pytest.raises(RateLimitError):
@@ -286,6 +289,13 @@ async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
     await asyncio.sleep(1.1)
 
     # Should be able to make calls again
-    response = await claude_manager.generate_response("Test prompt 4")
-    assert response == "<response>Default mock response</response>"
-    assert "Generating response for prompt: Test prompt 4" in caplog.text
+    try:
+        response = await claude_manager.generate_response("Test prompt 4")
+        assert response == "<response>Default mock response</response>"
+        assert "Generating response for prompt: Test prompt 4" in caplog.text
+    except Exception as e:
+        pytest.fail(f"Unexpected error after rate limit reset: {str(e)}")
+
+    # Log the entire captured log for debugging
+    print("Captured log:")
+    print(caplog.text)

@@ -62,7 +62,7 @@ class ClaudeManager:
             self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
             self.logger.debug(f"Using model: {model if model else 'default'}")
 
-        try:
+            selected_model = self.select_model(prompt) if model is None else model
             selected_model = self.select_model(prompt) if model is None else model
             response = await self.client.messages.create(
                 model=selected_model,
@@ -73,6 +73,7 @@ class ClaudeManager:
             self.token_tracker.add_tokens("generate_response", prompt, response_text)
             return self.parse_response(response_text)
         except (NotFoundError, APIError, APIConnectionError, APIStatusError) as e:
+            self.logger.error(f"API error in generate_response: {str(e)}")
             return await self._handle_error(e, prompt)
         except Exception as e:
             self.logger.error(f"Unexpected error in generate_response: {str(e)}")
