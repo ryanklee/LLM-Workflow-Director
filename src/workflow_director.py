@@ -27,8 +27,8 @@ from src.cost_analyzer import CostAnalyzer
 
 
 class WorkflowDirector:
-    def __init__(self, config_path='src/workflow_config.yaml', state_manager=None, claude_manager=None, user_interaction_handler=None, llm_manager=None):
-        self._setup_logging()
+    def __init__(self, config_path='src/workflow_config.yaml', state_manager=None, claude_manager=None, user_interaction_handler=None, llm_manager=None, logger=None):
+        self.logger = logger or self._setup_logging()
         self.state_manager = state_manager if isinstance(state_manager, StateManager) else StateManager()
         self.claude_manager = claude_manager or ClaudeManager()
         self.llm_manager = llm_manager or LLMManager()
@@ -53,8 +53,9 @@ class WorkflowDirector:
         self.logger.debug(f"WorkflowDirector initialized with LLMManager: {self.llm_manager}")
 
     def _setup_logging(self):
-        self.logger = logging.getLogger(__name__)
-        # Add any additional logging setup here if needed
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.DEBUG)  # Set to DEBUG to capture all log levels
+        return logger
 
     def get_token_usage(self, task_id: str = None) -> int:
         return self.claude_manager.get_token_usage(task_id)
