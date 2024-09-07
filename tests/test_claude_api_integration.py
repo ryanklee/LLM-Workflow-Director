@@ -9,6 +9,7 @@ from src.claude_manager import ClaudeManager
 from src.exceptions import RateLimitError
 from src.mock_claude_client import MockClaudeClient
 from src.llm_manager import LLMManager
+from anthropic import APIError
 
 @pytest.fixture
 def mock_claude_client():
