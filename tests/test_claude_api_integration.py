@@ -118,7 +118,7 @@ class MockClaudeClient:
                 raise APIStatusError("Simulated API error", response=MagicMock(), body={})
         response = self.responses.get(prompt, "Default mock response")
         self.logger.debug(f"Returning response: {response[:50]}...")
-        return response
+        return f"<response>{response}</response>"
 
 async def count_tokens(self, text: str) -> int:
     return len(text.split())
@@ -250,6 +250,7 @@ def get_error_count(self):
         return response
 
     async def count_tokens(self, text: str) -> int:
+        # A simple approximation of token counting
         return len(text.split())
 
     async def select_model(self, task: str) -> str:
@@ -1027,6 +1028,40 @@ async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
     # Log the entire captured log for debugging
     print("Captured log:")
     print(caplog.text)
+
+@pytest.mark.asyncio
+async def test_concurrent_claude_api_calls(mock_claude_client):
+    mock_claude_client.rate_limit_threshold = 5
+    results = await mock_claude_client.simulate_concurrent_calls(10)
+
+    successful_calls = [r for r in results if isinstance(r, str)]
+    rate_limit_errors = [r for r in results if isinstance(r, CustomRateLimitError)]
+
+    assert len(successful_calls) == 5, f"Expected 5 successful calls, but got {len(successful_calls)}"
+    assert len(rate_limit_errors) == 5, f"Expected 5 rate limit errors, but got {len(rate_limit_errors)}"
+    assert mock_claude_client.get_call_count() == 10, f"Expected 10 total calls, but got {mock_claude_client.get_call_count()}"
+
+@pytest.mark.asyncio
+async def test_token_counting(mock_claude_client):
+    text = "This is a test sentence."
+    token_count = await mock_claude_client.count_tokens(text)
+    assert token_count == 5, f"Expected 5 tokens, but got {token_count}"
+    
+    long_text = "This is a longer test sentence with more tokens to count."
+    long_token_count = await mock_claude_client.count_tokens(long_text)
+    assert long_token_count == 11, f"Expected 11 tokens, but got {long_token_count}"
+    
+    empty_text = ""
+    empty_token_count = await mock_claude_client.count_tokens(empty_text)
+    assert empty_token_count == 0, f"Expected 0 tokens for empty string, but got {empty_token_count}"
+
+@pytest.mark.asyncio
+async def test_generate_response(mock_claude_client):
+    prompt = "Tell me a joke"
+    response = await mock_claude_client.generate_response(prompt)
+    assert isinstance(response, str), "Response should be a string"
+    assert len(response) > 0, "Response should not be empty"
+    assert response.startswith("<response>") and response.endswith("</response>"), "Response should be wrapped in <response> tags"
 @pytest.mark.asyncio
 async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
     caplog.set_level(logging.DEBUG)
