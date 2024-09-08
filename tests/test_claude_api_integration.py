@@ -104,6 +104,65 @@ class MockClaudeClient:
     def get_error_count(self):
         return self.error_count
 
+    async def set_response(self, prompt: str, response: str):
+        self.responses[prompt] = response
+        self.logger.debug(f"Set response for prompt: {prompt[:50]}...")
+
+    async def set_error_mode(self, mode: bool):
+        self.error_mode = mode
+        self.logger.debug(f"Set error mode to: {mode}")
+
+    async def set_latency(self, latency: float):
+        self.latency = latency
+        self.logger.debug(f"Set latency to: {latency}")
+
+    async def set_rate_limit(self, threshold: int):
+        self.rate_limit_threshold = threshold
+        self.logger.debug(f"Set rate limit threshold to: {threshold}")
+
+    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        await asyncio.sleep(self.latency)
+        self.call_count += 1
+        self.logger.debug(f"Call count: {self.call_count}")
+        if self.call_count > self.rate_limit_threshold:
+            self.logger.warning("Rate limit exceeded")
+            raise CustomRateLimitError("Rate limit exceeded")
+        if self.error_mode:
+            self.error_count += 1
+            self.logger.debug(f"Error count: {self.error_count}")
+            if self.error_count <= self.max_errors:
+                self.logger.error("Simulated API error")
+                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+        response = self.responses.get(prompt, "Default mock response")
+        self.logger.debug(f"Returning response: {response[:50]}...")
+        return response
+
+    async def count_tokens(self, text: str) -> int:
+        return len(text.split())
+
+    async def select_model(self, task: str) -> str:
+        if "simple" in task.lower():
+            return "claude-3-haiku-20240307"
+        elif "complex" in task.lower():
+            return "claude-3-opus-20240229"
+        else:
+            return "claude-3-sonnet-20240229"
+
+    async def reset(self):
+        self.call_count = 0
+        self.error_count = 0
+        self.error_mode = False
+        self.latency = 0
+        self.responses = {}
+        self.logger.debug("Reset MockClaudeClient")
+
+    def get_call_count(self):
+        return self.call_count
+
+    def get_error_count(self):
+        return self.error_count
+
     def simulate_concurrent_calls(self, num_calls):
         results = []
         for _ in range(num_calls):
@@ -246,6 +305,50 @@ class ClaudeManager:
         self.logger.debug(f"Setting rate limit threshold to: {threshold}")
         await self.client.set_rate_limit(threshold)
 
+    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        try:
+            response = await self.client.generate_response(prompt, model)
+            self.logger.debug(f"Response generated successfully: {response[:50]}...")
+            return response
+        except CustomRateLimitError as e:
+            self.logger.warning(f"Rate limit reached: {str(e)}")
+            raise
+        except APIStatusError as e:
+            self.logger.error(f"API error: {str(e)}")
+            raise
+        except Exception as e:
+            self.logger.error(f"Unexpected error: {str(e)}")
+            raise
+
+    async def count_tokens(self, text: str) -> int:
+        self.logger.debug(f"Counting tokens for text: {text[:50]}...")
+        return await self.client.count_tokens(text)
+
+    async def select_model(self, task: str) -> str:
+        self.logger.debug(f"Selecting model for task: {task}")
+        return await self.client.select_model(task)
+
+    async def close(self):
+        self.logger.debug("Closing ClaudeManager")
+        await self.client.reset()
+
+    async def set_response(self, prompt: str, response: str):
+        self.logger.debug(f"Setting response for prompt: {prompt[:50]}...")
+        await self.client.set_response(prompt, response)
+
+    async def set_error_mode(self, mode: bool):
+        self.logger.debug(f"Setting error mode to: {mode}")
+        await self.client.set_error_mode(mode)
+
+    async def set_latency(self, latency: float):
+        self.logger.debug(f"Setting latency to: {latency}")
+        await self.client.set_latency(latency)
+
+    async def set_rate_limit(self, threshold: int):
+        self.logger.debug(f"Setting rate limit threshold to: {threshold}")
+        await self.client.set_rate_limit(threshold)
+
 @pytest.fixture(autouse=True)
 async def setup_teardown(mock_claude_client, claude_manager):
     logger.info("Setting up test environment")
@@ -292,7 +395,7 @@ def log_test_name(request):
 @pytest.mark.asyncio
 async def test_claude_api_latency(claude_manager, mock_claude_client):
     try:
-        await mock_claude_client.set_latency(0.5)  # Set a 500ms latency
+        await claude_manager.set_latency(0.5)  # Set a 500ms latency
         logger.info("Set latency to 500ms")
         start_time = time.time()
         response = await claude_manager.generate_response("Test prompt")
