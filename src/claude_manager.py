@@ -179,7 +179,7 @@ class ClaudeManager:
         self.logger.error(f"Error type: {error_type}")
         return f"<response>Fallback response: Unable to process the request. Error: {error_type}</response>"
 
-    def select_model(self, task_description):
+    async def select_model(self, task_description):
         if "simple" in task_description.lower():
             return "claude-3-haiku-20240307"
         elif "complex" in task_description.lower():
