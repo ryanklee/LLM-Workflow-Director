@@ -376,8 +376,9 @@ class MockClaudeClient:
         self.call_count += 1
         self.logger.debug(f"Call count: {self.call_count}, Threshold: {self.rate_limit_threshold}")
         if self.call_count > self.rate_limit_threshold:
-            self.logger.warning(f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}")
-            raise CustomRateLimitError(f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}")
+            error_msg = f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}"
+            self.logger.warning(error_msg)
+            raise RateLimitError(error_msg)
         if self.error_mode:
             self.error_count += 1
             self.logger.debug(f"Error count: {self.error_count}")
@@ -688,20 +689,25 @@ class ClaudeManager:
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50] if isinstance(prompt, str) else str(prompt)[:50]}...")
         if not isinstance(prompt, str):
-            self.logger.error(f"Invalid prompt type: {type(prompt)}. Must be a string.")
-            raise ValueError(f"Invalid prompt type: {type(prompt)}. Must be a string.")
+            error_msg = f"Invalid prompt type: {type(prompt)}. Must be a string."
+            self.logger.error(error_msg)
+            raise ValueError(error_msg)
         if not prompt.strip():
-            self.logger.error("Invalid prompt: must be a non-empty string")
-            raise ValueError("Invalid prompt: must be a non-empty string")
+            error_msg = "Invalid prompt: must be a non-empty string"
+            self.logger.error(error_msg)
+            raise ValueError(error_msg)
         if len(prompt) > self.max_context_length:
-            self.logger.error(f"Prompt length ({len(prompt)}) exceeds maximum context length of {self.max_context_length}")
-            raise ValueError(f"Prompt length ({len(prompt)}) exceeds maximum context length of {self.max_context_length}")
+            error_msg = f"Prompt length ({len(prompt)}) exceeds maximum context length of {self.max_context_length}"
+            self.logger.error(error_msg)
+            raise ValueError(error_msg)
         if "<script>" in prompt.lower():
-            self.logger.error("Invalid prompt: contains potentially unsafe content (<script> tag)")
-            raise ValueError("Invalid prompt: contains potentially unsafe content (<script> tag)")
+            error_msg = "Invalid prompt: contains potentially unsafe content (<script> tag)"
+            self.logger.error(error_msg)
+            raise ValueError(error_msg)
         if re.search(r'\b\d{3}-\d{2}-\d{4}\b', prompt):
-            self.logger.error("Invalid prompt: contains sensitive information (SSN pattern detected)")
-            raise ValueError("Invalid prompt: contains sensitive information (SSN pattern detected)")
+            error_msg = "Invalid prompt: contains sensitive information (SSN pattern detected)"
+            self.logger.error(error_msg)
+            raise ValueError(error_msg)
         try:
             response = await self.client.generate_response(prompt, model)
             self.logger.debug(f"Response generated successfully: {response[:50]}...")
@@ -1019,10 +1025,10 @@ async def test_claude_api_error_handling(claude_manager, mock_claude_client):
 @pytest.mark.asyncio
 async def test_claude_api_max_tokens(claude_manager, mock_claude_client, caplog):
     caplog.set_level(logging.DEBUG)
-    long_prompt = "a" * (mock_claude_client.max_test_tokens + 1)
-    with pytest.raises(ValueError, match="Prompt length exceeds maximum"):
+    long_prompt = "a" * (claude_manager.max_context_length + 1)
+    with pytest.raises(ValueError, match="Prompt length .* exceeds maximum context length"):
         await claude_manager.generate_response(long_prompt)
-    assert "Prompt length exceeds maximum context length" in caplog.text
+    assert "Prompt length" in caplog.text and "exceeds maximum context length" in caplog.text
 
 @pytest.mark.asyncio
 async def test_claude_api_response_truncation(claude_manager, mock_claude_client):
@@ -1099,17 +1105,18 @@ class TestInputValidation:
     async def test_input_validation_errors(self, claude_manager, input_text):
         with pytest.raises(ValueError) as excinfo:
             await claude_manager.generate_response(input_text)
+        error_msg = str(excinfo.value)
         if isinstance(input_text, str):
             if len(input_text) > claude_manager.max_context_length:
-                assert "Prompt length exceeds maximum" in str(excinfo.value)
+                assert f"Prompt length ({len(input_text)}) exceeds maximum context length" in error_msg
             elif not input_text.strip():
-                assert "Invalid prompt: must be a non-empty string" in str(excinfo.value)
+                assert "Invalid prompt: must be a non-empty string" in error_msg
             elif "<script>" in input_text.lower():
-                assert "Invalid prompt: contains potentially unsafe content" in str(excinfo.value)
+                assert "Invalid prompt: contains potentially unsafe content" in error_msg
             elif re.search(r'\b\d{3}-\d{2}-\d{4}\b', input_text):
-                assert "Invalid prompt: contains sensitive information" in str(excinfo.value)
+                assert "Invalid prompt: contains sensitive information" in error_msg
         else:
-            assert "Invalid prompt: must be a string" in str(excinfo.value)
+            assert f"Invalid prompt type: {type(input_text)}. Must be a string." in error_msg
         if isinstance(input_text, str) and len(input_text) > 1000:
             assert "Prompt length exceeds maximum" in str(excinfo.value)
         elif not isinstance(input_text, str) or not str(input_text).strip():
@@ -1162,10 +1169,11 @@ class TestRateLimiting:
     @pytest.mark.asyncio
     async def test_rate_limiting(self, claude_manager):
         await claude_manager.client.set_rate_limit(1)
+        await claude_manager.client.set_rate_limit_reset_time(0.1)  # Set a short reset time for testing
         response1 = await claude_manager.generate_response("Test")
         with pytest.raises(RateLimitError):
             await claude_manager.generate_response("Test")
-        await asyncio.sleep(1)  # Wait for rate limit to reset
+        await asyncio.sleep(0.2)  # Wait for rate limit to reset
         response2 = await claude_manager.generate_response("Test")
         assert response1 == response2
 
@@ -1345,7 +1353,7 @@ async def test_claude_manager_fallback_response(mock_claude_client, claude_manag
     await mock_claude_client.set_error_mode(True)
     mock_claude_client.max_errors = 0  # Force immediate fallback
 
-    with pytest.raises(CustomRateLimitError):
+    with pytest.raises(RateLimitError):
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
 
 @pytest.mark.asyncio
