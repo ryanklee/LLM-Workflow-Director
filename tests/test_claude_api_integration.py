@@ -1083,13 +1083,12 @@ async def test_mock_claude_client_concurrent_calls(mock_claude_client):
 
 @pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
-    try:
-        await mock_claude_client.set_rate_limit(5)  # Set a lower threshold for testing
-        logger.info("Set rate limit to 5 calls")
-        with pytest.raises(CustomRateLimitError):
-            for i in range(10):  # Attempt to make 10 calls
-                logger.debug(f"Making API call {i+1}")
-                await claude_manager.generate_response(f"Test prompt {i}")
+    await mock_claude_client.set_rate_limit(5)  # Set a lower threshold for testing
+    logger.info("Set rate limit to 5 calls")
+    with pytest.raises(RateLimitError):
+        for i in range(10):  # Attempt to make 10 calls
+            logger.debug(f"Making API call {i+1}")
+            await claude_manager.generate_response(f"Test prompt {i}")
         call_count = await mock_claude_client.get_call_count()
         assert call_count == 6, f"Expected 6 calls (5 successful + 1 that raises the error), but got {call_count}"
         logger.info(f"Rate limiting test passed. Total calls made: {call_count}")
@@ -1319,8 +1318,8 @@ async def test_mock_claude_client_rate_limit(mock_claude_client, claude_manager)
     mock_claude_client.rate_limit_threshold = 5
     for _ in range(mock_claude_client.rate_limit_threshold):
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
-    
-    with pytest.raises(CustomRateLimitError) as excinfo:
+
+    with pytest.raises(RateLimitError) as excinfo:
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     assert "Rate limit exceeded" in str(excinfo.value), f"Expected 'Rate limit exceeded', but got: {str(excinfo.value)}"
     
