@@ -238,10 +238,10 @@ class MockClaudeClient:
         self.__init__()
         self.logger.debug("Reset MockClaudeClient")
 
-    def get_call_count(self):
+    async def get_call_count(self):
         return self.call_count
 
-    def get_error_count(self):
+    async def get_error_count(self):
         return self.error_count
 
     def select_model(self, task: str) -> str:
@@ -364,11 +364,11 @@ class MockClaudeClient:
             self.logger.debug("Resetting call count due to time elapsed")
             self.call_count = 0
             self.last_reset_time = current_time
-        self.call_count += 1
-        self.logger.debug(f"Call count: {self.call_count}")
-        if self.call_count > self.rate_limit_threshold:
+        if self.call_count >= self.rate_limit_threshold:
             self.logger.warning("Rate limit exceeded")
             raise CustomRateLimitError("Rate limit exceeded")
+        self.call_count += 1
+        self.logger.debug(f"Call count: {self.call_count}")
         if self.error_mode:
             self.error_count += 1
             self.logger.debug(f"Error count: {self.error_count}")
@@ -718,6 +718,11 @@ class ClaudeManager:
             self.logger.error(f"Prompt length exceeds maximum context length of {self.max_context_length}")
             raise ValueError(f"Prompt length exceeds maximum context length of {self.max_context_length}")
         try:
+            prompt_str = str(prompt)
+        except Exception as e:
+            self.logger.error(f"Failed to convert prompt to string: {e}")
+            raise ValueError(f"Invalid prompt: {e}")
+        try:
             response = await self.client.generate_response(prompt, model)
             self.logger.debug(f"Response generated successfully: {response[:50]}...")
             return response
@@ -994,7 +999,7 @@ async def test_claude_api_max_tokens(claude_manager, mock_claude_client, caplog)
 @pytest.mark.asyncio
 async def test_claude_api_response_truncation(claude_manager, mock_claude_client):
     long_response = "b" * (mock_claude_client.max_test_tokens * 2)
-    mock_claude_client.set_response("Test prompt", long_response)
+    await mock_claude_client.set_response("Test prompt", long_response)
     response = await claude_manager.generate_response("Test prompt")
     assert len(response) <= mock_claude_client.max_test_tokens + 50  # Allow for some overhead
 
@@ -1189,11 +1194,11 @@ async def test_mock_claude_client_error_mode(mock_claude_client, claude_manager)
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_reset(mock_claude_client, claude_manager):
-    mock_claude_client.set_rate_limit(True)
-    mock_claude_client.set_error_mode(True)
-    mock_claude_client.set_response("Test prompt", "Test response")
+    await mock_claude_client.set_rate_limit(True)
+    await mock_claude_client.set_error_mode(True)
+    await mock_claude_client.set_response("Test prompt", "Test response")
         
-    mock_claude_client.reset()
+    await mock_claude_client.reset()
         
     response = await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     assert response == "<response>Default mock response</response>"
@@ -1202,7 +1207,7 @@ async def test_mock_claude_client_reset(mock_claude_client, claude_manager):
 async def test_mock_claude_client_call_count(mock_claude_client, claude_manager):
     for _ in range(3):
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
-    assert mock_claude_client.get_call_count() == 3
+    assert await mock_claude_client.get_call_count() == 3
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_error_count(mock_claude_client, claude_manager):
@@ -1216,7 +1221,7 @@ async def test_mock_claude_client_error_count(mock_claude_client, claude_manager
         
     response = await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     assert response == "<response>Default mock response</response>"
-    assert mock_claude_client.get_error_count() == 2
+    assert await mock_claude_client.get_error_count() == 2
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_rate_limit_reset(mock_claude_client, claude_manager):
@@ -1483,8 +1488,12 @@ async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
     logging.info("Starting rate limit reset test")
     logging.debug(f"Rate limit threshold: {mock_claude_client.rate_limit_threshold}")
     logging.debug(f"Rate limit reset time: {mock_claude_client.rate_limit_reset_time} seconds")
-    logging.debug(f"Initial call count: {await mock_claude_client.get_call_count()}")
+    initial_call_count = await mock_claude_client.get_call_count()
+    logging.debug(f"Initial call count: {initial_call_count}")
     logging.debug(f"Initial last reset time: {mock_claude_client.last_reset_time}")
+
+    # Log the test steps
+    logging.info("Step 1: Make calls until rate limit is reached")
 
     # Make calls until rate limit is reached
     for i in range(3):
