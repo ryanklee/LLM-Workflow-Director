@@ -160,10 +160,10 @@ class MockClaudeClient:
         self.__init__()
         self.logger.debug("Reset MockClaudeClient")
 
-    def get_call_count(self):
+    async def get_call_count(self):
         return self.call_count
 
-    def get_error_count(self):
+    async def get_error_count(self):
         return self.error_count
 
     async def select_model(self, task: str) -> str:
@@ -358,6 +358,11 @@ class MockClaudeClient:
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         await asyncio.sleep(self.latency)
+        current_time = time.time()
+        if current_time - self.last_reset_time >= self.rate_limit_reset_time:
+            self.logger.debug("Resetting call count due to time elapsed")
+            self.call_count = 0
+            self.last_reset_time = current_time
         self.call_count += 1
         self.logger.debug(f"Call count: {self.call_count}")
         if self.call_count > self.rate_limit_threshold:
@@ -371,7 +376,7 @@ class MockClaudeClient:
                 raise APIStatusError("Simulated API error", response=MagicMock(), body={})
         response = self.responses.get(prompt, "Default mock response")
         self.logger.debug(f"Returning response: {response[:50]}...")
-        return f"<response>{response}</response>"
+        return response
 
 async def count_tokens(self, text: str) -> int:
     return len(text.split())
@@ -701,7 +706,10 @@ class ClaudeManager:
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
-        if not isinstance(prompt, str) or not prompt.strip():
+        if not isinstance(prompt, str):
+            self.logger.error("Invalid prompt: must be a string")
+            raise ValueError("Invalid prompt: must be a string")
+        if not prompt.strip():
             self.logger.error("Invalid prompt: must be a non-empty string")
             raise ValueError("Invalid prompt: must be a non-empty string")
         if len(prompt) > self.max_context_length:
@@ -1452,6 +1460,8 @@ async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
     logging.info("Starting rate limit reset test")
     logging.debug(f"Rate limit threshold: {mock_claude_client.rate_limit_threshold}")
     logging.debug(f"Rate limit reset time: {mock_claude_client.rate_limit_reset_time} seconds")
+    logging.debug(f"Initial call count: {await mock_claude_client.get_call_count()}")
+    logging.debug(f"Initial last reset time: {mock_claude_client.last_reset_time}")
 
     # Make calls until rate limit is reached
     for i in range(3):
