@@ -261,6 +261,26 @@ class ClaudeManager:
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
 
+    async def set_latency(self, latency):
+        await self.client.set_latency(latency)
+
+    async def generate_response(self, prompt, model=None):
+        return await self.client.generate_response(prompt, model)
+
+    async def count_tokens(self, text):
+        return await self.client.count_tokens(text)
+
+    async def close(self):
+        await self.client.reset()
+
+    def select_model(self, task):
+        if "simple" in task.lower():
+            return "claude-3-haiku-20240307"
+        elif "complex" in task.lower():
+            return "claude-3-opus-20240229"
+        else:
+            return "claude-3-sonnet-20240229"
+
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         try:
@@ -357,7 +377,7 @@ async def setup_teardown(mock_claude_client, claude_manager):
     await mock_claude_client.reset()
     await claude_manager.close()
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def event_loop():
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
@@ -393,9 +413,11 @@ def log_test_name(request):
     logger.info(f"Finished test: {request.node.name}")
 
 @pytest.mark.asyncio
-async def test_claude_api_latency(claude_manager, mock_claude_client):
+async def test_claude_api_latency(claude_manager, mock_claude_client, run_async_fixture):
+    claude_manager = run_async_fixture(claude_manager)
+    mock_claude_client = run_async_fixture(mock_claude_client)
     try:
-        await claude_manager.set_latency(0.5)  # Set a 500ms latency
+        await mock_claude_client.set_latency(0.5)  # Set a 500ms latency
         logger.info("Set latency to 500ms")
         start_time = time.time()
         response = await claude_manager.generate_response("Test prompt")
@@ -409,15 +431,17 @@ async def test_claude_api_latency(claude_manager, mock_claude_client):
         raise
 
 @pytest.mark.asyncio
-async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
+async def test_claude_api_rate_limiting(claude_manager, mock_claude_client, run_async_fixture):
+    claude_manager = run_async_fixture(claude_manager)
+    mock_claude_client = run_async_fixture(mock_claude_client)
     try:
         await mock_claude_client.set_rate_limit(5)  # Set a lower threshold for testing
         logger.info("Set rate limit to 5 calls")
-        with pytest.raises(CustomRateLimitError):
+        with pytest.raises(RateLimitError):
             for i in range(10):  # Attempt to make 10 calls
                 logger.debug(f"Making API call {i+1}")
                 await claude_manager.generate_response(f"Test prompt {i}")
-        call_count = await mock_claude_client.get_call_count()
+        call_count = mock_claude_client.call_count
         assert call_count == 6, f"Expected 6 calls (5 successful + 1 that raises the error), but got {call_count}"
         logger.info(f"Rate limiting test passed. Total calls made: {call_count}")
     except Exception as e:
@@ -441,8 +465,10 @@ async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
         raise
 
 @pytest.mark.asyncio
-async def test_claude_api_error_handling(claude_manager, mock_claude_client):
-    mock_claude_client.set_error_mode(True)
+async def test_claude_api_error_handling(claude_manager, mock_claude_client, run_async_fixture):
+    claude_manager = run_async_fixture(claude_manager)
+    mock_claude_client = run_async_fixture(mock_claude_client)
+    await mock_claude_client.set_error_mode(True)
     with pytest.raises(APIStatusError):
         await claude_manager.generate_response("Test prompt")
 
