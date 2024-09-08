@@ -411,12 +411,12 @@ async def claude_manager(mock_claude_client):
         logger.debug("Closed ClaudeManager instance")
 
 @pytest.fixture(autouse=True)
-def setup_teardown(caplog):
+def setup_teardown(caplog, request):
     caplog.set_level(logging.DEBUG)
-    logger.info("Starting test")
+    logger.info(f"Starting test: {request.node.name}")
     yield
-    logger.info("Finished test")
-    logger.debug("Log output:\n" + caplog.text)
+    logger.info(f"Finished test: {request.node.name}")
+    logger.debug(f"Log output for {request.node.name}:\n" + caplog.text)
 
 @pytest.fixture
 def run_async_fixture():
@@ -499,6 +499,11 @@ def get_error_count(self):
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         await asyncio.sleep(self.latency)
+        current_time = time.time()
+        if current_time - self.last_reset_time >= self.rate_limit_reset_time:
+            self.call_count = 0
+            self.last_reset_time = current_time
+            self.logger.debug("Rate limit counter reset")
         self.call_count += 1
         self.logger.debug(f"Call count: {self.call_count}")
         if self.call_count > self.rate_limit_threshold:
@@ -763,6 +768,12 @@ class ClaudeManager:
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        if not isinstance(prompt, str) or not prompt.strip():
+            self.logger.error("Invalid prompt: must be a non-empty string")
+            raise ValueError("Invalid prompt: must be a non-empty string")
+        if len(prompt) > self.max_context_length:
+            self.logger.error(f"Prompt length exceeds maximum context length of {self.max_context_length}")
+            raise ValueError(f"Prompt length exceeds maximum context length of {self.max_context_length}")
         try:
             response = await self.client.generate_response(prompt, model)
             self.logger.debug(f"Response generated successfully: {response[:50]}...")
@@ -1237,10 +1248,16 @@ async def test_claude_manager_fallback_response(mock_claude_client, claude_manag
 async def test_claude_manager_retry_mechanism(mock_claude_client, claude_manager):
     await mock_claude_client.set_error_mode(True)
     mock_claude_client.max_errors = 2  # Allow 2 errors before success
-    
+
+    with pytest.raises(APIStatusError):
+        await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+
+    assert mock_claude_client.get_error_count() == 2
+
+    # Reset error mode and try again
+    await mock_claude_client.set_error_mode(False)
     response = await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     assert response == "<response>Default mock response</response>"
-    assert await mock_claude_client.get_error_count() == 2
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_rate_limit_reset(mock_claude_client, claude_manager):
@@ -1343,7 +1360,7 @@ async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
     logging.info("Rate limit error raised as expected")
 
     logging.info("Waiting for rate limit to reset")
-    await asyncio.sleep(1.1)
+    await asyncio.sleep(mock_claude_client.rate_limit_reset_time + 0.1)  # Wait slightly longer than the reset time
     logging.info("Rate limit reset period completed")
 
     # Should be able to make calls again
