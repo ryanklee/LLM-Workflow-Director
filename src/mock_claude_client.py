@@ -8,9 +8,6 @@ from src.exceptions import RateLimitError as CustomRateLimitError
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
-import asyncio
-from src.exceptions import RateLimitError
-
 class MockClaudeClient:
     def __init__(self):
         self.rate_limit_reached = False
