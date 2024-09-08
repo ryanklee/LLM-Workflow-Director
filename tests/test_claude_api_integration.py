@@ -710,9 +710,7 @@ def log_test_name(request):
 
 @pytest.mark.asyncio
 @log_test_start_end
-async def test_claude_api_latency(claude_manager, mock_claude_client, run_async_fixture):
-    claude_manager = run_async_fixture(claude_manager)
-    mock_claude_client = run_async_fixture(mock_claude_client)
+async def test_claude_api_latency(claude_manager, mock_claude_client):
     try:
         await mock_claude_client.set_latency(0.5)  # Set a 500ms latency
         logger.info("Set latency to 500ms")
