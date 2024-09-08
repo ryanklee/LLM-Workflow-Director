@@ -81,7 +81,7 @@ async def test_claude_api_response_truncation(claude_manager, mock_claude_client
 async def test_concurrent_claude_api_calls(claude_manager, mock_claude_client, caplog):
     caplog.set_level(logging.DEBUG)
     num_concurrent_calls = 5
-    mock_claude_client.set_response("Test prompt", "Test response")
+    await mock_claude_client.set_response("Test prompt", "Test response")
 
     logging.info(f"Starting concurrent API calls test with {num_concurrent_calls} calls")
 
@@ -101,7 +101,7 @@ async def test_concurrent_claude_api_calls(claude_manager, mock_claude_client, c
 
     assert len(successful_calls) + len(rate_limit_errors) == num_concurrent_calls, f"Expected {num_concurrent_calls} total results, got {len(successful_calls) + len(rate_limit_errors)}"
     assert all(result == "<response><response>Test response</response></response>" for result in successful_calls), "Not all successful responses match expected format"
-    assert mock_claude_client.call_count == num_concurrent_calls, f"Expected {num_concurrent_calls} calls to mock client, got {mock_claude_client.call_count}"
+    assert await mock_claude_client.get_call_count() == num_concurrent_calls, f"Expected {num_concurrent_calls} calls to mock client, got {await mock_claude_client.get_call_count()}"
 
     for i in range(num_concurrent_calls):
         assert f"Generating response for prompt: Test prompt {i}" in caplog.text, f"Missing log for prompt {i}"
