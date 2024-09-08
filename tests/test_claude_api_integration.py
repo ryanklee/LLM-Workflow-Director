@@ -65,6 +65,7 @@ class MockClaudeClient:
         self.max_context_length = 200000
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
+        self.logger.debug("Initialized MockClaudeClient")
 
     async def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
@@ -83,7 +84,7 @@ class MockClaudeClient:
         self.logger.debug(f"Set rate limit threshold to: {threshold}")
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
-        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        self.logger.debug(f"MockClaudeClient generating response for prompt: {prompt[:50]}... using model: {model}")
         await asyncio.sleep(self.latency)
         self.call_count += 1
         self.logger.debug(f"Call count: {self.call_count}")
@@ -97,7 +98,7 @@ class MockClaudeClient:
                 self.logger.error("Simulated API error")
                 raise APIStatusError("Simulated API error", response=MagicMock(), body={})
         response = self.responses.get(prompt, "Default mock response")
-        self.logger.debug(f"Returning response: {response[:50]}...")
+        self.logger.debug(f"MockClaudeClient returning response: {response[:50]}...")
         return f"<response>{response}</response>"
 
     async def count_tokens(self, text: str) -> int:
@@ -564,23 +565,26 @@ def get_error_count(self):
     def get_error_count(self):
         return self.error_count
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def claude_manager(mock_claude_client):
     manager = ClaudeManager(client=mock_claude_client)
     logger.debug("Created ClaudeManager instance with MockClaudeClient")
-    yield manager
-    await manager.close()
-    logger.debug("Closed ClaudeManager instance")
+    try:
+        yield manager
+    finally:
+        await manager.close()
+        logger.debug("Closed ClaudeManager instance")
 
 class ClaudeManager:
     def __init__(self, client):
         self.client = client
-        self.max_context_length = client.max_context_length
+        self.max_context_length = getattr(client, 'max_context_length', 200000)  # Default to 200k if not specified
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
+        self.logger.debug(f"Initialized ClaudeManager with client: {client.__class__.__name__}")
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
-        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}... using model: {model}")
         try:
             response = await self.client.generate_response(prompt, model)
             self.logger.debug(f"Response generated successfully: {response[:50]}...")
@@ -589,10 +593,10 @@ class ClaudeManager:
             self.logger.warning(f"Rate limit reached: {str(e)}")
             raise
         except APIStatusError as e:
-            self.logger.error(f"API error: {str(e)}")
+            self.logger.error(f"API error: {str(e)}", exc_info=True)
             raise
         except Exception as e:
-            self.logger.error(f"Unexpected error: {str(e)}")
+            self.logger.error(f"Unexpected error: {str(e)}", exc_info=True)
             raise
 
     async def count_tokens(self, text: str) -> int:
@@ -798,6 +802,8 @@ async def test_claude_api_latency(claude_manager, mock_claude_client):
     except Exception as e:
         logger.error(f"Error in test_claude_api_latency: {str(e)}", exc_info=True)
         raise
+    finally:
+        logger.info("Finished test_claude_api_latency")
 
 @pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
