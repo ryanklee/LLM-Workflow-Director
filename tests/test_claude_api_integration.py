@@ -336,9 +336,11 @@ async def simulate_concurrent_calls(self, num_calls):
 async def claude_manager(mock_claude_client):
     manager = ClaudeManager(client=mock_claude_client)
     logger.debug("Created ClaudeManager instance with MockClaudeClient")
-    yield manager
-    await manager.close()
-    logger.debug("Closed ClaudeManager instance")
+    try:
+        yield manager
+    finally:
+        await manager.close()
+        logger.debug("Closed ClaudeManager instance")
 
 @pytest.fixture
 def run_async_fixture():
