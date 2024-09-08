@@ -42,8 +42,7 @@ class ClaudeManager:
         return len(response) / 100  # Simple quality metric based on response length
 
     async def count_tokens(self, text):
-        # This is a simple approximation. For more accurate results, use a proper tokenizer.
-        return len(text.split())
+        return await self.client.count_tokens(text)
 
     @staticmethod
     def create_client():
@@ -80,12 +79,7 @@ class ClaudeManager:
 
             selected_model = await self.select_model(prompt) if model is None else model
             try:
-                response = await self.client.messages.create(
-                    model=selected_model,
-                    max_tokens=self.max_test_tokens,
-                    messages=[{"role": "user", "content": prompt}]
-                )
-                response_text = response.content[0].text
+                response_text = await self.client.generate_response(prompt, selected_model)
             except Exception as api_error:
                 self.logger.error(f"Error calling Claude API: {str(api_error)}", exc_info=True)
                 raise APIError(f"Claude API call failed: {str(api_error)}")

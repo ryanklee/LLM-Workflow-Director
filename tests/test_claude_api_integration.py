@@ -11,21 +11,33 @@ from src.mock_claude_client import MockClaudeClient
 from src.llm_manager import LLMManager
 from anthropic import APIError, APIStatusError
 
+# Set up logging for tests
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 @pytest.fixture
 def mock_claude_client():
-    return MockClaudeClient()
+    client = MockClaudeClient()
+    logger.debug("Created MockClaudeClient instance")
+    return client
 
 @pytest.fixture
 def claude_manager(mock_claude_client):
-    return ClaudeManager(client=mock_claude_client)
+    manager = ClaudeManager(client=mock_claude_client)
+    logger.debug("Created ClaudeManager instance with MockClaudeClient")
+    return manager
 
 @pytest.fixture
 def llm_manager(claude_manager):
-    return LLMManager(claude_manager=claude_manager)
+    manager = LLMManager(claude_manager=claude_manager)
+    logger.debug("Created LLMManager instance")
+    return manager
 
 @pytest.fixture
 def mock_claude_manager():
-    return MagicMock(spec=ClaudeManager)
+    manager = MagicMock(spec=ClaudeManager)
+    logger.debug("Created mock ClaudeManager")
+    return manager
 
 @pytest.fixture(scope="module")
 def cached_responses(request):
@@ -35,7 +47,14 @@ def cached_responses(request):
             cache[prompt] = response
         return cache[prompt]
     request.addfinalizer(cache.clear)
+    logger.debug("Created cached_responses fixture")
     return _cached_response
+
+@pytest.fixture(autouse=True)
+def log_test_name(request):
+    logger.info(f"Starting test: {request.node.name}")
+    yield
+    logger.info(f"Finished test: {request.node.name}")
 
 @pytest.mark.asyncio
 async def test_claude_api_latency(claude_manager, mock_claude_client):

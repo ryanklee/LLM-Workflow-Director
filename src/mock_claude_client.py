@@ -188,6 +188,7 @@ class MockClaudeClient:
         self.last_reset = asyncio.get_event_loop().time()
         self.error_mode = False
         self.latency = 0
+        self.messages = self  # Add this line to create a 'messages' attribute
 
     async def messages_create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], **kwargs) -> Dict:
         await self._check_rate_limit()
@@ -227,3 +228,11 @@ class MockClaudeClient:
         self.last_reset = asyncio.get_event_loop().time()
         self.error_mode = False
         self.latency = 0
+
+    async def count_tokens(self, text: str) -> int:
+        # Simple mock implementation
+        return len(text.split())
+
+    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+        response = await self.messages_create(model, 1000, [{"role": "user", "content": prompt}])
+        return response["content"][0]["text"]
