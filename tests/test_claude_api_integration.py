@@ -26,21 +26,17 @@ logger = logging.getLogger(__name__)
 async def mock_claude_client():
     client = MockClaudeClient()
     logger.debug("Created MockClaudeClient instance")
-    try:
-        yield client
-    finally:
-        await client.reset()
-        logger.debug("Reset MockClaudeClient instance")
+    yield client
+    await client.reset()
+    logger.debug("Reset MockClaudeClient instance")
 
 @pytest.fixture
 async def claude_manager(mock_claude_client):
     manager = ClaudeManager(client=mock_claude_client)
     logger.debug("Created ClaudeManager instance with MockClaudeClient")
-    try:
-        yield manager
-    finally:
-        await manager.close()
-        logger.debug("Closed ClaudeManager instance")
+    yield manager
+    await manager.close()
+    logger.debug("Closed ClaudeManager instance")
 
 @pytest.fixture(autouse=True)
 async def setup_teardown(mock_claude_client, claude_manager):

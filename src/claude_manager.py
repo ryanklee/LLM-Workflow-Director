@@ -88,6 +88,25 @@ class ClaudeManager:
         await self.client.reset()
         self.logger.debug("ClaudeManager closed")
 
+    @staticmethod
+    def create_client():
+        return AsyncAnthropic()
+
+    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        return await self.client.generate_response(prompt, model)
+
+    async def count_tokens(self, text: str) -> int:
+        return await self.client.count_tokens(text)
+
+    async def select_model(self, task: str) -> str:
+        return await self.client.select_model(task)
+
+    async def close(self):
+        self.logger.info("Closing ClaudeManager")
+        await self.client.reset()
+        self.logger.debug("ClaudeManager closed")
+
     async def close(self):
         self.logger.info("Closing ClaudeManager")
         # Add any cleanup logic here
