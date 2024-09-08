@@ -10,22 +10,25 @@ import functools
 import re
 import inspect
 import pprint
+import sys
+import os
 from unittest.mock import MagicMock
 from anthropic import APIStatusError
 from src.exceptions import RateLimitError, CustomRateLimitError
 from src.llm_manager import LLMManager
 from src.claude_manager import ClaudeManager
-import asyncio
-import pytest
 from functools import wraps
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-logger.info(f"Python version: {sys.version}")
-logger.info(f"pytest version: {pytest.__version__}")
-logger.info(f"Current working directory: {os.getcwd()}")
-logger.info(f"sys.path: {sys.path}")
+def log_test_info():
+    logger.info(f"Python version: {sys.version}")
+    logger.info(f"pytest version: {pytest.__version__}")
+    logger.info(f"Current working directory: {os.getcwd()}")
+    logger.info(f"sys.path: {sys.path}")
+
+log_test_info()
 
 def structured_log(func):
     @wraps(func)
