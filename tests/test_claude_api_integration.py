@@ -77,7 +77,7 @@ class MockClaudeClient:
         return self.error_count
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
-        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}... using model: {model}")
         await asyncio.sleep(self.latency)
         
         current_time = time.time()
@@ -128,7 +128,7 @@ class MockClaudeClient:
     def get_call_count(self):
         return self.call_count
 
-    def get_error_count(self):
+    async def get_error_count(self):
         return self.error_count
 
     def reset_error_count(self):
@@ -148,7 +148,7 @@ class MockClaudeClient:
             self.logger.debug(f"Error count: {self.error_count}")
             if self.error_count <= self.max_errors:
                 self.logger.error("Simulated API error")
-                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+                raise APIStatusError("Simulated API error", response=MagicMock(status_code=500), body={})
         response = self.responses.get(prompt, "Default mock response")
         self.logger.debug(f"MockClaudeClient returning response: {response[:50]}...")
         return f"<response>{response}</response>"
@@ -1446,7 +1446,7 @@ async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
         try:
             logging.debug(f"Attempting call {i+1}")
             response = await claude_manager.generate_response(f"Test prompt {i}")
-            assert response == f"<response>Default mock response</response>", f"Unexpected response for call {i+1}: {response}"
+            assert response == "Default mock response", f"Unexpected response for call {i+1}: {response}"
             assert f"Generating response for prompt: Test prompt {i}" in caplog.text, f"Missing log for prompt {i}"
             logging.debug(f"Call {i+1} successful")
         except Exception as e:
@@ -1468,7 +1468,7 @@ async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
     try:
         logging.debug("Attempting call after rate limit reset")
         response = await claude_manager.generate_response("Test prompt 4")
-        assert response == "<response>Default mock response</response>", f"Unexpected response after reset: {response}"
+        assert response == "Default mock response", f"Unexpected response after reset: {response}"
         assert "Generating response for prompt: Test prompt 4" in caplog.text, "Missing log for post-reset prompt"
         logging.info("Successfully made call after rate limit reset")
     except Exception as e:
