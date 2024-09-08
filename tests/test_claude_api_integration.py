@@ -120,30 +120,30 @@ class MockClaudeClient:
         self.logger.debug(f"Returning response: {response[:50]}...")
         return response
 
-    async def count_tokens(self, text: str) -> int:
-        return len(text.split())
+async def count_tokens(self, text: str) -> int:
+    return len(text.split())
 
-    async def select_model(self, task: str) -> str:
-        if "simple" in task.lower():
-            return "claude-3-haiku-20240307"
-        elif "complex" in task.lower():
-            return "claude-3-opus-20240229"
-        else:
-            return "claude-3-sonnet-20240229"
+async def select_model(self, task: str) -> str:
+    if "simple" in task.lower():
+        return "claude-3-haiku-20240307"
+    elif "complex" in task.lower():
+        return "claude-3-opus-20240229"
+    else:
+        return "claude-3-sonnet-20240229"
 
-    async def reset(self):
-        self.call_count = 0
-        self.error_count = 0
-        self.error_mode = False
-        self.latency = 0
-        self.responses = {}
-        self.logger.debug("Reset MockClaudeClient")
+async def reset(self):
+    self.call_count = 0
+    self.error_count = 0
+    self.error_mode = False
+    self.latency = 0
+    self.responses = {}
+    self.logger.debug("Reset MockClaudeClient")
 
-    def get_call_count(self):
-        return self.call_count
+def get_call_count(self):
+    return self.call_count
 
-    def get_error_count(self):
-        return self.error_count
+def get_error_count(self):
+    return self.error_count
 
 @pytest.fixture
 async def claude_manager(mock_claude_client):
