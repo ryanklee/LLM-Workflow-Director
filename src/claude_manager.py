@@ -6,29 +6,37 @@ from typing import Dict, List, Any
 from unittest.mock import MagicMock
 from anthropic import AsyncAnthropic, NotFoundError, APIError, APIConnectionError, APIStatusError
 from .exceptions import RateLimitError as CustomRateLimitError
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 logging.getLogger(__name__).info(f"Imported modules in {__name__}")
 
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+logger.setLevel(logging.DEBUG)
 
 class ClaudeManager:
     def __init__(self, client=None, requests_per_minute: int = 1000, requests_per_hour: int = 10000):
-        self.client = client or self.create_client()
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.info("Initializing ClaudeManager")
+        self.client = client or self.create_client()
+        self.logger.debug(f"Client initialized: {self.client}")
+        
         # Add a file handler for persistent logging
         file_handler = logging.FileHandler('claude_manager.log')
         file_handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
+        self.logger.debug("File handler added for persistent logging")
+        
         self.max_test_tokens = 1000
         self.rate_limiter = RateLimiter(requests_per_minute, requests_per_hour)
+        self.logger.debug(f"RateLimiter initialized with {requests_per_minute} rpm and {requests_per_hour} rph")
         self.token_tracker = TokenTracker()
         self.token_optimizer = TokenOptimizer(self.token_tracker)
         self.max_context_length = 200000  # Updated to 200k tokens
         self.messages = self.client.messages
-        self.logger.info("ClaudeManager initialized")
+        self.logger.info("ClaudeManager initialization complete")
 
     async def evaluate_response_quality(self, prompt):
         # Implement the evaluation logic here
