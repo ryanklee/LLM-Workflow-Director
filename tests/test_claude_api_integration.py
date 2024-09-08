@@ -1201,9 +1201,11 @@ async def test_mock_claude_client_response(mock_claude_client, claude_manager):
 @pytest.mark.asyncio
 async def test_mock_claude_client_rate_limit(mock_claude_client, claude_manager):
     mock_claude_client.rate_limit_threshold = 5
+    for _ in range(mock_claude_client.rate_limit_threshold):
+        await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+    
     with pytest.raises(CustomRateLimitError):
-        for _ in range(mock_claude_client.rate_limit_threshold + 1):
-            await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+        await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     
     assert await mock_claude_client.get_call_count() == mock_claude_client.rate_limit_threshold + 1
 
