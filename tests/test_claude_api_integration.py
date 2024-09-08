@@ -420,7 +420,7 @@ class MockClaudeClient:
         await asyncio.sleep(self.latency)
         current_time = time.time()
         if current_time - self.last_reset_time >= self.rate_limit_reset_time:
-            self.logger.debug(f"Resetting call count due to time elapsed. Old count: {self.call_count}")
+            self.logger.info(f"Resetting call count. Old count: {self.call_count}")
             self.call_count = 0
             self.last_reset_time = current_time
         self.call_count += 1
@@ -428,7 +428,8 @@ class MockClaudeClient:
         if self.call_count > self.rate_limit_threshold:
             error_msg = f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}"
             self.logger.warning(error_msg)
-            raise CustomRateLimitError(error_msg)  # Changed to CustomRateLimitError for consistency
+            raise RateLimitError(error_msg)
+        self.logger.info(f"Generating response for model: {model}")
         self.logger.info(f"Generating response for model: {model}")
         if self.error_mode:
             self.error_count += 1
@@ -650,9 +651,11 @@ def get_error_count(self):
             try:
                 result = await task
                 results.append(result)
-            except CustomRateLimitError as e:
+            except RateLimitError as e:
                 results.append(e)
-        self.logger.info(f"Simulated {num_calls} concurrent calls. Results: {len([r for r in results if isinstance(r, str)])} successful, {len([r for r in results if isinstance(r, CustomRateLimitError)])} rate limited")
+        successful = len([r for r in results if isinstance(r, str)])
+        rate_limited = len([r for r in results if isinstance(r, RateLimitError)])
+        self.logger.info(f"Simulated {num_calls} concurrent calls. Results: {successful} successful, {rate_limited} rate limited")
         return results
         self.latency = 0
         self.responses = {}
@@ -939,9 +942,9 @@ class ClaudeManager:
             response = await self.client.generate_response(prompt, model)
             self.logger.debug(f"Response generated successfully: {response[:50]}...")
             return response
-        except RateLimitError as e:  # Changed to RateLimitError
+        except (RateLimitError, CustomRateLimitError) as e:
             self.logger.warning(f"Rate limit reached: {str(e)}")
-            raise
+            raise RateLimitError(str(e))
         except APIStatusError as e:
             self.logger.error(f"API error: {str(e)}")
             raise
