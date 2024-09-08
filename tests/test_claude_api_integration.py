@@ -37,6 +37,69 @@ class MockClaudeClient:
         self.error_mode = False
         self.latency = 0
         self.responses = {}
+        self.max_test_tokens = 1000
+        self.call_count = 0
+        self.error_count = 0
+        self.max_errors = 3
+        self.max_context_length = 200000
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+
+    async def set_response(self, prompt: str, response: str):
+        self.responses[prompt] = response
+
+    async def set_error_mode(self, mode: bool):
+        self.error_mode = mode
+
+    async def set_latency(self, latency: float):
+        self.latency = latency
+
+    async def set_rate_limit(self, threshold: int):
+        self.rate_limit_threshold = threshold
+
+    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        await asyncio.sleep(self.latency)
+        self.call_count += 1
+        self.logger.debug(f"Call count: {self.call_count}")
+        if self.call_count > self.rate_limit_threshold:
+            self.logger.warning("Rate limit exceeded")
+            raise CustomRateLimitError("Rate limit exceeded")
+        if self.error_mode:
+            self.error_count += 1
+            self.logger.debug(f"Error count: {self.error_count}")
+            if self.error_count <= self.max_errors:
+                self.logger.error("Simulated API error")
+                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+        response = self.responses.get(prompt, "Default mock response")
+        self.logger.debug(f"Returning response: {response[:50]}...")
+        return response
+
+    async def count_tokens(self, text: str) -> int:
+        return len(text.split())
+
+    async def select_model(self, task: str) -> str:
+        if "simple" in task.lower():
+            return "claude-3-haiku-20240307"
+        elif "complex" in task.lower():
+            return "claude-3-opus-20240229"
+        else:
+            return "claude-3-sonnet-20240229"
+
+    async def reset(self):
+        self.call_count = 0
+        self.error_count = 0
+        self.error_mode = False
+        self.latency = 0
+        self.responses = {}
+
+class MockClaudeClient:
+    def __init__(self):
+        self.rate_limit_threshold = 5
+        self.rate_limit_reset_time = 60
+        self.error_mode = False
+        self.latency = 0
+        self.responses = {}
         self.call_count = 0
         self.error_count = 0
         self.max_test_tokens = 1000
@@ -125,6 +188,18 @@ class ClaudeManager:
 
     async def close(self):
         await self.client.reset()
+
+    async def set_response(self, prompt: str, response: str):
+        await self.client.set_response(prompt, response)
+
+    async def set_error_mode(self, mode: bool):
+        await self.client.set_error_mode(mode)
+
+    async def set_latency(self, latency: float):
+        await self.client.set_latency(latency)
+
+    async def set_rate_limit(self, threshold: int):
+        await self.client.set_rate_limit(threshold)
 
 @pytest.fixture(autouse=True)
 async def setup_teardown(mock_claude_client, claude_manager):
@@ -718,15 +793,15 @@ async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
     print(caplog.text)
 
 @pytest.mark.asyncio
-async def test_token_counting(mock_claude_client):
+async def test_token_counting(claude_manager):
     text = "This is a test sentence."
-    token_count = await mock_claude_client.count_tokens(text)
+    token_count = await claude_manager.count_tokens(text)
     assert token_count == 5, f"Expected 5 tokens, but got {token_count}"
 
 @pytest.mark.asyncio
-async def test_generate_response(mock_claude_client):
+async def test_generate_response(claude_manager):
     prompt = "Tell me a joke"
-    response = await mock_claude_client.generate_response(prompt)
+    response = await claude_manager.generate_response(prompt)
     assert isinstance(response, str), "Response should be a string"
     assert len(response) > 0, "Response should not be empty"
 
