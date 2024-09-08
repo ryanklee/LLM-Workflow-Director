@@ -47,15 +47,19 @@ class MockClaudeClient:
 
     async def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
+        self.logger.debug(f"Set response for prompt: {prompt[:50]}...")
 
     async def set_error_mode(self, mode: bool):
         self.error_mode = mode
+        self.logger.debug(f"Set error mode to: {mode}")
 
     async def set_latency(self, latency: float):
         self.latency = latency
+        self.logger.debug(f"Set latency to: {latency}")
 
     async def set_rate_limit(self, threshold: int):
         self.rate_limit_threshold = threshold
+        self.logger.debug(f"Set rate limit threshold to: {threshold}")
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
@@ -92,12 +96,13 @@ class MockClaudeClient:
         self.error_mode = False
         self.latency = 0
         self.responses = {}
+        self.logger.debug("Reset MockClaudeClient")
 
-class MockClaudeClient:
-    def __init__(self):
-        self.rate_limit_threshold = 5
-        self.rate_limit_reset_time = 60
-        self.error_mode = False
+    def get_call_count(self):
+        return self.call_count
+
+    def get_error_count(self):
+        return self.error_count
         self.latency = 0
         self.responses = {}
         self.max_test_tokens = 1000
