@@ -145,6 +145,15 @@ def get_call_count(self):
 def get_error_count(self):
     return self.error_count
 
+async def simulate_concurrent_calls(self, num_calls):
+    results = []
+    for _ in range(num_calls):
+        try:
+            results.append(await self.generate_response("Test prompt"))
+        except CustomRateLimitError as e:
+            results.append(e)
+    return results
+
 @pytest.fixture
 async def claude_manager(mock_claude_client):
     manager = ClaudeManager(client=mock_claude_client)
