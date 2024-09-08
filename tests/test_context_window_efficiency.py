@@ -130,7 +130,8 @@ def llm_manager(mock_claude_manager):
 def generate_synthetic_data(size):
     return " ".join(["word" for _ in range(size)])
 
-def test_token_usage_efficiency(llm_manager):
+@pytest.mark.asyncio
+async def test_token_usage_efficiency(llm_manager):
     test_sizes = [100, 1000, 10000, 50000, 100000]
     results = []
 
@@ -138,7 +139,7 @@ def test_token_usage_efficiency(llm_manager):
         synthetic_data = generate_synthetic_data(size)
         prompt = f"Summarize the following text: {synthetic_data}"
         
-        tokens_before = llm_manager.claude_manager.count_tokens(prompt)
+        tokens_before = await llm_manager.claude_manager.count_tokens(prompt)
         response = await llm_manager.query(prompt)
         tokens_after = await llm_manager.claude_manager.count_tokens(response['response'])
 

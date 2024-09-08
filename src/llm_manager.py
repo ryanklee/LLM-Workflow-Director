@@ -182,7 +182,7 @@ class LLMManager:
                 self.cache[cache_key] = result
                 
                 # Update token usage for the specific query
-                await self.token_tracker.add_tokens(query, input_tokens, output_tokens)
+                await self.token_tracker.add_tokens(prompt, input_tokens, output_tokens)
                 
                 await self.cost_optimizer.update_usage(tier, input_tokens + output_tokens, safe_time() - start_time, True)
                 
