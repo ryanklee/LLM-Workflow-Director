@@ -145,6 +145,74 @@ class MockClaudeClient:
     def get_error_count(self):
         return self.error_count
 
+@pytest.fixture
+async def claude_manager(mock_claude_client):
+    manager = ClaudeManager(client=mock_claude_client)
+    logger.debug("Created ClaudeManager instance with MockClaudeClient")
+    yield manager
+    await manager.close()
+    logger.debug("Closed ClaudeManager instance")
+
+@pytest.fixture
+def run_async_fixture():
+    def _run_async_fixture(fixture):
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(fixture.__anext__())
+    return _run_async_fixture
+        self.error_mode = mode
+        self.logger.debug(f"Set error mode to: {mode}")
+
+    async def set_latency(self, latency: float):
+        self.latency = latency
+        self.logger.debug(f"Set latency to: {latency}")
+
+    async def set_rate_limit(self, threshold: int):
+        self.rate_limit_threshold = threshold
+        self.logger.debug(f"Set rate limit threshold to: {threshold}")
+
+    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        await asyncio.sleep(self.latency)
+        self.call_count += 1
+        self.logger.debug(f"Call count: {self.call_count}")
+        if self.call_count > self.rate_limit_threshold:
+            self.logger.warning("Rate limit exceeded")
+            raise CustomRateLimitError("Rate limit exceeded")
+        if self.error_mode:
+            self.error_count += 1
+            self.logger.debug(f"Error count: {self.error_count}")
+            if self.error_count <= self.max_errors:
+                self.logger.error("Simulated API error")
+                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+        response = self.responses.get(prompt, "Default mock response")
+        self.logger.debug(f"Returning response: {response[:50]}...")
+        return response
+
+    async def count_tokens(self, text: str) -> int:
+        return len(text.split())
+
+    async def select_model(self, task: str) -> str:
+        if "simple" in task.lower():
+            return "claude-3-haiku-20240307"
+        elif "complex" in task.lower():
+            return "claude-3-opus-20240229"
+        else:
+            return "claude-3-sonnet-20240229"
+
+    async def reset(self):
+        self.call_count = 0
+        self.error_count = 0
+        self.error_mode = False
+        self.latency = 0
+        self.responses = {}
+        self.logger.debug("Reset MockClaudeClient")
+
+    def get_call_count(self):
+        return self.call_count
+
+    def get_error_count(self):
+        return self.error_count
+
     async def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
         self.logger.debug(f"Set response for prompt: {prompt[:50]}...")
