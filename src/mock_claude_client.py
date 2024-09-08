@@ -29,6 +29,43 @@ class MockClaudeClient:
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         response = await self.create(model, self.max_test_tokens, [{"role": "user", "content": prompt}])
         return response.content[0].text
+
+    async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+        await self._simulate_latency()
+        async with self.lock:
+            current_time = time.time()
+            if current_time - self.last_call_time >= self.rate_limit_reset_time:
+                self.call_count = 0
+            self.last_call_time = current_time
+            self.call_count += 1
+            
+            self.logger.debug(f"Call count: {self.call_count}, Threshold: {self.rate_limit_threshold}")
+            
+            if self.rate_limit_reached or self.call_count > self.rate_limit_threshold:
+                self.logger.warning("Rate limit exceeded")
+                raise CustomRateLimitError("Rate limit exceeded")
+            if self.error_mode:
+                self.error_count += 1
+                if self.error_count <= self.max_errors:
+                    self.logger.error("API error (error mode)")
+                    raise APIStatusError("API error", response=MagicMock(), body={})
+                else:
+                    self.error_mode = False
+                    self.error_count = 0
+            
+            prompt = messages[0]['content']
+            if len(prompt) > self.max_test_tokens:
+                self.logger.warning(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
+                raise ValueError(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
+            
+            response = self.responses.get(prompt, "Default mock response")
+            if len(response) > self.max_test_tokens:
+                response = response[:self.max_test_tokens] + "..."
+            
+            await asyncio.sleep(0.1)  # Simulate some processing time
+            
+            self.logger.debug(f"Returning response: {response[:50]}...")
+            return MagicMock(content=[MagicMock(text=response)])
         self.call_count = 0
         self.rate_limit_threshold = 5  # Number of calls before rate limiting
         self.last_call_time = 0

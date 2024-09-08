@@ -76,12 +76,17 @@ class ClaudeManager:
             self.logger.debug(f"Using model: {model if model else 'default'}")
 
             selected_model = await self.select_model(prompt) if model is None else model
-            response = await self.client.messages.create(
-                model=selected_model,
-                max_tokens=self.max_test_tokens,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            response_text = response.content[0].text
+            try:
+                response = await self.client.messages.create(
+                    model=selected_model,
+                    max_tokens=self.max_test_tokens,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                response_text = response.content[0].text
+            except Exception as api_error:
+                self.logger.error(f"Error calling Claude API: {str(api_error)}")
+                raise APIError(f"Claude API call failed: {str(api_error)}")
+
             await self.token_tracker.add_tokens("generate_response", token_count, await self.count_tokens(response_text))
             parsed_response = await self.parse_response(response_text)
             end_time = time.time()
@@ -94,7 +99,7 @@ class ClaudeManager:
             self.logger.error(f"API error in generate_response: {str(e)}")
             return await self._handle_error(e, prompt)
         except Exception as e:
-            self.logger.error(f"Unexpected error in generate_response: {str(e)}")
+            self.logger.error(f"Unexpected error in generate_response: {str(e)}", exc_info=True)
             return await self.fallback_response(prompt, f"Unexpected error: {str(e)}")
         finally:
             end_time = time.time()

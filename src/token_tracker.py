@@ -55,10 +55,13 @@ class TokenTracker:
 
     async def get_token_usage(self, task_id: str) -> int:
         async with self.lock:
-            return self.token_usage.get(task_id, 0)
+            usage = self.token_usage.get(task_id, 0)
+            self.logger.debug(f"Token usage for task {task_id}: {usage}")
+            return usage
 
     async def get_total_token_usage(self) -> int:
         async with self.lock:
+            self.logger.debug(f"Total token usage: {self.total_tokens}")
             return self.total_tokens
 
     async def reset(self):

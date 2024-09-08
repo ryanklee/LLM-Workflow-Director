@@ -187,7 +187,7 @@ async def test_optimization_strategies(claude_manager: ClaudeManager, benchmark:
     
     for strategy, query in strategies.items():
         result = await benchmark.pedantic(measure_token_efficiency, args=(query,), iterations=5, rounds=3)
-        print(f"Token efficiency for {strategy} strategy: {result.average:.2f} chars/token")
+        print(f"Token efficiency for {strategy} strategy: {result:.2f} chars/token")
 import pytest
 from src.llm_manager import LLMManager
 from src.claude_manager import ClaudeManager
@@ -228,11 +228,16 @@ async def test_token_usage_estimation(llm_manager, token_tracker):
         estimated_tokens = await llm_manager.claude_manager.count_tokens(query) + await llm_manager.claude_manager.count_tokens(response['response'])
         actual_tokens = await token_tracker.get_token_usage(query)
 
+        print(f"Query: {query}")
+        print(f"Estimated tokens: {estimated_tokens}")
+        print(f"Actual tokens: {actual_tokens}")
+
         if actual_tokens == 0:
             assert estimated_tokens == 0, f"Estimated tokens should be 0 when actual tokens are 0 for query: {query}"
         else:
-            assert abs(estimated_tokens - actual_tokens) / actual_tokens < 0.1, \
-                f"Token estimation error should be less than 10% for query: {query}"
+            error_margin = abs(estimated_tokens - actual_tokens) / actual_tokens
+            print(f"Error margin: {error_margin:.2%}")
+            assert error_margin < 0.1, f"Token estimation error should be less than 10% for query: {query}"
 
 @pytest.mark.asyncio
 async def test_token_optimization(token_optimizer):
