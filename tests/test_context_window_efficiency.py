@@ -1,4 +1,5 @@
 import pytest
+import logging
 from pytest_benchmark.fixture import BenchmarkFixture
 from unittest.mock import patch, MagicMock
 from src.claude_manager import ClaudeManager

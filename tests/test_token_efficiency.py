@@ -1,4 +1,5 @@
 import pytest
+import logging
 from pytest_benchmark.fixture import BenchmarkFixture
 from src.claude_manager import ClaudeManager
 from src.llm_manager import LLMManager
