@@ -12,6 +12,8 @@ from anthropic import Anthropic, NotFoundError, APIError, APIConnectionError
 import itertools
 from .claude_manager import ClaudeManager
 from .exceptions import RateLimitError
+from .token_tracker import TokenTracker
+from .token_optimizer import TokenOptimizer
 
 def safe_time():
     try:

@@ -100,3 +100,15 @@ class TokenOptimizer:
             report += f"- Task {task_id}: {tokens} tokens\n"
         
         return report
+class TokenTracker:
+    def __init__(self):
+        self.token_usage = {}
+
+    def add_tokens(self, key, input_tokens, output_tokens):
+        self.token_usage[key] = self.token_usage.get(key, 0) + input_tokens + output_tokens
+
+    def get_token_usage(self, key):
+        return self.token_usage.get(key, 0)
+
+    def get_total_token_usage(self):
+        return sum(self.token_usage.values())
