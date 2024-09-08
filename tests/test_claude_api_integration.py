@@ -19,6 +19,14 @@ import asyncio
 import pytest
 from functools import wraps
 
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+logger.info(f"Python version: {sys.version}")
+logger.info(f"pytest version: {pytest.__version__}")
+logger.info(f"Current working directory: {os.getcwd()}")
+logger.info(f"sys.path: {sys.path}")
+
 def structured_log(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -467,6 +475,7 @@ def setup_teardown(caplog, request):
     caplog.set_level(logging.DEBUG)
     logger.info(f"Starting test: {request.node.name}")
     logger.debug(f"Test parameters: {request.node.callspec.params if hasattr(request.node, 'callspec') else 'No parameters'}")
+    logger.debug(f"Test function source:\n{inspect.getsource(request.node.obj)}")
     yield
     logger.info(f"Finished test: {request.node.name}")
     logger.debug(f"Test result: {'Passed' if request.node.rep_call.passed else 'Failed'}")
@@ -479,6 +488,7 @@ def setup_teardown(caplog, request):
         logger.error(f"Exception info: {request.node.rep_call.longrepr}")
         logger.error(f"Full test function:\n{inspect.getsource(request.node.obj)}")
         logger.error(f"Local variables at failure:\n{pprint.pformat(request.node.obj.__globals__)}")
+        logger.error(f"Fixture values:\n{pprint.pformat(request.node.funcargs)}")
 
 @pytest.fixture
 def run_async_fixture():
