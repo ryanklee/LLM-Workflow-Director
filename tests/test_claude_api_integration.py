@@ -66,16 +66,11 @@ async def test_claude_api_latency(claude_manager, mock_claude_client):
 
 @pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
-    mock_claude_client.set_rate_limit(True)
-    mock_claude_client.rate_limit_threshold = 5  # Set a lower threshold for testing
-    with pytest.raises(RateLimitError) as excinfo:
+    mock_claude_client.set_rate_limit(5)  # Set a lower threshold for testing
+    with pytest.raises(RateLimitError):
         for i in range(10):  # Attempt to make 10 calls
-            try:
-                await claude_manager.generate_response(f"Test prompt {i}")
-            except RateLimitError:
-                assert i >= 5  # Should raise after 5 calls
-                raise
-    assert mock_claude_client.call_count == 6  # 5 successful + 1 that raises the error
+            await claude_manager.generate_response(f"Test prompt {i}")
+    assert mock_claude_client.get_call_count() == 6  # 5 successful + 1 that raises the error
 
 @pytest.mark.asyncio
 async def test_claude_api_error_handling(claude_manager, mock_claude_client):
@@ -86,13 +81,13 @@ async def test_claude_api_error_handling(claude_manager, mock_claude_client):
 @pytest.mark.asyncio
 async def test_claude_api_max_tokens(claude_manager, mock_claude_client):
     long_prompt = "a" * (mock_claude_client.max_test_tokens + 1)
-    with pytest.raises(ValueError, match="Test input exceeds maximum allowed tokens"):
+    with pytest.raises(ValueError, match="Prompt length .* exceeds maximum context length"):
         await claude_manager.generate_response(long_prompt)
 
 @pytest.mark.asyncio
 async def test_claude_api_response_truncation(claude_manager, mock_claude_client):
     long_response = "b" * (mock_claude_client.max_test_tokens * 2)
-    await mock_claude_client.set_response("Test prompt", long_response)
+    mock_claude_client.set_response("Test prompt", long_response)
     response = await claude_manager.generate_response("Test prompt")
     assert len(response) <= mock_claude_client.max_test_tokens + 50  # Allow for some overhead
 
