@@ -375,8 +375,9 @@ class MockClaudeClient:
                 self.logger.error("Simulated API error")
                 raise APIStatusError("Simulated API error", response=MagicMock(), body={})
         response = self.responses.get(prompt, "Default mock response")
-        self.logger.debug(f"Returning response: {response[:50]}...")
-        return response
+        wrapped_response = f"<response>{response}</response>"
+        self.logger.debug(f"Returning response: {wrapped_response[:50]}...")
+        return wrapped_response
 
 async def count_tokens(self, text: str) -> int:
     return len(text.split())
@@ -397,10 +398,10 @@ async def reset(self):
     self.responses = {}
     self.logger.debug("Reset MockClaudeClient")
 
-def get_call_count(self):
+async def get_call_count(self):
     return self.call_count
 
-def get_error_count(self):
+async def get_error_count(self):
     return self.error_count
 
 async def simulate_concurrent_calls(self, num_calls):
@@ -802,12 +803,21 @@ class ClaudeManager:
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
-        if not isinstance(prompt, str) or not prompt.strip():
+        if not isinstance(prompt, str):
+            self.logger.error("Invalid prompt: must be a string")
+            raise ValueError("Invalid prompt: must be a string")
+        if not prompt.strip():
             self.logger.error("Invalid prompt: must be a non-empty string")
             raise ValueError("Invalid prompt: must be a non-empty string")
         if len(prompt) > self.max_context_length:
             self.logger.error(f"Prompt length exceeds maximum context length of {self.max_context_length}")
             raise ValueError(f"Prompt length exceeds maximum context length of {self.max_context_length}")
+        if "<script>" in prompt.lower():
+            self.logger.error("Invalid prompt: contains potentially unsafe content")
+            raise ValueError("Invalid prompt: contains potentially unsafe content")
+        if re.search(r'\b\d{3}-\d{2}-\d{4}\b', prompt):
+            self.logger.error("Invalid prompt: contains sensitive information (SSN)")
+            raise ValueError("Invalid prompt: contains sensitive information (SSN)")
         try:
             response = await self.client.generate_response(prompt, model)
             self.logger.debug(f"Response generated successfully: {response[:50]}...")
@@ -913,20 +923,30 @@ async def test_claude_api_latency(claude_manager, mock_claude_client):
         logger.info("Finished test_claude_api_latency")
 
 @pytest.mark.asyncio
-async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
-    try:
-        await mock_claude_client.set_rate_limit(5)  # Set a lower threshold for testing
-        logger.info("Set rate limit to 5 calls")
-        with pytest.raises(CustomRateLimitError):
-            for i in range(10):  # Attempt to make 10 calls
-                logger.debug(f"Making API call {i+1}")
-                await claude_manager.generate_response(f"Test prompt {i}")
-        call_count = mock_claude_client.get_call_count()
-        assert call_count == 6, f"Expected 6 calls (5 successful + 1 that raises the error), but got {call_count}"
-        logger.info(f"Rate limiting test passed. Total calls made: {call_count}")
-    except Exception as e:
-        logger.error(f"Error in test_claude_api_rate_limiting: {str(e)}", exc_info=True)
-        raise
+async def test_claude_api_rate_limiting(claude_manager, mock_claude_client, caplog):
+    caplog.set_level(logging.DEBUG)
+    await mock_claude_client.set_rate_limit(5)  # Set a lower threshold for testing
+    logger.info("Set rate limit to 5 calls")
+
+    async def make_call(i):
+        try:
+            return await claude_manager.generate_response(f"Test prompt {i}")
+        except CustomRateLimitError:
+            return "Rate limited"
+
+    results = await asyncio.gather(*[make_call(i) for i in range(10)], return_exceptions=True)
+    
+    successful_calls = [r for r in results if r != "Rate limited"]
+    rate_limited_calls = [r for r in results if r == "Rate limited"]
+
+    assert len(successful_calls) == 5, f"Expected 5 successful calls, but got {len(successful_calls)}"
+    assert len(rate_limited_calls) == 5, f"Expected 5 rate-limited calls, but got {len(rate_limited_calls)}"
+
+    call_count = await mock_claude_client.get_call_count()
+    assert call_count == 10, f"Expected 10 total calls, but got {call_count}"
+
+    logger.info(f"Rate limiting test passed. Total calls made: {call_count}")
+    assert "Rate limit exceeded" in caplog.text
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_concurrent_calls(mock_claude_client):
@@ -963,10 +983,12 @@ async def test_claude_api_error_handling(claude_manager, mock_claude_client):
         await claude_manager.generate_response("Test prompt")
 
 @pytest.mark.asyncio
-async def test_claude_api_max_tokens(claude_manager, mock_claude_client):
+async def test_claude_api_max_tokens(claude_manager, mock_claude_client, caplog):
+    caplog.set_level(logging.DEBUG)
     long_prompt = "a" * (mock_claude_client.max_test_tokens + 1)
     with pytest.raises(ValueError, match="Prompt length exceeds maximum"):
         await claude_manager.generate_response(long_prompt)
+    assert "Prompt length exceeds maximum context length" in caplog.text
 
 @pytest.mark.asyncio
 async def test_claude_api_response_truncation(claude_manager, mock_claude_client):
