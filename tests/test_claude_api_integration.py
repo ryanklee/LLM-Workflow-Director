@@ -5,6 +5,7 @@ import tenacity
 import time
 import anthropic
 import logging
+import re
 from unittest.mock import MagicMock, AsyncMock, patch
 import functools
 from src.claude_manager import ClaudeManager
