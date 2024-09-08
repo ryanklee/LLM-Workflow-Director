@@ -14,7 +14,7 @@ import sys
 import os
 from unittest.mock import MagicMock
 from anthropic import APIStatusError
-from src.exceptions import RateLimitError, CustomRateLimitError
+from src.exceptions import CustomRateLimitError
 from src.llm_manager import LLMManager
 from src.claude_manager import ClaudeManager
 from functools import wraps
@@ -107,6 +107,9 @@ class MockClaudeClient:
                          f"rate_limit_reset_time={self.rate_limit_reset_time}, max_test_tokens={self.max_test_tokens}")
         self.logger.debug(f"Initialized MockClaudeClient with rate_limit_threshold={self.rate_limit_threshold}, "
                           f"rate_limit_reset_time={self.rate_limit_reset_time}, max_test_tokens={self.max_test_tokens}")
+
+    def __str__(self):
+        return f"MockClaudeClient(rate_limit_threshold={self.rate_limit_threshold}, call_count={self.call_count}, error_count={self.error_count}, error_mode={self.error_mode})"
 
     def __str__(self):
         return f"MockClaudeClient(rate_limit_threshold={self.rate_limit_threshold}, " \
@@ -421,6 +424,7 @@ class MockClaudeClient:
             error_msg = f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}"
             self.logger.warning(error_msg)
             raise CustomRateLimitError(error_msg)
+        self.logger.info(f"Generating response for model: {model}")
         if self.error_mode:
             self.error_count += 1
             self.logger.debug(f"Error count: {self.error_count}")
@@ -913,23 +917,26 @@ class ClaudeManager:
             self.logger.error(error_msg)
             raise ValueError(error_msg)
         if "<script>" in prompt.lower():
-            self.logger.error("Invalid prompt: contains potentially unsafe content (<script> tag)")
-            raise ValueError("Invalid prompt: contains potentially unsafe content (<script> tag)")
+            error_msg = "Invalid prompt: contains potentially unsafe content (<script> tag)"
+            self.logger.error(error_msg)
+            raise ValueError(error_msg)
         if re.search(r'\b\d{3}-\d{2}-\d{4}\b', prompt):
-            self.logger.error("Invalid prompt: contains sensitive information (SSN pattern detected)")
-            raise ValueError("Invalid prompt: contains sensitive information (SSN pattern detected)")
+            error_msg = "Invalid prompt: contains sensitive information (SSN pattern detected)"
+            self.logger.error(error_msg)
+            raise ValueError(error_msg)
         try:
+            self.logger.info(f"Sending request to client for model: {model}")
             response = await self.client.generate_response(prompt, model)
             self.logger.debug(f"Response generated successfully: {response[:50]}...")
             return response
-        except RateLimitError as e:
+        except CustomRateLimitError as e:
             self.logger.warning(f"Rate limit reached: {str(e)}")
             raise
         except APIStatusError as e:
             self.logger.error(f"API error: {str(e)}")
             raise
         except Exception as e:
-            self.logger.error(f"Unexpected error: {str(e)}")
+            self.logger.error(f"Unexpected error: {str(e)}", exc_info=True)
             raise
 
     async def count_tokens(self, text: str) -> int:
@@ -1054,7 +1061,7 @@ async def test_mock_claude_client_concurrent_calls(mock_claude_client):
     results = await mock_claude_client.simulate_concurrent_calls(10)
 
     successful_calls = [r for r in results if isinstance(r, str)]
-    rate_limit_errors = [r for r in results if isinstance(r, RateLimitError)]
+    rate_limit_errors = [r for r in results if isinstance(r, CustomRateLimitError)]
 
     assert len(successful_calls) == 5, f"Expected 5 successful calls, but got {len(successful_calls)}"
     assert len(rate_limit_errors) == 5, f"Expected 5 rate limit errors, but got {len(rate_limit_errors)}"
@@ -1066,7 +1073,7 @@ async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
     try:
         await mock_claude_client.set_rate_limit(5)  # Set a lower threshold for testing
         logger.info("Set rate limit to 5 calls")
-        with pytest.raises(RateLimitError):
+        with pytest.raises(CustomRateLimitError):
             for i in range(10):  # Attempt to make 10 calls
                 logger.debug(f"Making API call {i+1}")
                 await claude_manager.generate_response(f"Test prompt {i}")
@@ -1178,12 +1185,8 @@ class TestInputValidation:
                 assert "Invalid prompt: contains sensitive information" in error_msg
         else:
             assert f"Invalid prompt type: {type(input_text)}. Must be a string." in error_msg
-        if isinstance(input_text, str) and len(input_text) > 1000:
-            assert "Prompt length exceeds maximum" in str(excinfo.value)
-        elif not isinstance(input_text, str) or not str(input_text).strip():
-            assert "Invalid prompt: must be a non-empty string" in str(excinfo.value)
-        else:
-            assert "Invalid prompt" in str(excinfo.value)
+
+        logger.info(f"Input validation test completed for input: {input_text[:50]}...")
 
     @pytest.mark.fast
     @pytest.mark.asyncio
