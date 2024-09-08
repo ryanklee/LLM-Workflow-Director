@@ -27,6 +27,8 @@ class MockClaudeClient:
         return len(text.split())
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+        if len(prompt) > self.max_test_tokens:
+            raise ValueError(f"Prompt length ({len(prompt)} tokens) exceeds maximum context length of {self.max_test_tokens} tokens")
         response = await self.create(model, self.max_test_tokens, [{"role": "user", "content": prompt}])
         return response.content[0].text
 

@@ -20,6 +20,12 @@ class ClaudeManager:
         self.client = client or self.create_client()
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
+        # Add a file handler for persistent logging
+        file_handler = logging.FileHandler('claude_manager.log')
+        file_handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        self.logger.addHandler(file_handler)
         self.max_test_tokens = 1000
         self.rate_limiter = RateLimiter(requests_per_minute, requests_per_hour)
         self.token_tracker = TokenTracker()
@@ -66,9 +72,6 @@ class ClaudeManager:
             if token_count > self.max_context_length:
                 self.logger.error(f"Prompt length ({token_count} tokens) exceeds maximum context length of {self.max_context_length} tokens")
                 raise ValueError(f"Prompt length ({token_count} tokens) exceeds maximum context length of {self.max_context_length} tokens")
-            if token_count > self.max_test_tokens:
-                prompt = await self._truncate_prompt(prompt, self.max_test_tokens)
-                self.logger.debug(f"Prompt truncated to {self.max_test_tokens} tokens")
             if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
                 raise ValueError("Invalid prompt: contains potentially sensitive information")
             

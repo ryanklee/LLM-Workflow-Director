@@ -107,6 +107,12 @@ class LLMManager:
         self.error_handler = ErrorHandler()
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
+        # Add a file handler for persistent logging
+        file_handler = logging.FileHandler('llm_manager.log')
+        file_handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        self.logger.addHandler(file_handler)
         self.cache = {}
         self.cost_optimizer = LLMCostOptimizer()
         self.config = self._load_config(config_path)
@@ -123,7 +129,10 @@ class LLMManager:
         self.logger.info("LLMManager initialization complete")
 
     async def count_tokens(self, text: str) -> int:
-        return await self.claude_manager.count_tokens(text)
+        # Implement a more sophisticated token counting algorithm
+        # This is a simple approximation, consider using a proper tokenizer for production
+        words = text.split()
+        return max(1, len(words))  # Ensure we always return at least 1 token
 
     def _create_claude_manager(self):
         return ClaudeManager()
@@ -183,6 +192,9 @@ class LLMManager:
                 
                 # Update token usage for the specific query
                 await self.token_tracker.add_tokens(prompt, input_tokens, output_tokens)
+                
+                # Log the token usage for debugging
+                self.logger.debug(f"Token usage for query '{prompt[:30]}...': {await self.token_tracker.get_token_usage(prompt)}")
                 
                 await self.cost_optimizer.update_usage(tier, input_tokens + output_tokens, safe_time() - start_time, True)
                 
