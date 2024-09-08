@@ -106,6 +106,11 @@ class MockClaudeClient:
         self.logger.debug(f"Initialized MockClaudeClient with rate_limit_threshold={self.rate_limit_threshold}, "
                           f"rate_limit_reset_time={self.rate_limit_reset_time}, max_test_tokens={self.max_test_tokens}")
 
+    def __str__(self):
+        return f"MockClaudeClient(rate_limit_threshold={self.rate_limit_threshold}, " \
+               f"call_count={self.call_count}, error_count={self.error_count}, " \
+               f"error_mode={self.error_mode})"
+
     async def set_rate_limit_reset_time(self, reset_time: int):
         self.rate_limit_reset_time = reset_time
         self.logger.debug(f"Set rate limit reset time to: {reset_time} seconds")
@@ -265,7 +270,10 @@ class MockClaudeClient:
             self.logger.debug(f"Error count: {self.error_count}")
             if self.error_count <= self.max_errors:
                 self.logger.error("Simulated API error")
-                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+                raise APIStatusError("Simulated API error", response=MagicMock(status_code=500), body={})
+            else:
+                self.logger.info("Error mode reset after reaching max_errors")
+                self.error_mode = False
         response = self.responses.get(prompt, "Default mock response")
         self.logger.debug(f"Returning response: {response[:50]}...")
         return response
@@ -408,7 +416,7 @@ class MockClaudeClient:
         if self.call_count > self.rate_limit_threshold:
             error_msg = f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}"
             self.logger.warning(error_msg)
-            raise CustomRateLimitError(error_msg)
+            raise RateLimitError(error_msg)
         if self.error_mode:
             self.error_count += 1
             self.logger.debug(f"Error count: {self.error_count}")
@@ -711,12 +719,12 @@ def get_error_count(self):
 @pytest_asyncio.fixture
 async def claude_manager(mock_claude_client):
     manager = ClaudeManager(client=mock_claude_client)
-    logger.debug("Created ClaudeManager instance with MockClaudeClient")
+    logger.debug(f"Created ClaudeManager instance with {mock_claude_client}")
     try:
         yield manager
     finally:
         await manager.close()
-        logger.debug("Closed ClaudeManager instance")
+        logger.debug(f"Closed ClaudeManager instance. Final state: {mock_claude_client}")
 
 class ClaudeManager:
     def __init__(self, client):
@@ -734,6 +742,10 @@ class ClaudeManager:
             raise ValueError(error_msg)
         if not prompt.strip():
             error_msg = "Invalid prompt: must be a non-empty string"
+            self.logger.error(error_msg)
+            raise ValueError(error_msg)
+        if len(prompt) > self.max_context_length:
+            error_msg = f"Prompt length ({len(prompt)}) exceeds maximum context length of {self.max_context_length}"
             self.logger.error(error_msg)
             raise ValueError(error_msg)
         if len(prompt) > self.max_context_length:
@@ -904,9 +916,9 @@ class ClaudeManager:
             response = await self.client.generate_response(prompt, model)
             self.logger.debug(f"Response generated successfully: {response[:50]}...")
             return response
-        except CustomRateLimitError as e:
+        except RateLimitError as e:
             self.logger.warning(f"Rate limit reached: {str(e)}")
-            raise RateLimitError(str(e))
+            raise
         except APIStatusError as e:
             self.logger.error(f"API error: {str(e)}")
             raise
@@ -1401,10 +1413,14 @@ async def test_mock_claude_client_error_count(mock_claude_client, claude_manager
 @pytest.mark.asyncio
 async def test_claude_manager_fallback_response(mock_claude_client, claude_manager):
     await mock_claude_client.set_error_mode(True)
-    mock_claude_client.max_errors = 0  # Force immediate fallback
+    mock_claude_client.max_errors = 1  # Allow one error before fallback
 
-    with pytest.raises(CustomRateLimitError):
+    with pytest.raises(APIStatusError):
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+
+    # The second call should succeed as error_mode is reset
+    response = await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+    assert response == "<response>Default mock response</response>"
 
 @pytest.mark.asyncio
 async def test_claude_manager_retry_mechanism(mock_claude_client, claude_manager):
