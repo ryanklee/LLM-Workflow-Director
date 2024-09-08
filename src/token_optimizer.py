@@ -2,7 +2,7 @@ class TokenOptimizer:
     def __init__(self, token_tracker):
         self.token_tracker = token_tracker
 
-    def optimize_prompt(self, prompt: str) -> str:
+    async def optimize_prompt(self, prompt: str) -> str:
         # Implement more sophisticated optimization logic here
         words = prompt.split()
         if len(words) > 100:

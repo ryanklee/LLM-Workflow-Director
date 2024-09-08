@@ -8,6 +8,9 @@ from src.exceptions import RateLimitError as CustomRateLimitError
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
+import asyncio
+from src.exceptions import RateLimitError
+
 class MockClaudeClient:
     def __init__(self):
         self.rate_limit_reached = False
@@ -15,6 +18,13 @@ class MockClaudeClient:
         self.responses = {}
         self.messages = self
         self.max_test_tokens = 1000
+        self.call_count = 0
+        self.rate_limit_threshold = 5  # Number of calls before rate limiting
+        self.last_call_time = 0
+        self.error_count = 0
+        self.max_errors = 3
+        self.rate_limit_reset_time = 60  # seconds
+        self.lock = asyncio.Lock()
         self.call_count = 0
         self.rate_limit_threshold = 5  # Number of calls before rate limiting
         self.last_call_time = 0

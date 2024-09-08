@@ -134,7 +134,8 @@ def claude_manager():
 def llm_manager():
     return LLMManager()
 
-def test_token_usage_per_query_type(claude_manager: ClaudeManager, benchmark: BenchmarkFixture):
+@pytest.mark.asyncio
+async def test_token_usage_per_query_type(claude_manager: ClaudeManager, benchmark: BenchmarkFixture):
     query_types = {
         "short": "What's the capital of France?",
         "medium": "Explain the process of photosynthesis in plants.",
