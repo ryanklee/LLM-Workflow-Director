@@ -90,7 +90,7 @@ class MockClaudeClient:
         self.call_count += 1
         self.logger.debug(f"Call count: {self.call_count}")
         
-        if self.call_count > self.rate_limit_threshold:
+        if self.call_count >= self.rate_limit_threshold:
             self.logger.warning("Rate limit exceeded")
             raise CustomRateLimitError("Rate limit exceeded")
         
@@ -103,8 +103,9 @@ class MockClaudeClient:
                 raise APIStatusError("Simulated API error", response=MagicMock(), body={})
         
         response = self.responses.get(prompt, "Default mock response")
-        self.logger.debug(f"Returning response: {response[:50]}...")
-        return response
+        truncated_response = response[:self.max_test_tokens]
+        self.logger.debug(f"Returning response: {truncated_response[:50]}...")
+        return truncated_response
 
     async def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
@@ -177,9 +178,11 @@ class MockClaudeClient:
 
     async def simulate_concurrent_calls(self, num_calls):
         results = []
-        for _ in range(num_calls):
+        tasks = [self.generate_response("Test prompt") for _ in range(num_calls)]
+        for task in asyncio.as_completed(tasks):
             try:
-                results.append(await self.generate_response("Test prompt"))
+                result = await task
+                results.append(result)
             except CustomRateLimitError as e:
                 results.append(e)
         return results
@@ -293,10 +296,10 @@ class MockClaudeClient:
         self.__init__()
         self.logger.debug("Reset MockClaudeClient")
 
-    def get_call_count(self):
+    async def get_call_count(self):
         return self.call_count
 
-    def get_error_count(self):
+    async def get_error_count(self):
         return self.error_count
 
     async def set_latency(self, latency):
@@ -428,8 +431,10 @@ async def claude_manager(mock_claude_client):
 def setup_teardown(caplog, request):
     caplog.set_level(logging.DEBUG)
     logger.info(f"Starting test: {request.node.name}")
+    logger.debug(f"Test parameters: {request.node.callspec.params if hasattr(request.node, 'callspec') else 'No parameters'}")
     yield
     logger.info(f"Finished test: {request.node.name}")
+    logger.debug(f"Test result: {'Passed' if request.node.rep_call.passed else 'Failed'}")
     logger.debug(f"Log output for {request.node.name}:\n" + caplog.text)
     print(f"\nFull log output for {request.node.name}:")
     print(caplog.text)
@@ -733,7 +738,7 @@ class ClaudeManager:
             self.logger.error(f"API error: {str(e)}")
             raise
         except Exception as e:
-            self.logger.error(f"Unexpected error: {str(e)}")
+            self.logger.error(f"Unexpected error: {str(e)}", exc_info=True)
             raise
 
     async def count_tokens(self, text):
