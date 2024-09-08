@@ -6,6 +6,15 @@ import time
 import anthropic
 import logging
 import json
+import functools
+import re
+from unittest.mock import MagicMock
+from anthropic import APIStatusError
+from src.exceptions import RateLimitError, CustomRateLimitError
+from src.llm_manager import LLMManager
+from src.claude_manager import ClaudeManager
+import asyncio
+import pytest
 from functools import wraps
 
 def structured_log(func):
@@ -45,7 +54,7 @@ class StructuredLogger:
 logger = StructuredLogger(__name__)
 
 def log_test_start_end(func):
-    @functools.wraps(func)
+    @wraps(func)
     async def wrapper(*args, **kwargs):
         logger.info(f"Starting test: {func.__name__}")
         try:
