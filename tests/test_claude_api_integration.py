@@ -5,40 +5,44 @@ import tenacity
 import time
 import anthropic
 import logging
-import re
-from unittest.mock import MagicMock, AsyncMock, patch
-import functools
-import inspect
-import pprint
-from src.claude_manager import ClaudeManager
-from src.exceptions import RateLimitError
-from src.mock_claude_client import MockClaudeClient
-from src.llm_manager import LLMManager
-from anthropic import APIError, APIStatusError, RateLimitError
+import json
+from functools import wraps
 
-pytest_plugins = ['pytest_asyncio']
+def structured_log(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        logger = logging.getLogger(func.__module__)
+        logger.info(f"Starting {func.__name__}")
+        try:
+            result = func(*args, **kwargs)
+            logger.info(f"Finished {func.__name__}")
+            return result
+        except Exception as e:
+            logger.error(f"Error in {func.__name__}: {str(e)}", exc_info=True)
+            raise
+    return wrapper
 
-# Define custom markers
-pytest.mark.fast = pytest.mark.custom(name="fast", tryfirst=True)
-pytest.mark.slow = pytest.mark.custom(name="slow", tryfirst=True)
+class StructuredLogger:
+    def __init__(self, name):
+        self.logger = logging.getLogger(name)
 
-@pytest.fixture(scope="module")
-async def event_loop():
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    await loop.shutdown_asyncgens()
-    loop.close()
+    def _log(self, level, message, **kwargs):
+        log_data = {"message": message, **kwargs}
+        self.logger.log(level, json.dumps(log_data))
 
-# Set up logging for tests
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('test_claude_api_integration.log'),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
+    def debug(self, message, **kwargs):
+        self._log(logging.DEBUG, message, **kwargs)
+
+    def info(self, message, **kwargs):
+        self._log(logging.INFO, message, **kwargs)
+
+    def warning(self, message, **kwargs):
+        self._log(logging.WARNING, message, **kwargs)
+
+    def error(self, message, **kwargs):
+        self._log(logging.ERROR, message, **kwargs)
+
+logger = StructuredLogger(__name__)
 
 def log_test_start_end(func):
     @functools.wraps(func)
