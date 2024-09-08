@@ -800,22 +800,32 @@ async def test_claude_api_latency(claude_manager, mock_claude_client):
         raise
 
 @pytest.mark.asyncio
-async def test_claude_api_rate_limiting(claude_manager, mock_claude_client, run_async_fixture):
-    claude_manager = run_async_fixture(claude_manager)
-    mock_claude_client = run_async_fixture(mock_claude_client)
+async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
     try:
         await mock_claude_client.set_rate_limit(5)  # Set a lower threshold for testing
         logger.info("Set rate limit to 5 calls")
-        with pytest.raises(RateLimitError):
+        with pytest.raises(CustomRateLimitError):
             for i in range(10):  # Attempt to make 10 calls
                 logger.debug(f"Making API call {i+1}")
                 await claude_manager.generate_response(f"Test prompt {i}")
-        call_count = mock_claude_client.call_count
+        call_count = mock_claude_client.get_call_count()
         assert call_count == 6, f"Expected 6 calls (5 successful + 1 that raises the error), but got {call_count}"
         logger.info(f"Rate limiting test passed. Total calls made: {call_count}")
     except Exception as e:
         logger.error(f"Error in test_claude_api_rate_limiting: {str(e)}", exc_info=True)
         raise
+
+@pytest.mark.asyncio
+async def test_mock_claude_client_concurrent_calls(mock_claude_client):
+    mock_claude_client.rate_limit_threshold = 5
+    results = await mock_claude_client.simulate_concurrent_calls(10)
+
+    successful_calls = [r for r in results if isinstance(r, str)]
+    rate_limit_errors = [r for r in results if isinstance(r, CustomRateLimitError)]
+
+    assert len(successful_calls) == 5, f"Expected 5 successful calls, but got {len(successful_calls)}"
+    assert len(rate_limit_errors) == 5, f"Expected 5 rate limit errors, but got {len(rate_limit_errors)}"
+    assert mock_claude_client.get_call_count() == 10, f"Expected 10 total calls, but got {mock_claude_client.get_call_count()}"
 
 @pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
