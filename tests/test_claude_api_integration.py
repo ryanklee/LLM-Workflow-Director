@@ -30,6 +30,67 @@ async def mock_claude_client():
     await client.reset()
     logger.debug("Reset MockClaudeClient instance")
 
+class MockClaudeClient:
+    def __init__(self):
+        self.rate_limit_threshold = 5
+        self.rate_limit_reset_time = 60
+        self.error_mode = False
+        self.latency = 0
+        self.responses = {}
+        self.call_count = 0
+        self.error_count = 0
+        self.max_test_tokens = 1000
+        self.max_context_length = 200000
+
+    async def set_response(self, prompt: str, response: str):
+        self.responses[prompt] = response
+
+    async def set_error_mode(self, mode: bool):
+        self.error_mode = mode
+
+    async def set_latency(self, latency: float):
+        self.latency = latency
+
+    async def set_rate_limit(self, threshold: int):
+        self.rate_limit_threshold = threshold
+
+    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+        self.call_count += 1
+        await asyncio.sleep(self.latency)
+        
+        if self.call_count > self.rate_limit_threshold:
+            raise CustomRateLimitError("Rate limit exceeded")
+        
+        if self.error_mode:
+            self.error_count += 1
+            raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+        
+        return self.responses.get(prompt, "Default mock response")
+
+    async def count_tokens(self, text: str) -> int:
+        return len(text.split())
+
+    async def select_model(self, task: str) -> str:
+        if "simple" in task.lower():
+            return "claude-3-haiku-20240307"
+        elif "complex" in task.lower():
+            return "claude-3-opus-20240229"
+        else:
+            return "claude-3-sonnet-20240229"
+
+    async def reset(self):
+        self.call_count = 0
+        self.error_count = 0
+        self.error_mode = False
+        self.latency = 0
+        self.responses = {}
+
+    def get_call_count(self):
+        return self.call_count
+
+    def get_error_count(self):
+        return self.error_count
+
 @pytest.fixture
 async def claude_manager(mock_claude_client):
     manager = ClaudeManager(client=mock_claude_client)
@@ -38,6 +99,33 @@ async def claude_manager(mock_claude_client):
     await manager.close()
     logger.debug("Closed ClaudeManager instance")
 
+class ClaudeManager:
+    def __init__(self, client):
+        self.client = client
+        self.max_context_length = client.max_context_length
+
+    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+        try:
+            return await self.client.generate_response(prompt, model)
+        except CustomRateLimitError as e:
+            logger.warning(f"Rate limit reached: {str(e)}")
+            raise
+        except APIStatusError as e:
+            logger.error(f"API error: {str(e)}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            raise
+
+    async def count_tokens(self, text: str) -> int:
+        return await self.client.count_tokens(text)
+
+    async def select_model(self, task: str) -> str:
+        return await self.client.select_model(task)
+
+    async def close(self):
+        await self.client.reset()
+
 @pytest.fixture(autouse=True)
 async def setup_teardown(mock_claude_client, claude_manager):
     logger.info("Setting up test environment")
@@ -45,6 +133,12 @@ async def setup_teardown(mock_claude_client, claude_manager):
     logger.info("Tearing down test environment")
     await mock_claude_client.reset()
     await claude_manager.close()
+
+@pytest.fixture(scope="module")
+def event_loop():
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
 
 @pytest.fixture
 def llm_manager(claude_manager):
@@ -628,6 +722,13 @@ async def test_token_counting(mock_claude_client):
     text = "This is a test sentence."
     token_count = await mock_claude_client.count_tokens(text)
     assert token_count == 5, f"Expected 5 tokens, but got {token_count}"
+
+@pytest.mark.asyncio
+async def test_generate_response(mock_claude_client):
+    prompt = "Tell me a joke"
+    response = await mock_claude_client.generate_response(prompt)
+    assert isinstance(response, str), "Response should be a string"
+    assert len(response) > 0, "Response should not be empty"
 
 @pytest.mark.asyncio
 async def test_generate_response(mock_claude_client):
