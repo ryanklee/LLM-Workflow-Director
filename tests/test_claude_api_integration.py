@@ -8,6 +8,8 @@ import logging
 import re
 from unittest.mock import MagicMock, AsyncMock, patch
 import functools
+import inspect
+import pprint
 from src.claude_manager import ClaudeManager
 from src.exceptions import RateLimitError, RateLimitError as CustomRateLimitError
 from src.mock_claude_client import MockClaudeClient
