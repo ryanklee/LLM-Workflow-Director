@@ -152,79 +152,78 @@ class LLMManager:
         self.logger.debug(f"Query start time: {start_time}")
         
         try:
+            if tier is None:
+                query_complexity = await self._estimate_query_complexity(prompt)
+                tier = await self.cost_optimizer.select_optimal_tier(query_complexity)
 
-        if tier is None:
-            query_complexity = await self._estimate_query_complexity(prompt)
-            tier = await self.cost_optimizer.select_optimal_tier(query_complexity)
+            self.logger.debug(f"Selected tier: {tier}, model: {model or 'default'}")
+            self.logger.info(f"Query details - Tier: {tier}, Model: {model or 'default'}, Prompt length: {len(prompt)}")
 
-        self.logger.debug(f"Selected tier: {tier}, model: {model or 'default'}")
-        self.logger.info(f"Query details - Tier: {tier}, Model: {model or 'default'}, Prompt length: {len(prompt)}")
+            cache_key = await self._generate_cache_key(prompt, context, tier)
+            if cache_key in self.cache:
+                self.logger.info(f"Using cached response for prompt: {prompt[:50]}... (tier: {tier})")
+                return self.cache[cache_key]
 
-        cache_key = await self._generate_cache_key(prompt, context, tier)
-        if cache_key in self.cache:
-            self.logger.info(f"Using cached response for prompt: {prompt[:50]}... (tier: {tier})")
-            return self.cache[cache_key]
+            max_retries = 3
+            start_time = time.time()
+            original_tier = tier
 
-        max_retries = 3
-        start_time = time.time()
-        original_tier = tier
+            while max_retries > 0:
+                try:
+                    enhanced_prompt = await self._enhance_prompt(prompt, context)
+                    optimized_prompt = await self.token_optimizer.optimize_prompt(enhanced_prompt)
+                    tier_config = self.tiers.get(tier, self.tiers['balanced'])
 
-        while max_retries > 0:
-            try:
-                enhanced_prompt = await self._enhance_prompt(prompt, context)
-                optimized_prompt = await self.token_optimizer.optimize_prompt(enhanced_prompt)
-                tier_config = self.tiers.get(tier, self.tiers['balanced'])
+                    if model is None:
+                        model = tier_config['model']
 
-                if model is None:
-                    model = tier_config['model']
-
-                input_tokens = await self.claude_manager.count_tokens(optimized_prompt)
-                response = await self.claude_manager.generate_response(optimized_prompt, model=model)
-                output_tokens = await self.claude_manager.count_tokens(response)
-                
-                await self.token_tracker.add_tokens(cache_key, input_tokens, output_tokens)
-                
-                result = await self._process_response(response, tier, start_time)
-                result['raw_response'] = response
-                self.cache[cache_key] = result
-                self.logger.debug(f"Processed response: {result}")
-                
-                await self.token_tracker.add_tokens(prompt, input_tokens, output_tokens)
-                
-                self.logger.debug(f"Token usage for query '{prompt[:30]}...': {await self.token_tracker.get_token_usage(prompt)}")
-                
-                await self.cost_optimizer.update_usage(tier, input_tokens + output_tokens, time.time() - start_time, True)
-                
-                return {
-                    "response": result.get('response', ''),
-                    "task_progress": result.get('task_progress', 0),
-                    "state_updates": result.get('state_updates', {}),
-                    "actions": result.get('actions', []),
-                    "suggestions": result.get('suggestions', []),
-                    "raw_response": result.get('raw_response', ''),
-                    "token_usage": {
-                        "input": input_tokens,
-                        "output": output_tokens,
-                        "total": input_tokens + output_tokens
+                    input_tokens = await self.claude_manager.count_tokens(optimized_prompt)
+                    response = await self.claude_manager.generate_response(optimized_prompt, model=model)
+                    output_tokens = await self.claude_manager.count_tokens(response)
+                    
+                    await self.token_tracker.add_tokens(cache_key, input_tokens, output_tokens)
+                    
+                    result = await self._process_response(response, tier, start_time)
+                    result['raw_response'] = response
+                    self.cache[cache_key] = result
+                    self.logger.debug(f"Processed response: {result}")
+                    
+                    await self.token_tracker.add_tokens(prompt, input_tokens, output_tokens)
+                    
+                    self.logger.debug(f"Token usage for query '{prompt[:30]}...': {await self.token_tracker.get_token_usage(prompt)}")
+                    
+                    await self.cost_optimizer.update_usage(tier, input_tokens + output_tokens, time.time() - start_time, True)
+                    
+                    return {
+                        "response": result.get('response', ''),
+                        "task_progress": result.get('task_progress', 0),
+                        "state_updates": result.get('state_updates', {}),
+                        "actions": result.get('actions', []),
+                        "suggestions": result.get('suggestions', []),
+                        "raw_response": result.get('raw_response', ''),
+                        "token_usage": {
+                            "input": input_tokens,
+                            "output": output_tokens,
+                            "total": input_tokens + output_tokens
+                        }
                     }
-                }
-            except RateLimitError:
-                self.logger.warning(f"Rate limit reached for tier: {tier}")
-                max_retries -= 1
-                if max_retries == 0:
-                    return await self._fallback_response(prompt, context, original_tier)
-                tier = await self._get_fallback_tier(tier)
-                if tier is None:
-                    return await self._fallback_response(prompt, context, original_tier)
-                self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
-            except Exception as e:
-                self.logger.error(f"Error querying LLM: {str(e)} (tier: {tier})")
-                await self.cost_optimizer.update_usage(tier, 0, time.time() - start_time, False)
-                max_retries -= 1
-                if max_retries == 0:
-                    return await self._fallback_response(prompt, context, original_tier)
-        
-        return await self._fallback_response(prompt, context, original_tier)
+                except RateLimitError:
+                    self.logger.warning(f"Rate limit reached for tier: {tier}")
+                    max_retries -= 1
+                    if max_retries == 0:
+                        return await self._fallback_response(prompt, context, original_tier)
+                    tier = await self._get_fallback_tier(tier)
+                    if tier is None:
+                        return await self._fallback_response(prompt, context, original_tier)
+                    self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
+                except Exception as e:
+                    self.logger.error(f"Error querying LLM: {str(e)} (tier: {tier})")
+                    await self.cost_optimizer.update_usage(tier, 0, time.time() - start_time, False)
+                    max_retries -= 1
+                    if max_retries == 0:
+                        return await self._fallback_response(prompt, context, original_tier)
+            
+            return await self._fallback_response(prompt, context, original_tier)
         except Exception as e:
             self.logger.exception(f"Unexpected error in query method: {str(e)}")
             return await self._fallback_response(prompt, context, original_tier)
