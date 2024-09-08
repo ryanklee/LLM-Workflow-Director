@@ -103,6 +103,15 @@ class MockClaudeClient:
 
     def get_error_count(self):
         return self.error_count
+
+    def simulate_concurrent_calls(self, num_calls):
+        results = []
+        for _ in range(num_calls):
+            try:
+                results.append(self.generate_response("Test prompt"))
+            except CustomRateLimitError as e:
+                results.append(e)
+        return results
         self.latency = 0
         self.responses = {}
         self.max_test_tokens = 1000
