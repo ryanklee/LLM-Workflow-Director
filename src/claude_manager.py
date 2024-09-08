@@ -146,6 +146,9 @@ class ClaudeManager:
         except (NotFoundError, APIError, APIConnectionError, APIStatusError) as e:
             self.logger.error(f"API error in generate_response: {str(e)}", exc_info=True)
             return await self._handle_error(e, prompt)
+        except AttributeError as e:
+            self.logger.error(f"Attribute error in generate_response: {str(e)}", exc_info=True)
+            return await self.fallback_response(prompt, f"Attribute error: {str(e)}")
         except Exception as e:
             self.logger.error(f"Unexpected error in generate_response: {str(e)}", exc_info=True)
             return await self.fallback_response(prompt, f"Unexpected error: {str(e)}")
