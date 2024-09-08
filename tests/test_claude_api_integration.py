@@ -987,7 +987,8 @@ async def test_mock_claude_client_concurrent_calls(mock_claude_client):
 
     assert len(successful_calls) == 5, f"Expected 5 successful calls, but got {len(successful_calls)}"
     assert len(rate_limit_errors) == 5, f"Expected 5 rate limit errors, but got {len(rate_limit_errors)}"
-    assert await mock_claude_client.get_call_count() == 10, f"Expected 10 total calls, but got {await mock_claude_client.get_call_count()}"
+    call_count = await mock_claude_client.get_call_count()
+    assert call_count == 10, f"Expected 10 total calls, but got {call_count}"
 
 @pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
