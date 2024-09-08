@@ -108,6 +108,8 @@ class MockClaudeClient:
 
     def get_error_count(self):
         return self.error_count
+
+    async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
         await self._simulate_latency()
         async with self.lock:
             current_time = time.time()
