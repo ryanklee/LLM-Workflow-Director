@@ -179,3 +179,59 @@ def test_optimization_strategies(claude_manager: ClaudeManager, benchmark: Bench
     for strategy, query in strategies.items():
         result = benchmark.pedantic(measure_token_efficiency, args=(query,), iterations=5, rounds=3)
         print(f"Token efficiency for {strategy} strategy: {result.average:.2f} chars/token")
+import pytest
+from src.llm_manager import LLMManager
+from src.claude_manager import ClaudeManager
+from src.token_tracker import TokenTracker, TokenOptimizer
+from unittest.mock import MagicMock
+
+@pytest.fixture
+def mock_claude_manager():
+    mock = MagicMock(spec=ClaudeManager)
+    mock.count_tokens.side_effect = lambda text: len(text.split())  # Simple token count
+    return mock
+
+@pytest.fixture
+def llm_manager(mock_claude_manager):
+    return LLMManager(claude_manager=mock_claude_manager)
+
+@pytest.fixture
+def token_tracker():
+    return TokenTracker()
+
+@pytest.fixture
+def token_optimizer(token_tracker):
+    return TokenOptimizer(token_tracker)
+
+def test_token_usage_estimation(llm_manager, token_tracker):
+    test_queries = [
+        "What is the capital of France?",
+        "Explain the theory of relativity in simple terms.",
+        "Write a short story about a robot learning to love.",
+    ]
+
+    for query in test_queries:
+        response = llm_manager.query(query)
+        estimated_tokens = llm_manager.claude_manager.count_tokens(query) + llm_manager.claude_manager.count_tokens(response['response'])
+        actual_tokens = token_tracker.get_token_usage(query)
+
+        assert abs(estimated_tokens - actual_tokens) / actual_tokens < 0.1, \
+            f"Token estimation error should be less than 10% for query: {query}"
+
+def test_token_optimization(token_optimizer):
+    long_prompt = "This is a very long prompt that exceeds the maximum allowed tokens. " * 20
+    optimized_prompt = token_optimizer.optimize_prompt(long_prompt)
+
+    assert len(optimized_prompt) < len(long_prompt), "Optimized prompt should be shorter than the original"
+    assert token_optimizer.token_tracker.count_tokens(optimized_prompt) <= 100, \
+        "Optimized prompt should not exceed 100 tokens"
+
+def test_token_usage_tracking(llm_manager, token_tracker):
+    query = "What is the meaning of life?"
+    response = llm_manager.query(query)
+
+    assert token_tracker.get_token_usage(query) > 0, "Token usage should be tracked for the query"
+    assert token_tracker.get_total_token_usage() > 0, "Total token usage should be tracked"
+
+    efficiency = token_tracker.get_overall_efficiency()
+    assert 0 < efficiency < 100, "Token efficiency should be between 0 and 100 tokens per task"

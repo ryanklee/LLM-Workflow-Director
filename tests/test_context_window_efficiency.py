@@ -94,3 +94,44 @@ async def test_context_overflow_handling(claude_manager: ClaudeManager):
     
     with pytest.raises(ValueError, match="Prompt length exceeds maximum context length"):
         await claude_manager.generate_response(prompt)
+import pytest
+from unittest.mock import MagicMock
+from src.llm_manager import LLMManager
+from src.claude_manager import ClaudeManager
+
+@pytest.fixture
+def mock_claude_manager():
+    mock = MagicMock(spec=ClaudeManager)
+    mock.count_tokens.side_effect = lambda text: len(text.split())  # Simple token count
+    return mock
+
+@pytest.fixture
+def llm_manager(mock_claude_manager):
+    return LLMManager(claude_manager=mock_claude_manager)
+
+def generate_synthetic_data(size):
+    return " ".join(["word" for _ in range(size)])
+
+def test_token_usage_efficiency(llm_manager):
+    test_sizes = [100, 1000, 10000, 50000, 100000]
+    results = []
+
+    for size in test_sizes:
+        synthetic_data = generate_synthetic_data(size)
+        prompt = f"Summarize the following text: {synthetic_data}"
+        
+        tokens_before = llm_manager.claude_manager.count_tokens(prompt)
+        response = llm_manager.query(prompt)
+        tokens_after = llm_manager.claude_manager.count_tokens(response['response'])
+
+        efficiency = tokens_after / tokens_before
+        results.append((size, efficiency))
+
+    # Assert that efficiency generally improves (decreases) as context size increases
+    efficiencies = [r[1] for r in results]
+    assert all(efficiencies[i] >= efficiencies[i+1] for i in range(len(efficiencies)-1)), \
+        "Efficiency should generally improve (decrease) as context size increases"
+
+    # Log results for manual inspection
+    for size, efficiency in results:
+        print(f"Context size: {size}, Efficiency: {efficiency:.4f}")

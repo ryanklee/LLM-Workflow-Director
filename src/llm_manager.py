@@ -115,6 +115,8 @@ class LLMManager:
         self.logger.info("LLMManager initialized with config: %s", self.config)
         self.prompt_templates = self.config.get('prompt_templates', {})
         self.claude_manager = claude_manager or self._create_claude_manager()
+        self.token_tracker = TokenTracker()
+        self.token_optimizer = TokenOptimizer(self.token_tracker)
 
     def count_tokens(self, text: str) -> int:
         return self.claude_manager.count_tokens(text)
@@ -155,24 +157,36 @@ class LLMManager:
         while max_retries > 0:
             try:
                 enhanced_prompt = self._enhance_prompt(prompt, context)
+                optimized_prompt = self.token_optimizer.optimize_prompt(enhanced_prompt)
                 tier_config = self.tiers.get(tier, self.tiers['balanced'])
 
                 if model is None:
                     model = tier_config['model']
 
-                response = await self.claude_manager.generate_response(enhanced_prompt, model=model)
+                input_tokens = self.claude_manager.count_tokens(optimized_prompt)
+                response = await self.claude_manager.generate_response(optimized_prompt, model=model)
+                output_tokens = self.claude_manager.count_tokens(response)
+                
+                self.token_tracker.add_tokens(cache_key, input_tokens, output_tokens)
+                
                 result = self._process_response(response, tier, start_time)
-                result['raw_response'] = response  # Add this line to include the raw response
+                result['raw_response'] = response
                 self.cache[cache_key] = result
-                tokens = self.count_tokens(response)  # Count tokens of the response, not the prompt
-                self.cost_optimizer.update_usage(tier, tokens, safe_time() - start_time, True)
+                
+                self.cost_optimizer.update_usage(tier, input_tokens + output_tokens, safe_time() - start_time, True)
+                
                 return {
                     "response": result.get('response', ''),
                     "task_progress": result.get('task_progress', 0),
                     "state_updates": result.get('state_updates', {}),
                     "actions": result.get('actions', []),
                     "suggestions": result.get('suggestions', []),
-                    "raw_response": result.get('raw_response', '')
+                    "raw_response": result.get('raw_response', ''),
+                    "token_usage": {
+                        "input": input_tokens,
+                        "output": output_tokens,
+                        "total": input_tokens + output_tokens
+                    }
                 }
             except RateLimitError:
                 self.logger.warning(f"Rate limit reached for tier: {tier}")
