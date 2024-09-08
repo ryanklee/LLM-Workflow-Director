@@ -11,12 +11,16 @@ import functools
 import inspect
 import pprint
 from src.claude_manager import ClaudeManager
-from src.exceptions import RateLimitError, RateLimitError as CustomRateLimitError
+from src.exceptions import RateLimitError
 from src.mock_claude_client import MockClaudeClient
 from src.llm_manager import LLMManager
 from anthropic import APIError, APIStatusError
 
 pytest_plugins = ['pytest_asyncio']
+
+# Define custom markers
+pytest.mark.fast = pytest.mark.custom(name="fast", tryfirst=True)
+pytest.mark.slow = pytest.mark.custom(name="slow", tryfirst=True)
 
 @pytest.fixture(scope="module")
 async def event_loop():
@@ -52,10 +56,10 @@ def log_test_start_end(func):
 @pytest_asyncio.fixture
 async def mock_claude_client():
     client = MockClaudeClient()
-    logger.debug("Created MockClaudeClient instance")
+    logger.debug(f"Created MockClaudeClient instance with rate_limit_threshold={client.rate_limit_threshold}, rate_limit_reset_time={client.rate_limit_reset_time}")
     yield client
     await client.reset()
-    logger.debug("Reset MockClaudeClient instance")
+    logger.debug(f"Reset MockClaudeClient instance. Final call_count: {client.call_count}, error_count: {client.error_count}")
 
 class MockClaudeClient:
     def __init__(self):
@@ -843,14 +847,17 @@ class ClaudeManager:
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50] if isinstance(prompt, str) else str(prompt)[:50]}...")
         if not isinstance(prompt, str):
-            self.logger.error(f"Invalid prompt type: {type(prompt)}. Must be a string.")
-            raise ValueError(f"Invalid prompt type: {type(prompt)}. Must be a string.")
+            error_msg = f"Invalid prompt type: {type(prompt)}. Must be a string."
+            self.logger.error(error_msg)
+            raise ValueError(error_msg)
         if not prompt.strip():
-            self.logger.error("Invalid prompt: must be a non-empty string")
-            raise ValueError("Invalid prompt: must be a non-empty string")
+            error_msg = "Invalid prompt: must be a non-empty string"
+            self.logger.error(error_msg)
+            raise ValueError(error_msg)
         if len(prompt) > self.max_context_length:
-            self.logger.error(f"Prompt length ({len(prompt)}) exceeds maximum context length of {self.max_context_length}")
-            raise ValueError(f"Prompt length ({len(prompt)}) exceeds maximum context length of {self.max_context_length}")
+            error_msg = f"Prompt length ({len(prompt)}) exceeds maximum context length of {self.max_context_length}"
+            self.logger.error(error_msg)
+            raise ValueError(error_msg)
         if "<script>" in prompt.lower():
             self.logger.error("Invalid prompt: contains potentially unsafe content (<script> tag)")
             raise ValueError("Invalid prompt: contains potentially unsafe content (<script> tag)")
@@ -1200,7 +1207,7 @@ class TestContextManagement:
     async def test_context_overflow_handling(self, claude_manager, llm_manager):
         max_tokens = claude_manager.max_context_length
         overflow_input = "a" * (max_tokens + 1)  # Ensure it's just over the limit
-        with pytest.raises(ValueError, match="Prompt length exceeds maximum context length"):
+        with pytest.raises(ValueError, match=f"Prompt length \\({max_tokens + 1}\\) exceeds maximum context length of {max_tokens}"):
             await claude_manager.generate_response(overflow_input)
 
 class TestPerformance:
