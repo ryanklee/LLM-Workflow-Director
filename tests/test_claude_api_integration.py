@@ -16,10 +16,13 @@ from src.mock_claude_client import MockClaudeClient
 from src.llm_manager import LLMManager
 from anthropic import APIError, APIStatusError
 
+pytest_plugins = ['pytest_asyncio']
+
 @pytest.fixture(scope="module")
-def event_loop():
+async def event_loop():
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
+    await loop.shutdown_asyncgens()
     loop.close()
 
 # Set up logging for tests
@@ -369,11 +372,11 @@ class MockClaudeClient:
             self.logger.debug("Resetting call count due to time elapsed")
             self.call_count = 0
             self.last_reset_time = current_time
-        if self.call_count >= self.rate_limit_threshold:
-            self.logger.warning("Rate limit exceeded")
-            raise CustomRateLimitError("Rate limit exceeded")
         self.call_count += 1
         self.logger.debug(f"Call count: {self.call_count}")
+        if self.call_count > self.rate_limit_threshold:
+            self.logger.warning("Rate limit exceeded")
+            raise CustomRateLimitError("Rate limit exceeded")
         if self.error_mode:
             self.error_count += 1
             self.logger.debug(f"Error count: {self.error_count}")
@@ -381,7 +384,8 @@ class MockClaudeClient:
                 self.logger.error("Simulated API error")
                 raise APIStatusError("Simulated API error", response=MagicMock(), body={})
         response = self.responses.get(prompt, "Default mock response")
-        wrapped_response = f"<response>{response}</response>"
+        truncated_response = response[:self.max_test_tokens]
+        wrapped_response = f"<response>{truncated_response}</response>"
         self.logger.debug(f"Returning response: {wrapped_response[:50]}...")
         return wrapped_response
 
@@ -568,10 +572,10 @@ def get_error_count(self):
         self.responses = {}
         self.logger.debug("Reset MockClaudeClient")
 
-    def get_call_count(self):
+    async def get_call_count(self):
         return self.call_count
 
-    def get_error_count(self):
+    async def get_error_count(self):
         return self.error_count
 
     def simulate_concurrent_calls(self, num_calls):
@@ -994,7 +998,7 @@ async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
             for i in range(10):  # Attempt to make 10 calls
                 logger.debug(f"Making API call {i+1}")
                 await claude_manager.generate_response(f"Test prompt {i}")
-        call_count = mock_claude_client.get_call_count()
+        call_count = await mock_claude_client.get_call_count()
         assert call_count == 6, f"Expected 6 calls (5 successful + 1 that raises the error), but got {call_count}"
         logger.info(f"Rate limiting test passed. Total calls made: {call_count}")
     except Exception as e:
