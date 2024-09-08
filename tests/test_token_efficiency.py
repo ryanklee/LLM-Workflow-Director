@@ -140,7 +140,7 @@ async def llm_manager(claude_manager):
     return LLMManager(claude_manager=claude_manager)
 
 @pytest.mark.asyncio
-async def test_token_usage_per_query_type(claude_manager: ClaudeManager, benchmark: BenchmarkFixture):
+async def test_token_usage_per_query_type(claude_manager: ClaudeManager):
     query_types = {
         "short": "What's the capital of France?",
         "medium": "Explain the process of photosynthesis in plants.",
@@ -148,12 +148,16 @@ async def test_token_usage_per_query_type(claude_manager: ClaudeManager, benchma
     }
     
     async def measure_token_usage(query):
+        start_time = time.time()
         response = await claude_manager.generate_response(query)
-        return await claude_manager.count_tokens(query + response)
+        token_count = await claude_manager.count_tokens(query + response)
+        end_time = time.time()
+        return token_count, end_time - start_time
     
     for query_type, query in query_types.items():
-        result = await benchmark.pedantic(measure_token_usage, args=(query,), iterations=5, rounds=3)
-        print(f"Token usage for {query_type} query: {result:.0f} tokens")
+        token_count, duration = await measure_token_usage(query)
+        print(f"Token usage for {query_type} query: {token_count:.0f} tokens (took {duration:.2f} seconds)")
+        assert token_count > 0, f"Token usage for {query_type} query should be greater than 0"
 
 @pytest.mark.asyncio
 async def test_cost_effectiveness_of_models(llm_manager: LLMManager, benchmark: BenchmarkFixture):
@@ -175,7 +179,7 @@ async def test_cost_effectiveness_of_models(llm_manager: LLMManager, benchmark: 
         print(f"Cost-effectiveness for {model}: {avg_result:.2f} chars/$")
 
 @pytest.mark.asyncio
-async def test_optimization_strategies(claude_manager: ClaudeManager, benchmark: BenchmarkFixture):
+async def test_optimization_strategies(claude_manager: ClaudeManager):
     base_query = "Explain the process of photosynthesis in plants."
     strategies = {
         "base": base_query,
@@ -185,13 +189,17 @@ async def test_optimization_strategies(claude_manager: ClaudeManager, benchmark:
     }
     
     async def measure_token_efficiency(query):
+        start_time = time.time()
         response = await claude_manager.generate_response(query)
         tokens = await claude_manager.count_tokens(query + response)
-        return len(response) / tokens  # characters per token
+        efficiency = len(response) / tokens  # characters per token
+        end_time = time.time()
+        return efficiency, end_time - start_time
     
     for strategy, query in strategies.items():
-        result = await benchmark.pedantic(measure_token_efficiency, args=(query,), iterations=5, rounds=3)
-        print(f"Token efficiency for {strategy} strategy: {result:.2f} chars/token")
+        efficiency, duration = await measure_token_efficiency(query)
+        print(f"Token efficiency for {strategy} strategy: {efficiency:.2f} chars/token (took {duration:.2f} seconds)")
+        assert efficiency > 0, f"Token efficiency for {strategy} strategy should be greater than 0"
 import pytest
 from src.llm_manager import LLMManager
 from src.claude_manager import ClaudeManager
