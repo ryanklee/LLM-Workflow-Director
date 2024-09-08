@@ -87,7 +87,7 @@ class ClaudeManager:
                 )
                 response_text = response.content[0].text
             except Exception as api_error:
-                self.logger.error(f"Error calling Claude API: {str(api_error)}")
+                self.logger.error(f"Error calling Claude API: {str(api_error)}", exc_info=True)
                 raise APIError(f"Claude API call failed: {str(api_error)}")
 
             await self.token_tracker.add_tokens("generate_response", token_count, await self.count_tokens(response_text))
@@ -96,10 +96,10 @@ class ClaudeManager:
             self.logger.info(f"Response generated in {end_time - start_time:.2f} seconds. Model: {selected_model}, Input tokens: {token_count}, Output tokens: {await self.count_tokens(response_text)}")
             return parsed_response
         except RateLimitError as e:
-            self.logger.error(f"Rate limit error in generate_response: {str(e)}")
+            self.logger.error(f"Rate limit error in generate_response: {str(e)}", exc_info=True)
             raise
         except (NotFoundError, APIError, APIConnectionError, APIStatusError) as e:
-            self.logger.error(f"API error in generate_response: {str(e)}")
+            self.logger.error(f"API error in generate_response: {str(e)}", exc_info=True)
             return await self._handle_error(e, prompt)
         except Exception as e:
             self.logger.error(f"Unexpected error in generate_response: {str(e)}", exc_info=True)

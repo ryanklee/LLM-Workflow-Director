@@ -27,8 +27,9 @@ async def test_token_usage_per_query_type(claude_manager: ClaudeManager, benchma
         return await claude_manager.count_tokens(query + response)
     
     for query_type, query in query_types.items():
-        result = await benchmark.pedantic(measure_token_usage, args=(query,), iterations=5, rounds=3)
-        print(f"Token usage for {query_type} query: {result:.0f} tokens")
+        result = benchmark.pedantic(measure_token_usage, args=(query,), iterations=5, rounds=3)
+        tokens = await result
+        print(f"Token usage for {query_type} query: {tokens:.0f} tokens")
 
 @pytest.mark.asyncio
 async def test_cost_effectiveness_of_models(llm_manager: LLMManager, benchmark: BenchmarkFixture):
@@ -42,8 +43,12 @@ async def test_cost_effectiveness_of_models(llm_manager: LLMManager, benchmark: 
         return len(response['response']) / cost  # characters per unit of cost
     
     for model in models:
-        result = await benchmark.pedantic(measure_cost_effectiveness, args=(model,), iterations=3, rounds=1)
-        print(f"Cost-effectiveness for {model}: {result:.2f} chars/$")
+        results = []
+        for _ in range(3):  # Run 3 iterations
+            result = await measure_cost_effectiveness(model)
+            results.append(result)
+        avg_result = sum(results) / len(results)
+        print(f"Cost-effectiveness for {model}: {avg_result:.2f} chars/$")
 
 @pytest.mark.asyncio
 async def test_optimization_strategies(claude_manager: ClaudeManager, benchmark: BenchmarkFixture):
@@ -57,12 +62,13 @@ async def test_optimization_strategies(claude_manager: ClaudeManager, benchmark:
     
     async def measure_token_efficiency(query):
         response = await claude_manager.generate_response(query)
-        tokens = await claude_manager.count_tokens(query + str(response))
-        return len(str(response)) / tokens  # characters per token
+        tokens = await claude_manager.count_tokens(query + response)
+        return len(response) / tokens  # characters per token
     
     for strategy, query in strategies.items():
-        result = await benchmark.pedantic(measure_token_efficiency, args=(query,), iterations=5, rounds=3)
-        print(f"Token efficiency for {strategy} strategy: {result:.2f} chars/token")
+        result = benchmark.pedantic(measure_token_efficiency, args=(query,), iterations=5, rounds=3)
+        efficiency = await result
+        print(f"Token efficiency for {strategy} strategy: {efficiency:.2f} chars/token")
 
 @pytest.mark.asyncio
 async def test_token_usage_estimation(llm_manager: LLMManager):
