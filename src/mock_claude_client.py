@@ -29,6 +29,38 @@ class MockClaudeClient:
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
+        
+    async def _check_rate_limit(self):
+        current_time = time.time()
+        if current_time - self.last_call_time >= self.rate_limit_reset_time:
+            self.call_count = 0
+        self.last_call_time = current_time
+        self.call_count += 1
+        if self.call_count > self.rate_limit_threshold:
+            self.logger.warning("Rate limit exceeded")
+            raise CustomRateLimitError("Rate limit exceeded")
+
+    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+        await self._check_rate_limit()
+        await self._simulate_latency()
+        
+        if len(prompt) > self.max_test_tokens:
+            raise ValueError(f"Prompt length ({len(prompt)} tokens) exceeds maximum context length of {self.max_test_tokens} tokens")
+        
+        if self.error_mode:
+            self.error_count += 1
+            if self.error_count <= self.max_errors:
+                self.logger.error("API error (error mode)")
+                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+        
+        response = self.responses.get(prompt, "Default mock response")
+        return f"<response>{response}</response>"
+
+    async def count_tokens(self, text: str) -> int:
+        return len(text.split())
+
+    async def _simulate_latency(self):
+        await asyncio.sleep(self.latency)
 
     async def count_tokens(self, text: str) -> int:
         await asyncio.sleep(0.01)  # Simulate a short delay

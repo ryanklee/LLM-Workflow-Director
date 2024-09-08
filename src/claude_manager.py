@@ -88,11 +88,7 @@ class ClaudeManager:
             self.logger.debug(f"Using model: {model if model else 'default'}")
 
             selected_model = await self.select_model(prompt) if model is None else model
-            try:
-                response_text = await self.client.generate_response(prompt, selected_model)
-            except Exception as api_error:
-                self.logger.error(f"Error calling Claude API: {str(api_error)}", exc_info=True)
-                raise APIError(f"Claude API call failed: {str(api_error)}")
+            response_text = await self.client.generate_response(prompt, selected_model)
 
             await self.token_tracker.add_tokens("generate_response", token_count, await self.count_tokens(response_text))
             parsed_response = self.parse_response(response_text)
@@ -101,6 +97,9 @@ class ClaudeManager:
             return parsed_response
         except CustomRateLimitError as e:
             self.logger.error(f"Rate limit error in generate_response: {str(e)}", exc_info=True)
+            raise
+        except ValueError as e:
+            self.logger.error(f"Value error in generate_response: {str(e)}", exc_info=True)
             raise
         except (NotFoundError, APIError, APIConnectionError, APIStatusError) as e:
             self.logger.error(f"API error in generate_response: {str(e)}", exc_info=True)

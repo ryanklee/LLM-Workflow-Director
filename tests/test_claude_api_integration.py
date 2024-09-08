@@ -16,16 +16,18 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 @pytest.fixture
-def mock_claude_client():
+async def mock_claude_client():
     client = MockClaudeClient()
     logger.debug("Created MockClaudeClient instance")
-    return client
+    yield client
+    await client.reset()
 
 @pytest.fixture
-def claude_manager(mock_claude_client):
+async def claude_manager(mock_claude_client):
     manager = ClaudeManager(client=mock_claude_client)
     logger.debug("Created ClaudeManager instance with MockClaudeClient")
-    return manager
+    yield manager
+    await manager.close()  # Assuming we add a close method to clean up resources
 
 @pytest.fixture
 def llm_manager(claude_manager):
@@ -573,7 +575,7 @@ async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
 @pytest.mark.asyncio
 async def test_token_counting(mock_claude_client):
     text = "This is a test sentence."
-    token_count = mock_claude_client.count_tokens(text)
+    token_count = await mock_claude_client.count_tokens(text)
     assert token_count == 5, f"Expected 5 tokens, but got {token_count}"
 
 @pytest.mark.asyncio
