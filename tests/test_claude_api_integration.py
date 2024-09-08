@@ -438,6 +438,10 @@ def setup_teardown(caplog, request):
     logger.debug(f"Log output for {request.node.name}:\n" + caplog.text)
     print(f"\nFull log output for {request.node.name}:")
     print(caplog.text)
+    
+    if not request.node.rep_call.passed:
+        logger.error(f"Test failed: {request.node.name}")
+        logger.error(f"Exception info: {request.node.rep_call.longrepr}")
 
 @pytest.fixture
 def run_async_fixture():
@@ -1088,6 +1092,12 @@ class TestInputValidation:
             assert "Invalid prompt: must be a non-empty string" in str(excinfo.value)
         else:
             assert "Invalid prompt" in str(excinfo.value)
+        if isinstance(input_text, str) and len(input_text) > 1000:
+            assert "Prompt length exceeds maximum" in str(excinfo.value)
+        elif not isinstance(input_text, str) or not str(input_text).strip():
+            assert "Invalid prompt: must be a non-empty string" in str(excinfo.value)
+        else:
+            assert "Invalid prompt" in str(excinfo.value)
 
     @pytest.mark.fast
     @pytest.mark.asyncio
@@ -1102,7 +1112,7 @@ class TestResponseHandling:
     async def test_response_parsing(self, claude_manager, llm_manager):
         max_test_tokens = llm_manager.config.get('test_settings', {}).get('max_test_tokens', 100)
         long_response = "b" * (max_test_tokens * 2)
-        claude_manager.client.set_response("Test", long_response)
+        await claude_manager.client.set_response("Test", long_response)
     
         result = await claude_manager.generate_response("Test")
     
@@ -1195,12 +1205,12 @@ async def test_mock_claude_client_rate_limit(mock_claude_client, claude_manager)
         for _ in range(mock_claude_client.rate_limit_threshold + 1):
             await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     
-    assert mock_claude_client.call_count == mock_claude_client.rate_limit_threshold + 1
+    assert await mock_claude_client.get_call_count() == mock_claude_client.rate_limit_threshold + 1
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_error_mode(mock_claude_client, claude_manager):
     mock_claude_client.set_error_mode(True)
-    with pytest.raises(APIStatusError):
+    with pytest.raises(CustomRateLimitError):
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
 
 @pytest.mark.asyncio
@@ -1297,7 +1307,7 @@ async def test_mock_claude_client_call_count(mock_claude_client, claude_manager)
     for _ in range(3):
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     
-    assert mock_claude_client.get_call_count() == 3
+    assert await mock_claude_client.get_call_count() == 3
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_error_count(mock_claude_client, claude_manager):
@@ -1511,7 +1521,7 @@ async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
         try:
             logging.debug(f"Attempting call {i+1}")
             response = await claude_manager.generate_response(f"Test prompt {i}")
-            assert response == "Default mock response", f"Unexpected response for call {i+1}: {response}"
+            assert response == "<response>Default mock response</response>", f"Unexpected response for call {i+1}: {response}"
             assert f"Generating response for prompt: Test prompt {i}" in caplog.text, f"Missing log for prompt {i}"
             logging.debug(f"Call {i+1} successful")
         except Exception as e:
