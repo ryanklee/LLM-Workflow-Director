@@ -45,6 +45,47 @@ class MockClaudeClient:
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
 
+    async def set_latency(self, latency):
+        self.latency = latency
+        self.logger.debug(f"Set latency to: {latency}")
+
+    async def set_error_mode(self, mode):
+        self.error_mode = mode
+        self.logger.debug(f"Set error mode to: {mode}")
+
+    async def set_rate_limit(self, threshold):
+        self.rate_limit_threshold = threshold
+        self.logger.debug(f"Set rate limit threshold to: {threshold}")
+
+    async def set_response(self, prompt, response):
+        self.responses[prompt] = response
+        self.logger.debug(f"Set response for prompt: {prompt[:50]}...")
+
+    async def generate_response(self, prompt, model=None):
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        await asyncio.sleep(self.latency)
+        self.call_count += 1
+        self.logger.debug(f"Call count: {self.call_count}")
+        if self.call_count > self.rate_limit_threshold:
+            self.logger.warning("Rate limit exceeded")
+            raise RateLimitError("Rate limit exceeded")
+        if self.error_mode:
+            self.error_count += 1
+            self.logger.debug(f"Error count: {self.error_count}")
+            if self.error_count <= self.max_errors:
+                self.logger.error("Simulated API error")
+                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+        response = self.responses.get(prompt, "Default mock response")
+        self.logger.debug(f"Returning response: {response[:50]}...")
+        return response
+
+    async def count_tokens(self, text):
+        return len(text.split())
+
+    async def reset(self):
+        self.__init__()
+        self.logger.debug("Reset MockClaudeClient")
+
     async def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
         self.logger.debug(f"Set response for prompt: {prompt[:50]}...")
