@@ -64,6 +64,7 @@ class MockClaudeClient:
         self.max_errors = 3
         self.max_context_length = 200000
         self.last_reset_time = time.time()
+        self.error_count_history = []
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         self.logger.debug("Initialized MockClaudeClient")
@@ -687,8 +688,14 @@ class ClaudeManager:
     async def set_latency(self, latency):
         await self.client.set_latency(latency)
 
-    async def generate_response(self, prompt, model=None):
+    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        if not isinstance(prompt, str) or not prompt.strip():
+            self.logger.error("Invalid prompt: must be a non-empty string")
+            raise ValueError("Invalid prompt: must be a non-empty string")
+        if len(prompt) > self.max_context_length:
+            self.logger.error(f"Prompt length exceeds maximum context length of {self.max_context_length}")
+            raise ValueError(f"Prompt length exceeds maximum context length of {self.max_context_length}")
         try:
             response = await self.client.generate_response(prompt, model)
             self.logger.debug(f"Response generated successfully: {response[:50]}...")
