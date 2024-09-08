@@ -73,7 +73,7 @@ async def test_claude_api_max_tokens(claude_manager, mock_claude_client):
 @pytest.mark.asyncio
 async def test_claude_api_response_truncation(claude_manager, mock_claude_client):
     long_response = "b" * (mock_claude_client.max_test_tokens * 2)
-    mock_claude_client.set_response("Test prompt", long_response)
+    await mock_claude_client.set_response("Test prompt", long_response)
     response = await claude_manager.generate_response("Test prompt")
     assert len(response) <= mock_claude_client.max_test_tokens + 50  # Allow for some overhead
 
