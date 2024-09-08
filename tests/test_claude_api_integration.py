@@ -288,7 +288,7 @@ class MockClaudeClient:
         self.logger.debug(f"Call count: {self.call_count}")
         if self.call_count > self.rate_limit_threshold:
             self.logger.warning("Rate limit exceeded")
-            raise CustomRateLimitError("Rate limit exceeded")
+            raise RateLimitError("Rate limit exceeded")
         if self.error_mode:
             self.error_count += 1
             self.logger.debug(f"Error count: {self.error_count}")
