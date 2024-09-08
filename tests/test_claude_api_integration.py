@@ -1176,7 +1176,7 @@ async def test_mock_claude_client_concurrent_calls(mock_claude_client):
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_error_mode(mock_claude_client, claude_manager):
-    mock_claude_client.set_error_mode(True)
+    await mock_claude_client.set_error_mode(True)
     
     with pytest.raises(APIStatusError):
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
@@ -1191,7 +1191,7 @@ async def test_mock_claude_client_error_mode(mock_claude_client, claude_manager)
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_latency(mock_claude_client, claude_manager):
-    mock_claude_client.set_latency(0.5)  # Set a 500ms latency
+    await mock_claude_client.set_latency(0.5)  # Set a 500ms latency
     
     start_time = time.time()
     await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
