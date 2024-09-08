@@ -113,6 +113,23 @@ class MockClaudeClient:
     def get_error_count(self):
         return self.error_count
 
+    async def select_model(self, task: str) -> str:
+        if "simple" in task.lower():
+            return "claude-3-haiku-20240307"
+        elif "complex" in task.lower():
+            return "claude-3-opus-20240229"
+        else:
+            return "claude-3-sonnet-20240229"
+
+    async def simulate_concurrent_calls(self, num_calls):
+        results = []
+        for _ in range(num_calls):
+            try:
+                results.append(await self.generate_response("Test prompt"))
+            except CustomRateLimitError as e:
+                results.append(e)
+        return results
+
     def select_model(self, task: str) -> str:
         if "simple" in task.lower():
             return "claude-3-haiku-20240307"
