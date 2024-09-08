@@ -24,6 +24,7 @@ import time
 import anthropic
 import logging
 from unittest.mock import MagicMock, AsyncMock, patch
+import functools
 from src.claude_manager import ClaudeManager
 from src.exceptions import RateLimitError, RateLimitError as CustomRateLimitError
 from src.mock_claude_client import MockClaudeClient
@@ -40,6 +41,19 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+def log_test_start_end(func):
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        logger.info(f"Starting test: {func.__name__}")
+        try:
+            result = await func(*args, **kwargs)
+            logger.info(f"Finished test: {func.__name__}")
+            return result
+        except Exception as e:
+            logger.error(f"Error in test {func.__name__}: {str(e)}", exc_info=True)
+            raise
+    return wrapper
 
 @pytest.fixture
 async def mock_claude_client():
