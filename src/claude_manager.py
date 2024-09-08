@@ -17,6 +17,19 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 logger.setLevel(logging.DEBUG)
 
+import logging
+import json
+import asyncio
+import time
+from typing import Dict, List, Any
+from unittest.mock import MagicMock
+from anthropic import AsyncAnthropic, NotFoundError, APIError, APIConnectionError, APIStatusError
+from .exceptions import RateLimitError as CustomRateLimitError
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, RetryError
+from .rate_limiter import RateLimiter
+from .token_tracker import TokenTracker
+from .token_optimizer import TokenOptimizer
+
 class ClaudeManager:
     def __init__(self, client=None, requests_per_minute: int = 1000, requests_per_hour: int = 10000):
         self.logger = logging.getLogger(__name__)
@@ -40,16 +53,6 @@ class ClaudeManager:
         self.max_context_length = 200000  # Updated to 200k tokens
         self.messages = self.client.messages
         self.logger.info("ClaudeManager initialization complete")
-
-    async def evaluate_response_quality(self, prompt):
-        # Implement the evaluation logic here
-        # This is a placeholder implementation
-        response = await self.generate_response(prompt)
-        # You might want to implement a more sophisticated evaluation method
-        return len(response) / 100  # Simple quality metric based on response length
-
-    async def count_tokens(self, text):
-        return await self.client.count_tokens(text)
 
     @staticmethod
     def create_client():
@@ -92,7 +95,7 @@ class ClaudeManager:
                 raise APIError(f"Claude API call failed: {str(api_error)}")
 
             await self.token_tracker.add_tokens("generate_response", token_count, await self.count_tokens(response_text))
-            parsed_response = await self.parse_response(response_text)
+            parsed_response = self.parse_response(response_text)
             end_time = time.time()
             self.logger.info(f"Response generated in {end_time - start_time:.2f} seconds. Model: {selected_model}, Input tokens: {token_count}, Output tokens: {await self.count_tokens(response_text)}")
             return parsed_response
@@ -109,19 +112,10 @@ class ClaudeManager:
             end_time = time.time()
             self.logger.debug(f"Total time in generate_response: {end_time - start_time:.2f} seconds")
 
-    async def _truncate_prompt(self, prompt, max_tokens):
-        words = prompt.split()
-        truncated_prompt = ""
-        current_tokens = 0
-        for word in words:
-            word_tokens = await self.count_tokens(word)
-            if current_tokens + word_tokens > max_tokens:
-                break
-            truncated_prompt += word + " "
-            current_tokens += word_tokens
-        return truncated_prompt.strip()
+    async def count_tokens(self, text: str) -> int:
+        return await self.client.count_tokens(text)
 
-    def select_model(self, task_description):
+    async def select_model(self, task_description: str) -> str:
         if "simple" in task_description.lower():
             return "claude-3-haiku-20240307"
         elif "complex" in task_description.lower():
@@ -129,25 +123,13 @@ class ClaudeManager:
         else:
             return "claude-3-sonnet-20240229"
 
-    def parse_response(self, response_text):
+    def parse_response(self, response_text: str) -> str:
         max_length = self.max_test_tokens - 21
         truncated_text = response_text[:max_length] + "..." if len(response_text) > max_length else response_text
         parsed_response = f"<response>{truncated_text.strip()}</response>"
         return parsed_response
 
-    def _truncate_prompt(self, prompt, max_tokens):
-        words = prompt.split()
-        truncated_prompt = ""
-        current_tokens = 0
-        for word in words:
-            word_tokens = self.count_tokens(word)
-            if current_tokens + word_tokens > max_tokens:
-                break
-            truncated_prompt += word + " "
-            current_tokens += word_tokens
-        return truncated_prompt.strip()
-
-    async def _handle_error(self, error, prompt):
+    async def _handle_error(self, error: Exception, prompt: str) -> str:
         self.logger.error(f"Error in generate_response: {str(error)}", exc_info=True)
         if isinstance(error, NotFoundError):
             return await self.fallback_response(prompt, "Model not found")
@@ -175,62 +157,7 @@ class ClaudeManager:
             self.logger.error(f"Unknown error: {str(error)}", exc_info=True)
             return await self.fallback_response(prompt, f"Unknown error: {str(error)}")
 
-    async def fallback_response(self, prompt, error_type):
+    async def fallback_response(self, prompt: str, error_type: str) -> str:
         self.logger.warning(f"Fallback response triggered for prompt: {prompt[:50]}...")
         self.logger.error(f"Error type: {error_type}")
         return f"<response>Fallback response: Unable to process the request. Error: {error_type}</response>"
-
-    async def select_model(self, task_description):
-        if "simple" in task_description.lower():
-            return "claude-3-haiku-20240307"
-        elif "complex" in task_description.lower():
-            return "claude-3-opus-20240229"
-        else:
-            return "claude-3-sonnet-20240229"
-
-    async def evaluate_sufficiency(self, project_state):
-        # Implement the evaluation logic here
-        return {"is_sufficient": True, "reasoning": "Evaluation complete"}
-
-    async def make_decision(self, project_state):
-        prompt = f"Make decision based on: {project_state}"
-        response = await self.generate_response(prompt)
-        return self.parse_decision(response)
-
-    def parse_decision(self, response):
-        # Extract the decision from the response
-        # This is a simple implementation and might need to be adjusted based on the actual response format
-        return response.strip()
-
-    async def evaluate_project_state(self, project_data):
-        # Implement the project state evaluation logic here
-        return "Project state evaluation complete"
-
-    async def evaluate_with_context(self, context, project_state):
-        # Implement the evaluation with context logic here
-        return "Evaluation with context complete"
-
-    def render_prompt_template(self, template, context):
-        # Implement the prompt template rendering logic here
-        return template.format(**context)
-
-    async def get_completion(self, prompt, model, max_tokens):
-        # Implement the completion logic here
-        return await self.generate_response(prompt, model)
-
-    def parse_response(self, response_text):
-        max_length = self.max_test_tokens - 21
-        truncated_text = response_text[:max_length] + "..." if len(response_text) > max_length else response_text
-        parsed_response = f"<response>{truncated_text.strip()}</response>"
-        return parsed_response
-
-    def _extract_response_text(self, response):
-        if isinstance(response, dict):
-            if 'content' in response and isinstance(response['content'], list):
-                return response['content'][0]['text']
-            elif 'choices' in response and isinstance(response['choices'], list):
-                return response['choices'][0]['message']['content']
-        elif hasattr(response, 'content') and isinstance(response.content, list):
-            return response.content[0].text
-        
-        raise ValueError(f"Unexpected response structure: {response}")

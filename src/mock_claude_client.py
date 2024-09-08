@@ -258,6 +258,10 @@ import asyncio
 from typing import Dict, List, Optional
 from anthropic import AsyncAnthropic
 
+import asyncio
+from typing import Dict, List, Any
+from anthropic import APIStatusError, RateLimitError
+
 class MockClaudeClient:
     def __init__(self, rate_limit: int = 10, reset_interval: int = 60):
         self.rate_limit = rate_limit
@@ -266,24 +270,40 @@ class MockClaudeClient:
         self.last_reset = asyncio.get_event_loop().time()
         self.error_mode = False
         self.latency = 0
-        self.messages = self  # Add this line to create a 'messages' attribute
+        self.messages = self
+        self.responses = {}
+        self.max_test_tokens = 1000
+        self.call_count = 0
+        self.error_count = 0
+        self.max_errors = 3
 
     async def messages_create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], **kwargs) -> Dict:
         await self._check_rate_limit()
         await asyncio.sleep(self.latency)
 
         if self.error_mode:
-            raise Exception("Simulated API error")
+            self.error_count += 1
+            if self.error_count <= self.max_errors:
+                raise APIStatusError("Simulated API error", response=None, body={})
 
-        response = {
-            "content": [{"text": "This is a mock response from Claude."}],
+        prompt = messages[0]['content']
+        if len(prompt) > self.max_test_tokens:
+            raise ValueError(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
+
+        response = self.responses.get(prompt, "Default mock response")
+        if len(response) > self.max_test_tokens:
+            response = response[:self.max_test_tokens] + "..."
+
+        self.call_count += 1
+
+        return {
+            "content": [{"text": response}],
             "model": model,
             "usage": {
                 "input_tokens": sum(len(m["content"]) for m in messages) // 4,
-                "output_tokens": 10
+                "output_tokens": len(response) // 4
             }
         }
-        return response
 
     async def _check_rate_limit(self):
         current_time = asyncio.get_event_loop().time()
@@ -293,10 +313,12 @@ class MockClaudeClient:
 
         self.calls += 1
         if self.calls > self.rate_limit:
-            raise Exception("Rate limit exceeded")
+            raise RateLimitError("Rate limit exceeded")
 
     def set_error_mode(self, enabled: bool):
         self.error_mode = enabled
+        if not enabled:
+            self.error_count = 0
 
     def set_latency(self, latency: float):
         self.latency = latency
@@ -306,11 +328,26 @@ class MockClaudeClient:
         self.last_reset = asyncio.get_event_loop().time()
         self.error_mode = False
         self.latency = 0
+        self.responses = {}
+        self.call_count = 0
+        self.error_count = 0
 
     async def count_tokens(self, text: str) -> int:
-        # Simple mock implementation
+        await asyncio.sleep(0.01)  # Simulate a short delay
         return len(text.split())
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
-        response = await self.messages_create(model, 1000, [{"role": "user", "content": prompt}])
+        response = await self.messages_create(model, self.max_test_tokens, [{"role": "user", "content": prompt}])
         return response["content"][0]["text"]
+
+    def set_response(self, prompt: str, response: str):
+        self.responses[prompt] = response
+
+    def set_rate_limit(self, limit: int):
+        self.rate_limit = limit
+
+    def get_call_count(self) -> int:
+        return self.call_count
+
+    def get_error_count(self) -> int:
+        return self.error_count
