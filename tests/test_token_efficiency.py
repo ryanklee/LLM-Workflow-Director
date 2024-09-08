@@ -131,8 +131,10 @@ def claude_manager():
     return ClaudeManager()
 
 @pytest.fixture
-def llm_manager():
-    return LLMManager()
+async def llm_manager():
+    manager = LLMManager()
+    yield manager
+    await manager.token_tracker.reset()
 
 @pytest.mark.asyncio
 async def test_token_usage_per_query_type(claude_manager: ClaudeManager, benchmark: BenchmarkFixture):

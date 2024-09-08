@@ -21,6 +21,13 @@ class MockClaudeClient:
         self.call_count = 0
         self.rate_limit_threshold = 5  # Number of calls before rate limiting
         self.last_call_time = 0
+
+    async def count_tokens(self, text: str) -> int:
+        await asyncio.sleep(0.01)  # Simulate a short delay
+        return len(text.split())
+        self.call_count = 0
+        self.rate_limit_threshold = 5  # Number of calls before rate limiting
+        self.last_call_time = 0
         self.error_count = 0
         self.max_errors = 3
         self.rate_limit_reset_time = 60  # seconds
