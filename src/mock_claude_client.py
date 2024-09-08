@@ -25,6 +25,10 @@ class MockClaudeClient:
     async def count_tokens(self, text: str) -> int:
         await asyncio.sleep(0.01)  # Simulate a short delay
         return len(text.split())
+
+    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+        response = await self.create(model, self.max_test_tokens, [{"role": "user", "content": prompt}])
+        return response.content[0].text
         self.call_count = 0
         self.rate_limit_threshold = 5  # Number of calls before rate limiting
         self.last_call_time = 0

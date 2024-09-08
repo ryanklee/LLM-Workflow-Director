@@ -168,7 +168,7 @@ async def test_cost_effectiveness_of_models(llm_manager: LLMManager, benchmark: 
     
     for model in models:
         result = await benchmark.pedantic(measure_cost_effectiveness, args=(model,), iterations=3, rounds=1)
-        print(f"Cost-effectiveness for {model}: {result.average:.2f} chars/$")
+        print(f"Cost-effectiveness for {model}: {result.stats.mean:.2f} chars/$")
 
 @pytest.mark.asyncio
 async def test_optimization_strategies(claude_manager: ClaudeManager, benchmark: BenchmarkFixture):

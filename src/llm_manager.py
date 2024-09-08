@@ -148,6 +148,7 @@ class LLMManager:
             tier = await self.cost_optimizer.select_optimal_tier(query_complexity)
 
         self.logger.debug(f"Selected tier: {tier}, model: {model or 'default'}")
+        self.logger.info(f"Query details - Tier: {tier}, Model: {model or 'default'}, Prompt length: {len(prompt)}")
 
         cache_key = await self._generate_cache_key(prompt, context, tier)
         if cache_key in self.cache:

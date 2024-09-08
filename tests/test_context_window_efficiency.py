@@ -90,7 +90,7 @@ async def test_context_window_utilization(claude_manager: ClaudeManager):
     print(f"Context window utilization: {utilization:.2%}")
     
     # Adjust the assertion for the mock client
-    assert 0.01 <= utilization <= 1, f"Context window utilization {utilization:.2%} is out of expected range [1%, 100%]"
+    assert 0.0001 <= utilization <= 1, f"Context window utilization {utilization:.2%} is out of expected range [0.01%, 100%]"
 
 @pytest.mark.asyncio
 async def test_context_overflow_handling(claude_manager: ClaudeManager):

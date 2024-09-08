@@ -83,7 +83,7 @@ class ClaudeManager:
             await self.token_tracker.add_tokens("generate_response", token_count, await self.count_tokens(response_text))
             parsed_response = await self.parse_response(response_text)
             end_time = time.time()
-            self.logger.debug(f"Response generated in {end_time - start_time:.2f} seconds")
+            self.logger.info(f"Response generated in {end_time - start_time:.2f} seconds. Model: {selected_model}, Input tokens: {token_count}, Output tokens: {await self.count_tokens(response_text)}")
             return parsed_response
         except RateLimitError as e:
             self.logger.error(f"Rate limit error in generate_response: {str(e)}")
