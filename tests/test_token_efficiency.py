@@ -90,10 +90,10 @@ async def test_cost_optimization_suggestions(llm_manager: LLMManager):
     await llm_manager.query("Long query 1", model="claude-3-opus-20240229")
     await llm_manager.query("Long query 2", model="claude-3-opus-20240229")
     
-    suggestions = llm_manager.get_cost_optimization_suggestions()
+    suggestions = await llm_manager.get_optimization_suggestion()
     
-    print("Cost optimization suggestions:")
-    print(suggestions)
+    logging.info("Cost optimization suggestions:")
+    logging.info(suggestions)
     
     assert isinstance(suggestions, str), "Cost optimization suggestions should be a string"
     assert len(suggestions) > 0, "Cost optimization suggestions should not be empty"

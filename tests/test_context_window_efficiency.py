@@ -47,13 +47,16 @@ async def test_response_time_vs_context_size(claude_manager: ClaudeManager, benc
         return end_time - start_time
 
     for size in context_sizes:
-        result = await benchmark.pedantic(measure_response_time, args=(size,), iterations=3, rounds=1)
-        print(f"Response time for context size {size}: {result.average:.4f} seconds")
+        result = benchmark.pedantic(measure_response_time, args=(size,), iterations=3, rounds=1)
+        print(f"Response time for context size {size}: {result.stats['mean']:.4f} seconds")
     
     # Assert that the response time for the largest context is not significantly higher than the smallest
     large_context_time = await measure_response_time(context_sizes[-1])
     small_context_time = await measure_response_time(context_sizes[0])
     assert large_context_time < small_context_time * 2
+
+    logging.info(f"Large context time: {large_context_time:.4f} seconds")
+    logging.info(f"Small context time: {small_context_time:.4f} seconds")
 
 @pytest.mark.asyncio
 async def test_response_quality_vs_context_size(claude_manager: ClaudeManager, llm_manager: LLMManager):
@@ -91,9 +94,13 @@ async def test_context_overflow_handling(claude_manager: ClaudeManager):
     max_context_size = 200000
     overflow_context = "a" * (max_context_size + 1000)
     prompt = f"Summarize the following text in one sentence: {overflow_context}"
-    
+
     with pytest.raises(ValueError, match="Prompt length exceeds maximum context length"):
         await claude_manager.generate_response(prompt)
+
+    # Add logging for debugging
+    logging.debug(f"Prompt length: {len(prompt)}")
+    logging.debug(f"Max context size: {max_context_size}")
 import pytest
 from unittest.mock import MagicMock
 from src.llm_manager import LLMManager

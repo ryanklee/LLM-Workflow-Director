@@ -167,11 +167,11 @@ class LLMManager:
 
                 input_tokens = self.claude_manager.count_tokens(optimized_prompt)
                 response = await self.claude_manager.generate_response(optimized_prompt, model=model)
-                output_tokens = self.claude_manager.count_tokens(response)
+                output_tokens = self.claude_manager.count_tokens(response['content'][0]['text'])
                 
                 self.token_tracker.add_tokens(cache_key, input_tokens, output_tokens)
                 
-                result = self._process_response(response, tier, start_time)
+                result = self._process_response(response['content'][0]['text'], tier, start_time)
                 result['raw_response'] = response
                 self.cache[cache_key] = result
                 
@@ -207,6 +207,9 @@ class LLMManager:
                     return self._fallback_response(prompt, context, original_tier)
         
         return self._fallback_response(prompt, context, original_tier)
+
+    async def get_optimization_suggestion(self) -> str:
+        return self.cost_optimizer.suggest_optimization()
 
     def _process_response(self, response_content: str, tier: str, start_time: float) -> Dict[str, Any]:
         end_time = safe_time()

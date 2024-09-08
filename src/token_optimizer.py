@@ -2,7 +2,15 @@ class TokenOptimizer:
     def __init__(self, token_tracker):
         self.token_tracker = token_tracker
 
-    def optimize_prompt(self, prompt):
-        # Implement your optimization logic here
-        # This is a placeholder implementation
-        return prompt[:1000]  # Truncate to 1000 characters as a simple optimization
+    def optimize_prompt(self, prompt: str) -> str:
+        # Implement more sophisticated optimization logic here
+        words = prompt.split()
+        if len(words) > 100:
+            return ' '.join(words[:100])
+        return prompt
+
+    def truncate_response(self, response: str, max_tokens: int) -> str:
+        words = response.split()
+        if len(words) > max_tokens:
+            return ' '.join(words[:max_tokens])
+        return response

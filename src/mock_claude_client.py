@@ -87,6 +87,9 @@ class MockClaudeClient:
                 "usage": {"total_tokens": len(response.split())}
             }
 
+    def count_tokens(self, text: str) -> int:
+        return len(text.split())
+
     async def _simulate_latency(self):
         await asyncio.sleep(self.latency)
 
