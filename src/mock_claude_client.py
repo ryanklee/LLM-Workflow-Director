@@ -304,7 +304,7 @@ class MockClaudeClient:
         self.last_call_time = current_time
         self.call_count += 1
         if self.call_count > self.rate_limit_threshold:
-            raise RateLimitError("Rate limit exceeded")
+            raise CustomRateLimitError("Rate limit exceeded")
 
     async def _simulate_latency(self):
         await asyncio.sleep(self.latency)
