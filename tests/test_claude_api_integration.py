@@ -828,9 +828,9 @@ class ClaudeManager:
             response = await self.client.generate_response(prompt, model)
             self.logger.debug(f"Response generated successfully: {response[:50]}...")
             return response
-        except CustomRateLimitError as e:
+        except (CustomRateLimitError, RateLimitError) as e:
             self.logger.warning(f"Rate limit reached: {str(e)}")
-            raise
+            raise CustomRateLimitError(str(e))
         except APIStatusError as e:
             self.logger.error(f"API error: {str(e)}")
             raise
@@ -1314,7 +1314,7 @@ async def test_mock_claude_client_rate_limit(mock_claude_client, claude_manager)
     for _ in range(mock_claude_client.rate_limit_threshold):
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     
-    with pytest.raises((RateLimitError, CustomRateLimitError)) as excinfo:
+    with pytest.raises(CustomRateLimitError) as excinfo:
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     assert "Rate limit exceeded" in str(excinfo.value), f"Expected 'Rate limit exceeded', but got: {str(excinfo.value)}"
     
@@ -1322,10 +1322,12 @@ async def test_mock_claude_client_rate_limit(mock_claude_client, claude_manager)
     with pytest.raises(CustomRateLimitError) as excinfo:
         await mock_claude_client.generate_response("Test prompt", "claude-3-haiku-20240307")
     assert "Rate limit exceeded" in str(excinfo.value), f"Expected 'Rate limit exceeded', but got: {str(excinfo.value)}"
-    assert "Rate limit exceeded" in str(excinfo.value), f"Expected 'Rate limit exceeded', but got: {str(excinfo.value)}"
     
     call_count = await mock_claude_client.get_call_count()
-    assert call_count == mock_claude_client.rate_limit_threshold + 1, f"Expected {mock_claude_client.rate_limit_threshold + 1} calls, but got {call_count}"
+    assert call_count == mock_claude_client.rate_limit_threshold + 2, f"Expected {mock_claude_client.rate_limit_threshold + 2} calls, but got {call_count}"
+
+    # Add more detailed logging
+    logger.info(f"Rate limit test completed. Threshold: {mock_claude_client.rate_limit_threshold}, Final call count: {call_count}")
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_error_mode(mock_claude_client, claude_manager):
@@ -1604,6 +1606,9 @@ async def test_concurrent_claude_api_calls(mock_claude_client):
     assert len(rate_limit_errors) == 5, f"Expected 5 rate limit errors, but got {len(rate_limit_errors)}"
     call_count = await mock_claude_client.get_call_count()
     assert call_count == 10, f"Expected 10 total calls, but got {call_count}"
+
+    # Add more detailed logging
+    logger.info(f"Concurrent calls test completed. Successful calls: {len(successful_calls)}, Rate limit errors: {len(rate_limit_errors)}, Total calls: {call_count}")
 
 @pytest.mark.asyncio
 async def test_token_counting(mock_claude_client):
