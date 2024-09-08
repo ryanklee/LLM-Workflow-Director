@@ -14,7 +14,7 @@ import sys
 import os
 from unittest.mock import MagicMock
 from anthropic import APIStatusError
-from src.exceptions import CustomRateLimitError
+from src.exceptions import CustomRateLimitError, RateLimitError
 from src.llm_manager import LLMManager
 from src.claude_manager import ClaudeManager
 from functools import wraps
@@ -138,7 +138,7 @@ class MockClaudeClient:
         
         if self.call_count >= self.rate_limit_threshold:
             self.logger.warning("Rate limit exceeded")
-            raise RateLimitError("Rate limit exceeded")
+            raise CustomRateLimitError("Rate limit exceeded")
         
         if self.error_mode:
             self.error_count += 1
@@ -467,7 +467,7 @@ async def simulate_concurrent_calls(self, num_calls):
     for _ in range(num_calls):
         try:
             results.append(await self.generate_response("Test prompt"))
-        except RateLimitError as e:
+        except (RateLimitError, CustomRateLimitError) as e:
             results.append(e)
     return results
 
@@ -592,14 +592,16 @@ def get_error_count(self):
         await asyncio.sleep(self.latency)
         current_time = time.time()
         if current_time - self.last_reset_time >= self.rate_limit_reset_time:
+            self.logger.info(f"Resetting call count. Old count: {self.call_count}")
             self.call_count = 0
             self.last_reset_time = current_time
             self.logger.debug("Rate limit counter reset")
         self.call_count += 1
-        self.logger.debug(f"Call count: {self.call_count}")
+        self.logger.debug(f"Call count: {self.call_count}, Threshold: {self.rate_limit_threshold}")
         if self.call_count > self.rate_limit_threshold:
-            self.logger.warning("Rate limit exceeded")
-            raise CustomRateLimitError("Rate limit exceeded")
+            error_msg = f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}"
+            self.logger.warning(error_msg)
+            raise CustomRateLimitError(error_msg)
         if self.error_mode:
             self.error_count += 1
             self.logger.debug(f"Error count: {self.error_count}")
@@ -1171,22 +1173,29 @@ class TestInputValidation:
         "   "
     ])
     async def test_input_validation_errors(self, claude_manager, input_text):
-        with pytest.raises(ValueError) as excinfo:
-            await claude_manager.generate_response(input_text)
-        error_msg = str(excinfo.value)
-        if isinstance(input_text, str):
-            if len(input_text) > claude_manager.max_context_length:
-                assert f"Prompt length ({len(input_text)}) exceeds maximum context length" in error_msg, f"Expected error message about exceeding context length, but got: {error_msg}"
-            elif not input_text.strip():
-                assert "Invalid prompt: must be a non-empty string" in error_msg
-            elif "<script>" in input_text.lower():
-                assert "Invalid prompt: contains potentially unsafe content" in error_msg
-            elif re.search(r'\b\d{3}-\d{2}-\d{4}\b', input_text):
-                assert "Invalid prompt: contains sensitive information" in error_msg
-        else:
-            assert f"Invalid prompt type: {type(input_text)}. Must be a string." in error_msg
+        try:
+            with pytest.raises(ValueError) as excinfo:
+                await claude_manager.generate_response(input_text)
+            error_msg = str(excinfo.value)
+            if isinstance(input_text, str):
+                if len(input_text) > claude_manager.max_context_length:
+                    assert f"Prompt length ({len(input_text)}) exceeds maximum context length" in error_msg, f"Expected error message about exceeding context length, but got: {error_msg}"
+                elif not input_text.strip():
+                    assert "Invalid prompt: must be a non-empty string" in error_msg
+                elif "<script>" in input_text.lower():
+                    assert "Invalid prompt: contains potentially unsafe content" in error_msg
+                elif re.search(r'\b\d{3}-\d{2}-\d{4}\b', input_text):
+                    assert "Invalid prompt: contains sensitive information" in error_msg
+            else:
+                assert f"Invalid prompt type: {type(input_text)}. Must be a string." in error_msg
+        except AssertionError as e:
+            logger.error(f"Assertion failed for input: {input_text[:50]}... Error: {str(e)}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error for input: {input_text[:50]}... Error: {str(e)}")
+            raise
 
-        logger.info(f"Input validation test completed for input: {input_text[:50]}...")
+        logger.info(f"Input validation test completed for input: {input_text[:50] if isinstance(input_text, str) else str(input_text)[:50]}...")
 
     @pytest.mark.fast
     @pytest.mark.asyncio
@@ -1294,7 +1303,7 @@ async def test_mock_claude_client_rate_limit(mock_claude_client, claude_manager)
     for _ in range(mock_claude_client.rate_limit_threshold):
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     
-    with pytest.raises(RateLimitError) as excinfo:
+    with pytest.raises((RateLimitError, CustomRateLimitError)) as excinfo:
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     assert "Rate limit exceeded" in str(excinfo.value), f"Expected 'Rate limit exceeded', but got: {str(excinfo.value)}"
     
