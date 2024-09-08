@@ -94,6 +94,7 @@ class MockClaudeClient:
         
         if self.error_mode:
             self.error_count += 1
+            self.error_count_history.append(self.error_count)
             self.logger.debug(f"Error count: {self.error_count}")
             if self.error_count <= self.max_errors:
                 self.logger.error("Simulated API error")
@@ -417,6 +418,8 @@ def setup_teardown(caplog, request):
     yield
     logger.info(f"Finished test: {request.node.name}")
     logger.debug(f"Log output for {request.node.name}:\n" + caplog.text)
+    print(f"\nFull log output for {request.node.name}:")
+    print(caplog.text)
 
 @pytest.fixture
 def run_async_fixture():
@@ -582,6 +585,11 @@ def get_error_count(self):
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         await asyncio.sleep(self.latency)
+        current_time = time.time()
+        if current_time - self.last_reset_time >= self.rate_limit_reset_time:
+            self.call_count = 0
+            self.last_reset_time = current_time
+            self.logger.debug("Rate limit counter reset")
         self.call_count += 1
         self.logger.debug(f"Call count: {self.call_count}")
         if self.call_count > self.rate_limit_threshold:
@@ -1252,12 +1260,15 @@ async def test_claude_manager_retry_mechanism(mock_claude_client, claude_manager
     with pytest.raises(APIStatusError):
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
 
-    assert mock_claude_client.get_error_count() == 2
+    assert await mock_claude_client.get_error_count() == 2
 
     # Reset error mode and try again
     await mock_claude_client.set_error_mode(False)
     response = await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     assert response == "<response>Default mock response</response>"
+
+    # Log the full error count history
+    logger.info(f"Error count history: {mock_claude_client.error_count_history}")
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_rate_limit_reset(mock_claude_client, claude_manager):
@@ -1443,7 +1454,7 @@ async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
     logging.info("Rate limit error raised as expected")
 
     logging.info("Waiting for rate limit to reset")
-    await asyncio.sleep(1.1)
+    await asyncio.sleep(mock_claude_client.rate_limit_reset_time + 0.1)  # Wait slightly longer than the reset time
     logging.info("Rate limit reset period completed")
 
     # Should be able to make calls again
