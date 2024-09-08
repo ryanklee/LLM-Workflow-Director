@@ -428,7 +428,7 @@ class MockClaudeClient:
         if self.call_count > self.rate_limit_threshold:
             error_msg = f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}"
             self.logger.warning(error_msg)
-            raise RateLimitError(error_msg)  # Changed to RateLimitError for consistency
+            raise CustomRateLimitError(error_msg)  # Changed to CustomRateLimitError for consistency
         self.logger.info(f"Generating response for model: {model}")
         if self.error_mode:
             self.error_count += 1
@@ -643,13 +643,16 @@ def get_error_count(self):
     async def get_error_count(self):
         return self.error_count
 
-    def simulate_concurrent_calls(self, num_calls):
+    async def simulate_concurrent_calls(self, num_calls):
         results = []
-        for _ in range(num_calls):
+        tasks = [self.generate_response("Test prompt") for _ in range(num_calls)]
+        for task in asyncio.as_completed(tasks):
             try:
-                results.append(self.generate_response("Test prompt"))
-            except RateLimitError as e:
+                result = await task
+                results.append(result)
+            except CustomRateLimitError as e:
                 results.append(e)
+        self.logger.info(f"Simulated {num_calls} concurrent calls. Results: {len([r for r in results if isinstance(r, str)])} successful, {len([r for r in results if isinstance(r, CustomRateLimitError)])} rate limited")
         return results
         self.latency = 0
         self.responses = {}
