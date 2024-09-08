@@ -25,19 +25,19 @@ class MockClaudeClient:
         self.lock = asyncio.Lock()
         self.logger = logging.getLogger(__name__)
 
-    def set_response(self, prompt: str, response: str):
+    async def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
 
-    def set_rate_limit(self, limit_reached: bool):
+    async def set_rate_limit(self, limit_reached: bool):
         self.rate_limit_reached = limit_reached
 
-    def set_error_mode(self, error_mode: bool):
+    async def set_error_mode(self, error_mode: bool):
         self.error_mode = error_mode
 
-    def set_latency(self, latency: float):
+    async def set_latency(self, latency: float):
         self.latency = latency
 
-    def reset(self):
+    async def reset(self):
         self.rate_limit_reached = False
         self.error_mode = False
         self.responses = {}
@@ -87,7 +87,7 @@ class MockClaudeClient:
                 "usage": {"total_tokens": len(response.split())}
             }
 
-    def count_tokens(self, text: str) -> int:
+    async def count_tokens(self, text: str) -> int:
         return len(text.split())
 
     async def _simulate_latency(self):
@@ -103,25 +103,21 @@ class MockClaudeClient:
         await asyncio.sleep(self.rate_limit_reset_time)
         self.call_count = 0
 
-    def set_rate_limit_threshold(self, threshold: int):
+    async def set_rate_limit_threshold(self, threshold: int):
         self.rate_limit_threshold = threshold
 
-    def set_rate_limit_reset_time(self, reset_time: int):
+    async def set_rate_limit_reset_time(self, reset_time: int):
         self.rate_limit_reset_time = reset_time
 
     async def simulate_concurrent_calls(self, num_calls: int):
         tasks = [self.create("test-model", 100, [{"role": "user", "content": f"Test {i}"}]) for i in range(num_calls)]
         return await asyncio.gather(*tasks, return_exceptions=True)
 
-    def get_call_count(self):
+    async def get_call_count(self):
         return self.call_count
 
-    def get_error_count(self):
+    async def get_error_count(self):
         return self.error_count
-
-    def count_tokens(self, text: str) -> int:
-        # Simple token counting implementation
-        return len(text.split())
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         response = await self.create(model, self.max_test_tokens, [{"role": "user", "content": prompt}])

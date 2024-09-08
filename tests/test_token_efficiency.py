@@ -24,7 +24,7 @@ async def test_token_usage_per_query_type(claude_manager: ClaudeManager, benchma
     
     async def measure_token_usage(query):
         response = await claude_manager.generate_response(query)
-        return claude_manager.count_tokens(query + response)
+        return await claude_manager.count_tokens(query + response)
     
     for query_type, query in query_types.items():
         result = await benchmark.pedantic(measure_token_usage, args=(query,), iterations=5, rounds=3)
@@ -37,8 +37,8 @@ async def test_cost_effectiveness_of_models(llm_manager: LLMManager, benchmark: 
     
     async def measure_cost_effectiveness(model):
         response = await llm_manager.query(query, model=model)
-        tokens = llm_manager.count_tokens(query + response['response'])
-        cost = llm_manager.calculate_cost(model, tokens)
+        tokens = await llm_manager.count_tokens(query + response['response'])
+        cost = await llm_manager.calculate_cost(model, tokens)
         return len(response['response']) / cost  # characters per unit of cost
     
     for model in models:
@@ -57,7 +57,7 @@ async def test_optimization_strategies(claude_manager: ClaudeManager, benchmark:
     
     async def measure_token_efficiency(query):
         response = await claude_manager.generate_response(query)
-        tokens = claude_manager.count_tokens(query + str(response))
+        tokens = await claude_manager.count_tokens(query + str(response))
         return len(str(response)) / tokens  # characters per token
     
     for strategy, query in strategies.items():
@@ -73,8 +73,8 @@ async def test_token_usage_estimation(llm_manager: LLMManager):
     }
     
     for query_type, query in query_types.items():
-        estimated_tokens = llm_manager.estimate_token_usage(query)
-        actual_tokens = llm_manager.count_tokens(query)
+        estimated_tokens = await llm_manager.estimate_token_usage(query)
+        actual_tokens = await llm_manager.count_tokens(query)
         
         print(f"Query type: {query_type}")
         print(f"Estimated tokens: {estimated_tokens}")
@@ -110,7 +110,7 @@ async def test_token_efficiency_over_time(claude_manager: ClaudeManager, benchma
         
         for i in range(num_iterations):
             response = await claude_manager.generate_response(query)
-            tokens = claude_manager.count_tokens(query + response)
+            tokens = await claude_manager.count_tokens(query + response)
             total_tokens += tokens
             total_response_length += len(response)
             

@@ -33,7 +33,7 @@ class ClaudeManager:
         # You might want to implement a more sophisticated evaluation method
         return len(response) / 100  # Simple quality metric based on response length
 
-    def count_tokens(self, text):
+    async def count_tokens(self, text):
         # This is a simple approximation. For more accurate results, use a proper tokenizer.
         return len(text)
 
@@ -57,12 +57,12 @@ class ClaudeManager:
                 raise ValueError(f"Invalid prompt type: {type(prompt)}. Must be a string.")
             if not prompt.strip():
                 raise ValueError("Invalid prompt: must be a non-empty string")
-            token_count = self.count_tokens(prompt)
+            token_count = await self.count_tokens(prompt)
             self.logger.debug(f"Token count for prompt: {token_count}")
             if token_count > self.max_context_length:
                 raise ValueError(f"Prompt length exceeds maximum context length of {self.max_context_length} tokens")
             if token_count > self.max_test_tokens:
-                prompt = self._truncate_prompt(prompt, self.max_test_tokens)
+                prompt = await self._truncate_prompt(prompt, self.max_test_tokens)
                 self.logger.debug(f"Prompt truncated to {self.max_test_tokens} tokens")
             if '<script>' in prompt.lower() or 'ssn:' in prompt.lower():
                 raise ValueError("Invalid prompt: contains potentially sensitive information")
@@ -70,15 +70,15 @@ class ClaudeManager:
             self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
             self.logger.debug(f"Using model: {model if model else 'default'}")
 
-            selected_model = self.select_model(prompt) if model is None else model
+            selected_model = await self.select_model(prompt) if model is None else model
             response = await self.client.messages.create(
                 model=selected_model,
                 max_tokens=self.max_test_tokens,
                 messages=[{"role": "user", "content": prompt}]
             )
-            response_text = self._extract_response_text(response)
-            self.token_tracker.add_tokens("generate_response", token_count, self.count_tokens(response_text))
-            return self.parse_response(response_text)
+            response_text = await self._extract_response_text(response)
+            await self.token_tracker.add_tokens("generate_response", token_count, await self.count_tokens(response_text))
+            return await self.parse_response(response_text)
         except RateLimitError as e:
             self.logger.error(f"Rate limit error in generate_response: {str(e)}")
             raise

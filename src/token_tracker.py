@@ -44,24 +44,24 @@ class TokenTracker:
         self.token_usage: Dict[str, int] = {}
         self.total_tokens = 0
 
-    def add_tokens(self, task_id: str, input_tokens: int, output_tokens: int):
+    async def add_tokens(self, task_id: str, input_tokens: int, output_tokens: int):
         total_tokens = input_tokens + output_tokens
         self.token_usage[task_id] = self.token_usage.get(task_id, 0) + total_tokens
         self.total_tokens += total_tokens
         self.logger.info(f"Added {total_tokens} tokens for task {task_id}. Total tokens: {self.total_tokens}")
 
-    def get_token_usage(self, task_id: str) -> int:
+    async def get_token_usage(self, task_id: str) -> int:
         return self.token_usage.get(task_id, 0)
 
-    def get_total_token_usage(self) -> int:
+    async def get_total_token_usage(self) -> int:
         return self.total_tokens
 
-    def reset(self):
+    async def reset(self):
         self.token_usage.clear()
         self.total_tokens = 0
         self.logger.info("Token usage reset")
 
-    def count_tokens(self, text: str) -> int:
+    async def count_tokens(self, text: str) -> int:
         # This is a simple approximation. For more accurate results, use a proper tokenizer.
         return len(text.split())
 
@@ -70,9 +70,9 @@ class TokenOptimizer:
         self.token_tracker = token_tracker
         self.logger = logging.getLogger(__name__)
 
-    def suggest_optimization(self, task_id: str) -> str:
-        task_tokens = self.token_tracker.get_token_usage(task_id)
-        total_tokens = self.token_tracker.get_total_token_usage()
+    async def suggest_optimization(self, task_id: str) -> str:
+        task_tokens = await self.token_tracker.get_token_usage(task_id)
+        total_tokens = await self.token_tracker.get_total_token_usage()
         
         if task_tokens > total_tokens * 0.2:  # If task uses more than 20% of total tokens
             return f"Consider optimizing task {task_id} to reduce token usage"
@@ -81,18 +81,18 @@ class TokenOptimizer:
         else:
             return f"Token usage for task {task_id} seems reasonable"
 
-    def get_overall_efficiency(self) -> float:
-        total_tokens = self.token_tracker.get_total_token_usage()
+    async def get_overall_efficiency(self) -> float:
+        total_tokens = await self.token_tracker.get_total_token_usage()
         num_tasks = len(self.token_tracker.token_usage)
         if num_tasks == 0:
             return 0.0
         return total_tokens / num_tasks
 
-    def generate_report(self) -> str:
+    async def generate_report(self) -> str:
         report = "Token Usage Report:\n"
-        report += f"Total Tokens Used: {self.token_tracker.get_total_token_usage()}\n"
+        report += f"Total Tokens Used: {await self.token_tracker.get_total_token_usage()}\n"
         report += f"Number of Tasks: {len(self.token_tracker.token_usage)}\n"
-        report += f"Overall Efficiency: {self.get_overall_efficiency():.2f} tokens per task\n"
+        report += f"Overall Efficiency: {await self.get_overall_efficiency():.2f} tokens per task\n"
         report += "\nTop 5 Token-Heavy Tasks:\n"
         
         sorted_tasks = sorted(self.token_tracker.token_usage.items(), key=lambda x: x[1], reverse=True)[:5]
@@ -100,6 +100,13 @@ class TokenOptimizer:
             report += f"- Task {task_id}: {tokens} tokens\n"
         
         return report
+
+    async def optimize_prompt(self, prompt: str) -> str:
+        # Implement more sophisticated optimization logic here
+        words = prompt.split()
+        if len(words) > 100:
+            return ' '.join(words[:100])
+        return prompt
 class TokenTracker:
     def __init__(self):
         self.token_usage = {}

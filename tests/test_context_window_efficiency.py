@@ -24,8 +24,8 @@ async def test_token_usage_efficiency(claude_manager: ClaudeManager, benchmark: 
         context = "a" * size
         prompt = f"Summarize the following text in one sentence: {context}"
         response = await claude_manager.generate_response(prompt)
-        total_tokens = claude_manager.count_tokens(prompt + response)
-        useful_tokens = claude_manager.count_tokens(response)
+        total_tokens = await claude_manager.count_tokens(prompt + response)
+        useful_tokens = await claude_manager.count_tokens(response)
         return useful_tokens / total_tokens
 
     results = await benchmark.pedantic(measure_efficiency, args=(max(context_sizes),), iterations=5, rounds=3)
@@ -48,7 +48,7 @@ async def test_response_time_vs_context_size(claude_manager: ClaudeManager, benc
         return end_time - start_time
 
     for size in context_sizes:
-        result = benchmark.pedantic(measure_response_time, args=(size,), iterations=3, rounds=1)
+        result = await benchmark.pedantic(measure_response_time, args=(size,), iterations=3, rounds=1)
         print(f"Response time for context size {size}: {result.stats['mean']:.4f} seconds")
     
     # Assert that the response time for the largest context is not significantly higher than the smallest
@@ -83,7 +83,7 @@ async def test_context_window_utilization(claude_manager: ClaudeManager):
     prompt = f"Summarize the following text in one sentence: {context}"
     
     response = await claude_manager.generate_response(prompt)
-    total_tokens = claude_manager.count_tokens(prompt + response)
+    total_tokens = await claude_manager.count_tokens(prompt + response)
     
     utilization = total_tokens / max_context_size
     print(f"Context window utilization: {utilization:.2%}")
