@@ -166,39 +166,51 @@ class ClaudeManager:
     def __init__(self, client):
         self.client = client
         self.max_context_length = client.max_context_length
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         try:
-            return await self.client.generate_response(prompt, model)
+            response = await self.client.generate_response(prompt, model)
+            self.logger.debug(f"Response generated successfully: {response[:50]}...")
+            return response
         except CustomRateLimitError as e:
-            logger.warning(f"Rate limit reached: {str(e)}")
+            self.logger.warning(f"Rate limit reached: {str(e)}")
             raise
         except APIStatusError as e:
-            logger.error(f"API error: {str(e)}")
+            self.logger.error(f"API error: {str(e)}")
             raise
         except Exception as e:
-            logger.error(f"Unexpected error: {str(e)}")
+            self.logger.error(f"Unexpected error: {str(e)}")
             raise
 
     async def count_tokens(self, text: str) -> int:
+        self.logger.debug(f"Counting tokens for text: {text[:50]}...")
         return await self.client.count_tokens(text)
 
     async def select_model(self, task: str) -> str:
+        self.logger.debug(f"Selecting model for task: {task}")
         return await self.client.select_model(task)
 
     async def close(self):
+        self.logger.debug("Closing ClaudeManager")
         await self.client.reset()
 
     async def set_response(self, prompt: str, response: str):
+        self.logger.debug(f"Setting response for prompt: {prompt[:50]}...")
         await self.client.set_response(prompt, response)
 
     async def set_error_mode(self, mode: bool):
+        self.logger.debug(f"Setting error mode to: {mode}")
         await self.client.set_error_mode(mode)
 
     async def set_latency(self, latency: float):
+        self.logger.debug(f"Setting latency to: {latency}")
         await self.client.set_latency(latency)
 
     async def set_rate_limit(self, threshold: int):
+        self.logger.debug(f"Setting rate limit threshold to: {threshold}")
         await self.client.set_rate_limit(threshold)
 
 @pytest.fixture(autouse=True)
@@ -797,6 +809,15 @@ async def test_token_counting(claude_manager):
     text = "This is a test sentence."
     token_count = await claude_manager.count_tokens(text)
     assert token_count == 5, f"Expected 5 tokens, but got {token_count}"
+    
+    # Add more test cases
+    long_text = "This is a longer test sentence with more tokens to count."
+    long_token_count = await claude_manager.count_tokens(long_text)
+    assert long_token_count == 11, f"Expected 11 tokens, but got {long_token_count}"
+    
+    empty_text = ""
+    empty_token_count = await claude_manager.count_tokens(empty_text)
+    assert empty_token_count == 0, f"Expected 0 tokens for empty string, but got {empty_token_count}"
 
 @pytest.mark.asyncio
 async def test_generate_response(claude_manager):
