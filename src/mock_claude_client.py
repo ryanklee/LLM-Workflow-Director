@@ -24,11 +24,37 @@ class MockClaudeClient:
         self.error_count = 0
         self.max_errors = 3
         self.rate_limit_reset_time = 60  # seconds
+        self.max_context_length = 200000  # 200k tokens
         self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
+        self.logger.debug("Initialized MockClaudeClient")
+
+    async def set_response(self, prompt: str, response: str):
+        self.responses[prompt] = response
+        self.logger.debug(f"Set response for prompt: {prompt[:50]}...")
+
+    async def set_error_mode(self, mode: bool):
+        self.error_mode = mode
+        self.logger.debug(f"Set error mode to: {mode}")
+
+    async def set_latency(self, latency: float):
+        self.latency = latency
+        self.logger.debug(f"Set latency to: {latency}")
+
+    async def set_rate_limit(self, threshold: int):
+        self.rate_limit_threshold = threshold
+        self.logger.debug(f"Set rate limit threshold to: {threshold}")
+
+    async def select_model(self, task: str) -> str:
+        if "simple" in task.lower():
+            return "claude-3-haiku-20240307"
+        elif "complex" in task.lower():
+            return "claude-3-opus-20240229"
+        else:
+            return "claude-3-sonnet-20240229"
         
     async def _check_rate_limit(self):
         current_time = time.time()

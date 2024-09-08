@@ -28,13 +28,15 @@ async def mock_claude_client():
     logger.debug("Created MockClaudeClient instance")
     yield client
     await client.reset()
+    logger.debug("Reset MockClaudeClient instance")
 
 @pytest.fixture
 async def claude_manager(mock_claude_client):
     manager = ClaudeManager(client=mock_claude_client)
     logger.debug("Created ClaudeManager instance with MockClaudeClient")
     yield manager
-    await manager.close()  # Assuming we add a close method to clean up resources
+    await manager.close()
+    logger.debug("Closed ClaudeManager instance")
 
 @pytest.fixture(autouse=True)
 async def setup_teardown(mock_claude_client, claude_manager):
@@ -76,11 +78,13 @@ def log_test_name(request):
 @pytest.mark.asyncio
 async def test_claude_api_latency(claude_manager, mock_claude_client):
     await mock_claude_client.set_latency(0.5)  # Set a 500ms latency
+    logger.info("Set latency to 500ms")
     start_time = time.time()
     response = await claude_manager.generate_response("Test prompt")
     end_time = time.time()
-    assert end_time - start_time >= 0.5, "API call should take at least 500ms"
-    logger.info(f"API call latency: {end_time - start_time:.2f} seconds")
+    elapsed_time = end_time - start_time
+    assert elapsed_time >= 0.5, f"API call should take at least 500ms, but took {elapsed_time:.2f}s"
+    logger.info(f"API call latency: {elapsed_time:.2f} seconds")
     logger.info(f"Response: {response}")
 
 @pytest.mark.asyncio
