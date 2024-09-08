@@ -154,7 +154,7 @@ class MockClaudeClient:
         self.logger.debug(f"Call count: {self.call_count}")
         if self.call_count > self.rate_limit_threshold:
             self.logger.warning("Rate limit exceeded")
-            raise CustomRateLimitError("Rate limit exceeded")
+            raise RateLimitError("Rate limit exceeded")
         if self.error_mode:
             self.error_count += 1
             self.logger.debug(f"Error count: {self.error_count}")
@@ -425,7 +425,7 @@ async def simulate_concurrent_calls(self, num_calls):
     for _ in range(num_calls):
         try:
             results.append(await self.generate_response("Test prompt"))
-        except CustomRateLimitError as e:
+        except RateLimitError as e:
             results.append(e)
     return results
 
@@ -1237,7 +1237,7 @@ async def test_mock_claude_client_rate_limit(mock_claude_client, claude_manager)
     for _ in range(mock_claude_client.rate_limit_threshold):
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     
-    with pytest.raises(CustomRateLimitError):
+    with pytest.raises(RateLimitError):
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     
     call_count = await mock_claude_client.get_call_count()
@@ -1307,7 +1307,7 @@ async def test_mock_claude_client_concurrent_calls(mock_claude_client):
     results = await mock_claude_client.simulate_concurrent_calls(10)
 
     successful_calls = [r for r in results if isinstance(r, dict)]
-    rate_limit_errors = [r for r in results if isinstance(r, CustomRateLimitError)]
+    rate_limit_errors = [r for r in results if isinstance(r, RateLimitError)]
 
     assert len(successful_calls) == 5
     assert len(rate_limit_errors) == 5
