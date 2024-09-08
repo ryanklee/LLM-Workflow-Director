@@ -674,12 +674,18 @@ class ClaudeManager:
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}... using model: {model}")
-        if not isinstance(prompt, str) or not prompt.strip():
+        if not isinstance(prompt, str):
+            self.logger.error("Invalid prompt: must be a string")
+            raise ValueError("Invalid prompt: must be a string")
+        if not prompt.strip():
             self.logger.error("Invalid prompt: must be a non-empty string")
             raise ValueError("Invalid prompt: must be a non-empty string")
         if len(prompt) > self.max_context_length:
             self.logger.error(f"Prompt length exceeds maximum context length of {self.max_context_length}")
             raise ValueError(f"Prompt length exceeds maximum context length of {self.max_context_length}")
+        if "<script>" in prompt.lower():
+            self.logger.error("Invalid prompt: contains potentially unsafe content")
+            raise ValueError("Invalid prompt: contains potentially unsafe content")
         try:
             response = await self.client.generate_response(prompt, model)
             self.logger.debug(f"Response generated successfully: {response[:50]}...")
