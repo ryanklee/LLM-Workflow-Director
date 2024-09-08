@@ -40,7 +40,7 @@ class LLMCostOptimizer:
             'powerful': {'avg_response_time': 0, 'success_rate': 1.0}
         }
 
-    def update_usage(self, tier: str, tokens: int, response_time: float, success: bool):
+    async def update_usage(self, tier: str, tokens: int, response_time: float, success: bool):
         if tier in self.usage_stats:
             self.usage_stats[tier]['count'] += 1
             self.usage_stats[tier]['total_tokens'] += tokens
@@ -60,7 +60,7 @@ class LLMCostOptimizer:
         else:
             self.logger.warning(f"Unknown tier: {tier}")
 
-    def get_usage_report(self) -> Dict[str, Any]:
+    async def get_usage_report(self) -> Dict[str, Any]:
         total_cost = sum(self.usage_stats[tier]['total_cost'] for tier in self.usage_stats)
         return {
             'usage_stats': self.usage_stats,
@@ -68,7 +68,7 @@ class LLMCostOptimizer:
             'total_cost': total_cost
         }
 
-    def suggest_optimization(self) -> str:
+    async def suggest_optimization(self) -> str:
         total_queries = sum(self.usage_stats[tier]['count'] for tier in self.usage_stats)
         if total_queries == 0:
             return "Not enough data to suggest optimizations."
@@ -94,7 +94,7 @@ class LLMCostOptimizer:
         
         return " ".join(suggestions)
 
-    def select_optimal_tier(self, query_complexity: float) -> str:
+    async def select_optimal_tier(self, query_complexity: float) -> str:
         if query_complexity < 0.3:
             return 'fast'
         elif query_complexity < 0.7:
@@ -147,7 +147,7 @@ class LLMManager:
             query_complexity = await self._estimate_query_complexity(prompt)
             tier = await self.cost_optimizer.select_optimal_tier(query_complexity)
 
-        self.logger.debug(f"Selected tier: {tier}")
+        self.logger.debug(f"Selected tier: {tier}, model: {model or 'default'}")
 
         cache_key = await self._generate_cache_key(prompt, context, tier)
         if cache_key in self.cache:
@@ -209,6 +209,18 @@ class LLMManager:
                     return await self._fallback_response(prompt, context, original_tier)
         
         return await self._fallback_response(prompt, context, original_tier)
+
+    async def get_optimization_suggestion(self) -> str:
+        return await self.cost_optimizer.suggest_optimization()
+
+    async def get_usage_report(self) -> Dict[str, Any]:
+        return await self.cost_optimizer.get_usage_report()
+
+    async def calculate_cost(self, model: str, tokens: int) -> float:
+        # Implement the cost calculation logic here
+        # This is a placeholder implementation
+        cost_per_token = 0.0001  # Example cost per token
+        return tokens * cost_per_token
 
     async def _process_response(self, response: str, tier: str, start_time: float) -> Dict[str, Any]:
         end_time = safe_time()

@@ -108,6 +108,10 @@ class MockClaudeClient:
         response = await self.create(model, self.max_test_tokens, [{"role": "user", "content": prompt}])
         return response.content[0].text
 
+    async def count_tokens(self, text: str) -> int:
+        # This is a simple approximation. For more accurate results, use a proper tokenizer.
+        return len(text.split())
+
     async def _simulate_latency(self):
         await asyncio.sleep(self.latency)
 

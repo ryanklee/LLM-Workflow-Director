@@ -51,6 +51,7 @@ class ClaudeManager:
     )
     async def generate_response(self, prompt, model=None):
         self.logger.debug(f"Entering generate_response with prompt: {prompt[:50]}... and model: {model}")
+        start_time = time.time()
         try:
             if not await self.rate_limiter.is_allowed():
                 self.logger.warning("Rate limit reached, waiting for next available slot")
@@ -80,7 +81,10 @@ class ClaudeManager:
             )
             response_text = response.content[0].text
             await self.token_tracker.add_tokens("generate_response", token_count, await self.count_tokens(response_text))
-            return await self.parse_response(response_text)
+            parsed_response = await self.parse_response(response_text)
+            end_time = time.time()
+            self.logger.debug(f"Response generated in {end_time - start_time:.2f} seconds")
+            return parsed_response
         except RateLimitError as e:
             self.logger.error(f"Rate limit error in generate_response: {str(e)}")
             raise
@@ -90,6 +94,9 @@ class ClaudeManager:
         except Exception as e:
             self.logger.error(f"Unexpected error in generate_response: {str(e)}")
             return await self.fallback_response(prompt, f"Unexpected error: {str(e)}")
+        finally:
+            end_time = time.time()
+            self.logger.debug(f"Total time in generate_response: {end_time - start_time:.2f} seconds")
 
     async def _truncate_prompt(self, prompt, max_tokens):
         words = prompt.split()
