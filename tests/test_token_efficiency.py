@@ -230,12 +230,13 @@ async def test_token_optimization(token_optimizer):
     assert await token_optimizer.token_tracker.count_tokens(optimized_prompt) <= 100, \
         "Optimized prompt should not exceed 100 tokens"
 
-def test_token_usage_tracking(llm_manager, token_tracker):
+@pytest.mark.asyncio
+async def test_token_usage_tracking(llm_manager, token_tracker):
     query = "What is the meaning of life?"
-    response = llm_manager.query(query)
+    response = await llm_manager.query(query)
 
-    assert token_tracker.get_token_usage(query) > 0, "Token usage should be tracked for the query"
-    assert token_tracker.get_total_token_usage() > 0, "Total token usage should be tracked"
+    assert await token_tracker.get_token_usage(query) > 0, "Token usage should be tracked for the query"
+    assert await token_tracker.get_total_token_usage() > 0, "Total token usage should be tracked"
 
-    efficiency = token_tracker.get_overall_efficiency()
+    efficiency = await token_tracker.get_overall_efficiency()
     assert 0 < efficiency < 100, "Token efficiency should be between 0 and 100 tokens per task"

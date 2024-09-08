@@ -210,6 +210,27 @@ class LLMManager:
         
         return await self._fallback_response(prompt, context, original_tier)
 
+    async def _process_response(self, response: str, tier: str, start_time: float) -> Dict[str, Any]:
+        end_time = safe_time()
+        response_time = end_time - start_time
+        tokens = await self.claude_manager.count_tokens(response)
+
+        self.logger.debug(f"Received response from LLM: {response[:50]}...")
+        structured_response = await self._parse_structured_response(response)
+        
+        response_with_id = await self._add_unique_id(structured_response)
+        response_with_id['response_time'] = response_time
+        response_with_id['tier'] = tier
+        
+        if 'response' not in response_with_id or not response_with_id['response']:
+            response_with_id['response'] = response or "No response content"
+        
+        # Ensure 'response' is always a string
+        if isinstance(response_with_id['response'], dict):
+            response_with_id['response'] = str(response_with_id['response'])
+
+        return response_with_id
+
     async def get_optimization_suggestion(self) -> str:
         return await self.cost_optimizer.suggest_optimization()
 

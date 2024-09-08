@@ -24,13 +24,6 @@ class MockClaudeClient:
         self.error_count = 0
         self.max_errors = 3
         self.rate_limit_reset_time = 60  # seconds
-        self.lock = asyncio.Lock()
-        self.call_count = 0
-        self.rate_limit_threshold = 5  # Number of calls before rate limiting
-        self.last_call_time = 0
-        self.error_count = 0
-        self.max_errors = 3
-        self.rate_limit_reset_time = 60  # seconds
         self.latency = 0.1  # Default latency in seconds
         self.lock = asyncio.Lock()
         self.logger = logging.getLogger(__name__)
@@ -55,6 +48,9 @@ class MockClaudeClient:
         self.last_call_time = 0
         self.error_count = 0
         self.latency = 0.1
+
+    async def messages(self):
+        return self
 
     async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
         await self._simulate_latency()
@@ -91,11 +87,7 @@ class MockClaudeClient:
             await asyncio.sleep(0.1)  # Simulate some processing time
             
             self.logger.debug(f"Returning response: {response[:50]}...")
-            return {
-                "content": [{"text": response}],
-                "model": model,
-                "usage": {"total_tokens": len(response.split())}
-            }
+            return MagicMock(content=[MagicMock(text=response)])
 
     async def count_tokens(self, text: str) -> int:
         await asyncio.sleep(0.01)  # Simulate a short delay
@@ -103,19 +95,10 @@ class MockClaudeClient:
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         response = await self.create(model, self.max_test_tokens, [{"role": "user", "content": prompt}])
-        return response['content'][0]['text']
-
-    async def count_tokens(self, text: str) -> int:
-        return len(text.split())
+        return response.content[0].text
 
     async def _simulate_latency(self):
         await asyncio.sleep(self.latency)
-
-    async def completion(self, prompt: str, model: str, max_tokens_to_sample: int, **kwargs) -> Dict[str, Any]:
-        return await self.create(model, max_tokens_to_sample, [{"role": "user", "content": prompt}])
-
-    async def completions(self, prompt: str, model: str, max_tokens_to_sample: int, **kwargs) -> Dict[str, Any]:
-        return await self.completion(prompt, model, max_tokens_to_sample, **kwargs)
 
     async def wait_for_rate_limit_reset(self):
         await asyncio.sleep(self.rate_limit_reset_time)
@@ -136,7 +119,3 @@ class MockClaudeClient:
 
     async def get_error_count(self):
         return self.error_count
-
-    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
-        response = await self.create(model, self.max_test_tokens, [{"role": "user", "content": prompt}])
-        return response['content'][0]['text']

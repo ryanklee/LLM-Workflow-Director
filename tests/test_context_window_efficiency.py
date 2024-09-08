@@ -49,7 +49,7 @@ async def test_response_time_vs_context_size(claude_manager: ClaudeManager, benc
 
     for size in context_sizes:
         result = await benchmark.pedantic(measure_response_time, args=(size,), iterations=3, rounds=1)
-        print(f"Response time for context size {size}: {result.stats['mean']:.4f} seconds")
+        print(f"Response time for context size {size}: {result:.4f} seconds")
     
     # Assert that the response time for the largest context is not significantly higher than the smallest
     large_context_time = await measure_response_time(context_sizes[-1])
@@ -70,7 +70,8 @@ async def test_response_quality_vs_context_size(claude_manager: ClaudeManager, l
         response = await claude_manager.generate_response(prompt)
         
         quality_prompt = f"Evaluate the following summary for relevance and coherence on a scale of 1-10: '{response}'"
-        quality_score = await llm_manager.evaluate_response_quality(quality_prompt)
+        quality_score = await llm_manager.query(quality_prompt)
+        quality_score = float(quality_score['response'])
         
         print(f"Quality score for context size {size}: {quality_score}")
 
