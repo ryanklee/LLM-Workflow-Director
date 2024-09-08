@@ -107,6 +107,11 @@ class MockClaudeClient:
                          f"rate_limit_reset_time={self.rate_limit_reset_time}, max_test_tokens={self.max_test_tokens}")
         self.logger.debug(f"Initialized MockClaudeClient with rate_limit_threshold={self.rate_limit_threshold}, "
                           f"rate_limit_reset_time={self.rate_limit_reset_time}, max_test_tokens={self.max_test_tokens}")
+        
+    def __str__(self):
+        return f"MockClaudeClient(rate_limit_threshold={self.rate_limit_threshold}, " \
+               f"call_count={self.call_count}, error_count={self.error_count}, " \
+               f"error_mode={self.error_mode})"
 
     def __str__(self):
         return f"MockClaudeClient(rate_limit_threshold={self.rate_limit_threshold}, call_count={self.call_count}, error_count={self.error_count}, error_mode={self.error_mode})"
@@ -423,7 +428,7 @@ class MockClaudeClient:
         if self.call_count > self.rate_limit_threshold:
             error_msg = f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}"
             self.logger.warning(error_msg)
-            raise CustomRateLimitError(error_msg)
+            raise RateLimitError(error_msg)  # Changed to RateLimitError for consistency
         self.logger.info(f"Generating response for model: {model}")
         if self.error_mode:
             self.error_count += 1
@@ -1166,7 +1171,7 @@ class TestInputValidation:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("input_text", [
         "",
-        "a" * 1001,  # Over the max_test_tokens limit
+        "a" * 200001,  # Over the max_context_length limit
         "<script>",
         "SSN: 123-45-6789",
         123,
