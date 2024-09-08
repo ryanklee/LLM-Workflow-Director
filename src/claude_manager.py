@@ -54,6 +54,14 @@ class ClaudeManager:
         self.messages = self.client.messages
         self.logger.info("ClaudeManager initialization complete")
 
+    async def close(self):
+        self.logger.info("Closing ClaudeManager")
+        # Add any cleanup logic here
+        await self.client.reset()  # Assuming the client has a reset method
+
+    async def select_model(self, task: str) -> str:
+        return await self.client.select_model(task)
+
     @staticmethod
     def create_client():
         return AsyncAnthropic()

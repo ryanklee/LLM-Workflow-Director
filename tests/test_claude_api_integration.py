@@ -12,7 +12,14 @@ from src.llm_manager import LLMManager
 from anthropic import APIError, APIStatusError
 
 # Set up logging for tests
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('test_claude_api_integration.log'),
+        logging.StreamHandler()
+    ]
+)
 logger = logging.getLogger(__name__)
 
 @pytest.fixture
@@ -28,6 +35,14 @@ async def claude_manager(mock_claude_client):
     logger.debug("Created ClaudeManager instance with MockClaudeClient")
     yield manager
     await manager.close()  # Assuming we add a close method to clean up resources
+
+@pytest.fixture(autouse=True)
+async def setup_teardown(mock_claude_client, claude_manager):
+    logger.info("Setting up test environment")
+    yield
+    logger.info("Tearing down test environment")
+    await mock_claude_client.reset()
+    await claude_manager.close()
 
 @pytest.fixture
 def llm_manager(claude_manager):
@@ -60,11 +75,13 @@ def log_test_name(request):
 
 @pytest.mark.asyncio
 async def test_claude_api_latency(claude_manager, mock_claude_client):
-    mock_claude_client.set_latency(0.5)  # Set a 500ms latency
+    await mock_claude_client.set_latency(0.5)  # Set a 500ms latency
     start_time = time.time()
-    await claude_manager.generate_response("Test prompt")
+    response = await claude_manager.generate_response("Test prompt")
     end_time = time.time()
     assert end_time - start_time >= 0.5, "API call should take at least 500ms"
+    logger.info(f"API call latency: {end_time - start_time:.2f} seconds")
+    logger.info(f"Response: {response}")
 
 @pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
