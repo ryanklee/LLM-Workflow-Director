@@ -73,7 +73,8 @@ class MockClaudeClient:
         self.error_count_history = []
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
-        self.logger.debug("Initialized MockClaudeClient")
+        self.logger.debug(f"Initialized MockClaudeClient with rate_limit_threshold={self.rate_limit_threshold}, "
+                          f"rate_limit_reset_time={self.rate_limit_reset_time}, max_test_tokens={self.max_test_tokens}")
 
     async def set_rate_limit_reset_time(self, reset_time: int):
         self.rate_limit_reset_time = reset_time
@@ -132,7 +133,7 @@ class MockClaudeClient:
         self.__init__()
         self.logger.debug("Reset MockClaudeClient")
 
-    def get_call_count(self):
+    async def get_call_count(self):
         return self.call_count
 
     async def get_error_count(self):
@@ -369,14 +370,14 @@ class MockClaudeClient:
         await asyncio.sleep(self.latency)
         current_time = time.time()
         if current_time - self.last_reset_time >= self.rate_limit_reset_time:
-            self.logger.debug("Resetting call count due to time elapsed")
+            self.logger.debug(f"Resetting call count due to time elapsed. Old count: {self.call_count}")
             self.call_count = 0
             self.last_reset_time = current_time
         self.call_count += 1
-        self.logger.debug(f"Call count: {self.call_count}")
+        self.logger.debug(f"Call count: {self.call_count}, Threshold: {self.rate_limit_threshold}")
         if self.call_count > self.rate_limit_threshold:
-            self.logger.warning("Rate limit exceeded")
-            raise CustomRateLimitError("Rate limit exceeded")
+            self.logger.warning(f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}")
+            raise CustomRateLimitError(f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}")
         if self.error_mode:
             self.error_count += 1
             self.logger.debug(f"Error count: {self.error_count}")
@@ -831,22 +832,22 @@ class ClaudeManager:
         await self.client.set_rate_limit(threshold)
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
-        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        self.logger.debug(f"Generating response for prompt: {prompt[:50] if isinstance(prompt, str) else str(prompt)[:50]}...")
         if not isinstance(prompt, str):
-            self.logger.error("Invalid prompt: must be a string")
-            raise ValueError("Invalid prompt: must be a string")
+            self.logger.error(f"Invalid prompt type: {type(prompt)}. Must be a string.")
+            raise ValueError(f"Invalid prompt type: {type(prompt)}. Must be a string.")
         if not prompt.strip():
             self.logger.error("Invalid prompt: must be a non-empty string")
             raise ValueError("Invalid prompt: must be a non-empty string")
         if len(prompt) > self.max_context_length:
-            self.logger.error(f"Prompt length exceeds maximum context length of {self.max_context_length}")
-            raise ValueError(f"Prompt length exceeds maximum context length of {self.max_context_length}")
+            self.logger.error(f"Prompt length ({len(prompt)}) exceeds maximum context length of {self.max_context_length}")
+            raise ValueError(f"Prompt length ({len(prompt)}) exceeds maximum context length of {self.max_context_length}")
         if "<script>" in prompt.lower():
-            self.logger.error("Invalid prompt: contains potentially unsafe content")
-            raise ValueError("Invalid prompt: contains potentially unsafe content")
+            self.logger.error("Invalid prompt: contains potentially unsafe content (<script> tag)")
+            raise ValueError("Invalid prompt: contains potentially unsafe content (<script> tag)")
         if re.search(r'\b\d{3}-\d{2}-\d{4}\b', prompt):
-            self.logger.error("Invalid prompt: contains sensitive information (SSN)")
-            raise ValueError("Invalid prompt: contains sensitive information (SSN)")
+            self.logger.error("Invalid prompt: contains sensitive information (SSN pattern detected)")
+            raise ValueError("Invalid prompt: contains sensitive information (SSN pattern detected)")
         try:
             response = await self.client.generate_response(prompt, model)
             self.logger.debug(f"Response generated successfully: {response[:50]}...")
@@ -1494,7 +1495,8 @@ async def test_concurrent_claude_api_calls(mock_claude_client):
 
     assert len(successful_calls) == 5, f"Expected 5 successful calls, but got {len(successful_calls)}"
     assert len(rate_limit_errors) == 5, f"Expected 5 rate limit errors, but got {len(rate_limit_errors)}"
-    assert mock_claude_client.get_call_count() == 10, f"Expected 10 total calls, but got {mock_claude_client.get_call_count()}"
+    call_count = await mock_claude_client.get_call_count()
+    assert call_count == 10, f"Expected 10 total calls, but got {call_count}"
 
 @pytest.mark.asyncio
 async def test_token_counting(mock_claude_client):
