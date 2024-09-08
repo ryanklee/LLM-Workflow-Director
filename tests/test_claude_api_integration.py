@@ -14,7 +14,7 @@ from src.claude_manager import ClaudeManager
 from src.exceptions import RateLimitError
 from src.mock_claude_client import MockClaudeClient
 from src.llm_manager import LLMManager
-from anthropic import APIError, APIStatusError
+from anthropic import APIError, APIStatusError, RateLimitError
 
 pytest_plugins = ['pytest_asyncio']
 
@@ -102,7 +102,7 @@ class MockClaudeClient:
         
         if self.call_count >= self.rate_limit_threshold:
             self.logger.warning("Rate limit exceeded")
-            raise CustomRateLimitError("Rate limit exceeded")
+            raise RateLimitError("Rate limit exceeded")
         
         if self.error_mode:
             self.error_count += 1
@@ -193,7 +193,7 @@ class MockClaudeClient:
             try:
                 result = await task
                 results.append(result)
-            except CustomRateLimitError as e:
+            except RateLimitError as e:
                 results.append(e)
         return results
 
@@ -1000,7 +1000,7 @@ async def test_mock_claude_client_concurrent_calls(mock_claude_client):
     results = await mock_claude_client.simulate_concurrent_calls(10)
 
     successful_calls = [r for r in results if isinstance(r, str)]
-    rate_limit_errors = [r for r in results if isinstance(r, CustomRateLimitError)]
+    rate_limit_errors = [r for r in results if isinstance(r, RateLimitError)]
 
     assert len(successful_calls) == 5, f"Expected 5 successful calls, but got {len(successful_calls)}"
     assert len(rate_limit_errors) == 5, f"Expected 5 rate limit errors, but got {len(rate_limit_errors)}"
@@ -1012,7 +1012,7 @@ async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
     try:
         await mock_claude_client.set_rate_limit(5)  # Set a lower threshold for testing
         logger.info("Set rate limit to 5 calls")
-        with pytest.raises(CustomRateLimitError):
+        with pytest.raises(RateLimitError):
             for i in range(10):  # Attempt to make 10 calls
                 logger.debug(f"Making API call {i+1}")
                 await claude_manager.generate_response(f"Test prompt {i}")
