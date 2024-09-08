@@ -37,7 +37,7 @@ class ClaudeManager:
 
     async def count_tokens(self, text):
         # This is a simple approximation. For more accurate results, use a proper tokenizer.
-        return await self.client.count_tokens(text)
+        return len(text.split())
 
     @staticmethod
     def create_client():
@@ -90,6 +90,32 @@ class ClaudeManager:
         except Exception as e:
             self.logger.error(f"Unexpected error in generate_response: {str(e)}")
             return await self.fallback_response(prompt, f"Unexpected error: {str(e)}")
+
+    async def _truncate_prompt(self, prompt, max_tokens):
+        words = prompt.split()
+        truncated_prompt = ""
+        current_tokens = 0
+        for word in words:
+            word_tokens = await self.count_tokens(word)
+            if current_tokens + word_tokens > max_tokens:
+                break
+            truncated_prompt += word + " "
+            current_tokens += word_tokens
+        return truncated_prompt.strip()
+
+    async def select_model(self, task_description):
+        if "simple" in task_description.lower():
+            return "claude-3-haiku-20240307"
+        elif "complex" in task_description.lower():
+            return "claude-3-opus-20240229"
+        else:
+            return "claude-3-sonnet-20240229"
+
+    async def parse_response(self, response_text):
+        max_length = self.max_test_tokens - 21
+        truncated_text = response_text[:max_length] + "..." if len(response_text) > max_length else response_text
+        parsed_response = f"<response>{truncated_text.strip()}</response>"
+        return parsed_response
 
     def _truncate_prompt(self, prompt, max_tokens):
         words = prompt.split()

@@ -145,7 +145,7 @@ class LLMManager:
 
         if tier is None:
             query_complexity = await self._estimate_query_complexity(prompt)
-            tier = self.cost_optimizer.select_optimal_tier(query_complexity)
+            tier = await self.cost_optimizer.select_optimal_tier(query_complexity)
 
         self.logger.debug(f"Selected tier: {tier}")
 
@@ -177,7 +177,7 @@ class LLMManager:
                 result['raw_response'] = response
                 self.cache[cache_key] = result
                 
-                self.cost_optimizer.update_usage(tier, input_tokens + output_tokens, safe_time() - start_time, True)
+                await self.cost_optimizer.update_usage(tier, input_tokens + output_tokens, safe_time() - start_time, True)
                 
                 return {
                     "response": result.get('response', ''),
@@ -203,7 +203,7 @@ class LLMManager:
                 self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
             except Exception as e:
                 self.logger.error(f"Error querying LLM: {str(e)} (tier: {tier})")
-                self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
+                await self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
                 max_retries -= 1
                 if max_retries == 0:
                     return await self._fallback_response(prompt, context, original_tier)
