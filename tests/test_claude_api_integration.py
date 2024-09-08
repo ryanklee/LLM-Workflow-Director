@@ -38,6 +38,14 @@ async def claude_manager(mock_claude_client):
     await manager.close()
     logger.debug("Closed ClaudeManager instance")
 
+@pytest.fixture
+async def claude_manager(mock_claude_client):
+    manager = ClaudeManager(client=mock_claude_client)
+    logger.debug("Created ClaudeManager instance with MockClaudeClient")
+    yield manager
+    await manager.close()
+    logger.debug("Closed ClaudeManager instance")
+
 @pytest.fixture(autouse=True)
 async def setup_teardown(mock_claude_client, claude_manager):
     logger.info("Setting up test environment")
@@ -77,23 +85,35 @@ def log_test_name(request):
 
 @pytest.mark.asyncio
 async def test_claude_api_latency(claude_manager, mock_claude_client):
-    await mock_claude_client.set_latency(0.5)  # Set a 500ms latency
-    logger.info("Set latency to 500ms")
-    start_time = time.time()
-    response = await claude_manager.generate_response("Test prompt")
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    assert elapsed_time >= 0.5, f"API call should take at least 500ms, but took {elapsed_time:.2f}s"
-    logger.info(f"API call latency: {elapsed_time:.2f} seconds")
-    logger.info(f"Response: {response}")
+    try:
+        await mock_claude_client.set_latency(0.5)  # Set a 500ms latency
+        logger.info("Set latency to 500ms")
+        start_time = time.time()
+        response = await claude_manager.generate_response("Test prompt")
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        assert elapsed_time >= 0.5, f"API call should take at least 500ms, but took {elapsed_time:.2f}s"
+        logger.info(f"API call latency: {elapsed_time:.2f} seconds")
+        logger.info(f"Response: {response}")
+    except Exception as e:
+        logger.error(f"Error in test_claude_api_latency: {str(e)}", exc_info=True)
+        raise
 
 @pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
-    mock_claude_client.set_rate_limit(5)  # Set a lower threshold for testing
-    with pytest.raises(RateLimitError):
-        for i in range(10):  # Attempt to make 10 calls
-            await claude_manager.generate_response(f"Test prompt {i}")
-    assert mock_claude_client.get_call_count() == 6  # 5 successful + 1 that raises the error
+    try:
+        await mock_claude_client.set_rate_limit(5)  # Set a lower threshold for testing
+        logger.info("Set rate limit to 5 calls")
+        with pytest.raises(CustomRateLimitError):
+            for i in range(10):  # Attempt to make 10 calls
+                logger.debug(f"Making API call {i+1}")
+                await claude_manager.generate_response(f"Test prompt {i}")
+        call_count = mock_claude_client.get_call_count()
+        assert call_count == 6, f"Expected 6 calls (5 successful + 1 that raises the error), but got {call_count}"
+        logger.info(f"Rate limiting test passed. Total calls made: {call_count}")
+    except Exception as e:
+        logger.error(f"Error in test_claude_api_rate_limiting: {str(e)}", exc_info=True)
+        raise
 
 @pytest.mark.asyncio
 async def test_claude_api_error_handling(claude_manager, mock_claude_client):

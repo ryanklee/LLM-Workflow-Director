@@ -48,6 +48,78 @@ class MockClaudeClient:
         self.rate_limit_threshold = threshold
         self.logger.debug(f"Set rate limit threshold to: {threshold}")
 
+    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+        await self._check_rate_limit()
+        await self._simulate_latency()
+        
+        if len(prompt) > self.max_test_tokens:
+            raise ValueError(f"Prompt length ({len(prompt)} tokens) exceeds maximum context length of {self.max_test_tokens} tokens")
+        
+        if self.error_mode:
+            self.error_count += 1
+            if self.error_count <= self.max_errors:
+                self.logger.error("API error (error mode)")
+                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+        
+        response = self.responses.get(prompt, "Default mock response")
+        return f"<response>{response}</response>"
+
+    async def count_tokens(self, text: str) -> int:
+        return len(text.split())
+
+    async def _simulate_latency(self):
+        await asyncio.sleep(self.latency)
+
+    async def _check_rate_limit(self):
+        current_time = time.time()
+        if current_time - self.last_call_time >= self.rate_limit_reset_time:
+            self.call_count = 0
+        self.last_call_time = current_time
+        self.call_count += 1
+        if self.call_count > self.rate_limit_threshold:
+            self.logger.warning("Rate limit exceeded")
+            raise CustomRateLimitError("Rate limit exceeded")
+
+    async def reset(self):
+        self.rate_limit_reached = False
+        self.error_mode = False
+        self.responses = {}
+        self.call_count = 0
+        self.last_call_time = 0
+        self.error_count = 0
+        self.latency = 0.1
+        self.logger.debug("Reset MockClaudeClient")
+
+    def get_call_count(self):
+        return self.call_count
+
+    def get_error_count(self):
+        return self.error_count
+
+    async def select_model(self, task: str) -> str:
+        if "simple" in task.lower():
+            return "claude-3-haiku-20240307"
+        elif "complex" in task.lower():
+            return "claude-3-opus-20240229"
+        else:
+            return "claude-3-sonnet-20240229"
+
+    async def set_response(self, prompt: str, response: str):
+        self.responses[prompt] = response
+        self.logger.debug(f"Set response for prompt: {prompt[:50]}...")
+
+    async def set_error_mode(self, mode: bool):
+        self.error_mode = mode
+        self.logger.debug(f"Set error mode to: {mode}")
+
+    async def set_latency(self, latency: float):
+        self.latency = latency
+        self.logger.debug(f"Set latency to: {latency}")
+
+    async def set_rate_limit(self, threshold: int):
+        self.rate_limit_threshold = threshold
+        self.logger.debug(f"Set rate limit threshold to: {threshold}")
+
     async def select_model(self, task: str) -> str:
         if "simple" in task.lower():
             return "claude-3-haiku-20240307"
