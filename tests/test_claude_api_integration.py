@@ -1277,6 +1277,11 @@ async def test_mock_claude_client_rate_limit(mock_claude_client, claude_manager)
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     assert "Rate limit exceeded" in str(excinfo.value), f"Expected 'Rate limit exceeded', but got: {str(excinfo.value)}"
     
+    # Test that CustomRateLimitError is raised by MockClaudeClient
+    with pytest.raises(CustomRateLimitError) as excinfo:
+        await mock_claude_client.generate_response("Test prompt", "claude-3-haiku-20240307")
+    assert "Rate limit exceeded" in str(excinfo.value), f"Expected 'Rate limit exceeded', but got: {str(excinfo.value)}"
+    
     call_count = await mock_claude_client.get_call_count()
     assert call_count == mock_claude_client.rate_limit_threshold + 1, f"Expected {mock_claude_client.rate_limit_threshold + 1} calls, but got {call_count}"
 
