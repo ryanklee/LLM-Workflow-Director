@@ -1018,11 +1018,11 @@ class TestResponseHandling:
     @pytest.mark.slow
     @pytest.mark.asyncio
     async def test_retry_mechanism(self, claude_manager):
-        claude_manager.client.set_error_mode(True)
-        with pytest.raises(Exception):
+        await claude_manager.client.set_error_mode(True)
+        with pytest.raises(APIStatusError):
             await claude_manager.generate_response("Test")
-        claude_manager.client.set_error_mode(False)
-        claude_manager.client.set_response("Test", "Success")
+        await claude_manager.client.set_error_mode(False)
+        await claude_manager.client.set_response("Test", "Success")
         response = await claude_manager.generate_response("Test")
         assert "Success" in response
 
