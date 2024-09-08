@@ -28,6 +28,10 @@ class MockClaudeClient:
         self.lock = asyncio.Lock()
         self.logger = logging.getLogger(__name__)
 
+    async def count_tokens(self, text: str) -> int:
+        await asyncio.sleep(0.01)  # Simulate a short delay
+        return len(text.split())
+
     async def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
 

@@ -194,8 +194,11 @@ def mock_claude_manager():
     return mock
 
 @pytest.fixture
-def llm_manager(mock_claude_manager):
-    return LLMManager(claude_manager=mock_claude_manager)
+async def llm_manager(mock_claude_manager):
+    manager = LLMManager(claude_manager=mock_claude_manager)
+    yield manager
+    # Clean up after each test
+    await manager.token_tracker.reset()
 
 @pytest.fixture
 def token_tracker():

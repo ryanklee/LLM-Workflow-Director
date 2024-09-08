@@ -116,11 +116,11 @@ class LLMManager:
             'powerful': {'model': 'claude-3-opus-20240229', 'max_tokens': 4000}
         })
         self.logger.info("LLMManager initialized with config: %s", self.config)
-        self.logger.info("LLMManager initialized with config: %s", self.config)
         self.prompt_templates = self.config.get('prompt_templates', {})
         self.claude_manager = claude_manager or self._create_claude_manager()
         self.token_tracker = TokenTracker()
         self.token_optimizer = TokenOptimizer(self.token_tracker)
+        self.logger.info("LLMManager initialization complete")
 
     async def count_tokens(self, text: str) -> int:
         return await self.claude_manager.count_tokens(text)

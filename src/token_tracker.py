@@ -127,3 +127,7 @@ class TokenTracker:
     async def count_tokens(self, text: str) -> int:
         # This is a simple approximation. For more accurate results, use a proper tokenizer.
         return len(text.split())
+
+    async def reset(self):
+        async with self.lock:
+            self.token_usage.clear()
