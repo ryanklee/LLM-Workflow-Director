@@ -145,7 +145,7 @@ class LLMManager:
 
         if tier is None:
             query_complexity = await self._estimate_query_complexity(prompt)
-            tier = await self.cost_optimizer.select_optimal_tier(query_complexity)
+            tier = self.cost_optimizer.select_optimal_tier(query_complexity)
 
         self.logger.debug(f"Selected tier: {tier}")
 
@@ -169,15 +169,15 @@ class LLMManager:
 
                 input_tokens = await self.claude_manager.count_tokens(optimized_prompt)
                 response = await self.claude_manager.generate_response(optimized_prompt, model=model)
-                output_tokens = await self.claude_manager.count_tokens(response['content'][0]['text'])
+                output_tokens = await self.claude_manager.count_tokens(response)
                 
                 await self.token_tracker.add_tokens(cache_key, input_tokens, output_tokens)
                 
-                result = await self._process_response(response['content'][0]['text'], tier, start_time)
+                result = await self._process_response(response, tier, start_time)
                 result['raw_response'] = response
                 self.cache[cache_key] = result
                 
-                await self.cost_optimizer.update_usage(tier, input_tokens + output_tokens, safe_time() - start_time, True)
+                self.cost_optimizer.update_usage(tier, input_tokens + output_tokens, safe_time() - start_time, True)
                 
                 return {
                     "response": result.get('response', ''),
@@ -203,7 +203,7 @@ class LLMManager:
                 self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
             except Exception as e:
                 self.logger.error(f"Error querying LLM: {str(e)} (tier: {tier})")
-                await self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
+                self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
                 max_retries -= 1
                 if max_retries == 0:
                     return await self._fallback_response(prompt, context, original_tier)

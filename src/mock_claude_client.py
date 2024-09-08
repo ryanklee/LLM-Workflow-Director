@@ -98,6 +98,14 @@ class MockClaudeClient:
             }
 
     async def count_tokens(self, text: str) -> int:
+        await asyncio.sleep(0.01)  # Simulate a short delay
+        return len(text.split())
+
+    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+        response = await self.create(model, self.max_test_tokens, [{"role": "user", "content": prompt}])
+        return response['content'][0]['text']
+
+    async def count_tokens(self, text: str) -> int:
         return len(text.split())
 
     async def _simulate_latency(self):

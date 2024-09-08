@@ -37,7 +37,7 @@ class ClaudeManager:
 
     async def count_tokens(self, text):
         # This is a simple approximation. For more accurate results, use a proper tokenizer.
-        return len(text.split())
+        return await self.client.count_tokens(text)
 
     @staticmethod
     def create_client():
@@ -73,12 +73,8 @@ class ClaudeManager:
             self.logger.debug(f"Using model: {model if model else 'default'}")
 
             selected_model = await self.select_model(prompt) if model is None else model
-            response = await self.client.messages.create(
-                model=selected_model,
-                max_tokens=self.max_test_tokens,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            response_text = await self._extract_response_text(response)
+            response = await self.client.generate_response(prompt, selected_model)
+            response_text = response
             await self.token_tracker.add_tokens("generate_response", token_count, await self.count_tokens(response_text))
             return await self.parse_response(response_text)
         except RateLimitError as e:

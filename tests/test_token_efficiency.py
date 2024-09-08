@@ -141,13 +141,13 @@ async def test_token_usage_per_query_type(claude_manager: ClaudeManager, benchma
         "medium": "Explain the process of photosynthesis in plants.",
         "long": "Write a 500-word essay on the impact of artificial intelligence on modern society."
     }
-    
-    def measure_token_usage(query):
-        response = claude_manager.generate_response(query)
-        return claude_manager.count_tokens(query + response)
-    
+
+    async def measure_token_usage(query):
+        response = await claude_manager.generate_response(query)
+        return await claude_manager.count_tokens(query + response)
+
     for query_type, query in query_types.items():
-        result = benchmark.pedantic(measure_token_usage, args=(query,), iterations=5, rounds=3)
+        result = await benchmark.pedantic(measure_token_usage, args=(query,), iterations=5, rounds=3)
         print(f"Token usage for {query_type} query: {result.stats.mean:.0f} tokens")
 
 def test_cost_effectiveness_of_models(llm_manager: LLMManager, benchmark: BenchmarkFixture):
@@ -205,7 +205,8 @@ def token_tracker():
 def token_optimizer(token_tracker):
     return TokenOptimizer(token_tracker)
 
-def test_token_usage_estimation(llm_manager, token_tracker):
+@pytest.mark.asyncio
+async def test_token_usage_estimation(llm_manager, token_tracker):
     test_queries = [
         "What is the capital of France?",
         "Explain the theory of relativity in simple terms.",
@@ -213,19 +214,20 @@ def test_token_usage_estimation(llm_manager, token_tracker):
     ]
 
     for query in test_queries:
-        response = llm_manager.query(query)
-        estimated_tokens = llm_manager.claude_manager.count_tokens(query) + llm_manager.claude_manager.count_tokens(response['response'])
-        actual_tokens = token_tracker.get_token_usage(query)
+        response = await llm_manager.query(query)
+        estimated_tokens = await llm_manager.claude_manager.count_tokens(query) + await llm_manager.claude_manager.count_tokens(response['response'])
+        actual_tokens = await token_tracker.get_token_usage(query)
 
         assert abs(estimated_tokens - actual_tokens) / actual_tokens < 0.1, \
             f"Token estimation error should be less than 10% for query: {query}"
 
-def test_token_optimization(token_optimizer):
+@pytest.mark.asyncio
+async def test_token_optimization(token_optimizer):
     long_prompt = "This is a very long prompt that exceeds the maximum allowed tokens. " * 20
-    optimized_prompt = token_optimizer.optimize_prompt(long_prompt)
+    optimized_prompt = await token_optimizer.optimize_prompt(long_prompt)
 
     assert len(optimized_prompt) < len(long_prompt), "Optimized prompt should be shorter than the original"
-    assert token_optimizer.token_tracker.count_tokens(optimized_prompt) <= 100, \
+    assert await token_optimizer.token_tracker.count_tokens(optimized_prompt) <= 100, \
         "Optimized prompt should not exceed 100 tokens"
 
 def test_token_usage_tracking(llm_manager, token_tracker):
