@@ -1586,55 +1586,55 @@ async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
     mock_claude_client.rate_limit_threshold = 3
     mock_claude_client.rate_limit_reset_time = 1  # 1 second for faster testing
 
-    logging.info("Starting rate limit reset test")
-    logging.debug(f"Rate limit threshold: {mock_claude_client.rate_limit_threshold}")
-    logging.debug(f"Rate limit reset time: {mock_claude_client.rate_limit_reset_time} seconds")
+    logger.info("Starting rate limit reset test")
+    logger.debug(f"Rate limit threshold: {mock_claude_client.rate_limit_threshold}")
+    logger.debug(f"Rate limit reset time: {mock_claude_client.rate_limit_reset_time} seconds")
     initial_call_count = await mock_claude_client.get_call_count()
-    logging.debug(f"Initial call count: {initial_call_count}")
-    logging.debug(f"Initial last reset time: {mock_claude_client.last_reset_time}")
+    logger.debug(f"Initial call count: {initial_call_count}")
+    logger.debug(f"Initial last reset time: {mock_claude_client.last_reset_time}")
 
     # Log the test steps
-    logging.info("Step 1: Make calls until rate limit is reached")
+    logger.info("Step 1: Make calls until rate limit is reached")
 
     # Make calls until rate limit is reached
     for i in range(3):
         try:
-            logging.debug(f"Attempting call {i+1}")
+            logger.debug(f"Attempting call {i+1}")
             response = await claude_manager.generate_response(f"Test prompt {i}")
             assert response == "<response>Default mock response</response>", f"Unexpected response for call {i+1}: {response}"
             assert f"Generating response for prompt: Test prompt {i}" in caplog.text, f"Missing log for prompt {i}"
-            logging.debug(f"Call {i+1} successful")
+            logger.debug(f"Call {i+1} successful")
         except Exception as e:
-            logging.error(f"Unexpected error during rate limit test: {str(e)}")
+            logger.error(f"Unexpected error during rate limit test: {str(e)}")
             pytest.fail(f"Unexpected error during rate limit test: {str(e)}")
 
-    logging.info("Rate limit should be reached. Attempting one more call.")
+    logger.info("Rate limit should be reached. Attempting one more call.")
     # Next call should raise RateLimitError
     with pytest.raises(RateLimitError) as excinfo:
         await claude_manager.generate_response("Test prompt 3")
     assert "Rate limit exceeded" in str(excinfo.value), f"Expected 'Rate limit exceeded', but got: {str(excinfo.value)}"
-    logging.info(f"Rate limit error raised as expected: {str(excinfo.value)}")
+    logger.info(f"Rate limit error raised as expected: {str(excinfo.value)}")
 
-    logging.info("Waiting for rate limit to reset")
+    logger.info("Waiting for rate limit to reset")
     await asyncio.sleep(mock_claude_client.rate_limit_reset_time + 0.1)  # Wait slightly longer than the reset time
-    logging.info("Rate limit reset period completed")
+    logger.info("Rate limit reset period completed")
 
     # Should be able to make calls again
     try:
-        logging.debug("Attempting call after rate limit reset")
+        logger.debug("Attempting call after rate limit reset")
         response = await claude_manager.generate_response("Test prompt 4")
         assert response == "<response>Default mock response</response>", f"Unexpected response after reset: {response}"
         assert "Generating response for prompt: Test prompt 4" in caplog.text, "Missing log for post-reset prompt"
-        logging.info("Successfully made call after rate limit reset")
+        logger.info("Successfully made call after rate limit reset")
     except Exception as e:
-        logging.error(f"Unexpected error after rate limit reset: {str(e)}")
+        logger.error(f"Unexpected error after rate limit reset: {str(e)}")
         pytest.fail(f"Unexpected error after rate limit reset: {str(e)}")
 
-    logging.info("Rate limit reset test completed successfully")
+    logger.info("Rate limit reset test completed successfully")
 
     # Log the entire captured log for debugging
-    print("Captured log:")
-    print(caplog.text)
+    logger.debug("Captured log:")
+    logger.debug(caplog.text)
 
 @pytest.mark.asyncio
 async def test_token_counting(claude_manager):
