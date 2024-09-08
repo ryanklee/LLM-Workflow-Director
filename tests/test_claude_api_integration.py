@@ -1,24 +1,6 @@
 import pytest
 import asyncio
 import pytest_asyncio
-
-@pytest.fixture(scope="module")
-def event_loop():
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-@pytest_asyncio.fixture
-async def mock_claude_client():
-    client = MockClaudeClient()
-    yield client
-    await client.reset()
-
-@pytest_asyncio.fixture
-async def claude_manager(mock_claude_client):
-    manager = ClaudeManager(client=mock_claude_client)
-    yield manager
-    await manager.close()
 import tenacity
 import time
 import anthropic
@@ -30,6 +12,12 @@ from src.exceptions import RateLimitError, RateLimitError as CustomRateLimitErro
 from src.mock_claude_client import MockClaudeClient
 from src.llm_manager import LLMManager
 from anthropic import APIError, APIStatusError
+
+@pytest.fixture(scope="module")
+def event_loop():
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
 
 # Set up logging for tests
 logging.basicConfig(
@@ -110,7 +98,7 @@ class MockClaudeClient:
                 raise APIStatusError("Simulated API error", response=MagicMock(), body={})
         response = self.responses.get(prompt, "Default mock response")
         self.logger.debug(f"Returning response: {response[:50]}...")
-        return response
+        return f"<response>{response}</response>"
 
     async def count_tokens(self, text: str) -> int:
         return len(text.split())
@@ -124,6 +112,14 @@ class MockClaudeClient:
 
     def get_error_count(self):
         return self.error_count
+
+    def select_model(self, task: str) -> str:
+        if "simple" in task.lower():
+            return "claude-3-haiku-20240307"
+        elif "complex" in task.lower():
+            return "claude-3-opus-20240229"
+        else:
+            return "claude-3-sonnet-20240229"
 
     async def set_response(self, prompt, response):
         self.responses[prompt] = response
