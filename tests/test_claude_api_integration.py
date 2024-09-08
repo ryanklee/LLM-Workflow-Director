@@ -159,18 +159,20 @@ def run_async_fixture():
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(fixture.__anext__())
     return _run_async_fixture
-        self.error_mode = mode
-        self.logger.debug(f"Set error mode to: {mode}")
 
-    async def set_latency(self, latency: float):
-        self.latency = latency
-        self.logger.debug(f"Set latency to: {latency}")
+async def set_error_mode(self, mode: bool):
+    self.error_mode = mode
+    self.logger.debug(f"Set error mode to: {mode}")
 
-    async def set_rate_limit(self, threshold: int):
-        self.rate_limit_threshold = threshold
-        self.logger.debug(f"Set rate limit threshold to: {threshold}")
+async def set_latency(self, latency: float):
+    self.latency = latency
+    self.logger.debug(f"Set latency to: {latency}")
 
-    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+async def set_rate_limit(self, threshold: int):
+    self.rate_limit_threshold = threshold
+    self.logger.debug(f"Set rate limit threshold to: {threshold}")
+
+async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         await asyncio.sleep(self.latency)
         self.call_count += 1
