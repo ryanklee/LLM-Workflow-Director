@@ -43,7 +43,7 @@ async def test_cost_effectiveness_of_models(llm_manager: LLMManager, benchmark: 
     
     for model in models:
         result = await benchmark.pedantic(measure_cost_effectiveness, args=(model,), iterations=3, rounds=1)
-        print(f"Cost-effectiveness for {model}: {result.stats.mean:.2f} chars/$")
+        print(f"Cost-effectiveness for {model}: {result:.2f} chars/$")
 
 @pytest.mark.asyncio
 async def test_optimization_strategies(claude_manager: ClaudeManager, benchmark: BenchmarkFixture):
@@ -62,7 +62,7 @@ async def test_optimization_strategies(claude_manager: ClaudeManager, benchmark:
     
     for strategy, query in strategies.items():
         result = await benchmark.pedantic(measure_token_efficiency, args=(query,), iterations=5, rounds=3)
-        print(f"Token efficiency for {strategy} strategy: {result.average:.2f} chars/token")
+        print(f"Token efficiency for {strategy} strategy: {result:.2f} chars/token")
 
 @pytest.mark.asyncio
 async def test_token_usage_estimation(llm_manager: LLMManager):
@@ -153,7 +153,7 @@ async def test_token_usage_per_query_type(claude_manager: ClaudeManager, benchma
     
     for query_type, query in query_types.items():
         result = await benchmark.pedantic(measure_token_usage, args=(query,), iterations=5, rounds=3)
-        print(f"Token usage for {query_type} query: {result.stats.mean:.0f} tokens")
+        print(f"Token usage for {query_type} query: {result:.0f} tokens")
 
 @pytest.mark.asyncio
 async def test_cost_effectiveness_of_models(llm_manager: LLMManager, benchmark: BenchmarkFixture):
@@ -228,8 +228,11 @@ async def test_token_usage_estimation(llm_manager, token_tracker):
         estimated_tokens = await llm_manager.claude_manager.count_tokens(query) + await llm_manager.claude_manager.count_tokens(response['response'])
         actual_tokens = await token_tracker.get_token_usage(query)
 
-        assert abs(estimated_tokens - actual_tokens) / actual_tokens < 0.1, \
-            f"Token estimation error should be less than 10% for query: {query}"
+        if actual_tokens == 0:
+            assert estimated_tokens == 0, f"Estimated tokens should be 0 when actual tokens are 0 for query: {query}"
+        else:
+            assert abs(estimated_tokens - actual_tokens) / actual_tokens < 0.1, \
+                f"Token estimation error should be less than 10% for query: {query}"
 
 @pytest.mark.asyncio
 async def test_token_optimization(token_optimizer):

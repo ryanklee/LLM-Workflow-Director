@@ -47,13 +47,19 @@ async def test_response_time_vs_context_size(claude_manager: ClaudeManager, benc
         end_time = asyncio.get_event_loop().time()
         return end_time - start_time
 
-    for size in context_sizes:
-        result = await benchmark.pedantic(measure_response_time, args=(size,), iterations=3, rounds=1)
-        print(f"Response time for context size {size}: {result:.4f} seconds")
+    async def measure_all_response_times():
+        results = []
+        for size in context_sizes:
+            result = await measure_response_time(size)
+            results.append((size, result))
+            print(f"Response time for context size {size}: {result:.4f} seconds")
+        return results
+
+    results = await benchmark.pedantic(measure_all_response_times, iterations=1, rounds=1)
     
     # Assert that the response time for the largest context is not significantly higher than the smallest
-    large_context_time = await measure_response_time(context_sizes[-1])
-    small_context_time = await measure_response_time(context_sizes[0])
+    large_context_time = results[-1][1]
+    small_context_time = results[0][1]
     assert large_context_time < small_context_time * 2
 
     logging.info(f"Large context time: {large_context_time:.4f} seconds")
@@ -70,12 +76,14 @@ async def test_response_quality_vs_context_size(claude_manager: ClaudeManager, l
         response = await claude_manager.generate_response(prompt)
         
         quality_prompt = f"Evaluate the following summary for relevance and coherence on a scale of 1-10: '{response}'"
-        quality_score = await llm_manager.query(quality_prompt)
-        quality_score = float(quality_score['response'])
-        
-        print(f"Quality score for context size {size}: {quality_score}")
-
-        assert 1 <= quality_score <= 10, f"Quality score {quality_score} is out of expected range (1-10)"
+        quality_response = await llm_manager.query(quality_prompt)
+        try:
+            quality_score = float(quality_response['response'])
+            print(f"Quality score for context size {size}: {quality_score}")
+            assert 1 <= quality_score <= 10, f"Quality score {quality_score} is out of expected range (1-10)"
+        except ValueError:
+            print(f"Invalid quality score for context size {size}: {quality_response['response']}")
+            assert False, f"Invalid quality score: {quality_response['response']}"
 
 @pytest.mark.asyncio
 async def test_context_window_utilization(claude_manager: ClaudeManager):
@@ -131,8 +139,8 @@ def test_token_usage_efficiency(llm_manager):
         prompt = f"Summarize the following text: {synthetic_data}"
         
         tokens_before = llm_manager.claude_manager.count_tokens(prompt)
-        response = llm_manager.query(prompt)
-        tokens_after = llm_manager.claude_manager.count_tokens(response['response'])
+        response = await llm_manager.query(prompt)
+        tokens_after = await llm_manager.claude_manager.count_tokens(response['response'])
 
         efficiency = tokens_after / tokens_before
         results.append((size, efficiency))

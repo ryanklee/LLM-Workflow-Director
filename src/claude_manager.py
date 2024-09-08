@@ -51,6 +51,7 @@ class ClaudeManager:
     )
     async def generate_response(self, prompt, model=None):
         self.logger.debug(f"Entering generate_response with prompt: {prompt[:50]}... and model: {model}")
+        self.logger.debug(f"Prompt length: {len(prompt)}")
         start_time = time.time()
         try:
             if not await self.rate_limiter.is_allowed():
@@ -63,7 +64,8 @@ class ClaudeManager:
             token_count = await self.count_tokens(prompt)
             self.logger.debug(f"Token count for prompt: {token_count}")
             if token_count > self.max_context_length:
-                raise ValueError(f"Prompt length exceeds maximum context length of {self.max_context_length} tokens")
+                self.logger.error(f"Prompt length ({token_count} tokens) exceeds maximum context length of {self.max_context_length} tokens")
+                raise ValueError(f"Prompt length ({token_count} tokens) exceeds maximum context length of {self.max_context_length} tokens")
             if token_count > self.max_test_tokens:
                 prompt = await self._truncate_prompt(prompt, self.max_test_tokens)
                 self.logger.debug(f"Prompt truncated to {self.max_test_tokens} tokens")

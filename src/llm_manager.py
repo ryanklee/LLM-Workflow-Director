@@ -142,6 +142,9 @@ class LLMManager:
 
     async def query(self, prompt: str, context: Optional[Dict[str, Any]] = None, tier: Optional[str] = None, model: Optional[str] = None) -> Dict[str, Any]:
         self.logger.debug(f"Querying LLM with prompt: {prompt[:50]}...")
+        self.logger.debug(f"Context: {context}")
+        self.logger.debug(f"Tier: {tier}")
+        self.logger.debug(f"Model: {model}")
 
         if tier is None:
             query_complexity = await self._estimate_query_complexity(prompt)
@@ -177,6 +180,9 @@ class LLMManager:
                 result = await self._process_response(response, tier, start_time)
                 result['raw_response'] = response
                 self.cache[cache_key] = result
+                
+                # Update token usage for the specific query
+                await self.token_tracker.add_tokens(query, input_tokens, output_tokens)
                 
                 await self.cost_optimizer.update_usage(tier, input_tokens + output_tokens, safe_time() - start_time, True)
                 
