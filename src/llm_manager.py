@@ -3,23 +3,13 @@ import time
 import yaml
 import os
 import ast
-import random
 from typing import Dict, Any, Optional, List
-from unittest.mock import MagicMock
 from .error_handler import ErrorHandler
-from pydantic import Field, validator
 from anthropic import Anthropic, NotFoundError, APIError, APIConnectionError
-import itertools
 from .claude_manager import ClaudeManager
 from .exceptions import RateLimitError
 from .token_tracker import TokenTracker
 from .token_optimizer import TokenOptimizer
-
-def safe_time():
-    try:
-        return time.time()
-    except StopIteration:
-        return 0
 
 class LLMCostOptimizer:
     def __init__(self):
@@ -86,7 +76,7 @@ class LLMCostOptimizer:
         for tier in self.performance_metrics:
             if self.performance_metrics[tier]['success_rate'] < 0.95:
                 suggestions.append(f"Investigate and improve reliability of the '{tier}' tier.")
-            if self.performance_metrics[tier]['avg_response_time'] > 5:  # Assuming 5 seconds is our threshold
+            if self.performance_metrics[tier]['avg_response_time'] > 5:  #  5 seconds threshold
                 suggestions.append(f"Consider optimizing response time for the '{tier}' tier.")
 
         if not suggestions:
@@ -107,7 +97,6 @@ class LLMManager:
         self.error_handler = ErrorHandler()
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
-        # Add a file handler for persistent logging
         file_handler = logging.FileHandler('llm_manager.log')
         file_handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -129,8 +118,6 @@ class LLMManager:
         self.logger.info("LLMManager initialization complete")
 
     async def count_tokens(self, text: str) -> int:
-        # Implement a more sophisticated token counting algorithm
-        # This is a simple approximation, consider using a proper tokenizer for production
         words = text.split()
         return max(1, len(words))  # Ensure we always return at least 1 token
 
@@ -168,7 +155,7 @@ class LLMManager:
             return self.cache[cache_key]
 
         max_retries = 3
-        start_time = safe_time()
+        start_time = time.time()
         original_tier = tier
 
         while max_retries > 0:
@@ -190,13 +177,11 @@ class LLMManager:
                 result['raw_response'] = response
                 self.cache[cache_key] = result
                 
-                # Update token usage for the specific query
                 await self.token_tracker.add_tokens(prompt, input_tokens, output_tokens)
                 
-                # Log the token usage for debugging
                 self.logger.debug(f"Token usage for query '{prompt[:30]}...': {await self.token_tracker.get_token_usage(prompt)}")
                 
-                await self.cost_optimizer.update_usage(tier, input_tokens + output_tokens, safe_time() - start_time, True)
+                await self.cost_optimizer.update_usage(tier, input_tokens + output_tokens, time.time() - start_time, True)
                 
                 return {
                     "response": result.get('response', ''),
@@ -222,7 +207,7 @@ class LLMManager:
                 self.logger.info(f"Falling back to a lower-tier LLM: {tier}")
             except Exception as e:
                 self.logger.error(f"Error querying LLM: {str(e)} (tier: {tier})")
-                await self.cost_optimizer.update_usage(tier, 0, safe_time() - start_time, False)
+                await self.cost_optimizer.update_usage(tier, 0, time.time() - start_time, False)
                 max_retries -= 1
                 if max_retries == 0:
                     return await self._fallback_response(prompt, context, original_tier)
@@ -236,13 +221,11 @@ class LLMManager:
         return await self.cost_optimizer.get_usage_report()
 
     async def calculate_cost(self, model: str, tokens: int) -> float:
-        # Implement the cost calculation logic here
-        # This is a placeholder implementation
         cost_per_token = 0.0001  # Example cost per token
         return tokens * cost_per_token
 
     async def _process_response(self, response: str, tier: str, start_time: float) -> Dict[str, Any]:
-        end_time = safe_time()
+        end_time = time.time()
         response_time = end_time - start_time
         tokens = await self.claude_manager.count_tokens(response)
 
@@ -256,40 +239,12 @@ class LLMManager:
         if 'response' not in response_with_id or not response_with_id['response']:
             response_with_id['response'] = response or "No response content"
         
-        # Ensure 'response' is always a string
-        if isinstance(response_with_id['response'], dict):
-            response_with_id['response'] = str(response_with_id['response'])
-
-        return response_with_id
-
-    async def get_optimization_suggestion(self) -> str:
-        return await self.cost_optimizer.suggest_optimization()
-
-    async def _process_response(self, response_content: str, tier: str, start_time: float) -> Dict[str, Any]:
-        end_time = safe_time()
-        response_time = end_time - start_time
-        tokens = await self.count_tokens(response_content) if response_content else 0
-
-        self.logger.debug(f"Received response from LLM: {response_content[:50]}...")
-        structured_response = await self._parse_structured_response(response_content)
-        
-        response_with_id = await self._add_unique_id(structured_response)
-        response_with_id['response_time'] = response_time
-        response_with_id['tier'] = tier
-        
-        if 'response' not in response_with_id or not response_with_id['response']:
-            response_with_id['response'] = response_content or "No response content"
-        elif isinstance(response_with_id['response'], MagicMock):
-            response_with_id['response'] = str(response_with_id['response'])
-        
-        # Ensure 'response' is always a string
         if isinstance(response_with_id['response'], dict):
             response_with_id['response'] = str(response_with_id['response'])
 
         return response_with_id
 
     async def _estimate_query_complexity(self, query: str) -> float:
-        # This is a simple heuristic and can be improved
         word_count = len(query.split())
         complexity_keywords = ['analyze', 'compare', 'evaluate', 'synthesize', 'complex']
         keyword_count = sum(1 for word in query.lower().split() if word in complexity_keywords)
@@ -310,12 +265,6 @@ class LLMManager:
     async def determine_query_tier(self, query: str) -> str:
         complexity = await self._estimate_query_complexity(query)
         return await self.cost_optimizer.select_optimal_tier(complexity)
-
-    async def get_usage_report(self) -> Dict[str, Any]:
-        return await self.cost_optimizer.get_usage_report()
-
-    async def get_optimization_suggestion(self) -> str:
-        return await self.cost_optimizer.suggest_optimization()
 
     async def _enhance_prompt(self, prompt: str, context: Optional[Dict[str, Any]]) -> str:
         if context is None:
@@ -385,10 +334,7 @@ class LLMManager:
     async def _add_unique_id(self, response: Dict[str, Any]) -> Dict[str, Any]:
         if not isinstance(response, dict):
             response = {"response": str(response)}
-        try:
-            current_time = time.time()
-        except StopIteration:
-            current_time = 0  # Use a default value when time.time() is mocked and raises StopIteration
+        current_time = time.time()
         unique_id = str(abs(hash(str(response) + str(current_time))))
         response['id'] = f"(ID: {unique_id})"
         return response
