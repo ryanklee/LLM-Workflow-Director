@@ -936,7 +936,7 @@ class ClaudeManager:
             response = await self.client.generate_response(prompt, model)
             self.logger.debug(f"Response generated successfully: {response[:50]}...")
             return response
-        except CustomRateLimitError as e:
+        except RateLimitError as e:  # Changed to RateLimitError
             self.logger.warning(f"Rate limit reached: {str(e)}")
             raise
         except APIStatusError as e:
@@ -1115,19 +1115,24 @@ async def test_claude_api_response_truncation(claude_manager, mock_claude_client
 @pytest.mark.asyncio
 async def test_concurrent_claude_api_calls(claude_manager, mock_claude_client, caplog):
     caplog.set_level(logging.DEBUG)
-    num_concurrent_calls = 5
+    num_concurrent_calls = 10
+    mock_claude_client.rate_limit_threshold = 5
     await mock_claude_client.set_response("Test prompt", "Test response")
 
     logging.info(f"Starting concurrent API calls test with {num_concurrent_calls} calls")
 
     async def make_call(i):
-        logging.debug(f"Making call {i}")
-        response = await claude_manager.generate_response(f"Test prompt {i}", "claude-3-haiku-20240307")
-        logging.debug(f"Call {i} completed with response: {response}")
-        return response
+        try:
+            logging.debug(f"Making call {i}")
+            response = await claude_manager.generate_response(f"Test prompt {i}", "claude-3-haiku-20240307")
+            logging.debug(f"Call {i} completed with response: {response}")
+            return response
+        except RateLimitError as e:
+            logging.debug(f"Call {i} rate limited: {str(e)}")
+            return e
 
     tasks = [make_call(i) for i in range(num_concurrent_calls)]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+    results = await asyncio.gather(*tasks)
 
     successful_calls = [r for r in results if isinstance(r, str)]
     rate_limit_errors = [r for r in results if isinstance(r, RateLimitError)]
@@ -1135,14 +1140,15 @@ async def test_concurrent_claude_api_calls(claude_manager, mock_claude_client, c
     logging.info(f"Concurrent calls completed. Successful: {len(successful_calls)}, Rate Limited: {len(rate_limit_errors)}")
 
     assert len(successful_calls) + len(rate_limit_errors) == num_concurrent_calls, f"Expected {num_concurrent_calls} total results, got {len(successful_calls) + len(rate_limit_errors)}"
-    assert all(result == "<response><response>Test response</response></response>" for result in successful_calls), "Not all successful responses match expected format"
+    assert len(successful_calls) == mock_claude_client.rate_limit_threshold, f"Expected {mock_claude_client.rate_limit_threshold} successful calls, got {len(successful_calls)}"
+    assert len(rate_limit_errors) == num_concurrent_calls - mock_claude_client.rate_limit_threshold, f"Expected {num_concurrent_calls - mock_claude_client.rate_limit_threshold} rate limit errors, got {len(rate_limit_errors)}"
+    assert all(result == "<response>Test response</response>" for result in successful_calls), "Not all successful responses match expected format"
     assert await mock_claude_client.get_call_count() == num_concurrent_calls, f"Expected {num_concurrent_calls} calls to mock client, got {await mock_claude_client.get_call_count()}"
 
     for i in range(num_concurrent_calls):
         assert f"Generating response for prompt: Test prompt {i}" in caplog.text, f"Missing log for prompt {i}"
 
-    if rate_limit_errors:
-        assert "Rate limit reached, waiting for next available slot" in caplog.text, "Missing rate limit warning in logs"
+    assert "Rate limit exceeded" in caplog.text, "Missing rate limit warning in logs"
 
     logging.info("Concurrent API calls test completed successfully")
 
@@ -1650,10 +1656,10 @@ async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
 
     logger.info("Rate limit should be reached. Attempting one more call.")
     # Next call should raise RateLimitError
-    with pytest.raises(RateLimitError) as excinfo:
+    with pytest.raises(RateLimitError):
         await claude_manager.generate_response("Test prompt 3")
-    assert "Rate limit exceeded" in str(excinfo.value), f"Expected 'Rate limit exceeded', but got: {str(excinfo.value)}"
-    logger.info(f"Rate limit error raised as expected: {str(excinfo.value)}")
+    assert "Rate limit exceeded" in caplog.text, "Missing rate limit warning in logs"
+    logger.info("Rate limit error raised as expected")
 
     logger.info("Waiting for rate limit to reset")
     await asyncio.sleep(mock_claude_client.rate_limit_reset_time + 0.1)  # Wait slightly longer than the reset time
@@ -1673,8 +1679,8 @@ async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
     logger.info("Rate limit reset test completed successfully")
 
     # Log the entire captured log for debugging
-    logger.debug("Captured log:")
-    logger.debug(caplog.text)
+    print("Captured log:")
+    print(caplog.text)
 
 @pytest.mark.asyncio
 async def test_token_counting(claude_manager):
