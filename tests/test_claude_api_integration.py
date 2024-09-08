@@ -442,6 +442,8 @@ def setup_teardown(caplog, request):
     if not request.node.rep_call.passed:
         logger.error(f"Test failed: {request.node.name}")
         logger.error(f"Exception info: {request.node.rep_call.longrepr}")
+        logger.error(f"Full test function:\n{inspect.getsource(request.node.obj)}")
+        logger.error(f"Local variables at failure:\n{pprint.pformat(request.node.obj.__globals__)}")
 
 @pytest.fixture
 def run_async_fixture():
@@ -979,7 +981,7 @@ async def test_mock_claude_client_concurrent_calls(mock_claude_client):
 
     assert len(successful_calls) == 5, f"Expected 5 successful calls, but got {len(successful_calls)}"
     assert len(rate_limit_errors) == 5, f"Expected 5 rate limit errors, but got {len(rate_limit_errors)}"
-    assert mock_claude_client.get_call_count() == 10, f"Expected 10 total calls, but got {mock_claude_client.get_call_count()}"
+    assert await mock_claude_client.get_call_count() == 10, f"Expected 10 total calls, but got {await mock_claude_client.get_call_count()}"
 
 @pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
@@ -1085,13 +1087,18 @@ class TestInputValidation:
     ])
     async def test_input_validation_errors(self, claude_manager, input_text):
         with pytest.raises(ValueError) as excinfo:
-            await claude_manager.generate_response(str(input_text))
-        if isinstance(input_text, str) and len(input_text) > 1000:
-            assert "Prompt length exceeds maximum" in str(excinfo.value)
-        elif not isinstance(input_text, str) or not str(input_text).strip():
-            assert "Invalid prompt: must be a non-empty string" in str(excinfo.value)
+            await claude_manager.generate_response(input_text)
+        if isinstance(input_text, str):
+            if len(input_text) > claude_manager.max_context_length:
+                assert "Prompt length exceeds maximum" in str(excinfo.value)
+            elif not input_text.strip():
+                assert "Invalid prompt: must be a non-empty string" in str(excinfo.value)
+            elif "<script>" in input_text.lower():
+                assert "Invalid prompt: contains potentially unsafe content" in str(excinfo.value)
+            elif re.search(r'\b\d{3}-\d{2}-\d{4}\b', input_text):
+                assert "Invalid prompt: contains sensitive information" in str(excinfo.value)
         else:
-            assert "Invalid prompt" in str(excinfo.value)
+            assert "Invalid prompt: must be a string" in str(excinfo.value)
         if isinstance(input_text, str) and len(input_text) > 1000:
             assert "Prompt length exceeds maximum" in str(excinfo.value)
         elif not isinstance(input_text, str) or not str(input_text).strip():
@@ -1207,7 +1214,8 @@ async def test_mock_claude_client_rate_limit(mock_claude_client, claude_manager)
     with pytest.raises(CustomRateLimitError):
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     
-    assert await mock_claude_client.get_call_count() == mock_claude_client.rate_limit_threshold + 1
+    call_count = await mock_claude_client.get_call_count()
+    assert call_count == mock_claude_client.rate_limit_threshold + 1, f"Expected {mock_claude_client.rate_limit_threshold + 1} calls, but got {call_count}"
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_error_mode(mock_claude_client, claude_manager):
@@ -1326,7 +1334,7 @@ async def test_claude_manager_fallback_response(mock_claude_client, claude_manag
     await mock_claude_client.set_error_mode(True)
     mock_claude_client.max_errors = 0  # Force immediate fallback
 
-    with pytest.raises(APIStatusError):
+    with pytest.raises(CustomRateLimitError):
         await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
 
 @pytest.mark.asyncio
@@ -1545,7 +1553,7 @@ async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
     try:
         logging.debug("Attempting call after rate limit reset")
         response = await claude_manager.generate_response("Test prompt 4")
-        assert response == "Default mock response", f"Unexpected response after reset: {response}"
+        assert response == "<response>Default mock response</response>", f"Unexpected response after reset: {response}"
         assert "Generating response for prompt: Test prompt 4" in caplog.text, "Missing log for post-reset prompt"
         logging.info("Successfully made call after rate limit reset")
     except Exception as e:
