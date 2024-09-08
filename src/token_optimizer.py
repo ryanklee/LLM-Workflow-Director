@@ -9,8 +9,9 @@ class TokenOptimizer:
             return ' '.join(words[:100])
         return prompt
 
-    def truncate_response(self, response: str, max_tokens: int) -> str:
-        words = response.split()
-        if len(words) > max_tokens:
-            return ' '.join(words[:max_tokens])
+    async def truncate_response(self, response: str, max_tokens: int) -> str:
+        tokens = response.split()
+        if len(tokens) <= max_tokens:
+            return response
+        return ' '.join(tokens[:max_tokens])
         return response

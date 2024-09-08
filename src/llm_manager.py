@@ -106,6 +106,7 @@ class LLMManager:
     def __init__(self, config_path='src/llm_config.yaml', claude_manager=None):
         self.error_handler = ErrorHandler()
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
         self.cache = {}
         self.cost_optimizer = LLMCostOptimizer()
         self.config = self._load_config(config_path)
@@ -114,6 +115,7 @@ class LLMManager:
             'balanced': {'model': 'claude-3-sonnet-20240229', 'max_tokens': 4000},
             'powerful': {'model': 'claude-3-opus-20240229', 'max_tokens': 4000}
         })
+        self.logger.info("LLMManager initialized with config: %s", self.config)
         self.logger.info("LLMManager initialized with config: %s", self.config)
         self.prompt_templates = self.config.get('prompt_templates', {})
         self.claude_manager = claude_manager or self._create_claude_manager()

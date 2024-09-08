@@ -19,12 +19,14 @@ class ClaudeManager:
     def __init__(self, client=None, requests_per_minute: int = 1000, requests_per_hour: int = 10000):
         self.client = client or self.create_client()
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
         self.max_test_tokens = 1000
         self.rate_limiter = RateLimiter(requests_per_minute, requests_per_hour)
         self.token_tracker = TokenTracker()
         self.token_optimizer = TokenOptimizer(self.token_tracker)
         self.max_context_length = 200000  # Updated to 200k tokens
         self.messages = self.client.messages
+        self.logger.info("ClaudeManager initialized")
 
     async def evaluate_response_quality(self, prompt):
         # Implement the evaluation logic here
@@ -35,7 +37,7 @@ class ClaudeManager:
 
     async def count_tokens(self, text):
         # This is a simple approximation. For more accurate results, use a proper tokenizer.
-        return len(text)
+        return len(text.split())
 
     @staticmethod
     def create_client():
