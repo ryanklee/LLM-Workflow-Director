@@ -52,8 +52,14 @@ class TokenTracker:
             self.token_usage[task_id] = self.token_usage.get(task_id, 0) + total_tokens
             self.total_tokens += total_tokens
             self.logger.info(f"Added {total_tokens} tokens for task {task_id}. Total tokens: {self.total_tokens}")
-        # Add this line to ensure the token usage is immediately available
-        await self.get_token_usage(task_id)
+        
+        # Log the current state of token usage
+        self.logger.debug(f"Current token usage: {self.token_usage}")
+        self.logger.debug(f"Total tokens: {self.total_tokens}")
+        
+        # Ensure the token usage is immediately available
+        usage = await self.get_token_usage(task_id)
+        self.logger.debug(f"Verified token usage for task {task_id}: {usage}")
 
     async def get_token_usage(self, task_id: str) -> int:
         async with self.lock:

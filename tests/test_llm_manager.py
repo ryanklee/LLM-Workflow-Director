@@ -290,3 +290,58 @@ def test_llm_manager_caching(llm_manager):
             assert result4 != result1
         
         assert mock_anthropic.return_value.messages.create.call_count == 3
+import pytest
+from unittest.mock import MagicMock, patch
+from src.llm_manager import LLMManager
+from src.claude_manager import ClaudeManager
+
+@pytest.fixture
+def mock_claude_manager():
+    return MagicMock(spec=ClaudeManager)
+
+@pytest.fixture
+def llm_manager(mock_claude_manager):
+    return LLMManager(claude_manager=mock_claude_manager)
+
+@pytest.mark.asyncio
+async def test_query(llm_manager, mock_claude_manager):
+    mock_claude_manager.generate_response.return_value = "Test response"
+    mock_claude_manager.count_tokens.return_value = 10
+    
+    response = await llm_manager.query("Test query")
+    
+    assert response['response'] == "Test response"
+    assert 'token_usage' in response
+    assert response['token_usage']['total'] == 20  # input + output tokens
+
+@pytest.mark.asyncio
+async def test_evaluate_sufficiency(llm_manager, mock_claude_manager):
+    mock_claude_manager.generate_response.return_value = "<evaluation>SUFFICIENT</evaluation><reasoning>Test reasoning</reasoning>"
+    
+    result = await llm_manager.evaluate_sufficiency("test_stage", {}, {})
+    
+    assert result['is_sufficient'] == True
+    assert result['reasoning'] == "Test reasoning"
+
+@pytest.mark.asyncio
+async def test_get_optimization_suggestion(llm_manager):
+    with patch.object(llm_manager.cost_optimizer, 'suggest_optimization', return_value="Test suggestion"):
+        suggestion = await llm_manager.get_optimization_suggestion()
+        assert suggestion == "Test suggestion"
+
+@pytest.mark.asyncio
+async def test_get_usage_report(llm_manager):
+    with patch.object(llm_manager.cost_optimizer, 'get_usage_report', return_value={"test": "report"}):
+        report = await llm_manager.get_usage_report()
+        assert report == {"test": "report"}
+
+@pytest.mark.asyncio
+async def test_calculate_cost(llm_manager):
+    cost = await llm_manager.calculate_cost("test_model", 1000)
+    assert cost == 0.1  # Assuming the default cost of 0.0001 per token
+
+@pytest.mark.asyncio
+async def test_clear_cache(llm_manager):
+    llm_manager.cache = {"test": "data"}
+    await llm_manager.clear_cache()
+    assert llm_manager.cache == {}

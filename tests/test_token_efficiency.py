@@ -230,6 +230,10 @@ async def test_token_usage_estimation(llm_manager, token_tracker):
     for query in test_queries:
         response = await llm_manager.query(query)
         estimated_tokens = await llm_manager.claude_manager.count_tokens(query) + await llm_manager.claude_manager.count_tokens(response['response'])
+        
+        # Wait for a short time to ensure token usage is updated
+        await asyncio.sleep(0.1)
+        
         actual_tokens = await token_tracker.get_token_usage(query)
 
         print(f"Query: {query}")
@@ -237,6 +241,11 @@ async def test_token_usage_estimation(llm_manager, token_tracker):
         print(f"Actual tokens: {actual_tokens}")
 
         assert estimated_tokens > 0, f"Estimated tokens should be greater than 0 for query: {query}"
+        
+        # Log the token usage state for debugging
+        print(f"Token tracker state: {token_tracker.token_usage}")
+        print(f"Total tokens: {token_tracker.total_tokens}")
+        
         assert actual_tokens > 0, f"Actual tokens should be greater than 0 for query: {query}"
 
         if actual_tokens > 0:
