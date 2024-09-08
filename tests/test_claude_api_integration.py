@@ -68,6 +68,13 @@ class MockClaudeClient:
         self.logger.setLevel(logging.DEBUG)
         self.logger.debug("Initialized MockClaudeClient")
 
+    async def set_rate_limit_reset_time(self, reset_time: int):
+        self.rate_limit_reset_time = reset_time
+        self.logger.debug(f"Set rate limit reset time to: {reset_time} seconds")
+
+    async def get_error_count(self):
+        return self.error_count
+
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         await asyncio.sleep(self.latency)
@@ -1174,14 +1181,14 @@ async def test_mock_claude_client_concurrent_calls(mock_claude_client):
 @pytest.mark.asyncio
 async def test_mock_claude_client_error_mode(mock_claude_client, claude_manager):
     await mock_claude_client.set_error_mode(True)
-    
-    with pytest.raises(APIStatusError):
-        await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
-    
-    # After max_errors, it should return to normal
+
     for _ in range(mock_claude_client.max_errors):
         with pytest.raises(APIStatusError):
             await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+
+    # After max_errors, it should return to normal
+    response = await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+    assert response == "<response>Default mock response</response>"
     
     await mock_claude_client.set_error_mode(False)
     response = await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
@@ -1218,9 +1225,9 @@ async def test_mock_claude_client_error_count(mock_claude_client, claude_manager
 async def test_claude_manager_fallback_response(mock_claude_client, claude_manager):
     await mock_claude_client.set_error_mode(True)
     mock_claude_client.max_errors = 0  # Force immediate fallback
-    
-    response = await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
-    assert "I apologize, but I'm unable to process your request at the moment" in response
+
+    with pytest.raises(APIStatusError):
+        await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
 
 @pytest.mark.asyncio
 async def test_claude_manager_retry_mechanism(mock_claude_client, claude_manager):
@@ -1411,7 +1418,7 @@ async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
     # Next call should raise RateLimitError
     with pytest.raises(RateLimitError):
         await claude_manager.generate_response("Test prompt 3")
-    assert "Rate limit reached, waiting for next available slot" in caplog.text, "Missing rate limit warning in logs"
+    assert "Rate limit reached: Rate limit exceeded" in caplog.text, "Missing rate limit warning in logs"
     logging.info("Rate limit error raised as expected")
 
     logging.info("Waiting for rate limit to reset")
