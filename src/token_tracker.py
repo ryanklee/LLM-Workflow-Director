@@ -47,21 +47,25 @@ class TokenTracker:
         self.lock = asyncio.Lock()
 
     async def add_tokens(self, task_id: str, input_tokens: int, output_tokens: int):
-        total_tokens = input_tokens + output_tokens
-        self.token_usage[task_id] = self.token_usage.get(task_id, 0) + total_tokens
-        self.total_tokens += total_tokens
-        self.logger.info(f"Added {total_tokens} tokens for task {task_id}. Total tokens: {self.total_tokens}")
+        async with self.lock:
+            total_tokens = input_tokens + output_tokens
+            self.token_usage[task_id] = self.token_usage.get(task_id, 0) + total_tokens
+            self.total_tokens += total_tokens
+            self.logger.info(f"Added {total_tokens} tokens for task {task_id}. Total tokens: {self.total_tokens}")
 
     async def get_token_usage(self, task_id: str) -> int:
-        return self.token_usage.get(task_id, 0)
+        async with self.lock:
+            return self.token_usage.get(task_id, 0)
 
     async def get_total_token_usage(self) -> int:
-        return self.total_tokens
+        async with self.lock:
+            return self.total_tokens
 
     async def reset(self):
-        self.token_usage.clear()
-        self.total_tokens = 0
-        self.logger.info("Token usage reset")
+        async with self.lock:
+            self.token_usage.clear()
+            self.total_tokens = 0
+            self.logger.info("Token usage reset")
 
     async def count_tokens(self, text: str) -> int:
         # This is a simple approximation. For more accurate results, use a proper tokenizer.
