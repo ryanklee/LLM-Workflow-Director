@@ -1,6 +1,7 @@
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, patch, MagicMock, ANY
+from asyncio import Future
 from src.exceptions import RateLimitError
 from src.claude_manager import ClaudeManager
 from src.llm_manager import LLMManager, LLMCostOptimizer
@@ -32,7 +33,9 @@ async def llm_manager(mock_claude_manager):
             }
         }
         manager = LLMManager(claude_manager=mock_claude_manager)
-        return manager
+        yield manager
+        # Clean up after each test
+        await manager.clear_cache()
 
 @pytest.mark.asyncio
 async def test_llm_manager_initialization(llm_manager):
@@ -48,7 +51,7 @@ async def test_llm_manager_query(llm_manager, mock_claude_manager):
     mock_claude_manager.generate_response.return_value = mock_response
     with patch.object(llm_manager.cost_optimizer, 'select_optimal_tier', return_value='balanced'):
         with patch.object(llm_manager.cost_optimizer, 'update_usage') as mock_update_usage:
-            with patch('time.time', side_effect=[0, 1]):
+            with patch('time.time', new_callable=AsyncMock, side_effect=[0, 1]):
                 response = await llm_manager.query("Test prompt")
 
     assert isinstance(response, dict)
@@ -168,7 +171,7 @@ async def test_evaluate_sufficiency_error(llm_manager):
 @pytest.mark.asyncio
 async def test_llm_manager_query_with_context(llm_manager):
     with patch.object(llm_manager.claude_manager, 'generate_response', return_value="Test response"), \
-         patch('time.time', side_effect=[0, 1]):  # Mock start and end times
+         patch('time.time', new_callable=AsyncMock, side_effect=[0, 1]):  # Mock start and end times
         context = {
             "key1": "value1",
             "key2": "value2",
@@ -236,7 +239,7 @@ async def test_llm_manager_fallback_to_fast(llm_manager):
 ])
 async def test_llm_manager_query_with_tiers_and_models(llm_manager, tier, expected_response):
     with patch('anthropic.Anthropic') as mock_anthropic, \
-         patch('time.time', side_effect=[0, 1, 2, 3, 4, 5, 6, 7]):  # Mock start and end times
+         patch('time.time', new_callable=AsyncMock, side_effect=[0, 1, 2, 3, 4, 5, 6, 7]):  # Mock start and end times
         mock_anthropic.return_value.messages.create.return_value = type('obj', (object,), {'content': [type('obj', (object,), {'text': expected_response})()] })()
     
         with patch.object(llm_manager.cost_optimizer, 'update_usage'):

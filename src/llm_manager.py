@@ -99,9 +99,15 @@ class LLMManager:
         self.logger.setLevel(logging.DEBUG)
         file_handler = logging.FileHandler('llm_manager.log')
         file_handler.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
+        
+        # Add a stream handler for console output during tests
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.DEBUG)
+        console_handler.setFormatter(formatter)
+        self.logger.addHandler(console_handler)
         self.cache = {}
         self.cost_optimizer = LLMCostOptimizer()
         self.config = self._load_config(config_path)
@@ -141,6 +147,11 @@ class LLMManager:
         self.logger.debug(f"Context: {context}")
         self.logger.debug(f"Tier: {tier}")
         self.logger.debug(f"Model: {model}")
+        
+        start_time = await self._get_time()
+        self.logger.debug(f"Query start time: {start_time}")
+        
+        try:
 
         if tier is None:
             query_complexity = await self._estimate_query_complexity(prompt)
@@ -176,6 +187,7 @@ class LLMManager:
                 result = await self._process_response(response, tier, start_time)
                 result['raw_response'] = response
                 self.cache[cache_key] = result
+                self.logger.debug(f"Processed response: {result}")
                 
                 await self.token_tracker.add_tokens(prompt, input_tokens, output_tokens)
                 
@@ -213,6 +225,9 @@ class LLMManager:
                     return await self._fallback_response(prompt, context, original_tier)
         
         return await self._fallback_response(prompt, context, original_tier)
+        except Exception as e:
+            self.logger.exception(f"Unexpected error in query method: {str(e)}")
+            return await self._fallback_response(prompt, context, original_tier)
 
     async def get_optimization_suggestion(self) -> str:
         return await self.cost_optimizer.suggest_optimization()
@@ -472,6 +487,9 @@ class LLMManager:
         self.cache.clear()
         self.logger.info("LLM response cache cleared.")
 
+    async def _get_time(self) -> float:
+        return time.time()
+
     async def _handle_error(self, prompt: str, context: Optional[Dict[str, Any]], tier: str, error: Exception) -> Dict[str, Any]:
         self.logger.error(f"Error in LLM query: {str(error)}")
         await self.cost_optimizer.update_usage(tier, 0, 0, False)
@@ -483,12 +501,14 @@ class LLMManager:
 
     async def _fallback_response(self, prompt: str, context: Optional[Dict[str, Any]], tier: str) -> Dict[str, Any]:
         self.logger.warning(f"Fallback response triggered for tier: {tier}")
-        return await self._add_unique_id({
+        return {
             "response": "I apologize, but I'm unable to process your request at the moment. Please try again later.",
-            "error": "All LLM tiers failed. Using fallback response.",
+            "error": f"All LLM tiers failed. Using fallback response. (tier: {tier})",
             "tier": tier,
             "task_progress": 0,
             "state_updates": {},
             "actions": [],
-            "suggestions": ["Please try rephrasing your query.", "Check your internet connection.", "Contact support if the issue persists."]
-        })
+            "suggestions": ["Please try rephrasing your query.", "Check your internet connection.", "Contact support if the issue persists."],
+            "raw_response": "",
+            "token_usage": {"input": 0, "output": 0, "total": 0}
+        }
