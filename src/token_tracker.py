@@ -36,6 +36,7 @@ class TokenOptimizer(TokenOptimizationPolicy):
             return response
         return ' '.join(tokens[:max_tokens])
 import logging
+import asyncio
 from typing import Dict
 
 class TokenTracker:
@@ -43,6 +44,7 @@ class TokenTracker:
         self.logger = logging.getLogger(__name__)
         self.token_usage: Dict[str, int] = {}
         self.total_tokens = 0
+        self.lock = asyncio.Lock()
 
     async def add_tokens(self, task_id: str, input_tokens: int, output_tokens: int):
         total_tokens = input_tokens + output_tokens
