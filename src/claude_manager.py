@@ -6,7 +6,10 @@ from typing import Dict, List, Any
 from unittest.mock import MagicMock
 from anthropic import AsyncAnthropic, NotFoundError, APIError, APIConnectionError, APIStatusError
 from .exceptions import RateLimitError as CustomRateLimitError
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, RetryError
+from .rate_limiter import RateLimiter
+from .token_tracker import TokenTracker
+from .token_optimizer import TokenOptimizer
 
 logging.getLogger(__name__).info(f"Imported modules in {__name__}")
 
@@ -93,7 +96,7 @@ class ClaudeManager:
             end_time = time.time()
             self.logger.info(f"Response generated in {end_time - start_time:.2f} seconds. Model: {selected_model}, Input tokens: {token_count}, Output tokens: {await self.count_tokens(response_text)}")
             return parsed_response
-        except RateLimitError as e:
+        except CustomRateLimitError as e:
             self.logger.error(f"Rate limit error in generate_response: {str(e)}", exc_info=True)
             raise
         except (NotFoundError, APIError, APIConnectionError, APIStatusError) as e:
@@ -148,7 +151,7 @@ class ClaudeManager:
         self.logger.error(f"Error in generate_response: {str(error)}", exc_info=True)
         if isinstance(error, NotFoundError):
             return await self.fallback_response(prompt, "Model not found")
-        elif isinstance(error, RateLimitError):
+        elif isinstance(error, CustomRateLimitError):
             self.logger.warning(f"Rate limit error encountered: {str(error)}")
             await asyncio.sleep(5)
             return await self.fallback_response(prompt, "Rate limit exceeded")
