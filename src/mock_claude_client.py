@@ -20,6 +20,15 @@ class MockClaudeClient:
         self.last_call_time = 0
         self.latency = 0.1  # Default latency in seconds
         self.logger = logging.getLogger(__name__)
+        self.lock = asyncio.Lock()
+        self.error_count = 0
+        self.max_errors = 3
+        self.rate_limit_reset_time = 60  # seconds
+        self.logger.setLevel(logging.DEBUG)
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
 
     async def count_tokens(self, text: str) -> int:
         await asyncio.sleep(0.01)  # Simulate a short delay
@@ -32,6 +41,73 @@ class MockClaudeClient:
         return response.content[0].text
 
     async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+        async with self.lock:
+            self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}")
+            await self._simulate_latency()
+            self._check_rate_limit()
+            
+            if self.error_mode:
+                self.error_count += 1
+                if self.error_count <= self.max_errors:
+                    self.logger.warning(f"Error mode active. Raising APIStatusError. Error count: {self.error_count}")
+                    raise APIStatusError("API error", response=MagicMock(), body={})
+                else:
+                    self.logger.info("Error mode deactivated after reaching max errors")
+                    self.error_mode = False
+                    self.error_count = 0
+            
+            prompt = messages[0]['content']
+            self.logger.debug(f"Received prompt: {prompt[:50]}...")
+            if len(prompt) > self.max_test_tokens:
+                self.logger.warning(f"Prompt exceeds max tokens. Prompt length: {len(prompt)}, Max tokens: {self.max_test_tokens}")
+                raise ValueError(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
+            
+            response = self.responses.get(prompt, "Default mock response")
+            if len(response) > self.max_test_tokens:
+                self.logger.warning(f"Response exceeds max tokens. Truncating. Original length: {len(response)}")
+                response = response[:self.max_test_tokens] + "..."
+            
+            self.logger.debug(f"Returning response: {response[:50]}...")
+            return MagicMock(content=[MagicMock(text=response)])
+
+    def _check_rate_limit(self):
+        current_time = time.time()
+        if current_time - self.last_call_time >= self.rate_limit_reset_time:
+            self.call_count = 0
+        self.last_call_time = current_time
+        self.call_count += 1
+        if self.call_count > self.rate_limit_threshold:
+            raise RateLimitError("Rate limit exceeded")
+
+    async def _simulate_latency(self):
+        await asyncio.sleep(self.latency)
+
+    def set_response(self, prompt: str, response: str):
+        self.responses[prompt] = response
+
+    def set_rate_limit(self, limit_reached: bool):
+        self.rate_limit_reached = limit_reached
+
+    def set_error_mode(self, error_mode: bool):
+        self.error_mode = error_mode
+
+    def set_latency(self, latency: float):
+        self.latency = latency
+
+    def reset(self):
+        self.rate_limit_reached = False
+        self.error_mode = False
+        self.responses = {}
+        self.call_count = 0
+        self.last_call_time = 0
+        self.error_count = 0
+        self.latency = 0.1
+
+    def get_call_count(self):
+        return self.call_count
+
+    def get_error_count(self):
+        return self.error_count
         await self._simulate_latency()
         async with self.lock:
             current_time = time.time()

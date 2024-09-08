@@ -114,7 +114,7 @@ class ClaudeManager:
             current_tokens += word_tokens
         return truncated_prompt.strip()
 
-    async def select_model(self, task_description):
+    def select_model(self, task_description):
         if "simple" in task_description.lower():
             return "claude-3-haiku-20240307"
         elif "complex" in task_description.lower():
@@ -122,7 +122,7 @@ class ClaudeManager:
         else:
             return "claude-3-sonnet-20240229"
 
-    async def parse_response(self, response_text):
+    def parse_response(self, response_text):
         max_length = self.max_test_tokens - 21
         truncated_text = response_text[:max_length] + "..." if len(response_text) > max_length else response_text
         parsed_response = f"<response>{truncated_text.strip()}</response>"

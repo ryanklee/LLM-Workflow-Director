@@ -269,13 +269,14 @@ class TestPerformance:
 async def test_mock_claude_client_response(mock_claude_client, claude_manager):
     mock_claude_client.set_response("Test prompt", "Test response")
     response = await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
-    assert response == "<response><response>Test response</response></response>"
+    assert response == "<response>Test response</response>"
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_rate_limit(mock_claude_client, claude_manager):
     mock_claude_client.set_rate_limit(True)
     with pytest.raises(RateLimitError):
-        await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+        for _ in range(mock_claude_client.rate_limit_threshold + 1):
+            await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_error_mode(mock_claude_client, claude_manager):
@@ -288,11 +289,31 @@ async def test_mock_claude_client_reset(mock_claude_client, claude_manager):
     mock_claude_client.set_rate_limit(True)
     mock_claude_client.set_error_mode(True)
     mock_claude_client.set_response("Test prompt", "Test response")
-    
+        
     mock_claude_client.reset()
-    
+        
     response = await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
     assert response == "<response>Default mock response</response>"
+
+@pytest.mark.asyncio
+async def test_mock_claude_client_call_count(mock_claude_client, claude_manager):
+    for _ in range(3):
+        await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+    assert mock_claude_client.get_call_count() == 3
+
+@pytest.mark.asyncio
+async def test_mock_claude_client_error_count(mock_claude_client, claude_manager):
+    mock_claude_client.set_error_mode(True)
+    mock_claude_client.max_errors = 2
+        
+    with pytest.raises(APIStatusError):
+        await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+    with pytest.raises(APIStatusError):
+        await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+        
+    response = await claude_manager.generate_response("Test prompt", "claude-3-haiku-20240307")
+    assert response == "<response>Default mock response</response>"
+    assert mock_claude_client.get_error_count() == 2
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_rate_limit_reset(mock_claude_client, claude_manager):
