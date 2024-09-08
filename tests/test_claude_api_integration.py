@@ -1235,7 +1235,8 @@ async def test_claude_manager_retry_mechanism(mock_claude_client, claude_manager
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_rate_limit_reset(mock_claude_client, claude_manager):
-    mock_claude_client.rate_limit_threshold = 3
+    await mock_claude_client.set_rate_limit(3)
+    await mock_claude_client.set_latency(0)  # Set latency to 0 for faster testing
     mock_claude_client.rate_limit_reset_time = 1  # 1 second for faster testing
 
     # Make calls until rate limit is reached
