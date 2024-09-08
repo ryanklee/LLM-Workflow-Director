@@ -63,9 +63,38 @@ class MockClaudeClient:
         self.error_count = 0
         self.max_errors = 3
         self.max_context_length = 200000
+        self.last_reset_time = time.time()
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         self.logger.debug("Initialized MockClaudeClient")
+
+    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        await asyncio.sleep(self.latency)
+        
+        current_time = time.time()
+        if current_time - self.last_reset_time >= self.rate_limit_reset_time:
+            self.call_count = 0
+            self.last_reset_time = current_time
+            self.logger.debug("Rate limit counter reset")
+        
+        self.call_count += 1
+        self.logger.debug(f"Call count: {self.call_count}")
+        
+        if self.call_count > self.rate_limit_threshold:
+            self.logger.warning("Rate limit exceeded")
+            raise CustomRateLimitError("Rate limit exceeded")
+        
+        if self.error_mode:
+            self.error_count += 1
+            self.logger.debug(f"Error count: {self.error_count}")
+            if self.error_count <= self.max_errors:
+                self.logger.error("Simulated API error")
+                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+        
+        response = self.responses.get(prompt, "Default mock response")
+        self.logger.debug(f"Returning response: {response[:50]}...")
+        return response
 
     async def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
@@ -82,6 +111,20 @@ class MockClaudeClient:
     async def set_rate_limit(self, threshold: int):
         self.rate_limit_threshold = threshold
         self.logger.debug(f"Set rate limit threshold to: {threshold}")
+
+    async def reset(self):
+        self.__init__()
+        self.logger.debug("Reset MockClaudeClient")
+
+    def get_call_count(self):
+        return self.call_count
+
+    def get_error_count(self):
+        return self.error_count
+
+    def reset_error_count(self):
+        self.error_count = 0
+        self.logger.debug("Reset error count")
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"MockClaudeClient generating response for prompt: {prompt[:50]}... using model: {model}")
@@ -171,7 +214,7 @@ class MockClaudeClient:
                 raise APIStatusError("Simulated API error", response=MagicMock(), body={})
         response = self.responses.get(prompt, "Default mock response")
         self.logger.debug(f"Returning response: {response[:50]}...")
-        return f"<response>{response}</response>"
+        return response  # Remove the <response> tags here
 
     async def count_tokens(self, text: str) -> int:
         return len(text.split())
@@ -359,6 +402,14 @@ async def claude_manager(mock_claude_client):
     finally:
         await manager.close()
         logger.debug("Closed ClaudeManager instance")
+
+@pytest.fixture(autouse=True)
+def setup_teardown(caplog):
+    caplog.set_level(logging.DEBUG)
+    logger.info("Starting test")
+    yield
+    logger.info("Finished test")
+    logger.debug("Log output:\n" + caplog.text)
 
 @pytest.fixture
 def run_async_fixture():
@@ -588,7 +639,7 @@ class ClaudeManager:
         try:
             response = await self.client.generate_response(prompt, model)
             self.logger.debug(f"Response generated successfully: {response[:50]}...")
-            return response
+            return f"<response>{response}</response>"
         except CustomRateLimitError as e:
             self.logger.warning(f"Rate limit reached: {str(e)}")
             raise
