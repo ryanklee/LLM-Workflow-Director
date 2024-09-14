@@ -162,7 +162,10 @@ class ClaudeManager:
         except ValueError as e:
             self.logger.error(f"Value error in generate_response: {str(e)}", exc_info=True)
             raise
-        except (NotFoundError, APIError, APIConnectionError, APIStatusError) as e:
+        except RateLimitError as e:
+            self.logger.warning(f"Rate limit reached: {str(e)}")
+            raise
+        except (NotFoundError, APIError, APIConnectionError) as e:
             self.logger.error(f"API error in generate_response: {str(e)}", exc_info=True)
             return await self._handle_error(e, prompt)
         except AttributeError as e:
@@ -170,7 +173,7 @@ class ClaudeManager:
             return await self.fallback_response(prompt, f"Attribute error: {str(e)}")
         except Exception as e:
             self.logger.error(f"Unexpected error in generate_response: {str(e)}", exc_info=True)
-            return await self.fallback_response(prompt, f"Unexpected error: {str(e)}")
+            raise APIStatusError("Unexpected error", response=MagicMock(), body={})
         finally:
             end_time = time.time()
             self.logger.debug(f"Total time in generate_response: {end_time - start_time:.2f} seconds")
