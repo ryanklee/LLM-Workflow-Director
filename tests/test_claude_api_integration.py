@@ -1037,6 +1037,7 @@ async def test_claude_api_latency(claude_manager, mock_claude_client):
         assert elapsed_time >= 0.5, f"API call should take at least 500ms, but took {elapsed_time:.2f}s"
         logger.info(f"API call latency: {elapsed_time:.2f} seconds")
         logger.info(f"Response: {response}")
+        assert "<response>" in response and "</response>" in response, "Response should be wrapped in <response> tags"
     except Exception as e:
         logger.error(f"Error in test_claude_api_latency: {str(e)}", exc_info=True)
         raise
@@ -1158,6 +1159,16 @@ async def test_concurrent_claude_api_calls(claude_manager, mock_claude_client, c
     assert "Rate limit exceeded" in caplog.text, "Missing rate limit warning in logs"
 
     logging.info("Concurrent API calls test completed successfully")
+
+@pytest.mark.asyncio
+async def test_claude_manager_error_handling(claude_manager, mock_claude_client):
+    await mock_claude_client.set_error_mode(True)
+    with pytest.raises(APIStatusError):
+        await claude_manager.generate_response("Test prompt")
+    
+    await mock_claude_client.set_error_mode(False)
+    response = await claude_manager.generate_response("Test prompt")
+    assert "<response>" in response and "</response>" in response, "Response should be wrapped in <response> tags"
 
 class TestClaudeAPIBasics:
     @pytest.mark.fast
