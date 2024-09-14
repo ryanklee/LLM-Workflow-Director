@@ -163,7 +163,7 @@ class MockClaudeClient:
                     raise APIStatusError("Simulated API error", response=MagicMock(), body={})
             
             response = self.responses.get(prompt, "Default mock response")
-            return f"<response>{response}</response>"
+            return response  # Return the response without XML wrapping
 
     async def count_tokens(self, text: str) -> int:
         return len(text.split())
