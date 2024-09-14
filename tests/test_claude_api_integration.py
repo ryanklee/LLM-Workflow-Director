@@ -1062,14 +1062,15 @@ async def test_claude_api_rate_limit_adjustment(claude_manager, mock_claude_clie
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_concurrent_calls(mock_claude_client):
-    with pytest.raises(CustomRateLimitError) as exc_info:
-        results = await mock_claude_client.simulate_concurrent_calls(10)
+    num_calls = 10
+    results = await mock_claude_client.simulate_concurrent_calls(num_calls)
     
-    # Check that the rate limit error was raised
-    assert "Rate limit exceeded" in str(exc_info.value)
+    successful_calls = [r for r in results if isinstance(r, str)]
+    rate_limited_calls = [r for r in results if isinstance(r, CustomRateLimitError)]
     
-    # Check that the correct number of successful calls were made before the rate limit was exceeded
-    assert mock_claude_client.call_count == 5
+    assert len(successful_calls) == mock_claude_client.rate_limit_threshold, f"Expected {mock_claude_client.rate_limit_threshold} successful calls, but got {len(successful_calls)}"
+    assert len(rate_limited_calls) == num_calls - mock_claude_client.rate_limit_threshold, f"Expected {num_calls - mock_claude_client.rate_limit_threshold} rate-limited calls, but got {len(rate_limited_calls)}"
+    assert mock_claude_client.call_count == num_calls, f"Expected {num_calls} total calls, but got {mock_claude_client.call_count}"
     
     # Reset the call count for other tests
     mock_claude_client.call_count = 0
