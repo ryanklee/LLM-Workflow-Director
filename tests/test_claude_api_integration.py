@@ -419,16 +419,17 @@ class MockClaudeClient:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         await asyncio.sleep(self.latency)
         current_time = time.time()
-        if current_time - self.last_reset_time >= self.rate_limit_reset_time:
-            self.logger.info(f"Resetting call count. Old count: {self.call_count}")
-            self.call_count = 0
-            self.last_reset_time = current_time
-        self.call_count += 1
-        self.logger.debug(f"Call count: {self.call_count}, Threshold: {self.rate_limit_threshold}")
-        if self.call_count > self.rate_limit_threshold:
-            error_msg = f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}"
-            self.logger.warning(error_msg)
-            raise RateLimitError(error_msg)
+        async with self.lock:
+            if current_time - self.last_reset_time >= self.rate_limit_reset_time:
+                self.logger.info(f"Resetting call count. Old count: {self.call_count}")
+                self.call_count = 0
+                self.last_reset_time = current_time
+            self.call_count += 1
+            self.logger.debug(f"Call count: {self.call_count}, Threshold: {self.rate_limit_threshold}")
+            if self.call_count > self.rate_limit_threshold:
+                error_msg = f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}"
+                self.logger.warning(error_msg)
+                raise CustomRateLimitError(error_msg)
         self.logger.info(f"Generating response for model: {model}")
         self.logger.info(f"Generating response for model: {model}")
         if self.error_mode:
