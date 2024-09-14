@@ -194,15 +194,9 @@ class MockClaudeClient:
             return "claude-3-sonnet-20240229"
 
     async def simulate_concurrent_calls(self, num_calls):
-        results = []
-        tasks = [self.generate_response("Test prompt") for _ in range(num_calls)]
-        for task in asyncio.as_completed(tasks):
-            try:
-                result = await task
-                results.append(result)
-            except RateLimitError as e:
-                results.append(e)
-        return results
+        tasks = [self.generate_response(f"Test prompt {i}") for i in range(num_calls)]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        return [r if isinstance(r, str) else r for r in results]
 
     def select_model(self, task: str) -> str:
         if "simple" in task.lower():
@@ -651,8 +645,9 @@ def get_error_count(self):
             self.call_count += 1
             self.logger.debug(f"Call count: {self.call_count}")
             if self.call_count > self.rate_limit_threshold:
-                self.logger.warning("Rate limit exceeded")
-                raise CustomRateLimitError("Rate limit exceeded")
+                error_msg = f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}"
+                self.logger.warning(error_msg)
+                raise CustomRateLimitError(error_msg)
             if self.error_mode:
                 self.error_count += 1
                 self.logger.debug(f"Error count: {self.error_count}")
