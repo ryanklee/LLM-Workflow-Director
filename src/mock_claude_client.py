@@ -489,32 +489,39 @@ class MockClaudeClient:
         return self.error_count
 
     async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> MagicMock:
+        self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}")
         await self._simulate_latency()
         await self._check_rate_limit()
 
         if self.error_mode:
             self.error_count += 1
             if self.error_count <= self.max_errors:
+                self.logger.warning(f"Error mode active. Raising APIStatusError. Error count: {self.error_count}")
                 raise APIStatusError("Simulated API error", response=MagicMock(), body={})
 
         prompt = messages[0]['content']
+        self.logger.debug(f"Received prompt: {prompt[:50]}...")
         if len(prompt) > self.max_test_tokens:
+            self.logger.warning(f"Prompt exceeds max tokens. Prompt length: {len(prompt)}, Max tokens: {self.max_test_tokens}")
             raise ValueError(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
 
         response = self.responses.get(prompt, "Default mock response")
         if len(response) > max_tokens:
+            self.logger.warning(f"Response exceeds max tokens. Truncating. Original length: {len(response)}")
             response = response[:max_tokens] + "..."
 
         self.call_count += 1
-
+        self.logger.debug(f"Returning response: {response[:50]}...")
         return MagicMock(content=[MagicMock(text=f"<response>{response}</response>")])
 
     async def _check_rate_limit(self):
         current_time = time.time()
         if current_time - self.last_reset_time >= self.rate_limit_reset_time:
+            self.logger.info(f"Resetting call count. Old count: {self.call_count}")
             self.call_count = 0
             self.last_reset_time = current_time
         if self.call_count >= self.rate_limit_threshold:
+            self.logger.warning(f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}")
             raise CustomRateLimitError("Rate limit exceeded")
 import asyncio
 from typing import Dict, List, Optional
