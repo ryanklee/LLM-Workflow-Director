@@ -1,83 +1,14 @@
 import pytest
 import asyncio
-import pytest_asyncio
-import tenacity
-import time
-import anthropic
 import logging
-import json
-import functools
-import re
-import inspect
-import pprint
-import sys
-import os
 from unittest.mock import MagicMock
 from anthropic import APIStatusError
 from src.exceptions import CustomRateLimitError, RateLimitError
 from src.llm_manager import LLMManager
 from src.claude_manager import ClaudeManager
-from functools import wraps
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-
-def log_test_info():
-    logger.info(f"Python version: {sys.version}")
-    logger.info(f"pytest version: {pytest.__version__}")
-    logger.info(f"Current working directory: {os.getcwd()}")
-    logger.info(f"sys.path: {sys.path}")
-
-log_test_info()
-
-def structured_log(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        logger = logging.getLogger(func.__module__)
-        logger.info(f"Starting {func.__name__}")
-        try:
-            result = func(*args, **kwargs)
-            logger.info(f"Finished {func.__name__}")
-            return result
-        except Exception as e:
-            logger.error(f"Error in {func.__name__}: {str(e)}", exc_info=True)
-            raise
-    return wrapper
-
-class StructuredLogger:
-    def __init__(self, name):
-        self.logger = logging.getLogger(name)
-
-    def _log(self, level, message, **kwargs):
-        log_data = {"message": message, **kwargs}
-        self.logger.log(level, json.dumps(log_data))
-
-    def debug(self, message, **kwargs):
-        self._log(logging.DEBUG, message, **kwargs)
-
-    def info(self, message, **kwargs):
-        self._log(logging.INFO, message, **kwargs)
-
-    def warning(self, message, **kwargs):
-        self._log(logging.WARNING, message, **kwargs)
-
-    def error(self, message, **kwargs):
-        self._log(logging.ERROR, message, **kwargs)
-
-logger = StructuredLogger(__name__)
-
-def log_test_start_end(func):
-    @wraps(func)
-    async def wrapper(*args, **kwargs):
-        logger.info(f"Starting test: {func.__name__}")
-        try:
-            result = await func(*args, **kwargs)
-            logger.info(f"Finished test: {func.__name__}")
-            return result
-        except Exception as e:
-            logger.error(f"Error in test {func.__name__}: {str(e)}", exc_info=True)
-            raise
-    return wrapper
 
 @pytest_asyncio.fixture
 async def mock_claude_client():
