@@ -68,7 +68,7 @@ class MockClaudeClient:
         
         response = self.responses.get(prompt, "Default mock response")
         self.logger.debug(f"Returning response: {response[:50]}...")
-        return response
+        return response  # Return the response without XML wrapping
 
     async def count_tokens(self, text: str) -> int:
         return len(text.split())
@@ -375,7 +375,7 @@ class MockClaudeClient:
             await asyncio.sleep(0.1)  # Simulate some processing time
             
             self.logger.debug(f"Returning response: {response[:50]}...")
-            return MagicMock(content=[MagicMock(text=response)])  # Return the response without XML wrapping
+            return MagicMock(content=[MagicMock(text=response)])
         self.call_count = 0
         self.rate_limit_threshold = 5  # Number of calls before rate limiting
         self.last_call_time = 0
