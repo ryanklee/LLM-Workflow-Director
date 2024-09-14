@@ -1171,7 +1171,7 @@ import sys
 import os
 from unittest.mock import MagicMock
 from anthropic import APIStatusError
-from src.exceptions import CustomRateLimitError, RateLimit
+from src.exceptions import CustomRateLimitError
 @pytest.mark.asyncio
 async def test_rate_limit_reset(claude_manager, mock_claude_client, caplog):
     caplog.set_level(logging.DEBUG)
