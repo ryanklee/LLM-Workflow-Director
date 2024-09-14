@@ -508,14 +508,14 @@ Throughout the implementation process, maintain regular communication with stake
     17.4. Enhance MockClaudeClient with realistic behavior [COMPLETED]
     17.5. Implement asynchronous rate limiting in MockClaudeClient [COMPLETED]
     17.6. Implement rate limit reset functionality in MockClaudeClient [COMPLETED]
-    17.7. Add concurrent API calls testing [IN PROGRESS]
+    17.7. Add concurrent API calls testing [COMPLETED]
     17.8. Fix error handling in MockClaudeClient and ClaudeManager [COMPLETED]
     17.9. Update tests to expect correct error types [COMPLETED]
     17.10. Implement configurable rate limit threshold and reset time [COMPLETED]
     17.11. Add tests for error mode behavior [COMPLETED]
     17.12. Implement and test latency simulation [COMPLETED]
-    17.13. Implement token counting functionality [TODO]
-    17.14. Add generate_response method to MockClaudeClient [TODO]
+    17.13. Implement token counting functionality [COMPLETED]
+    17.14. Add generate_response method to MockClaudeClient [COMPLETED]
 
 18. Performance Enhancements and LLM Usage Optimization (High)
     18.1. Implement selective parallel test execution for non-LLM tests [COMPLETED]
