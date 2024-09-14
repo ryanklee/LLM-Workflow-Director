@@ -67,6 +67,7 @@ class MockClaudeClient:
                          f"rate_limit_reset_time={self.rate_limit_reset_time}, max_test_tokens={self.max_test_tokens}")
         self.logger.debug(f"Initialized MockClaudeClient with rate_limit_threshold={self.rate_limit_threshold}, "
                           f"rate_limit_reset_time={self.rate_limit_reset_time}, max_test_tokens={self.max_test_tokens}")
+        self.lock = asyncio.Lock()
         
     def __str__(self):
         return f"MockClaudeClient(rate_limit_threshold={self.rate_limit_threshold}, " \
@@ -557,18 +558,19 @@ def get_error_count(self):
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         await asyncio.sleep(self.latency)
-        current_time = time.time()
-        if current_time - self.last_reset_time >= self.rate_limit_reset_time:
-            self.logger.info(f"Resetting call count. Old count: {self.call_count}")
-            self.call_count = 0
-            self.last_reset_time = current_time
-            self.logger.debug("Rate limit counter reset")
-        self.call_count += 1
-        self.logger.debug(f"Call count: {self.call_count}, Threshold: {self.rate_limit_threshold}")
-        if self.call_count > self.rate_limit_threshold:
-            error_msg = f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}"
-            self.logger.warning(error_msg)
-            raise CustomRateLimitError(error_msg)
+        async with self.lock:
+            current_time = time.time()
+            if current_time - self.last_reset_time >= self.rate_limit_reset_time:
+                self.logger.info(f"Resetting call count. Old count: {self.call_count}")
+                self.call_count = 0
+                self.last_reset_time = current_time
+                self.logger.debug("Rate limit counter reset")
+            self.call_count += 1
+            self.logger.debug(f"Call count: {self.call_count}, Threshold: {self.rate_limit_threshold}")
+            if self.call_count > self.rate_limit_threshold:
+                error_msg = f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}"
+                self.logger.warning(error_msg)
+                raise CustomRateLimitError(error_msg)
         if self.error_mode:
             self.error_count += 1
             self.logger.debug(f"Error count: {self.error_count}")
@@ -608,10 +610,7 @@ def get_error_count(self):
     async def simulate_concurrent_calls(self, num_calls):
         tasks = [self.generate_response(f"Prompt {i}") for i in range(num_calls)]
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        successful_results = [result for result in results if isinstance(result, str)]
-        if any(isinstance(result, CustomRateLimitError) for result in results):
-            raise CustomRateLimitError(f"Rate limit exceeded. Successful calls: {len(successful_results)}")
-        return successful_results
+        return results
         self.latency = 0
         self.responses = {}
         self.max_test_tokens = 1000
