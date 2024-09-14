@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 @pytest_asyncio.fixture
 async def mock_claude_client():
     client = MockClaudeClient()
+    client.lock = asyncio.Lock()  # Ensure the lock is initialized
     logger.debug(f"Created MockClaudeClient instance with rate_limit_threshold={client.rate_limit_threshold}, rate_limit_reset_time={client.rate_limit_reset_time}")
     yield client
     await client.reset()

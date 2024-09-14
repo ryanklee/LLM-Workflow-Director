@@ -21,12 +21,12 @@ class MockClaudeClient:
         self.last_call_time = 0
         self.latency = 0.1  # Default latency in seconds
         self.logger = logging.getLogger(__name__)
-        self.lock = asyncio.Lock()  # Add this line to create the lock attribute
+        self.lock = asyncio.Lock()
         self.error_count = 0
         self.max_errors = 3
         self.rate_limit_reset_time = 60  # seconds
         self.max_context_length = 200000  # 200k tokens
-        self.client = self  # Add this line to make 'client' attribute available
+        self.client = self
 
     async def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
