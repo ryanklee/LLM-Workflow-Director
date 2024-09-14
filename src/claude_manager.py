@@ -4,7 +4,7 @@ import asyncio
 import time
 from typing import Dict, List, Any
 from unittest.mock import MagicMock
-from anthropic import AsyncAnthropic, NotFoundError, APIError, APIConnectionError, APIStatusError
+from anthropic import AsyncAnthropic, NotFoundError, APIError, APIConnectionError, APIStatusError, RateLimitError
 from .exceptions import RateLimitError as CustomRateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, RetryError
 from .rate_limiter import RateLimiter
