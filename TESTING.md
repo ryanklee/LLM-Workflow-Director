@@ -187,4 +187,19 @@ We use pytest-cov for coverage reporting. Coverage reports are generated automat
 ## Updating Tests
 When adding new features or modifying existing ones, always update or add corresponding tests. Follow the existing patterns and conventions in the test files.
 
+## Token Usage Efficiency Benchmark
+We have implemented a token usage efficiency benchmark in `tests/test_context_window_efficiency.py`. This benchmark:
+- Generates synthetic data for testing
+- Simulates Claude API calls using a mock
+- Calculates token usage efficiency
+- Logs detailed information about each sample and the overall efficiency
+- Asserts that the efficiency falls within expected ranges
+
+To run this benchmark:
+```
+pytest tests/test_context_window_efficiency.py
+```
+
+The benchmark provides insights into how efficiently we're using the context window in our LLM interactions. Monitor the logged information and benchmark results to track improvements in token usage efficiency over time.
+
 Remember to update these guidelines as new testing practices or requirements are introduced to the project.

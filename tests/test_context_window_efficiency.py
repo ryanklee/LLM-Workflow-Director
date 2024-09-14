@@ -156,3 +156,91 @@ async def test_token_usage_efficiency(llm_manager):
     # Log results for manual inspection
     for size, efficiency in results:
         print(f"Context size: {size}, Efficiency: {efficiency:.4f}")
+import pytest
+import random
+import string
+import logging
+from typing import List
+from unittest.mock import Mock
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+def generate_synthetic_data(min_length: int, max_length: int, num_samples: int) -> List[str]:
+    """
+    Generate synthetic data for token usage efficiency testing.
+
+    Args:
+        min_length (int): Minimum length of generated text.
+        max_length (int): Maximum length of generated text.
+        num_samples (int): Number of samples to generate.
+
+    Returns:
+        List[str]: List of generated text samples.
+    """
+    samples = []
+    for _ in range(num_samples):
+        length = random.randint(min_length, max_length)
+        text = ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation + ' ', k=length))
+        samples.append(text)
+    return samples
+
+def test_generate_synthetic_data():
+    min_length = 10
+    max_length = 100
+    num_samples = 5
+    samples = generate_synthetic_data(min_length, max_length, num_samples)
+
+    assert len(samples) == num_samples
+    for sample in samples:
+        assert min_length <= len(sample) <= max_length
+
+class MockClaudeManager:
+    def __init__(self):
+        self.count_tokens = Mock(return_value=100)
+        self.generate_response = Mock(return_value="Mocked response")
+
+@pytest.fixture
+def mock_claude_manager():
+    return MockClaudeManager()
+
+def calculate_token_usage_efficiency(input_tokens: int, output_tokens: int) -> float:
+    """
+    Calculate token usage efficiency.
+
+    Args:
+        input_tokens (int): Number of input tokens.
+        output_tokens (int): Number of output tokens.
+
+    Returns:
+        float: Token usage efficiency as a percentage.
+    """
+    total_tokens = input_tokens + output_tokens
+    return (output_tokens / total_tokens) * 100 if total_tokens > 0 else 0
+
+@pytest.mark.benchmark(group="token_efficiency")
+def test_token_usage_efficiency_benchmark(benchmark, mock_claude_manager):
+    def run_benchmark():
+        samples = generate_synthetic_data(min_length=50, max_length=500, num_samples=10)
+        efficiencies = []
+
+        for i, sample in enumerate(samples, 1):
+            input_tokens = mock_claude_manager.count_tokens(sample)
+            mock_claude_manager.generate_response(sample)
+            output_tokens = mock_claude_manager.count_tokens(mock_claude_manager.generate_response.return_value)
+            efficiency = calculate_token_usage_efficiency(input_tokens, output_tokens)
+            efficiencies.append(efficiency)
+            
+            logger.info(f"Sample {i}: Input tokens: {input_tokens}, Output tokens: {output_tokens}, Efficiency: {efficiency:.2f}%")
+
+        avg_efficiency = sum(efficiencies) / len(efficiencies)
+        logger.info(f"Average token usage efficiency: {avg_efficiency:.2f}%")
+        return avg_efficiency
+
+    result = benchmark(run_benchmark)
+    assert result > 0, "Token usage efficiency should be greater than 0"
+    logger.info(f"Benchmark result - Average token usage efficiency: {result:.2f}%")
+
+    # Additional assertions
+    assert result > 30, "Token usage efficiency should be above 30%"
+    assert result < 90, "Token usage efficiency should be below 90%"
