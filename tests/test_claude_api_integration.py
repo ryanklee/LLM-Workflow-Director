@@ -1123,7 +1123,7 @@ async def test_mock_claude_client_latency(mock_claude_client):
 async def test_mock_claude_client_custom_responses(mock_claude_client):
     test_prompt = "Custom response prompt"
     test_response = "This is a custom response"
-    mock_claude_client.set_response(test_prompt, test_response)
+    await mock_claude_client.set_response(test_prompt, test_response)
     
     response = await mock_claude_client.generate_response(test_prompt)
     expected_response = f"<response>{test_response}</response>"
@@ -1140,14 +1140,14 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
     assert create_response.content[0].text == expected_response, f"Expected custom response '{expected_response}' from create method, but got '{create_response.content[0].text}'"
 
     # Test rate limiting
-    mock_claude_client.set_rate_limit(3)
+    await mock_claude_client.set_rate_limit(3)
     for _ in range(3):
         await mock_claude_client.create("test-model", 100, [{"role": "user", "content": "Test"}])
     with pytest.raises(CustomRateLimitError):
         await mock_claude_client.create("test-model", 100, [{"role": "user", "content": "Test"}])
 
     # Test error mode
-    mock_claude_client.set_error_mode(True)
+    await mock_claude_client.set_error_mode(True)
     with pytest.raises(APIStatusError):
         await mock_claude_client.create("test-model", 100, [{"role": "user", "content": "Test"}])
 
