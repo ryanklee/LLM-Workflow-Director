@@ -1,4 +1,5 @@
 import pytest
+import pytest_asyncio
 import asyncio
 import logging
 from unittest.mock import MagicMock
@@ -975,7 +976,6 @@ def log_test_name(request):
     logger.info(f"Finished test: {request.node.name}")
 
 @pytest.mark.asyncio
-@log_test_start_end
 async def test_claude_api_latency(claude_manager, mock_claude_client):
     try:
         await mock_claude_client.set_latency(0.5)  # Set a 500ms latency
