@@ -1093,6 +1093,13 @@ async def test_mock_claude_client_concurrent_calls(mock_claude_client):
         expected_count = i + 6  # The first error should be at count 6
         assert f"Count: {expected_count}, Threshold: 5" in str(error), f"Unexpected error message: {str(error)}"
 
+    # Additional logging for debugging
+    print(f"Successful calls: {len(successful_calls)}")
+    print(f"Rate limit errors: {len(rate_limit_errors)}")
+    print(f"Total call count: {call_count}")
+    for i, result in enumerate(results):
+        print(f"Result {i+1}: {'Success' if isinstance(result, str) else 'Rate Limit Error'}")
+
 @pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
     try:
