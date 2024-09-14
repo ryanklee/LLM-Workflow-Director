@@ -1074,6 +1074,61 @@ async def test_mock_claude_client_concurrent_calls(mock_claude_client):
     await mock_claude_client.reset()
 
 @pytest.mark.asyncio
+async def test_mock_claude_client_rate_limit_reset(mock_claude_client):
+    # Set a short rate limit reset time for testing
+    mock_claude_client.rate_limit_reset_time = 0.1  # 100 ms
+    
+    # Make calls up to the rate limit
+    for _ in range(mock_claude_client.rate_limit_threshold):
+        await mock_claude_client.generate_response("Test prompt")
+    
+    # The next call should be rate limited
+    with pytest.raises(CustomRateLimitError):
+        await mock_claude_client.generate_response("Rate limited prompt")
+    
+    # Wait for the rate limit to reset
+    await asyncio.sleep(0.2)  # Wait slightly longer than the reset time
+    
+    # This call should succeed now
+    response = await mock_claude_client.generate_response("After reset prompt")
+    assert isinstance(response, str), "Expected a successful response after rate limit reset"
+
+@pytest.mark.asyncio
+async def test_mock_claude_client_error_mode(mock_claude_client):
+    # Enable error mode
+    await mock_claude_client.set_error_mode(True)
+    
+    # The first few calls should raise APIStatusError
+    for _ in range(mock_claude_client.max_errors):
+        with pytest.raises(APIStatusError):
+            await mock_claude_client.generate_response("Error mode prompt")
+    
+    # The next call should succeed (error mode should be automatically disabled)
+    response = await mock_claude_client.generate_response("After error mode prompt")
+    assert isinstance(response, str), "Expected a successful response after error mode is exhausted"
+
+@pytest.mark.asyncio
+async def test_mock_claude_client_latency(mock_claude_client):
+    test_latency = 0.1  # 100 ms
+    await mock_claude_client.set_latency(test_latency)
+    
+    start_time = time.time()
+    await mock_claude_client.generate_response("Latency test prompt")
+    end_time = time.time()
+    
+    elapsed_time = end_time - start_time
+    assert elapsed_time >= test_latency, f"Expected latency of at least {test_latency}s, but got {elapsed_time}s"
+
+@pytest.mark.asyncio
+async def test_mock_claude_client_custom_responses(mock_claude_client):
+    test_prompt = "Custom response prompt"
+    test_response = "This is a custom response"
+    await mock_claude_client.set_response(test_prompt, test_response)
+    
+    response = await mock_claude_client.generate_response(test_prompt)
+    assert response == test_response, f"Expected custom response '{test_response}', but got '{response}'"
+
+@pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
     try:
         await mock_claude_client.set_rate_limit(5)  # Set a lower threshold for testing
