@@ -17,19 +17,6 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 logger.setLevel(logging.DEBUG)
 
-import logging
-import json
-import asyncio
-import time
-from typing import Dict, List, Any
-from unittest.mock import MagicMock
-from anthropic import AsyncAnthropic, NotFoundError, APIError, APIConnectionError, APIStatusError
-from .exceptions import RateLimitError as CustomRateLimitError
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, RetryError
-from .rate_limiter import RateLimiter
-from .token_tracker import TokenTracker
-from .token_optimizer import TokenOptimizer
-
 class ClaudeManager:
     def __init__(self, client=None, requests_per_minute: int = 1000, requests_per_hour: int = 10000):
         self.logger = logging.getLogger(__name__)
