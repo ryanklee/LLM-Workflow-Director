@@ -279,3 +279,8 @@ def log_test_info(request):
     logger.info(f"Starting test: {request.node.name}")
     yield
     logger.info(f"Finished test: {request.node.name}")
+import logging
+
+def pytest_configure(config):
+    logging.getLogger("src.claude_manager").setLevel(logging.ERROR)
+    logging.getLogger("src.mock_claude_client").setLevel(logging.ERROR)

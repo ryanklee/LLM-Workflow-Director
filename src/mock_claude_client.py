@@ -594,7 +594,7 @@ class MockClaudeClient:
 
         self.calls += 1
         if self.calls > self.rate_limit:
-            raise RateLimitError("Rate limit exceeded")
+            raise RateLimitError("Rate limit exceeded", response=MagicMock(), body={})
 
     def set_error_mode(self, enabled: bool):
         self.error_mode = enabled
