@@ -45,6 +45,47 @@
    - For non-mocked tests, focus on essential functionality with minimal token usage.
    - Use parameterized tests to cover multiple scenarios without repeating long strings.
 
-(Sections 3, 4, and 5 remain unchanged)
+## 3. Mocking Strategies
+
+3.1. MockClaudeClient Implementation:
+   - Develop a comprehensive MockClaudeClient that simulates Claude API behavior.
+   - Implement realistic token counting and rate limiting in the mock client.
+   - Add methods to simulate various error conditions and edge cases.
+
+3.2. Fixture Usage:
+   - Create fixtures for commonly used mock responses and configurations.
+   - Implement factory fixtures for generating varied test data.
+
+3.3. Contextual Mocking:
+   - Use context managers to temporarily modify mock behavior within specific tests.
+   - Implement mock responses that vary based on input to simulate more realistic scenarios.
+
+## 4. Test Categorization and Execution
+
+4.1. Test Markers:
+   - Use pytest markers to categorize tests (e.g., @pytest.mark.fast, @pytest.mark.slow, @pytest.mark.mock).
+   - Implement test selection in CI/CD pipelines based on these categories.
+
+4.2. Parallel Execution:
+   - Design tests to be independent and suitable for parallel execution.
+   - Use pytest-xdist for parallel test execution in CI/CD pipelines.
+
+4.3. Test Data Management:
+   - Implement efficient test data generation and management strategies.
+   - Use temporary directories and cleanup fixtures to manage test data.
+
+## 5. Continuous Improvement
+
+5.1. Performance Monitoring:
+   - Implement test timing and resource usage tracking.
+   - Regularly review and optimize slow or resource-intensive tests.
+
+5.2. Coverage Analysis:
+   - Maintain high test coverage while optimizing for performance and token usage.
+   - Use coverage tools to identify untested code paths and edge cases.
+
+5.3. Regression Prevention:
+   - Implement automated regression testing for critical functionality.
+   - Use snapshot testing for complex outputs to detect unexpected changes.
 
 By following these best practices, we can maintain a comprehensive and efficient test suite that optimizes for both thorough testing and minimal resource usage, particularly in terms of file size, test output verbosity, and LLM API calls and token consumption.
