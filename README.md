@@ -41,12 +41,13 @@ For detailed usage instructions, configuration options, and advanced features, p
 
 ## Project Status
 
-The LLM-Workflow Director is actively being developed and refined. Current focus areas include:
+The LLM-Workflow Director is making significant progress towards its goals:
 
-- Enhancing multi-modal input support
-- Improving external tool integration
-- Refining adaptive learning for Claude usage
-- Optimizing prompt engineering techniques
+- **Approaching Dog-food Ready**: The project is advancing towards a state where it can be used to manage its own development process. We have defined clear criteria for "dog-food ready" status and are actively working towards meeting these benchmarks.
+- **Core Functionality Implementation**: We have implemented key components such as workflow management, Claude API integration, and basic LLM-driven evaluations.
+- **Advanced Features Development**: We are currently in the process of implementing and refining advanced features such as multi-modal input support, external tool integration, adaptive learning for Claude usage, and enhanced prompt engineering techniques.
+
+For a detailed list of criteria for "dog-food ready" status, please refer to the [Dog-food Ready Criteria](docs/dogfood_ready_criteria.md) document.
 
 ## Contributing
 
