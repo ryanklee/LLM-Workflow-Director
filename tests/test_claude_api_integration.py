@@ -395,7 +395,6 @@ class MockClaudeClient:
                 self.logger.warning(error_msg)
                 raise CustomRateLimitError(error_msg)
         self.logger.info(f"Generating response for model: {model}")
-        self.logger.info(f"Generating response for model: {model}")
         if self.error_mode:
             self.error_count += 1
             self.logger.debug(f"Error count: {self.error_count}")
