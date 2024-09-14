@@ -1137,7 +1137,7 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
 
     # Test response from create method
     create_response = await mock_claude_client.create("test-model", 100, [{"role": "user", "content": test_prompt}])
-    assert create_response.content[0].text == expected_response, f"Expected custom response '{expected_response}' from create method, but got '{create_response.content[0].text}'"
+    assert create_response["content"][0]["text"] == expected_response, f"Expected custom response '{expected_response}' from create method, but got '{create_response['content'][0]['text']}'"
 
     # Test rate limiting
     await mock_claude_client.set_rate_limit(3)
