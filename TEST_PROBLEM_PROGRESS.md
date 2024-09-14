@@ -39,6 +39,23 @@ Next steps:
 2. Update any other related tests that might be affected by this change.
 3. Run the test suite again to confirm the fix and check for any new issues.
 
+### Implementation Plan
+
+1. Update the `generate_response` method in MockClaudeClient:
+   - Remove the XML wrapping from the response.
+   - Ensure that custom responses are returned as-is.
+
+2. Review and update other methods in MockClaudeClient that might be affected:
+   - Check the `create` method to ensure consistency with the `generate_response` method.
+
+3. Update any tests that might be expecting XML-wrapped responses:
+   - Review all tests in `test_claude_api_integration.py` that use MockClaudeClient.
+   - Adjust assertions to expect non-wrapped responses where appropriate.
+
+4. Run the updated test suite and analyze the new coverage report.
+
+5. If the coverage is still below 20%, identify areas with low coverage and add more tests.
+
 ### Hypothesis 2: Insufficient Test Coverage (Still Relevant)
 
 While this is not the immediate cause of the failing test, it remains a concern for overall code quality and reliability:
