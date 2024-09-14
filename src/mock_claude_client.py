@@ -68,7 +68,7 @@ class MockClaudeClient:
         
         response = self.responses.get(prompt, "Default mock response")
         self.logger.debug(f"Returning response: {response[:50]}...")
-        return f"<response>{response}</response>"
+        return response
 
     async def count_tokens(self, text: str) -> int:
         return len(text.split())
