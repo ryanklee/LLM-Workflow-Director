@@ -67,8 +67,9 @@ class MockClaudeClient:
                 raise APIStatusError("Simulated API error", response=MagicMock(), body={})
         
         response = self.responses.get(prompt, "Default mock response")
-        self.logger.debug(f"Returning response: {response[:50]}...")
-        return response  # Return the response without XML wrapping
+        wrapped_response = f"<response>{response}</response>"
+        self.logger.debug(f"Returning response: {wrapped_response[:50]}...")
+        return wrapped_response  # Return the response with XML wrapping
 
     async def count_tokens(self, text: str) -> int:
         return len(text.split())
@@ -298,8 +299,9 @@ class MockClaudeClient:
                 self.logger.warning(f"Response exceeds max tokens. Truncating. Original length: {len(response)}")
                 response = response[:self.max_test_tokens] + "..."
             
-            self.logger.debug(f"Returning response: {response[:50]}...")
-            return MagicMock(content=[MagicMock(text=response)])
+            wrapped_response = f"<response>{response}</response>"
+            self.logger.debug(f"Returning response: {wrapped_response[:50]}...")
+            return MagicMock(content=[MagicMock(text=wrapped_response)])
 
     def _check_rate_limit(self):
         current_time = time.time()
