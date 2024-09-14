@@ -1021,6 +1021,41 @@ async def test_claude_api_rate_limiting(claude_manager, mock_claude_client, capl
     assert "Rate limit exceeded" in caplog.text
 
 @pytest.mark.asyncio
+async def test_claude_api_with_custom_responses(claude_manager, mock_claude_client_with_responses):
+    responses = {
+        "Hello": "Hi there!",
+        "How are you?": "I'm doing well, thank you for asking.",
+        "What's the weather like?": "I'm sorry, I don't have real-time weather information."
+    }
+    await mock_claude_client_with_responses(responses)
+
+    for prompt, expected_response in responses.items():
+        response = await claude_manager.generate_response(prompt)
+        assert response == f"<response>{expected_response}</response>", f"Expected '{expected_response}', but got '{response}'"
+
+@pytest.mark.asyncio
+async def test_claude_api_error_handling(claude_manager, mock_claude_client_with_error_mode):
+    await mock_claude_client_with_error_mode(True)
+    
+    with pytest.raises(APIStatusError):
+        await claude_manager.generate_response("Test prompt")
+
+    await mock_claude_client_with_error_mode(False)
+    response = await claude_manager.generate_response("Test prompt")
+    assert "<response>" in response and "</response>" in response, "Response should be wrapped in <response> tags"
+
+@pytest.mark.asyncio
+async def test_claude_api_rate_limit_adjustment(claude_manager, mock_claude_client_with_rate_limit):
+    await mock_claude_client_with_rate_limit(3)
+    
+    for i in range(3):
+        response = await claude_manager.generate_response(f"Test prompt {i}")
+        assert "<response>" in response, f"Expected a valid response for call {i+1}"
+
+    with pytest.raises(CustomRateLimitError):
+        await claude_manager.generate_response("This should fail due to rate limit")
+
+@pytest.mark.asyncio
 async def test_mock_claude_client_concurrent_calls(mock_claude_client):
     mock_claude_client.rate_limit_threshold = 5
     results = await mock_claude_client.simulate_concurrent_calls(10)
