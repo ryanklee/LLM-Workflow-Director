@@ -38,7 +38,7 @@ class ClaudeManager:
         self.token_tracker = TokenTracker()
         self.token_optimizer = TokenOptimizer(self.token_tracker)
         self.max_context_length = 200000  # Updated to 200k tokens
-        self.messages = self.client.messages
+        self.messages = getattr(self.client, 'messages', self.client)
         self.logger.info("ClaudeManager initialization complete")
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:

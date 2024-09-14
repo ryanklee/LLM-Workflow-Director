@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 from anthropic import RateLimitError, APIError, APIStatusError
 from src.exceptions import RateLimitError as CustomRateLimitError
 
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 class MockClaudeClient:
@@ -53,6 +53,7 @@ class MockClaudeClient:
             return "claude-3-sonnet-20240229"
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         async with self.lock:
             await self._check_rate_limit()
             await self._simulate_latency()
@@ -67,6 +68,7 @@ class MockClaudeClient:
                     raise APIStatusError("Simulated API error", response=MagicMock(), body={})
             
             response = self.responses.get(prompt, "Default mock response")
+            self.logger.debug(f"Returning response: {response[:50]}...")
             return f"<response>{response}</response>"
 
     async def count_tokens(self, text: str) -> int:

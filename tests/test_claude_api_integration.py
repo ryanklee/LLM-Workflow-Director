@@ -19,6 +19,14 @@ async def mock_claude_client():
     await client.reset()
     logger.debug(f"Reset MockClaudeClient instance. Final call_count: {client.call_count}, error_count: {client.error_count}")
 
+@pytest_asyncio.fixture
+async def claude_manager(mock_claude_client):
+    manager = ClaudeManager(client=mock_claude_client)
+    logger.debug(f"Created ClaudeManager instance with MockClaudeClient")
+    yield manager
+    await manager.close()
+    logger.debug(f"Closed ClaudeManager instance")
+
 @pytest.fixture
 def mock_claude_client_with_responses(mock_claude_client):
     async def setup_responses(responses):
