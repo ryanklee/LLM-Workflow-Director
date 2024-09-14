@@ -6,7 +6,8 @@ from unittest.mock import MagicMock
 from anthropic import RateLimitError, APIError, APIStatusError
 from src.exceptions import RateLimitError as CustomRateLimitError
 
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger(__name__)
 
 class MockClaudeClient:
     def __init__(self):
