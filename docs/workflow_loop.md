@@ -1,58 +1,49 @@
-# LLM-Workflow Director: Workflow Loop Design (Python Implementation)
+# LLM-Workflow Director: Workflow Loop Design
 
-## 1. Overview
+## Overview
 
 The LLM-Workflow Director is a Python-based system designed to guide AI-assisted software development processes. It emphasizes Domain-Driven Design (DDD) and Test-Driven Development (TDD) principles, ensuring systematic progression through crucial development stages.
 
-## 2. Workflow Stages
+For detailed information on workflow stages and transitions, please refer to the [Workflow Configuration](workflow_configuration.md) document.
 
-1. Project Initialization
-2. Requirements Elaboration
-3. Research Gathering and Analysis
-4. Domain Modeling
-5. Design
-6. Test Design
-7. Implementation
-8. Testing
-9. Review and Refinement
+## Core Workflow Loop
 
-## 3. Core Workflow Loop
+The core workflow loop consists of the following steps:
 
 1. **CLI Initialization**: Parse command-line arguments and set up the project environment.
 2. **State Assessment**: Analyze current project state and determine active stage/step.
 3. **Constraint Validation**: Apply and validate constraints for the current stage.
 4. **Priority Determination**: Set priorities based on the current stage, adhering to DDD and TDD.
-5. **LLM Interaction Preparation**: Prepare context and prompts for LLM interaction.
-6. **Sufficiency Evaluation**: Use LLM CLI microservice to evaluate the sufficiency of the current stage.
-7. **Direction Generation**: Create actionable directions for Aider, emphasizing current priorities or addressing insufficiencies, using LLM CLI for complex reasoning tasks.
-8. **Aider Execution**: Send directions to Aider and await task completion.
-9. **Result Processing**: Analyze Aider's output and update project state.
-   - Parse structured LLM responses, including task progress, state updates, actions, and suggestions.
-   - Update stage progress based on LLM-reported task completion.
-   - Apply state updates to the project's current state.
-   - Execute LLM-suggested actions within the workflow.
-   - Present LLM suggestions to the user for consideration.
+5. **LLM Interaction Preparation**: Prepare context and prompts for Claude API interaction.
+6. **Sufficiency Evaluation**: Use Claude to evaluate the sufficiency of the current stage.
+7. **Direction Generation**: Create actionable directions for the next steps, emphasizing current priorities or addressing insufficiencies.
+8. **Task Execution**: Execute the generated directions or send them to the appropriate component.
+9. **Result Processing**: Analyze the output and update project state.
 10. **User Interaction**: Handle user input when required.
 11. **Progress Evaluation**: Assess step/stage completion and manage transitions based on sufficiency evaluation.
 12. **Stage Transition**: If transitioning to a new stage, perform necessary setup and provide stage information.
 13. **Loop or Exit**: Continue the loop if there are more steps, or exit if the workflow is complete.
 
-## 5. LLM Response Handling
+For details on LLM integration, please refer to the [Claude Integration Guide](claude_integration.md).
 
-The WorkflowDirector processes structured LLM responses with the following components:
+## LLM Response Handling
+
+The WorkflowDirector processes structured Claude API responses with the following components:
 
 1. **Task Progress**: A float value between 0 and 1 indicating the progress of the current task or stage.
 2. **State Updates**: A dictionary of key-value pairs to update in the project state.
 3. **Actions**: A list of actions for the WorkflowDirector to execute.
 4. **Suggestions**: A list of suggestions for the user to consider.
 
-The LLM response is parsed and processed to:
+The Claude API response is parsed and processed to:
 - Update the stage progress
 - Modify the project state
 - Execute suggested actions
 - Present suggestions to the user
 
-This structured approach allows for more precise control and feedback within the workflow, enhancing the collaboration between the LLM, the WorkflowDirector, and the user.
+This structured approach allows for precise control and feedback within the workflow, enhancing the collaboration between Claude, the WorkflowDirector, and the user.
+
+For details on response handling and parsing, see the [Claude API Reference](claude_api_reference.md).
 
 ## 4. Stage Transition Process
 
