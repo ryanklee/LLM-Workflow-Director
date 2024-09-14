@@ -21,6 +21,7 @@ class MockClaudeClient:
         self.last_call_time = 0
         self.latency = 0.1  # Default latency in seconds
         self.logger = logging.getLogger(__name__)
+        self.lock = asyncio.Lock()  # Add this line to create the lock attribute
         self.lock = asyncio.Lock()
         self.error_count = 0
         self.max_errors = 3
