@@ -18,6 +18,25 @@ async def mock_claude_client():
     await client.reset()
     logger.debug(f"Reset MockClaudeClient instance. Final call_count: {client.call_count}, error_count: {client.error_count}")
 
+@pytest.fixture
+def mock_claude_client_with_responses(mock_claude_client):
+    async def setup_responses(responses):
+        for prompt, response in responses.items():
+            await mock_claude_client.set_response(prompt, response)
+    return setup_responses
+
+@pytest.fixture
+def mock_claude_client_with_error_mode(mock_claude_client):
+    async def set_error_mode(mode: bool):
+        await mock_claude_client.set_error_mode(mode)
+    return set_error_mode
+
+@pytest.fixture
+def mock_claude_client_with_rate_limit(mock_claude_client):
+    async def set_rate_limit(threshold: int):
+        await mock_claude_client.set_rate_limit(threshold)
+    return set_rate_limit
+
 class MockClaudeClient:
     def __init__(self):
         self.rate_limit_threshold = 5
