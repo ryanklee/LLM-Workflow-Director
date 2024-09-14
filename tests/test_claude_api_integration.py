@@ -1127,6 +1127,11 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
     
     response = await mock_claude_client.generate_response(test_prompt)
     assert response == test_response, f"Expected custom response '{test_response}', but got '{response}'"
+    
+    # Test with default response
+    default_prompt = "Default prompt"
+    default_response = await mock_claude_client.generate_response(default_prompt)
+    assert default_response == "Default mock response", f"Expected default response 'Default mock response', but got '{default_response}'"
 
 @pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
