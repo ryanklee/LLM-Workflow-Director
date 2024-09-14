@@ -5,45 +5,89 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
 
 ## Hypotheses (Ranked by Likelihood)
 
-1. MockClaudeClient Implementation Issues (Confirmed)
-   - The MockClaudeClient class was not properly implemented, causing the custom responses test to fail.
-   - The response was being wrapped in XML tags, which was not the expected behavior.
+1. MockClaudeClient Implementation Issues (Partially Resolved, Still Relevant)
+   - The MockClaudeClient class was updated to remove XML wrapping, but the issue persists.
+   - There might be inconsistencies between different methods in MockClaudeClient.
 
-2. Insufficient Test Coverage (Still Relevant)
+2. Test Case Expectations Mismatch (New, High Likelihood)
+   - The test case might not have been updated to reflect the changes in MockClaudeClient.
+   - There could be a mismatch between what the test expects and what MockClaudeClient now returns.
+
+3. Insufficient Test Coverage (Still Relevant)
    - The test suite may not be comprehensive enough to cover all the required code paths.
    - Some files or functions might be completely untested.
 
-3. Asynchronous Testing Configuration (Less Likely)
+4. Asynchronous Testing Configuration (Less Likely)
    - The pytest-asyncio plugin might not be properly configured, leading to incomplete execution of asynchronous tests.
 
-4. Code Complexity (Less Likely)
+5. Code Complexity (Less Likely)
    - The codebase might be overly complex, making it difficult to achieve high test coverage.
 
-5. Test Environment Setup (Less Likely)
+6. Test Environment Setup (Less Likely)
    - The test environment might not be properly set up, leading to incomplete test execution.
 
 ## Progress
 
-### Hypothesis 1: MockClaudeClient Implementation Issues (Confirmed)
+### Hypothesis 1: MockClaudeClient Implementation Issues (Partially Resolved, Still Relevant)
 
-This hypothesis has been confirmed as the cause of the failing test in `test_mock_claude_client_custom_responses`.
+Previous implementation:
+1. Updated `generate_response` method to return the response without XML wrapping.
+2. Updated `create` method to ensure consistency with `generate_response`.
 
-Implementation progress:
-1. Reviewed the `generate_response` method in MockClaudeClient.
-2. Identified the issue with the response being wrapped in XML tags.
-3. Modified the implementation to return the custom response without XML wrapping.
-4. Updated the test to reflect the correct expected behavior.
-
-Implementation:
-1. The fix has been implemented in the MockClaudeClient class:
-   - Updated `generate_response` method to return the response without XML wrapping.
-   - Updated `create` method to ensure consistency with `generate_response`.
-2. These changes should resolve the issue with the `test_mock_claude_client_custom_responses` test.
+New findings:
+1. The changes made to MockClaudeClient did not fully resolve the issue.
+2. There might be inconsistencies between different methods in MockClaudeClient.
 
 Next steps:
-1. Run the updated test suite to confirm the fix.
-2. Review and update any other tests that might be expecting XML-wrapped responses.
-3. Analyze the new coverage report to identify areas for further improvement.
+1. Review all methods in MockClaudeClient to ensure consistency in response formatting.
+2. Check if there are any other methods that might still be wrapping responses in XML tags.
+
+### Hypothesis 2: Test Case Expectations Mismatch (New, High Likelihood)
+
+Findings:
+1. The test `test_mock_claude_client_custom_responses` is still expecting a response without XML tags.
+2. The actual response from MockClaudeClient is still wrapped in XML tags.
+
+Next steps:
+1. Review the `test_mock_claude_client_custom_responses` test case.
+2. Update the test case to reflect the current behavior of MockClaudeClient.
+3. Ensure that the test expectations match the actual implementation.
+
+Implementation plan:
+1. Update the `test_mock_claude_client_custom_responses` test case to expect the correct response format.
+2. Review and update any other tests that might be affected by the changes in MockClaudeClient.
+
+### Hypothesis 3: Insufficient Test Coverage (Still Relevant)
+
+Next steps:
+1. After resolving the immediate issue, focus on improving overall test coverage.
+2. Identify files and functions with low coverage and add more tests.
+3. Implement property-based testing for suitable components to increase coverage.
+
+### Hypothesis 4-6: (Less Likely, No Changes)
+
+These hypotheses remain less likely but will be revisited if the higher priority issues don't fully resolve the problem.
+
+## Implementation Plan
+
+1. Update the `test_mock_claude_client_custom_responses` test case:
+   - Modify the assertion to expect the response without XML tags.
+   - Update any setup or teardown code if necessary.
+
+2. Review and update MockClaudeClient:
+   - Ensure all methods consistently return responses without XML wrapping.
+   - Check for any remaining XML wrapping in other methods.
+
+3. Run the updated test suite and analyze the new coverage report.
+
+4. Based on the results, continue adding tests to improve overall coverage, focusing on:
+   - Modules with low coverage
+   - Critical paths in the codebase
+   - Edge cases and error handling
+
+5. Implement property-based testing for suitable components to increase coverage and catch edge cases.
+
+We'll continue to update this document as we progress through our investigation and implementation.
 
 ### Implementation Plan
 
