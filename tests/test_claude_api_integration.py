@@ -1073,7 +1073,7 @@ async def test_mock_claude_client_concurrent_calls(mock_claude_client):
     results = await mock_claude_client.simulate_concurrent_calls(10)
 
     successful_calls = [r for r in results if isinstance(r, str)]
-    rate_limit_errors = [r for r in results if isinstance(r, RateLimitError)]
+    rate_limit_errors = [r for r in results if isinstance(r, CustomRateLimitError)]
 
     assert len(successful_calls) == 5, f"Expected 5 successful calls, but got {len(successful_calls)}"
     assert len(rate_limit_errors) == 5, f"Expected 5 rate limit errors, but got {len(rate_limit_errors)}"
@@ -1147,7 +1147,7 @@ async def test_concurrent_claude_api_calls(claude_manager, mock_claude_client, c
     assert len(successful_calls) + len(rate_limit_errors) == num_concurrent_calls, f"Expected {num_concurrent_calls} total results, got {len(successful_calls) + len(rate_limit_errors)}"
     assert len(successful_calls) == mock_claude_client.rate_limit_threshold, f"Expected {mock_claude_client.rate_limit_threshold} successful calls, got {len(successful_calls)}"
     assert len(rate_limit_errors) == num_concurrent_calls - mock_claude_client.rate_limit_threshold, f"Expected {num_concurrent_calls - mock_claude_client.rate_limit_threshold} rate limit errors, got {len(rate_limit_errors)}"
-    assert all("<response>Test response</response>" in result for result in successful_calls), "Not all successful responses match expected format"
+    assert all("<response>Test response</response>" == result for result in successful_calls), "Not all successful responses match expected format"
     assert await mock_claude_client.get_call_count() == num_concurrent_calls, f"Expected {num_concurrent_calls} calls to mock client, got {await mock_claude_client.get_call_count()}"
 
     for i in range(num_concurrent_calls):
