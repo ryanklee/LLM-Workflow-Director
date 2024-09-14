@@ -607,15 +607,15 @@ def get_error_count(self):
 
     async def simulate_concurrent_calls(self, num_calls):
         results = []
-        tasks = [self.generate_response("Test prompt") for _ in range(num_calls)]
+        tasks = [self.generate_response(f"Test prompt {i}") for i in range(num_calls)]
         for task in asyncio.as_completed(tasks):
             try:
                 result = await task
                 results.append(result)
-            except RateLimitError as e:
+            except CustomRateLimitError as e:
                 results.append(e)
         successful = len([r for r in results if isinstance(r, str)])
-        rate_limited = len([r for r in results if isinstance(r, RateLimitError)])
+        rate_limited = len([r for r in results if isinstance(r, CustomRateLimitError)])
         self.logger.info(f"Simulated {num_calls} concurrent calls. Results: {successful} successful, {rate_limited} rate limited")
         return results
         self.latency = 0
@@ -1075,10 +1075,18 @@ async def test_mock_claude_client_concurrent_calls(mock_claude_client):
     successful_calls = [r for r in results if isinstance(r, str)]
     rate_limit_errors = [r for r in results if isinstance(r, CustomRateLimitError)]
 
-    assert len(successful_calls) <= 5, f"Expected at most 5 successful calls, but got {len(successful_calls)}"
-    assert len(rate_limit_errors) >= 5, f"Expected at least 5 rate limit errors, but got {len(rate_limit_errors)}"
+    assert len(successful_calls) == 5, f"Expected exactly 5 successful calls, but got {len(successful_calls)}"
+    assert len(rate_limit_errors) == 5, f"Expected exactly 5 rate limit errors, but got {len(rate_limit_errors)}"
     call_count = await mock_claude_client.get_call_count()
     assert call_count == 10, f"Expected 10 total calls, but got {call_count}"
+
+    # Check that all successful responses are wrapped correctly
+    for response in successful_calls:
+        assert response.startswith("<response>") and response.endswith("</response>"), f"Invalid response format: {response}"
+
+    # Check that all rate limit errors have the correct message
+    for error in rate_limit_errors:
+        assert "Rate limit exceeded" in str(error), f"Unexpected error message: {str(error)}"
 
 @pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
