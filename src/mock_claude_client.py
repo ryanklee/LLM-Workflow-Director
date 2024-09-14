@@ -652,8 +652,8 @@ class MockClaudeClient:
         return len(text.split())
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
-        response = await self.messages_create(model, self.max_test_tokens, [{"role": "user", "content": prompt}])
-        return response["content"][0]["text"]
+        response = await self.create(model, self.max_test_tokens, [{"role": "user", "content": prompt}])
+        return response.content[0].text
 
     def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
@@ -666,6 +666,27 @@ class MockClaudeClient:
 
     def get_error_count(self) -> int:
         return self.error_count
+
+    async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> MagicMock:
+        await self._check_rate_limit()
+        await asyncio.sleep(self.latency)
+
+        if self.error_mode:
+            self.error_count += 1
+            if self.error_count <= self.max_errors:
+                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+
+        prompt = messages[0]['content']
+        if len(prompt) > self.max_test_tokens:
+            raise ValueError(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
+
+        response = self.responses.get(prompt, "Default mock response")
+        if len(response) > max_tokens:
+            response = response[:max_tokens] + "..."
+
+        self.call_count += 1
+
+        return MagicMock(content=[MagicMock(text=f"<response>{response}</response>")])
 import asyncio
 from typing import Dict, List, Optional
 
