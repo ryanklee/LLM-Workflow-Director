@@ -638,25 +638,26 @@ def get_error_count(self):
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         await asyncio.sleep(self.latency)
-        current_time = time.time()
-        if current_time - self.last_reset_time >= self.rate_limit_reset_time:
-            self.call_count = 0
-            self.last_reset_time = current_time
-            self.logger.debug("Rate limit counter reset")
-        self.call_count += 1
-        self.logger.debug(f"Call count: {self.call_count}")
-        if self.call_count > self.rate_limit_threshold:
-            self.logger.warning("Rate limit exceeded")
-            raise CustomRateLimitError("Rate limit exceeded")
-        if self.error_mode:
-            self.error_count += 1
-            self.logger.debug(f"Error count: {self.error_count}")
-            if self.error_count <= self.max_errors:
-                self.logger.error("Simulated API error")
-                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
-        response = self.responses.get(prompt, "Default mock response")
-        self.logger.debug(f"Returning response: {response[:50]}...")
-        return response
+        async with self.lock:
+            current_time = time.time()
+            if current_time - self.last_reset_time >= self.rate_limit_reset_time:
+                self.call_count = 0
+                self.last_reset_time = current_time
+                self.logger.debug("Rate limit counter reset")
+            self.call_count += 1
+            self.logger.debug(f"Call count: {self.call_count}")
+            if self.call_count > self.rate_limit_threshold:
+                self.logger.warning("Rate limit exceeded")
+                raise CustomRateLimitError("Rate limit exceeded")
+            if self.error_mode:
+                self.error_count += 1
+                self.logger.debug(f"Error count: {self.error_count}")
+                if self.error_count <= self.max_errors:
+                    self.logger.error("Simulated API error")
+                    raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+            response = self.responses.get(prompt, "Default mock response")
+            self.logger.debug(f"Returning response: {response[:50]}...")
+            return response
 
     async def count_tokens(self, text: str) -> int:
         return len(text.split())
