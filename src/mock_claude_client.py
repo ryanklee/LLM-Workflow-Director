@@ -632,3 +632,50 @@ class MockClaudeClient:
 
     def get_error_count(self) -> int:
         return self.error_count
+import asyncio
+from typing import Dict, List, Optional
+
+class MockClaudeClient:
+    def __init__(self, rate_limit: int = 10, reset_time: int = 60):
+        self.rate_limit = rate_limit
+        self.reset_time = reset_time
+        self.calls = 0
+        self.last_reset = asyncio.get_event_loop().time()
+        self.error_mode = False
+        self.latency = 0
+
+    async def create_message(self, model: str, messages: List[Dict[str, str]], max_tokens: int) -> Dict:
+        await self._check_rate_limit()
+        await asyncio.sleep(self.latency)  # Simulate network latency
+
+        if self.error_mode:
+            raise Exception("MockClaudeClient is in error mode")
+
+        # Simple mock response
+        return {
+            "content": [{"text": "This is a mock response from Claude."}],
+            "model": model,
+            "usage": {"input_tokens": 10, "output_tokens": 10}
+        }
+
+    async def _check_rate_limit(self):
+        current_time = asyncio.get_event_loop().time()
+        if current_time - self.last_reset > self.reset_time:
+            self.calls = 0
+            self.last_reset = current_time
+
+        self.calls += 1
+        if self.calls > self.rate_limit:
+            raise Exception("Rate limit exceeded")
+
+    def set_error_mode(self, mode: bool):
+        self.error_mode = mode
+
+    def set_latency(self, latency: float):
+        self.latency = latency
+
+    def reset(self):
+        self.calls = 0
+        self.last_reset = asyncio.get_event_loop().time()
+        self.error_mode = False
+        self.latency = 0
