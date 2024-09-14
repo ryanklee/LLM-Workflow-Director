@@ -507,7 +507,15 @@ class MockClaudeClient:
 
         self.call_count += 1
 
-        return MagicMock(content=[MagicMock(text=response)])
+        return MagicMock(content=[MagicMock(text=f"<response>{response}</response>")])
+
+    async def _check_rate_limit(self):
+        current_time = time.time()
+        if current_time - self.last_reset_time >= self.rate_limit_reset_time:
+            self.call_count = 0
+            self.last_reset_time = current_time
+        if self.call_count >= self.rate_limit_threshold:
+            raise CustomRateLimitError("Rate limit exceeded")
 import asyncio
 from typing import Dict, List, Optional
 from anthropic import AsyncAnthropic
