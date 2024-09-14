@@ -19,6 +19,9 @@
 15. SecurityManager
 16. CacheManager
 17. CodingConventionsManager
+18. SufficiencyEvaluator
+19. ProjectStateReporter
+20. DocumentationHealthChecker
 
 For detailed descriptions of each entity, please refer to the [full domain model documentation](https://your-project-wiki-or-docs-link.com/domain-model).
 

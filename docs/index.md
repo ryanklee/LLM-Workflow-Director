@@ -1,7 +1,7 @@
 # LLM-Workflow Director Documentation
 
 ## Overview
-The LLM-Workflow Director is a Python-based system designed to guide AI-assisted software development processes, emphasizing Domain-Driven Design (DDD) and Test-Driven Development (TDD) principles.
+The LLM-Workflow Director is a Python-based system designed to guide AI-assisted software development processes, emphasizing Domain-Driven Design (DDD) and Test-Driven Development (TDD) principles. The project is currently approaching "dog-food ready" status, where it will be capable of managing its own development process.
 
 ## Table of Contents
 
@@ -14,6 +14,7 @@ The LLM-Workflow Director is a Python-based system designed to guide AI-assisted
 7. [Claude API Reference](claude_api_reference.md)
 8. [Testing Guidelines](TESTING.md)
 9. [Contributing Guidelines](CONTRIBUTING.md)
+10. [Dog-food Ready Criteria](dogfood_ready_criteria.md)
 
 ## Key Concepts
 

@@ -20,10 +20,11 @@ For detailed progress on each phase and task, please refer to the project manage
 
 We are currently focusing on:
 
-1. Enhancing Claude API integration
-2. Implementing advanced workflow features
-3. Optimizing performance and scalability
-4. Expanding and refining the test suite
+1. Achieving "dog-food ready" status
+2. Enhancing Claude API integration
+3. Implementing advanced workflow features
+4. Optimizing performance and scalability
+5. Expanding and refining the test suite
 
 For specific tasks and their status, please refer to the "Current Focus" section in our project management tool.
 
@@ -32,8 +33,15 @@ For specific tasks and their status, please refer to the "Current Focus" section
 1. Complete the implementation of remaining advanced features
 2. Conduct comprehensive testing and optimization
 3. Finalize documentation and prepare for deployment
+4. Begin using the LLM-Workflow Director to manage its own development process
 
 For a detailed breakdown of next steps and their priorities, please consult the project roadmap.
+
+## Milestones
+
+1. Achieve "Dog-food Ready" Status
+   - Meet all criteria outlined in the [Dog-food Ready Criteria](dogfood_ready_criteria.md) document
+   - Successfully use the system to manage at least one full cycle of its own development process
 
 ## Notes
 

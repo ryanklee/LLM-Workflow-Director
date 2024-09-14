@@ -1,14 +1,15 @@
 # Development Process for LLM-Workflow Director
 
-This project is being developed as a collaboration between a human developer and an AI assistant. There are no external contributors or stakeholders involved. This document outlines the development process and guidelines for this unique collaboration.
+This project is being developed as a collaboration between a human developer and an AI assistant. As the project approaches "dog-food ready" status, it will begin to manage aspects of its own development process. This document outlines the development process and guidelines for this unique collaboration.
 
 ## Development Workflow
 
-1. The human developer proposes changes or new features.
+1. The human developer or the LLM-Workflow Director proposes changes or new features.
 2. The AI assistant provides suggestions, code snippets, and guidance.
 3. The human developer implements the changes, potentially with further assistance from the AI.
-4. The human developer reviews and tests the changes.
-5. The changes are committed to the repository.
+4. The LLM-Workflow Director evaluates the changes for sufficiency and adherence to project standards.
+5. The human developer reviews and tests the changes.
+6. The changes are committed to the repository.
 
 ## Code Style and Standards
 
