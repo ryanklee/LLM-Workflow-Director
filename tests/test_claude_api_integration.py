@@ -715,6 +715,7 @@ class ClaudeManager:
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         self.logger.debug(f"Initialized ClaudeManager with client: {client.__class__.__name__}")
+        self.lock = asyncio.Lock()
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50] if isinstance(prompt, str) else str(prompt)[:50]}...")
@@ -899,10 +900,11 @@ class ClaudeManager:
             self.logger.error(error_msg)
             raise ValueError(error_msg)
         try:
-            self.logger.info(f"Sending request to client for model: {model}")
-            response = await self.client.generate_response(prompt, model)
-            self.logger.debug(f"Response generated successfully: {response[:50]}...")
-            return response
+            async with self.lock:
+                self.logger.info(f"Sending request to client for model: {model}")
+                response = await self.client.generate_response(prompt, model)
+                self.logger.debug(f"Response generated successfully: {response[:50]}...")
+                return response
         except (RateLimitError, CustomRateLimitError) as e:
             self.logger.warning(f"Rate limit reached: {str(e)}")
             raise RateLimitError(str(e))

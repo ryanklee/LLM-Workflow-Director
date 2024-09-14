@@ -54,22 +54,21 @@ class MockClaudeClient:
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
-        async with self.lock:
-            await self._check_rate_limit()
-            await self._simulate_latency()
-            
-            if len(prompt) > self.max_test_tokens:
-                raise ValueError(f"Prompt length ({len(prompt)} tokens) exceeds maximum context length of {self.max_test_tokens} tokens")
-            
-            if self.error_mode:
-                self.error_count += 1
-                if self.error_count <= self.max_errors:
-                    self.logger.error("API error (error mode)")
-                    raise APIStatusError("Simulated API error", response=MagicMock(), body={})
-            
-            response = self.responses.get(prompt, "Default mock response")
-            self.logger.debug(f"Returning response: {response[:50]}...")
-            return f"<response>{response}</response>"
+        await self._check_rate_limit()
+        await self._simulate_latency()
+        
+        if len(prompt) > self.max_test_tokens:
+            raise ValueError(f"Prompt length ({len(prompt)} tokens) exceeds maximum context length of {self.max_test_tokens} tokens")
+        
+        if self.error_mode:
+            self.error_count += 1
+            if self.error_count <= self.max_errors:
+                self.logger.error("API error (error mode)")
+                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+        
+        response = self.responses.get(prompt, "Default mock response")
+        self.logger.debug(f"Returning response: {response[:50]}...")
+        return f"<response>{response}</response>"
 
     async def count_tokens(self, text: str) -> int:
         return len(text.split())
