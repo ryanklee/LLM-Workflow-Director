@@ -1068,10 +1068,10 @@ async def test_mock_claude_client_concurrent_calls(mock_claude_client):
     assert len(successful_calls) + len(rate_limited_calls) == num_calls, f"Expected {num_calls} total results, but got {len(successful_calls) + len(rate_limited_calls)}"
     assert len(successful_calls) <= mock_claude_client.rate_limit_threshold, f"Expected at most {mock_claude_client.rate_limit_threshold} successful calls, but got {len(successful_calls)}"
     assert len(rate_limited_calls) >= num_calls - mock_claude_client.rate_limit_threshold, f"Expected at least {num_calls - mock_claude_client.rate_limit_threshold} rate-limited calls, but got {len(rate_limited_calls)}"
-    assert mock_claude_client.call_count == num_calls, f"Expected {num_calls} total calls, but got {mock_claude_client.call_count}"
+    assert await mock_claude_client.get_call_count() == num_calls, f"Expected {num_calls} total calls, but got {await mock_claude_client.get_call_count()}"
     
     # Reset the call count for other tests
-    mock_claude_client.call_count = 0
+    await mock_claude_client.reset()
 
 @pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
