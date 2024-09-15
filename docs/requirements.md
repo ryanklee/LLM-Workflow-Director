@@ -643,17 +643,23 @@ This structure provides a more comprehensive and organized set of requirements f
     22.4. The system shall provide automated deployment scripts and configuration management tools.
     22.5. The system shall implement version checking and upgrade notification systems.
 
-23. LLM-Specific Testing
-    23.1. The system shall implement a MockClaudeClient for simulating Claude API responses in tests.
-    23.2. The system shall provide test fixtures for common LLM interaction scenarios.
-    23.3. The system shall implement parameterized tests for various LLM input and output scenarios.
-    23.4. The system shall include tests for proper handling of different Claude models (Haiku, Sonnet, Opus).
-    23.5. The system shall implement tests for the tiered LLM approach, including fallback mechanisms.
-    23.6. The system shall provide tests for LLM response parsing and error handling.
-    23.7. The system shall include tests for prompt generation and template rendering.
-    23.8. The system shall implement tests for context management and token limit handling.
-    23.9. The system shall provide tests for LLM-based evaluation and decision-making processes.
-    23.10. The system shall include performance tests specific to LLM interactions and response processing.
-    23.11. The system shall implement rate limiting simulation in MockClaudeClient for testing API usage constraints.
-    23.12. The system shall provide error response simulation in MockClaudeClient for testing error handling scenarios.
-    23.13. The system shall implement reset functionality in MockClaudeClient for test isolation and repeatability.
+23. LLM-Specific Testing and Contract Testing
+    23.1. The system shall implement contract testing against the Claude API to ensure accurate representation of API behavior.
+    23.2. The system shall use a contract testing tool (e.g., Pact or Spring Cloud Contract) to define and run contract tests.
+    23.3. The system shall generate mock behaviors based on contract test results.
+    23.4. The system shall implement a MockClaudeClient that uses behaviors derived from contract tests.
+    23.5. The system shall regularly run contract tests against the latest version of the Claude API to detect changes.
+    23.6. The system shall provide test fixtures for common LLM interaction scenarios based on contract test results.
+    23.7. The system shall implement parameterized tests for various LLM input and output scenarios derived from contract tests.
+    23.8. The system shall include tests for proper handling of different Claude models (Haiku, Sonnet, Opus) as defined in the contract.
+    23.9. The system shall implement tests for the tiered LLM approach, including fallback mechanisms, based on contract-defined behaviors.
+    23.10. The system shall provide tests for LLM response parsing and error handling using contract-defined response structures.
+    23.11. The system shall include tests for prompt generation and template rendering that align with contract-defined input formats.
+    23.12. The system shall implement tests for context management and token limit handling as specified in the API contract.
+    23.13. The system shall provide tests for LLM-based evaluation and decision-making processes using contract-defined response formats.
+    23.14. The system shall include performance tests specific to LLM interactions and response processing based on contract-defined SLAs.
+    23.15. The system shall implement rate limiting simulation in MockClaudeClient based on contract-defined rate limits.
+    23.16. The system shall provide error response simulation in MockClaudeClient using contract-defined error scenarios.
+    23.17. The system shall implement reset functionality in MockClaudeClient for test isolation and repeatability.
+    23.18. The system shall maintain a versioned history of contract tests to track API changes over time.
+    23.19. The system shall provide mechanisms to update mocks and tests when contract changes are detected.
