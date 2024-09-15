@@ -235,7 +235,16 @@ class MockClaudeClient:
             self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}")
             return await self.client._create(model, max_tokens, messages)
 
-    def __init__(self, rate_limit: int = 10, reset_time: int = 60):
+    def __init__(self, api_key: str, rate_limit: int = 10, reset_time: int = 60):
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+        self.logger.debug(f"Initializing MockClaudeClient with api_key: {api_key[:5]}..., rate_limit: {rate_limit}, reset_time: {reset_time}")
+        
+        self.api_key = api_key
         self.rate_limit = rate_limit
         self.reset_time = reset_time
         self.calls = 0
@@ -248,13 +257,7 @@ class MockClaudeClient:
         self.error_count = 0
         self.max_errors = 3
         self._messages = None
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
-        self.logger.debug("Initialized MockClaudeClient")
+        self.logger.debug("Finished initialization of MockClaudeClient")
 
     @property
     def messages(self):
