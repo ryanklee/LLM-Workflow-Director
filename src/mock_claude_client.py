@@ -76,6 +76,12 @@ class MockClaudeClient:
         self._messages = None  # Initialize to None
         self.logger.debug("Finished initialization of MockClaudeClient")
 
+    def debug_dump(self):
+        self.logger.debug("Dumping MockClaudeClient state:")
+        for attr, value in self.__dict__.items():
+            if attr != 'logger':
+                self.logger.debug(f"{attr}: {value}")
+
     @property
     def messages(self):
         self.logger.debug("Accessing messages property")

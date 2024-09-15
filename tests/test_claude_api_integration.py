@@ -1024,43 +1024,47 @@ async def test_claude_api_rate_limiting(claude_manager, mock_claude_client, capl
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_custom_responses(mock_claude_client_with_responses):
-    mock_client, setup_responses = mock_claude_client_with_responses
-    mock_client.logger.debug("Starting test_mock_claude_client_custom_responses")
-    mock_client.debug_dump()
+    try:
+        mock_client, setup_responses = mock_claude_client_with_responses
+        mock_client.logger.debug("Starting test_mock_claude_client_custom_responses")
+        mock_client.debug_dump()
 
-    responses = {
-        "Hello": "Hi there!",
-        "How are you?": "I'm doing well, thank you for asking.",
-        "What's the weather like?": "I'm sorry, I don't have real-time weather information."
-    }
-    await setup_responses(responses)
+        responses = {
+            "Hello": "Hi there!",
+            "How are you?": "I'm doing well, thank you for asking.",
+            "What's the weather like?": "I'm sorry, I don't have real-time weather information."
+        }
+        await setup_responses(responses)
 
-    mock_client.logger.debug("Set custom responses")
-    mock_client.debug_dump()
+        mock_client.logger.debug("Set custom responses")
+        mock_client.debug_dump()
 
-    for prompt, expected_response in responses.items():
-        mock_client.logger.debug(f"Testing prompt: {prompt}")
-        try:
-            mock_client.logger.debug("Accessing messages property")
-            messages = mock_client.messages
-            mock_client.logger.debug("Successfully accessed messages property")
-            
-            mock_client.logger.debug("Calling messages.create")
-            response = await messages.create(
-                model="claude-3-opus-20240229",
-                max_tokens=100,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            mock_client.logger.debug(f"Received response: {response}")
-            assert response["content"][0]["text"] == f"<response>{expected_response}</response>", f"Expected '{expected_response}', but got '{response['content'][0]['text']}'"
-            mock_client.logger.debug(f"Successful response for prompt: {prompt}")
-        except Exception as e:
-            mock_client.logger.error(f"Error processing prompt '{prompt}': {str(e)}")
-            mock_client.debug_dump()
-            raise
+        for prompt, expected_response in responses.items():
+            mock_client.logger.debug(f"Testing prompt: {prompt}")
+            try:
+                mock_client.logger.debug("Accessing messages property")
+                messages = mock_client.messages
+                mock_client.logger.debug("Successfully accessed messages property")
+                
+                mock_client.logger.debug("Calling messages.create")
+                response = await messages.create(
+                    model="claude-3-opus-20240229",
+                    max_tokens=100,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                mock_client.logger.debug(f"Received response: {response}")
+                assert response["content"][0]["text"] == f"<response>{expected_response}</response>", f"Expected '{expected_response}', but got '{response['content'][0]['text']}'"
+                mock_client.logger.debug(f"Successful response for prompt: {prompt}")
+            except Exception as e:
+                mock_client.logger.error(f"Error processing prompt '{prompt}': {str(e)}")
+                mock_client.debug_dump()
+                raise
 
-    mock_client.logger.debug("Completed test_mock_claude_client_custom_responses")
-    mock_client.debug_dump()
+        mock_client.logger.debug("Completed test_mock_claude_client_custom_responses")
+        mock_client.debug_dump()
+    except Exception as e:
+        logging.error(f"Unexpected error in test_mock_claude_client_custom_responses: {str(e)}")
+        raise
 
 @pytest.mark.asyncio
 async def test_claude_api_error_handling(claude_manager, mock_claude_client_with_error_mode):
