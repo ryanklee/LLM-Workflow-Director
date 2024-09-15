@@ -49,9 +49,9 @@ import uuid
 from typing import Dict, Any, List
 from unittest.mock import MagicMock
 from anthropic import RateLimitError, APIError, APIStatusError
-from src.exceptions import RateLimitError as CustomRateLimitError
+from src.exceptions import CustomRateLimitError
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
 logger = logging.getLogger(__name__)
 
 class MockClaudeClient:
