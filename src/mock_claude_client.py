@@ -649,6 +649,11 @@ class MockClaudeClient:
     def __repr__(self):
         return self.__str__()
 
+    @property
+    def messages(self):
+        self.logger.debug("Accessing messages property")
+        return self._messages
+
     async def debug_dump(self):
         self.logger.debug("Starting debug_dump method")
         try:
