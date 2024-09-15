@@ -57,8 +57,12 @@ async def mock_claude_client_with_responses(mock_claude_client):
         if not asyncio.iscoroutinefunction(mock_claude_client.debug_dump):
             raise TypeError("debug_dump is not an async method")
         
-        state = await mock_claude_client.debug_dump()
-        logger.debug(f"MockClaudeClient state: {state}")
+        try:
+            state = await mock_claude_client.debug_dump()
+            logger.debug(f"MockClaudeClient state: {state}")
+        except Exception as e:
+            logger.error(f"Error calling debug_dump: {str(e)}", exc_info=True)
+            raise
         
         assert hasattr(mock_claude_client, 'messages'), "MockClaudeClient instance does not have 'messages' attribute"
         assert mock_claude_client.messages is not None, "MockClaudeClient 'messages' attribute is None"
@@ -111,11 +115,19 @@ class MockClaudeClient:
                f"call_count={self.call_count}, error_count={self.error_count}, " \
                f"error_mode={self.error_mode})"
 
-    def debug_dump(self):
-        self.logger.debug("Dumping MockClaudeClient state:")
-        for attr, value in self.__dict__.items():
-            if attr != 'logger':
-                self.logger.debug(f"{attr}: {value}")
+    async def debug_dump(self):
+        self.logger.debug("Starting debug_dump method")
+        try:
+            state = {}
+            for attr, value in self.__dict__.items():
+                if attr != 'logger':
+                    state[attr] = str(value)
+                    self.logger.debug(f"{attr}: {value}")
+            self.logger.debug("Finished debug_dump method")
+            return state
+        except Exception as e:
+            self.logger.error(f"Error in debug_dump: {str(e)}", exc_info=True)
+            raise
 
     async def set_rate_limit_reset_time(self, reset_time: int):
         self.rate_limit_reset_time = reset_time
