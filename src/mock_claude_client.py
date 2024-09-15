@@ -589,18 +589,18 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(leve
 logger = logging.getLogger(__name__)
 
 class MockClaudeClient:
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, rate_limit: int = 10, reset_time: int = 60):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
-        self.logger.debug(f"Initializing MockClaudeClient {id(self)} with api_key: {api_key[:5]}...")
+        self.logger.debug(f"Initializing MockClaudeClient {id(self)} with api_key: {api_key[:5]}, rate_limit: {rate_limit}, reset_time: {reset_time}")
         
         self.api_key = api_key
-        self.rate_limit = 10
-        self.reset_time = 60
+        self.rate_limit = rate_limit
+        self.reset_time = reset_time
         self.calls = 0
         self.last_reset = asyncio.get_event_loop().time()
         self.error_mode = False
@@ -610,6 +610,7 @@ class MockClaudeClient:
         self.call_count = 0
         self.error_count = 0
         self.max_errors = 3
+        self._messages = None
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
 
     def __str__(self):

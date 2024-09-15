@@ -41,7 +41,7 @@ async def mock_claude_client_with_responses(request):
     mock_client = None
     try:
         logger.debug("Attempting to create MockClaudeClient instance")
-        mock_client = MockClaudeClient(api_key="test_api_key")
+        mock_client = MockClaudeClient(api_key="test_api_key", rate_limit=10, reset_time=60)
         logger.debug(f"Created MockClaudeClient instance: {mock_client}")
         
         async def setup_responses(responses):
