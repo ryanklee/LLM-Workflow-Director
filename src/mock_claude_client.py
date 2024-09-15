@@ -378,20 +378,27 @@ class MockClaudeClient:
             raise CustomRateLimitError("Rate limit exceeded")
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
-        await self._check_rate_limit()
-        await self._simulate_latency()
-        
-        if len(prompt) > self.max_test_tokens:
-            raise ValueError(f"Prompt length ({len(prompt)} tokens) exceeds maximum context length of {self.max_test_tokens} tokens")
-        
-        if self.error_mode:
-            self.error_count += 1
-            if self.error_count <= self.max_errors:
-                self.logger.error("API error (error mode)")
-                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
-        
-        response = self.responses.get(prompt, "Default mock response")
-        return response  # Return the response without XML wrapping
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}... using model: {model}")
+        try:
+            await self._check_rate_limit()
+            await self._simulate_latency()
+            
+            if len(prompt) > self.max_test_tokens:
+                raise ValueError(f"Prompt length ({len(prompt)} tokens) exceeds maximum context length of {self.max_test_tokens} tokens")
+            
+            if self.error_mode:
+                self.error_count += 1
+                if self.error_count <= self.max_errors:
+                    self.logger.error("API error (error mode)")
+                    raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+            
+            response = self.responses.get(prompt, "Default mock response")
+            wrapped_response = f"<response>{response}</response>"
+            self.logger.debug(f"Generated response: {wrapped_response[:50]}...")
+            return wrapped_response
+        except Exception as e:
+            self.logger.error(f"Error generating response: {str(e)}")
+            raise
 
     async def count_tokens(self, text: str) -> int:
         return len(text.split())

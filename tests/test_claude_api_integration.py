@@ -226,7 +226,7 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
         logger.debug(f"MockClaudeClient type: {type(mock_client)}")
         logger.debug(f"MockClaudeClient attributes: {dir(mock_client)}")
         
-        mock_client.debug_dump()
+        await mock_client.debug_dump()
 
         responses = {
             "Hello": "Hi there!",
@@ -236,25 +236,31 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
         await setup_responses(responses)
 
         logger.debug("Set custom responses")
-        mock_client.debug_dump()
+        await mock_client.debug_dump()
 
         for prompt, expected_response in responses.items():
             logger.debug(f"Testing prompt: {prompt}")
             try:
                 response = await mock_client.generate_response(prompt)
                 logger.debug(f"Received response: {response}")
-                assert response == f"<response>{expected_response}</response>", f"Expected '{expected_response}', but got '{response}'"
+                logger.debug(f"Expected response: <response>{expected_response}</response>")
+                assert response == f"<response>{expected_response}</response>", f"Expected '<response>{expected_response}</response>', but got '{response}'"
                 logger.debug(f"Successful response for prompt: {prompt}")
+            except AssertionError as ae:
+                logger.error(f"Assertion error for prompt '{prompt}': {str(ae)}")
+                await mock_client.debug_dump()
+                raise
             except Exception as e:
                 logger.error(f"Error processing prompt '{prompt}': {str(e)}", exc_info=True)
-                mock_client.debug_dump()
+                await mock_client.debug_dump()
                 raise
 
         logger.debug("Completed test_mock_claude_client_custom_responses")
-        mock_client.debug_dump()
+        await mock_client.debug_dump()
     except Exception as e:
         logger.error(f"Unexpected error in test_mock_claude_client_custom_responses: {str(e)}", exc_info=True)
-        mock_client.debug_dump()
+        if 'mock_client' in locals():
+            await mock_client.debug_dump()
         raise
 
 # ... (rest of the test file remains unchanged)
