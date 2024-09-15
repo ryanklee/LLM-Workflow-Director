@@ -76,6 +76,29 @@ We will implement these changes and then run the test suite to verify the fix.
 
 If the test still fails after these changes, we will need to investigate further, possibly looking into the test implementation itself or considering other potential issues in the MockClaudeClient implementation.
 
+## Implementation
+
+We will now implement the solution based on our analysis:
+
+1. Update the MockClaudeClient class structure:
+   - Add the 'Messages' class.
+   - Implement the 'messages' attribute.
+   - Move and update the 'create' method.
+
+2. Ensure all related functionality is properly updated.
+
+We will implement these changes and then run the test suite to verify the fix.
+
+## Next Steps
+
+1. Run the updated test suite to verify that the `test_mock_claude_client_custom_responses` test now passes.
+2. Review other tests that use MockClaudeClient to ensure they are using the correct interface (i.e., `mock_claude_client.messages.create()`).
+3. Update documentation to reflect the changes made to MockClaudeClient, particularly the new structure with the `messages` attribute.
+4. Implement additional tests to cover edge cases and error scenarios for the new structure.
+5. Continue monitoring the test suite for any other potential issues or inconsistencies.
+
+If the test still fails after these changes, we will need to investigate further, possibly looking into the test implementation itself or considering other potential issues in the MockClaudeClient implementation.
+
 ## Implementation Results
 
 The changes have been implemented as planned. Here's a summary of the modifications:

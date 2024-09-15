@@ -1124,11 +1124,11 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
     test_prompt = "Custom response prompt"
     test_response = "This is a custom response"
     await mock_claude_client.set_response(test_prompt, test_response)
-    
+        
     response = await mock_claude_client.generate_response(test_prompt)
     expected_response = f"<response>{test_response}</response>"
     assert response == expected_response, f"Expected custom response '{expected_response}', but got '{response}'"
-    
+        
     # Test with default response
     default_prompt = "Default prompt"
     default_response = await mock_claude_client.generate_response(default_prompt)
