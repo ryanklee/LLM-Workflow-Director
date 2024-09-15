@@ -386,7 +386,9 @@ class Messages:
         return response["content"][0]["text"]
 
     async def set_response(self, prompt: str, response: str):
+        self.logger.debug(f"Setting response for prompt: {prompt[:50]}...")
         self.responses[prompt] = response
+        self.logger.debug(f"Response set successfully for prompt: {prompt[:50]}...")
 
     async def set_error_mode(self, mode: bool):
         self.error_mode = mode

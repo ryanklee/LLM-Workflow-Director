@@ -39,11 +39,12 @@ async def mock_claude_client_with_responses(request):
     logger.info(f"Initializing mock_claude_client_with_responses fixture in test {request.node.name}")
     
     mock_client = MockClaudeClient(api_key="test_api_key")
+    logger.debug(f"Created MockClaudeClient instance: {mock_client}")
     
     async def setup_responses(responses):
         logger.debug(f"Setting up responses: {responses}")
         for prompt, response in responses.items():
-            mock_client.responses[prompt] = response
+            await mock_client.set_response(prompt, response)
             logger.debug(f"Set response for prompt: {prompt}")
     
     logger.info(f"Returning MockClaudeClient: {mock_client}")
