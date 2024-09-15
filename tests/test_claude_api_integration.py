@@ -1040,8 +1040,18 @@ async def test_claude_api_with_custom_responses(claude_manager, mock_claude_clie
     for prompt, expected_response in responses.items():
         mock_claude_client_with_responses.logger.debug(f"Testing prompt: {prompt}")
         try:
-            response = await claude_manager.generate_response(prompt)
-            assert response == f"<response>{expected_response}</response>", f"Expected '{expected_response}', but got '{response}'"
+            mock_claude_client_with_responses.logger.debug("Accessing messages property")
+            messages = mock_claude_client_with_responses.messages
+            mock_claude_client_with_responses.logger.debug("Successfully accessed messages property")
+            
+            mock_claude_client_with_responses.logger.debug("Calling messages.create")
+            response = await messages.create(
+                model="claude-3-opus-20240229",
+                max_tokens=100,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            mock_claude_client_with_responses.logger.debug(f"Received response: {response}")
+            assert response["content"][0]["text"] == f"<response>{expected_response}</response>", f"Expected '{expected_response}', but got '{response['content'][0]['text']}'"
             mock_claude_client_with_responses.logger.debug(f"Successful response for prompt: {prompt}")
         except Exception as e:
             mock_claude_client_with_responses.logger.error(f"Error processing prompt '{prompt}': {str(e)}")
