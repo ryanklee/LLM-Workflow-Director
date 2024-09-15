@@ -76,12 +76,12 @@ class MockClaudeClient:
         self._messages = None  # Initialize to None
         self.logger.debug("Finished initialization of MockClaudeClient")
 
-    def debug_dump(self):
+    async def debug_dump(self):
         self.logger.debug("Dumping MockClaudeClient state:")
         for attr, value in self.__dict__.items():
             if attr != 'logger':
                 self.logger.debug(f"{attr}: {value}")
-        return None  # Explicitly return None to make the return value clear
+        return "Debug dump completed"  # Return a string instead of None
 
     def debug_dump(self):
         self.logger.debug("Dumping MockClaudeClient state:")

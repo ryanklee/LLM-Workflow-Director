@@ -202,17 +202,22 @@ def setup_teardown(caplog, request):
     logger.debug(f"Test function source:\n{inspect.getsource(request.node.obj)}")
     yield
     logger.info(f"Finished test: {request.node.name}")
-    logger.debug(f"Test result: {'Passed' if request.node.rep_call.passed else 'Failed'}")
+    # Use getattr to safely access rep_call attribute
+    rep_call = getattr(request.node, 'rep_call', None)
+    if rep_call:
+        logger.debug(f"Test result: {'Passed' if rep_call.passed else 'Failed'}")
+        if not rep_call.passed:
+            logger.error(f"Test failed: {request.node.name}")
+            logger.error(f"Exception info: {rep_call.longrepr}")
+    else:
+        logger.warning("Unable to determine test result. rep_call attribute not found.")
     logger.debug(f"Log output for {request.node.name}:\n" + caplog.text)
     print(f"\nFull log output for {request.node.name}:")
     print(caplog.text)
     
-    if not request.node.rep_call.passed:
-        logger.error(f"Test failed: {request.node.name}")
-        logger.error(f"Exception info: {request.node.rep_call.longrepr}")
-        logger.error(f"Full test function:\n{inspect.getsource(request.node.obj)}")
-        logger.error(f"Local variables at failure:\n{pprint.pformat(request.node.obj.__globals__)}")
-        logger.error(f"Fixture values:\n{pprint.pformat(request.node.funcargs)}")
+    logger.error(f"Full test function:\n{inspect.getsource(request.node.obj)}")
+    logger.error(f"Local variables at failure:\n{pprint.pformat(request.node.obj.__globals__)}")
+    logger.error(f"Fixture values:\n{pprint.pformat(request.node.funcargs)}")
 
 @pytest.fixture
 def run_async_fixture():
@@ -232,7 +237,8 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
         logger.debug(f"MockClaudeClient type: {type(mock_client)}")
         logger.debug(f"MockClaudeClient attributes: {dir(mock_client)}")
         
-        await mock_client.debug_dump()
+        debug_dump_result = await mock_client.debug_dump()
+        logger.debug(f"Initial debug dump result: {debug_dump_result}")
 
         responses = {
             "Hello": "Hi there!",
@@ -242,7 +248,8 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
         await setup_responses(responses)
 
         logger.debug("Set custom responses")
-        await mock_client.debug_dump()
+        debug_dump_result = await mock_client.debug_dump()
+        logger.debug(f"Debug dump after setting responses: {debug_dump_result}")
 
         for prompt, expected_response in responses.items():
             logger.debug(f"Testing prompt: {prompt}")
@@ -254,19 +261,23 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
                 logger.debug(f"Successful response for prompt: {prompt}")
             except AssertionError as ae:
                 logger.error(f"Assertion error for prompt '{prompt}': {str(ae)}")
-                await mock_client.debug_dump()
+                debug_dump_result = await mock_client.debug_dump()
+                logger.debug(f"Debug dump after assertion error: {debug_dump_result}")
                 raise
             except Exception as e:
                 logger.error(f"Error processing prompt '{prompt}': {str(e)}", exc_info=True)
-                await mock_client.debug_dump()
+                debug_dump_result = await mock_client.debug_dump()
+                logger.debug(f"Debug dump after exception: {debug_dump_result}")
                 raise
 
         logger.debug("Completed test_mock_claude_client_custom_responses")
-        await mock_client.debug_dump()
+        final_debug_dump = await mock_client.debug_dump()
+        logger.debug(f"Final debug dump: {final_debug_dump}")
     except Exception as e:
         logger.error(f"Unexpected error in test_mock_claude_client_custom_responses: {str(e)}", exc_info=True)
         if 'mock_client' in locals():
-            await mock_client.debug_dump()
+            final_error_dump = await mock_client.debug_dump()
+            logger.debug(f"Debug dump after unexpected error: {final_error_dump}")
         raise
 
 # ... (rest of the test file remains unchanged)
