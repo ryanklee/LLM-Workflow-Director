@@ -119,7 +119,7 @@ class MockClaudeClient:
     def ensure_messages_initialized(self):
         self.logger.debug("Ensuring messages are initialized")
         try:
-            if self._messages is None:
+            if not hasattr(self, '_messages') or self._messages is None:
                 self.logger.info("Initializing Messages instance")
                 self._messages = self.Messages(self)
             return self._messages
@@ -618,7 +618,7 @@ class MockClaudeClient:
     class Messages:
         def __init__(self, client):
             self.client = client
-            self.client.logger.debug("Initialized Messages class")
+            self.client.logger.debug(f"Initialized Messages class for client {id(client)}")
 
         async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
             self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}")
@@ -631,7 +631,7 @@ class MockClaudeClient:
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
-        self.logger.debug("Starting initialization of MockClaudeClient")
+        self.logger.debug(f"Starting initialization of MockClaudeClient {id(self)}")
         
         self.rate_limit = rate_limit
         self.reset_time = reset_time
@@ -645,7 +645,10 @@ class MockClaudeClient:
         self.error_count = 0
         self.max_errors = 3
         self._messages = None  # Initialize to None
-        self.logger.debug("Finished initialization of MockClaudeClient")
+        self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
+
+    def __del__(self):
+        self.logger.debug(f"Destroying MockClaudeClient {id(self)}")
 
     def __str__(self):
         return f"MockClaudeClient(call_count={self.call_count}, error_count={self.error_count}, error_mode={self.error_mode})"

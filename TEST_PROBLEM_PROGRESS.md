@@ -46,6 +46,7 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
 2. The MockClaudeClient class does not have an `ensure_messages_initialized` method, which is expected by the fixture.
 3. The error occurs during the setup phase of the test, specifically in the `mock_claude_client_with_responses` fixture.
 4. The inconsistency between the expected interface (with `ensure_messages_initialized`) and the actual implementation is the root cause of the current error.
+5. The `ensure_messages_initialized` method is called within the `messages` property getter, indicating a potential design issue in how the Messages instance is initialized and accessed.
 
 ## Next Steps
 
@@ -55,25 +56,27 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
 4. Implement stronger type checking and error handling in the fixture to catch and report initialization issues early.
 5. Review the asynchronous flow in both the MockClaudeClient class and the fixture to ensure proper async/await usage.
 6. After implementing the missing method, run the tests again to identify any remaining issues.
+7. Consider refactoring the `messages` property implementation to avoid potential initialization issues.
 
 ## Implementation Plan
 
 1. Update MockClaudeClient Class:
    - Add the `ensure_messages_initialized` method.
-   - Implement a robust initialization process for the `messages` attribute.
+   - Refactor the `messages` property to use the new method.
+   - Implement a robust initialization process for the `_messages` attribute.
    - Add detailed logging for object creation, attribute initialization, and method calls.
    - Implement comprehensive error handling and informative error messages.
-   - Ensure consistent initialization of the `messages` attribute across all methods and contexts.
+   - Ensure consistent initialization of the `_messages` attribute across all methods and contexts.
 
 2. Update Fixture:
    - Add logging to track the entire lifecycle of the fixture, including MockClaudeClient instantiation.
    - Implement strong type checking to ensure the returned object is of the correct type.
    - Add error handling to catch and log any initialization or attribute access errors.
-   - Verify the presence and accessibility of the `messages` attribute before returning the instance.
+   - Verify the presence and accessibility of the `_messages` attribute before returning the instance.
 
 3. Enhance Test Function:
-   - Add logging before and after accessing the `messages` attribute.
+   - Add logging before and after accessing the `messages` property.
    - Implement additional checks to verify the state of the MockClaudeClient before using it.
-   - Add error handling around the `messages` attribute access.
+   - Add error handling around the `messages` property access.
 
-We will implement these changes incrementally, starting with adding the `ensure_messages_initialized` method to the MockClaudeClient class. After this implementation, we'll run the tests again to gather more information and adjust our approach as needed.
+We will implement these changes incrementally, starting with adding the `ensure_messages_initialized` method to the MockClaudeClient class and refactoring the `messages` property. After this implementation, we'll run the tests again to gather more information and adjust our approach as needed.
