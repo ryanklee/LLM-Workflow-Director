@@ -136,7 +136,7 @@ The test suite was run again, but the `test_mock_claude_client_custom_responses`
 5. Code Saving or Application Issue (Ruled Out)
    - This hypothesis has been ruled out after verifying the file contents and git status.
 
-## Next Steps
+## Implementation Plan
 
 1. Update MockClaudeClient Implementation:
    - Implement the 'messages' attribute as a property in the MockClaudeClient class.
@@ -150,7 +150,18 @@ The test suite was run again, but the `test_mock_claude_client_custom_responses`
 3. Update Test Case (if necessary):
    - After implementing the changes, review the test case to ensure it aligns with the updated MockClaudeClient structure.
 
-Let's proceed with the implementation of these changes, focusing on correctly initializing the 'messages' attribute and aligning the MockClaudeClient with the Claude API structure.
+## Implementation
+
+We will now implement the solution based on our analysis:
+
+1. Update the MockClaudeClient class:
+   - Add the 'Messages' class as an inner class of MockClaudeClient.
+   - Implement the 'messages' attribute as a property.
+   - Move the existing 'create' method to the Messages class.
+
+2. Ensure all related functionality is properly updated.
+
+We will implement these changes and then run the test suite to verify the fix.
 
 ## Implementation
 
