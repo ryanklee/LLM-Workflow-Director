@@ -32,11 +32,11 @@ async def claude_manager(mock_claude_client):
     logger.debug(f"Closed ClaudeManager instance")
 
 @pytest.fixture
-def mock_claude_client_with_responses(mock_claude_client):
+async def mock_claude_client_with_responses(mock_claude_client):
     async def setup_responses(responses):
         for prompt, response in responses.items():
             await mock_claude_client.set_response(prompt, response)
-    return setup_responses
+    return mock_claude_client, setup_responses
 
 @pytest.fixture
 def mock_claude_client_with_error_mode(mock_claude_client):
