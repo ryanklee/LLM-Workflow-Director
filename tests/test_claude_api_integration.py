@@ -64,8 +64,8 @@ async def mock_claude_client_with_responses(mock_claude_client, request):
         try:
             messages = mock_claude_client.ensure_messages_initialized()
             logger.debug(f"Successfully initialized messages: {messages}")
-        except AttributeError:
-            logger.error("MockClaudeClient does not have 'ensure_messages_initialized' method")
+        except Exception as e:
+            logger.error(f"Error initializing messages: {str(e)}", exc_info=True)
             raise
         
         if messages is None:
@@ -343,5 +343,7 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
     except Exception as e:
         logger.error(f"Error in test_mock_claude_client_custom_responses: {str(e)}", exc_info=True)
         raise
+    finally:
+        logger.info(f"Finished test_mock_claude_client_custom_responses in {request.node.name}")
 
 # ... (rest of the test file remains unchanged)
