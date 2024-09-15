@@ -20,14 +20,14 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
    - Validation: Review the async flow in the test and fixture, ensure proper awaiting of async methods.
    - Status: Under investigation.
 
-4. Test Setup Issue (Low Likelihood)
-   - The test setup might not be correctly handling the asynchronous fixture.
-   - Validation: Review the test function and its use of the fixture, ensuring proper async/await usage.
-   - Status: To be investigated.
-
-5. Inconsistent Class Structure (New Hypothesis)
+4. Inconsistent Class Structure (Medium Likelihood)
    - The MockClaudeClient class structure might be inconsistent with the expected interface.
    - Validation: Compare MockClaudeClient structure with the actual Claude API client structure.
+   - Status: To be investigated.
+
+5. Test Setup Issue (Low Likelihood)
+   - The test setup might not be correctly handling the asynchronous fixture.
+   - Validation: Review the test function and its use of the fixture, ensuring proper async/await usage.
    - Status: To be investigated.
 
 ## New Learnings
@@ -36,6 +36,7 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
 2. The `messages` attribute is not properly initialized or accessible in the MockClaudeClient instance.
 3. The fixture is attempting to access the `messages` attribute, but it doesn't exist on the MockClaudeClient instance.
 4. The error persists despite previous attempts to initialize the `messages` attribute, suggesting a deeper structural issue.
+5. The test is running in a parallel environment (using pytest-xdist), which could potentially introduce timing or initialization issues.
 
 ## Next Steps
 
@@ -44,6 +45,7 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
 3. Add comprehensive logging throughout the MockClaudeClient class and the fixture to track the object's lifecycle and attribute access.
 4. Implement stronger type checking and error handling in the fixture to catch and report initialization issues early.
 5. Review the asynchronous flow in both the MockClaudeClient class and the fixture to ensure proper async/await usage.
+6. Investigate potential issues related to parallel test execution and fixture sharing.
 
 ## Implementation Plan
 
@@ -67,5 +69,9 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
 4. Verify Asynchronous Flow:
    - Review and update the async implementation in both MockClaudeClient and the fixture.
    - Ensure all async operations are properly awaited and handled.
+
+5. Address Parallel Execution Concerns:
+   - Review fixture scoping and ensure proper isolation between parallel test runs.
+   - Consider adding unique identifiers to MockClaudeClient instances for better tracking in logs.
 
 We will implement these changes incrementally, starting with the MockClaudeClient updates, then move on to the fixture and test function improvements. After each step, we'll run the tests to gather more information and adjust our approach as needed.

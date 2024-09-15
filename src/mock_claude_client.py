@@ -640,7 +640,7 @@ class MockClaudeClient:
         self.call_count = 0
         self.error_count = 0
         self.max_errors = 3
-        self._messages = None  # Initialize as None
+        self._messages = self.Messages(self)  # Initialize immediately
         self.logger.debug("Finished initialization of MockClaudeClient")
 
     def __str__(self):
@@ -652,8 +652,8 @@ class MockClaudeClient:
     @property
     def messages(self):
         self.logger.debug("Accessing messages property")
-        if self._messages is None:
-            self.logger.info("Initializing Messages instance")
+        if not hasattr(self, '_messages') or self._messages is None:
+            self.logger.warning("Messages instance not found, reinitializing")
             self._messages = self.Messages(self)
         return self._messages
 
@@ -670,6 +670,10 @@ class MockClaudeClient:
         except Exception as e:
             self.logger.error(f"Error in debug_dump: {str(e)}", exc_info=True)
             raise
+
+    async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+        self.logger.debug(f"_create method called with model: {model}, max_tokens: {max_tokens}")
+        # ... (rest of the method implementation)
 
     def __init__(self, rate_limit: int = 10, reset_time: int = 60):
         self.logger = logging.getLogger(__name__)
