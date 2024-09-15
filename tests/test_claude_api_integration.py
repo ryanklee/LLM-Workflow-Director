@@ -1022,12 +1022,24 @@ async def test_claude_api_rate_limiting(claude_manager, mock_claude_client, capl
     logger.info(f"Rate limiting test passed. Total calls made: {call_count}")
     assert "Rate limit exceeded" in caplog.text
 
+import logging
+
 @pytest.mark.asyncio
 async def test_mock_claude_client_custom_responses(mock_claude_client_with_responses):
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    
     try:
         mock_client, setup_responses = mock_claude_client_with_responses
-        mock_client.logger.debug("Starting test_mock_claude_client_custom_responses")
-        mock_client.debug_dump()
+        logger.debug("Starting test_mock_claude_client_custom_responses")
+        logger.debug(f"MockClaudeClient type: {type(mock_client)}")
+        logger.debug(f"MockClaudeClient attributes: {dir(mock_client)}")
+        
+        if hasattr(mock_client, 'debug_dump'):
+            logger.debug("Calling debug_dump")
+            mock_client.debug_dump()
+        else:
+            logger.error("debug_dump method not found on MockClaudeClient")
 
         responses = {
             "Hello": "Hi there!",
@@ -1036,35 +1048,39 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
         }
         await setup_responses(responses)
 
-        mock_client.logger.debug("Set custom responses")
-        mock_client.debug_dump()
+        logger.debug("Set custom responses")
+        if hasattr(mock_client, 'debug_dump'):
+            mock_client.debug_dump()
 
         for prompt, expected_response in responses.items():
-            mock_client.logger.debug(f"Testing prompt: {prompt}")
+            logger.debug(f"Testing prompt: {prompt}")
             try:
-                mock_client.logger.debug("Accessing messages property")
+                logger.debug("Accessing messages property")
                 messages = mock_client.messages
-                mock_client.logger.debug("Successfully accessed messages property")
+                logger.debug("Successfully accessed messages property")
                 
-                mock_client.logger.debug("Calling messages.create")
+                logger.debug("Calling messages.create")
                 response = await messages.create(
                     model="claude-3-opus-20240229",
                     max_tokens=100,
                     messages=[{"role": "user", "content": prompt}]
                 )
-                mock_client.logger.debug(f"Received response: {response}")
+                logger.debug(f"Received response: {response}")
                 assert response["content"][0]["text"] == f"<response>{expected_response}</response>", f"Expected '{expected_response}', but got '{response['content'][0]['text']}'"
-                mock_client.logger.debug(f"Successful response for prompt: {prompt}")
+                logger.debug(f"Successful response for prompt: {prompt}")
             except Exception as e:
-                mock_client.logger.error(f"Error processing prompt '{prompt}': {str(e)}")
-                mock_client.debug_dump()
+                logger.error(f"Error processing prompt '{prompt}': {str(e)}", exc_info=True)
+                if hasattr(mock_client, 'debug_dump'):
+                    mock_client.debug_dump()
                 raise
 
-        mock_client.logger.debug("Completed test_mock_claude_client_custom_responses")
-        mock_client.debug_dump()
+        logger.debug("Completed test_mock_claude_client_custom_responses")
+        if hasattr(mock_client, 'debug_dump'):
+            mock_client.debug_dump()
     except Exception as e:
-        logging.error(f"Unexpected error in test_mock_claude_client_custom_responses: {str(e)}")
-        mock_client.debug_dump()  # Add this line to dump the client state in case of unexpected errors
+        logger.error(f"Unexpected error in test_mock_claude_client_custom_responses: {str(e)}", exc_info=True)
+        if hasattr(mock_client, 'debug_dump'):
+            mock_client.debug_dump()
         raise
 
 @pytest.mark.asyncio
