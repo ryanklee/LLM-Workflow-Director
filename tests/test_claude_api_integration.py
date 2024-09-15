@@ -10,6 +10,7 @@ from anthropic import APIStatusError
 from src.exceptions import CustomRateLimitError, RateLimitError
 from src.llm_manager import LLMManager
 from src.claude_manager import ClaudeManager
+from src.mock_claude_client import MockClaudeClient
 from pact import Consumer, Provider
 
 from typing import List, Union
@@ -23,7 +24,7 @@ def pact():
 
 @pytest_asyncio.fixture
 async def mock_claude_client():
-    client = MockClaudeClient()
+    client = MockClaudeClient(api_key="test_api_key")
     client.lock = asyncio.Lock()  # Ensure the lock is initialized
     logger.debug(f"Created MockClaudeClient instance with rate_limit_threshold={client.rate_limit_threshold}, rate_limit_reset_time={client.rate_limit_reset_time}")
     yield client
