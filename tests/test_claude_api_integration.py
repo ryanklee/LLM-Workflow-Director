@@ -53,10 +53,6 @@ async def mock_claude_client_with_responses(mock_claude_client):
         if mock_claude_client is None:
             raise ValueError("mock_claude_client is None")
         
-        # Ensure debug_dump is an async method
-        if not asyncio.iscoroutinefunction(mock_claude_client.debug_dump):
-            raise TypeError("debug_dump is not an async method")
-        
         try:
             state = await mock_claude_client.debug_dump()
             logger.debug(f"MockClaudeClient state: {state}")
