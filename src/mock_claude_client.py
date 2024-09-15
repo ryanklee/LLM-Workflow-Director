@@ -836,6 +836,13 @@ class Messages:
     async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
         return await self.client._create(model, max_tokens, messages)
 
+class Messages:
+    def __init__(self, client):
+        self.client = client
+
+    async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+        return await self.client._create(model, max_tokens, messages)
+
 class MockClaudeClient:
     def __init__(self, rate_limit: int = 10, reset_time: int = 60):
         self.rate_limit = rate_limit
