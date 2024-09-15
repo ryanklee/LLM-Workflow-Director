@@ -41,7 +41,12 @@ async def mock_claude_client_with_responses(mock_claude_client):
     async def setup_responses(responses):
         logger.debug(f"Setting up responses: {responses}")
         for prompt, response in responses.items():
-            await mock_claude_client.set_response(prompt, response)
+            try:
+                await mock_claude_client.set_response(prompt, response)
+                logger.debug(f"Set response for prompt: {prompt}")
+            except Exception as e:
+                logger.error(f"Error setting response for prompt '{prompt}': {str(e)}", exc_info=True)
+                raise
     
     logger.debug(f"Returning MockClaudeClient: {mock_claude_client}")
     return mock_claude_client, setup_responses
@@ -197,27 +202,32 @@ async def reset_mock_claude_client(mock_claude_client):
 @pytest.fixture(autouse=True)
 def setup_teardown(caplog, request):
     caplog.set_level(logging.DEBUG)
+    logger = logging.getLogger(__name__)
     logger.info(f"Starting test: {request.node.name}")
     logger.debug(f"Test parameters: {request.node.callspec.params if hasattr(request.node, 'callspec') else 'No parameters'}")
     logger.debug(f"Test function source:\n{inspect.getsource(request.node.obj)}")
     yield
     logger.info(f"Finished test: {request.node.name}")
-    # Use getattr to safely access rep_call attribute
-    rep_call = getattr(request.node, 'rep_call', None)
-    if rep_call:
-        logger.debug(f"Test result: {'Passed' if rep_call.passed else 'Failed'}")
-        if not rep_call.passed:
-            logger.error(f"Test failed: {request.node.name}")
-            logger.error(f"Exception info: {rep_call.longrepr}")
-    else:
-        logger.warning("Unable to determine test result. rep_call attribute not found.")
+    try:
+        # Use getattr to safely access rep_call attribute
+        rep_call = getattr(request.node, 'rep_call', None)
+        if rep_call:
+            logger.debug(f"Test result: {'Passed' if rep_call.passed else 'Failed'}")
+            if not rep_call.passed:
+                logger.error(f"Test failed: {request.node.name}")
+                logger.error(f"Exception info: {rep_call.longrepr}")
+        else:
+            logger.warning("Unable to determine test result. rep_call attribute not found.")
+    except Exception as e:
+        logger.error(f"Error accessing test result: {str(e)}", exc_info=True)
+
     logger.debug(f"Log output for {request.node.name}:\n" + caplog.text)
     print(f"\nFull log output for {request.node.name}:")
     print(caplog.text)
     
-    logger.error(f"Full test function:\n{inspect.getsource(request.node.obj)}")
-    logger.error(f"Local variables at failure:\n{pprint.pformat(request.node.obj.__globals__)}")
-    logger.error(f"Fixture values:\n{pprint.pformat(request.node.funcargs)}")
+    logger.debug(f"Full test function:\n{inspect.getsource(request.node.obj)}")
+    logger.debug(f"Local variables at failure:\n{pprint.pformat(request.node.obj.__globals__)}")
+    logger.debug(f"Fixture values:\n{pprint.pformat(request.node.funcargs)}")
 
 @pytest.fixture
 def run_async_fixture():
@@ -276,8 +286,11 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
     except Exception as e:
         logger.error(f"Unexpected error in test_mock_claude_client_custom_responses: {str(e)}", exc_info=True)
         if 'mock_client' in locals():
-            final_error_dump = await mock_client.debug_dump()
-            logger.debug(f"Debug dump after unexpected error: {final_error_dump}")
+            try:
+                final_error_dump = await mock_client.debug_dump()
+                logger.debug(f"Debug dump after unexpected error: {final_error_dump}")
+            except Exception as debug_error:
+                logger.error(f"Error during final debug dump: {str(debug_error)}", exc_info=True)
         raise
 
 # ... (rest of the test file remains unchanged)

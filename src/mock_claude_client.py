@@ -83,11 +83,14 @@ class MockClaudeClient:
                 self.logger.debug(f"{attr}: {value}")
         return "Debug dump completed"  # Return a string instead of None
 
-    def debug_dump(self):
+    async def debug_dump(self):
         self.logger.debug("Dumping MockClaudeClient state:")
+        state = {}
         for attr, value in self.__dict__.items():
             if attr != 'logger':
+                state[attr] = str(value)
                 self.logger.debug(f"{attr}: {value}")
+        return state
 
     @property
     def messages(self):
