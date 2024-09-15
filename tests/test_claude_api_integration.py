@@ -1158,29 +1158,47 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
     mock_claude_client.logger.debug("Testing rate limiting")
     await mock_claude_client.set_rate_limit(3)
     for i in range(3):
-        await messages.create(
-            model="claude-3-opus-20240229",
-            max_tokens=100,
-            messages=[{"role": "user", "content": f"Test prompt {i}"}]
-        )
+        try:
+            await messages.create(
+                model="claude-3-opus-20240229",
+                max_tokens=100,
+                messages=[{"role": "user", "content": f"Test prompt {i}"}]
+            )
+        except Exception as e:
+            mock_claude_client.logger.error(f"Error during rate limit test iteration {i}: {str(e)}")
+            raise
     
     with pytest.raises(CustomRateLimitError):
-        await messages.create(
-            model="claude-3-opus-20240229",
-            max_tokens=100,
-            messages=[{"role": "user", "content": "Rate limit exceeded prompt"}]
-        )
+        try:
+            await messages.create(
+                model="claude-3-opus-20240229",
+                max_tokens=100,
+                messages=[{"role": "user", "content": "Rate limit exceeded prompt"}]
+            )
+        except CustomRateLimitError:
+            mock_claude_client.logger.debug("Rate limit error raised as expected")
+            raise
+        except Exception as e:
+            mock_claude_client.logger.error(f"Unexpected error during rate limit test: {str(e)}")
+            raise
     mock_claude_client.logger.debug("Rate limiting test passed")
 
     # Test error mode
     mock_claude_client.logger.debug("Testing error mode")
     await mock_claude_client.set_error_mode(True)
     with pytest.raises(APIStatusError):
-        await messages.create(
-            model="claude-3-opus-20240229",
-            max_tokens=100,
-            messages=[{"role": "user", "content": "Error mode prompt"}]
-        )
+        try:
+            await messages.create(
+                model="claude-3-opus-20240229",
+                max_tokens=100,
+                messages=[{"role": "user", "content": "Error mode prompt"}]
+            )
+        except APIStatusError:
+            mock_claude_client.logger.debug("API status error raised as expected")
+            raise
+        except Exception as e:
+            mock_claude_client.logger.error(f"Unexpected error during error mode test: {str(e)}")
+            raise
     mock_claude_client.logger.debug("Error mode test passed")
 
     mock_claude_client.logger.debug("All tests in test_mock_claude_client_custom_responses completed")

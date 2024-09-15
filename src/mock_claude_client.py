@@ -60,11 +60,15 @@ class MockClaudeClient:
 
     @property
     def messages(self):
-        if self._messages is None:
-            self.logger.debug("Initializing Messages instance")
-            self._messages = self.Messages(self)
-        self.logger.debug("Accessing messages property")
-        return self._messages
+        try:
+            if self._messages is None:
+                self.logger.debug("Initializing Messages instance")
+                self._messages = self.Messages(self)
+            self.logger.debug("Accessing messages property")
+            return self._messages
+        except Exception as e:
+            self.logger.error(f"Error accessing messages property: {str(e)}")
+            raise
 
     async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
         self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}")
