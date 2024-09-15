@@ -50,10 +50,12 @@ async def mock_claude_client_with_responses(mock_claude_client):
     
     logger.debug(f"Verifying MockClaudeClient instance: {mock_claude_client}")
     try:
+        await mock_claude_client.debug_dump()
         messages = mock_claude_client.messages
         logger.debug(f"Successfully accessed messages property: {messages}")
     except Exception as e:
         logger.error(f"Failed to access messages property: {str(e)}", exc_info=True)
+        await mock_claude_client.debug_dump()
         raise
     
     logger.debug(f"Returning MockClaudeClient: {mock_claude_client}")
@@ -295,6 +297,7 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
             except AttributeError as ae:
                 logger.error(f"AttributeError accessing messages: {str(ae)}", exc_info=True)
                 logger.debug(f"MockClaudeClient attributes: {dir(mock_client)}")
+                await mock_client.debug_dump()
                 raise
             except AssertionError as ae:
                 logger.error(f"Assertion error for prompt '{prompt}': {str(ae)}")
