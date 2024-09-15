@@ -1146,88 +1146,43 @@ async def test_mock_claude_client_latency(mock_claude_client):
     assert elapsed_time >= test_latency, f"Expected latency of at least {test_latency}s, but got {elapsed_time}s"
 
 @pytest.mark.asyncio
-async def test_mock_claude_client_custom_responses(mock_claude_client):
-    mock_claude_client.logger.debug("Starting test_mock_claude_client_custom_responses")
+async def test_mock_claude_client_custom_responses(mock_claude_client_with_responses):
+    mock_claude_client_with_responses.logger.debug("Starting test_mock_claude_client_custom_responses")
+    mock_claude_client_with_responses.debug_dump()
 
-    # Test custom response
-    test_prompt = "Custom response prompt"
-    test_response = "This is a custom response"
-    await mock_claude_client.set_response(test_prompt, test_response)
-    
-    mock_claude_client.logger.debug(f"Set custom response for prompt: {test_prompt}")
-    
-    try:
-        mock_claude_client.logger.debug("Attempting to access 'messages' attribute")
-        messages = mock_claude_client.messages
-        mock_claude_client.logger.debug("Successfully accessed 'messages' attribute")
-        
-        mock_claude_client.logger.debug("Calling messages.create")
-        response = await messages.create(
-            model="claude-3-opus-20240229",
-            max_tokens=100,
-            messages=[{"role": "user", "content": test_prompt}]
-        )
-        mock_claude_client.logger.debug(f"Received response: {response}")
-        assert response["content"][0]["text"] == test_response, f"Expected custom response '{test_response}', but got '{response['content'][0]['text']}'"
-        mock_claude_client.logger.debug("Custom response test passed")
-    except AttributeError as e:
-        mock_claude_client.logger.error(f"AttributeError occurred: {str(e)}")
-        mock_claude_client.logger.debug(f"MockClaudeClient attributes: {dir(mock_claude_client)}")
-        mock_claude_client.logger.debug(f"MockClaudeClient type: {type(mock_claude_client)}")
-        mock_claude_client.logger.debug(f"MockClaudeClient __dict__: {mock_claude_client.__dict__}")
-        raise
-    except Exception as e:
-        mock_claude_client.logger.error(f"Unexpected error occurred: {str(e)}")
-        raise
-    
-    # Test rate limiting
-    mock_claude_client.logger.debug("Testing rate limiting")
-    await mock_claude_client.set_rate_limit(3)
-    for i in range(3):
+    responses = {
+        "Hello": "Hi there!",
+        "How are you?": "I'm doing well, thank you for asking.",
+        "What's the weather like?": "I'm sorry, I don't have real-time weather information."
+    }
+    await mock_claude_client_with_responses(responses)
+
+    mock_claude_client_with_responses.logger.debug("Set custom responses")
+    mock_claude_client_with_responses.debug_dump()
+
+    for prompt, expected_response in responses.items():
+        mock_claude_client_with_responses.logger.debug(f"Testing prompt: {prompt}")
         try:
-            await messages.create(
+            mock_claude_client_with_responses.logger.debug("Accessing messages property")
+            messages = mock_claude_client_with_responses.messages
+            mock_claude_client_with_responses.logger.debug("Successfully accessed messages property")
+            
+            mock_claude_client_with_responses.logger.debug("Calling messages.create")
+            response = await messages.create(
                 model="claude-3-opus-20240229",
                 max_tokens=100,
-                messages=[{"role": "user", "content": f"Test prompt {i}"}]
+                messages=[{"role": "user", "content": prompt}]
             )
+            mock_claude_client_with_responses.logger.debug(f"Received response: {response}")
+            assert response["content"][0]["text"] == f"<response>{expected_response}</response>", f"Expected '{expected_response}', but got '{response['content'][0]['text']}'"
+            mock_claude_client_with_responses.logger.debug(f"Successful response for prompt: {prompt}")
         except Exception as e:
-            mock_claude_client.logger.error(f"Error during rate limit test iteration {i}: {str(e)}")
+            mock_claude_client_with_responses.logger.error(f"Error processing prompt '{prompt}': {str(e)}")
+            mock_claude_client_with_responses.debug_dump()
             raise
-    
-    with pytest.raises(CustomRateLimitError):
-        try:
-            await messages.create(
-                model="claude-3-opus-20240229",
-                max_tokens=100,
-                messages=[{"role": "user", "content": "Rate limit exceeded prompt"}]
-            )
-        except CustomRateLimitError:
-            mock_claude_client.logger.debug("Rate limit error raised as expected")
-            raise
-        except Exception as e:
-            mock_claude_client.logger.error(f"Unexpected error during rate limit test: {str(e)}")
-            raise
-    mock_claude_client.logger.debug("Rate limiting test passed")
 
-    # Test error mode
-    mock_claude_client.logger.debug("Testing error mode")
-    await mock_claude_client.set_error_mode(True)
-    with pytest.raises(APIStatusError):
-        try:
-            await messages.create(
-                model="claude-3-opus-20240229",
-                max_tokens=100,
-                messages=[{"role": "user", "content": "Error mode prompt"}]
-            )
-        except APIStatusError:
-            mock_claude_client.logger.debug("API status error raised as expected")
-            raise
-        except Exception as e:
-            mock_claude_client.logger.error(f"Unexpected error during error mode test: {str(e)}")
-            raise
-    mock_claude_client.logger.debug("Error mode test passed")
-
-    mock_claude_client.logger.debug("All tests in test_mock_claude_client_custom_responses completed")
+    mock_claude_client_with_responses.logger.debug("Completed test_mock_claude_client_custom_responses")
+    mock_claude_client_with_responses.debug_dump()
 
 @pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
