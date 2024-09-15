@@ -34,9 +34,9 @@ async def claude_manager(mock_claude_client):
     logger.debug(f"Closed ClaudeManager instance")
 
 @pytest_asyncio.fixture
-async def mock_claude_client_with_responses(mock_claude_client):
+async def mock_claude_client_with_responses(mock_claude_client, request):
     logger = logging.getLogger(__name__)
-    logger.info(f"Initializing mock_claude_client_with_responses fixture for client {id(mock_claude_client)}")
+    logger.info(f"Initializing mock_claude_client_with_responses fixture for client {id(mock_claude_client)} in test {request.node.name}")
     
     async def setup_responses(responses):
         logger.debug(f"Setting up responses: {responses}")
@@ -61,9 +61,12 @@ async def mock_claude_client_with_responses(mock_claude_client):
             raise
         
         logger.debug("Ensuring 'messages' attribute is initialized")
-        messages = mock_claude_client.ensure_messages_initialized()
-        
-        logger.debug(f"Successfully initialized messages: {messages}")
+        try:
+            messages = mock_claude_client.ensure_messages_initialized()
+            logger.debug(f"Successfully initialized messages: {messages}")
+        except AttributeError:
+            logger.error("MockClaudeClient does not have 'ensure_messages_initialized' method")
+            raise
         
         if messages is None:
             logger.error("MockClaudeClient 'messages' attribute is None")
@@ -76,11 +79,11 @@ async def mock_claude_client_with_responses(mock_claude_client):
     return mock_claude_client, setup_responses
 
 @pytest.fixture(scope="function", autouse=True)
-def function_logger():
+def function_logger(request):
     logger = logging.getLogger(__name__)
-    logger.info(f"Starting test function: {pytest.current_test.__name__}")
+    logger.info(f"Starting test function: {request.node.name}")
     yield
-    logger.info(f"Finished test function: {pytest.current_test.__name__}")
+    logger.info(f"Finished test function: {request.node.name}")
 
 @pytest.fixture(scope="function")
 def mock_claude_client():
@@ -288,9 +291,9 @@ def run_async_fixture():
     return _run_async_fixture
 
 @pytest.mark.asyncio
-async def test_mock_claude_client_custom_responses(mock_claude_client_with_responses):
+async def test_mock_claude_client_custom_responses(mock_claude_client_with_responses, request):
     logger = logging.getLogger(__name__)
-    logger.info("Starting test_mock_claude_client_custom_responses")
+    logger.info(f"Starting test_mock_claude_client_custom_responses in {request.node.name}")
     
     try:
         mock_client, setup_responses = mock_claude_client_with_responses
