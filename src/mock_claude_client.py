@@ -567,22 +567,56 @@ import asyncio
 from typing import Dict, List, Any
 from anthropic import APIStatusError, RateLimitError
 
+class Messages:
+    def __init__(self, client):
+        self.client = client
+
+    async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+        return await self.client._create(model, max_tokens, messages)
+
 class MockClaudeClient:
-    def __init__(self, rate_limit: int = 10, reset_interval: int = 60):
+    def __init__(self, rate_limit: int = 10, reset_time: int = 60):
         self.rate_limit = rate_limit
-        self.reset_interval = reset_interval
+        self.reset_time = reset_time
         self.calls = 0
         self.last_reset = asyncio.get_event_loop().time()
         self.error_mode = False
         self.latency = 0
-        self.messages = self
         self.responses = {}
         self.max_test_tokens = 1000
         self.call_count = 0
         self.error_count = 0
         self.max_errors = 3
-        self.rate_limit_threshold = rate_limit
+        self.messages = Messages(self)
         self.max_context_length = 200000
+
+    async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+        await self._check_rate_limit()
+        await asyncio.sleep(self.latency)
+
+        if self.error_mode:
+            self.error_count += 1
+            if self.error_count <= self.max_errors:
+                raise APIStatusError("Simulated API error", response=None, body={})
+
+        prompt = messages[0]['content']
+        if len(prompt) > self.max_test_tokens:
+            raise ValueError(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
+
+        response = self.responses.get(prompt, "Default mock response")
+        if len(response) > max_tokens:
+            response = response[:max_tokens] + "..."
+
+        self.call_count += 1
+
+        return {
+            "content": [{"text": f"<response>{response}</response>"}],
+            "model": model,
+            "usage": {
+                "input_tokens": sum(len(m["content"]) for m in messages),
+                "output_tokens": len(response)
+            }
+        }
 
     async def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
