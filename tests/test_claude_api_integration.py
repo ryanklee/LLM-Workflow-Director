@@ -50,6 +50,13 @@ async def mock_claude_client_with_responses(mock_claude_client):
     
     try:
         logger.debug(f"Verifying MockClaudeClient instance: {mock_claude_client}")
+        if mock_claude_client is None:
+            raise ValueError("mock_claude_client is None")
+        
+        # Ensure debug_dump is an async method
+        if not asyncio.iscoroutinefunction(mock_claude_client.debug_dump):
+            raise TypeError("debug_dump is not an async method")
+        
         await mock_claude_client.debug_dump()
         
         assert hasattr(mock_claude_client, 'messages'), "MockClaudeClient instance does not have 'messages' attribute"
@@ -258,6 +265,22 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
         mock_client, setup_responses = mock_claude_client_with_responses
         logger.debug(f"MockClaudeClient: {mock_client}")
         
+        # Verify mock_client is not None
+        if mock_client is None:
+            raise ValueError("mock_client is None")
+        
+        # Verify debug_dump is an async method
+        if not asyncio.iscoroutinefunction(mock_client.debug_dump):
+            raise TypeError("debug_dump is not an async method")
+        
+        # Call debug_dump to verify the client state
+        try:
+            state = await mock_client.debug_dump()
+            logger.debug(f"MockClaudeClient state: {state}")
+        except Exception as e:
+            logger.error(f"Error calling debug_dump: {str(e)}", exc_info=True)
+            raise
+        
         responses = {
             "Hello": "Hi there!",
             "How are you?": "I'm doing well, thank you for asking.",
@@ -268,15 +291,19 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
 
         for prompt, expected_response in responses.items():
             logger.debug(f"Testing prompt: {prompt}")
-            response = await mock_client.messages.create(
-                model="claude-3-opus-20240229",
-                max_tokens=100,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            actual_response = response["content"][0]["text"]
-            logger.debug(f"Received response: {actual_response}")
-            assert actual_response == f"<response>{expected_response}</response>", f"Expected '<response>{expected_response}</response>', but got '{actual_response}'"
-            logger.debug(f"Successful response for prompt: {prompt}")
+            try:
+                response = await mock_client.messages.create(
+                    model="claude-3-opus-20240229",
+                    max_tokens=100,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                actual_response = response["content"][0]["text"]
+                logger.debug(f"Received response: {actual_response}")
+                assert actual_response == f"<response>{expected_response}</response>", f"Expected '<response>{expected_response}</response>', but got '{actual_response}'"
+                logger.debug(f"Successful response for prompt: {prompt}")
+            except Exception as e:
+                logger.error(f"Error processing prompt '{prompt}': {str(e)}", exc_info=True)
+                raise
 
         logger.info("Completed test_mock_claude_client_custom_responses successfully")
     except Exception as e:
