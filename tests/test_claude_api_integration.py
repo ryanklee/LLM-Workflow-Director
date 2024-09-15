@@ -274,10 +274,11 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
         for prompt, expected_response in responses.items():
             logger.debug(f"Testing prompt: {prompt}")
             try:
-                response = await mock_client.generate_response(prompt)
-                logger.debug(f"Received response: {response}")
+                response = await mock_client.messages.create("claude-3-opus-20240229", 100, [{"role": "user", "content": prompt}])
+                actual_response = response["content"][0]["text"]
+                logger.debug(f"Received response: {actual_response}")
                 logger.debug(f"Expected response: <response>{expected_response}</response>")
-                assert response == f"<response>{expected_response}</response>", f"Expected '<response>{expected_response}</response>', but got '{response}'"
+                assert actual_response == f"<response>{expected_response}</response>", f"Expected '<response>{expected_response}</response>', but got '{actual_response}'"
                 logger.debug(f"Successful response for prompt: {prompt}")
             except AssertionError as ae:
                 logger.error(f"Assertion error for prompt '{prompt}': {str(ae)}")
