@@ -29,16 +29,16 @@ from src.exceptions import RateLimitError as CustomRateLimitError
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-class Messages:
-    def __init__(self, client):
-        self.client = client
-        self.client.logger.debug("Initialized Messages class")
-
-    async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
-        self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}")
-        return await self.client._create(model, max_tokens, messages)
-
 class MockClaudeClient:
+    class Messages:
+        def __init__(self, client):
+            self.client = client
+            self.client.logger.debug("Initialized Messages class")
+
+        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+            self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}")
+            return await self.client._create(model, max_tokens, messages)
+
     def __init__(self):
         self.rate_limit_reached = False
         self.error_mode = False
@@ -54,8 +54,15 @@ class MockClaudeClient:
         self.max_errors = 3
         self.rate_limit_reset_time = 60  # seconds
         self.max_context_length = 200000  # 200k tokens
-        self.messages = Messages(self)
-        self.logger.debug("Initialized MockClaudeClient with messages attribute")
+        self._messages = None
+        self.logger.debug("Initialized MockClaudeClient")
+
+    @property
+    def messages(self):
+        if self._messages is None:
+            self._messages = self.Messages(self)
+            self.logger.debug("Created Messages instance")
+        return self._messages
 
     async def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
