@@ -640,7 +640,7 @@ class MockClaudeClient:
         self.call_count = 0
         self.error_count = 0
         self.max_errors = 3
-        self._messages = None
+        self._messages = self.Messages(self)  # Initialize Messages instance here
         self.logger.debug("Finished initialization of MockClaudeClient")
 
     def __str__(self):
@@ -662,14 +662,10 @@ class MockClaudeClient:
     @property
     def messages(self):
         self.logger.debug("Accessing messages property")
-        try:
-            if not hasattr(self, '_messages') or self._messages is None:
-                self.logger.debug("Creating new Messages instance")
-                self._messages = self.Messages(self)
-            return self._messages
-        except Exception as e:
-            self.logger.error(f"Error accessing messages property: {str(e)}")
-            raise AttributeError(f"Failed to access 'messages' property: {str(e)}") from e
+        if self._messages is None:
+            self.logger.warning("Messages instance is None, creating a new one")
+            self._messages = self.Messages(self)
+        return self._messages
 
     def __init__(self, rate_limit: int = 10, reset_time: int = 60):
         self.logger = logging.getLogger(__name__)

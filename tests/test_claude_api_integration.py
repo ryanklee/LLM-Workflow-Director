@@ -56,12 +56,16 @@ async def mock_claude_client_with_responses(mock_claude_client):
         
         logger.debug(f"Verifying MockClaudeClient instance: {mock_claude_client}")
         await mock_claude_client.debug_dump()
+        
+        # Add assertions to verify MockClaudeClient initialization
+        assert hasattr(mock_claude_client, 'messages'), "MockClaudeClient instance does not have 'messages' attribute"
+        assert mock_claude_client.messages is not None, "MockClaudeClient 'messages' attribute is None"
+        
         messages = mock_claude_client.messages
         logger.debug(f"Successfully accessed messages property: {messages}")
     except Exception as e:
         logger.error(f"Error during MockClaudeClient initialization or verification: {str(e)}", exc_info=True)
-        logger.debug("Attempting to create a new MockClaudeClient instance as fallback")
-        mock_claude_client = MockClaudeClient()
+        raise  # Raise the exception instead of creating a new instance
     
     logger.debug(f"Returning MockClaudeClient: {mock_claude_client}")
     return mock_claude_client, setup_responses
