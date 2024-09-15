@@ -241,7 +241,7 @@ class MockClaudeClient:
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
-        self.logger.debug(f"Starting initialization of MockClaudeClient {id(self)} with api_key: {api_key[:5]}...")
+        self.logger.debug(f"Initializing MockClaudeClient {id(self)} with api_key: {api_key[:5]}...")
         
         self.api_key = api_key
         self.rate_limit = rate_limit
@@ -249,14 +249,17 @@ class MockClaudeClient:
         self.calls = 0
         self.last_reset = asyncio.get_event_loop().time()
         self.error_mode = False
-        self.latency = 0
+        self.latency = 0.1
         self.responses = {}
         self.max_test_tokens = 1000
         self.call_count = 0
         self.error_count = 0
         self.max_errors = 3
+        self.max_context_length = 200000
         self._messages = None
-        self.logger.debug("Finished initialization of MockClaudeClient")
+        self.lock = asyncio.Lock()
+        
+        self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
 
     @property
     def messages(self):
