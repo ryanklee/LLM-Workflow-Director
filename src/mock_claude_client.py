@@ -795,21 +795,22 @@ class MockClaudeClient:
                 self.logger.warning(f"Error mode active. Raising APIStatusError. Error count: {self.error_count}")
                 raise APIStatusError("Simulated API error", response=MagicMock(), body={})
 
-        prompt = messages[0]['content']
+        prompt = messages[-1]['content']  # Use the last message as the prompt
         self.logger.debug(f"Received prompt: {prompt[:50]}...")
-        if len(prompt) > self.max_test_tokens:
-            self.logger.warning(f"Prompt exceeds max tokens. Prompt length: {len(prompt)}, Max tokens: {self.max_test_tokens}")
-            raise ValueError(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
+        if sum(len(m['content']) for m in messages) > self.max_context_length:
+            self.logger.warning(f"Total message length exceeds max context length")
+            raise ValueError(f"Total message length exceeds maximum context length ({self.max_context_length})")
 
         response = self.responses.get(prompt, "Default mock response")
         if len(response) > max_tokens:
             self.logger.warning(f"Response exceeds max tokens. Truncating. Original length: {len(response)}")
             response = response[:max_tokens] + "..."
 
+        wrapped_response = f"<response>{response}</response>"
         self.call_count += 1
-        self.logger.debug(f"Returning response: {response[:50]}...")
+        self.logger.debug(f"Returning response: {wrapped_response[:50]}...")
         return {
-            "content": [{"text": f"<response>{response}</response>"}],
+            "content": [{"text": wrapped_response}],
             "model": model,
             "usage": {
                 "input_tokens": sum(len(m["content"]) for m in messages),
