@@ -33,11 +33,17 @@ async def claude_manager(mock_claude_client):
     await manager.close()
     logger.debug(f"Closed ClaudeManager instance")
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def mock_claude_client_with_responses(mock_claude_client):
+    logger = logging.getLogger(__name__)
+    logger.debug("Creating mock_claude_client_with_responses fixture")
+    
     async def setup_responses(responses):
+        logger.debug(f"Setting up responses: {responses}")
         for prompt, response in responses.items():
             await mock_claude_client.set_response(prompt, response)
+    
+    logger.debug(f"Returning MockClaudeClient: {mock_claude_client}")
     return mock_claude_client, setup_responses
 
 @pytest.fixture
