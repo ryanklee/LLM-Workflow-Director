@@ -1064,6 +1064,7 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
         mock_client.debug_dump()
     except Exception as e:
         logging.error(f"Unexpected error in test_mock_claude_client_custom_responses: {str(e)}")
+        mock_client.debug_dump()  # Add this line to dump the client state in case of unexpected errors
         raise
 
 @pytest.mark.asyncio
