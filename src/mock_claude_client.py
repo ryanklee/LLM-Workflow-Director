@@ -66,12 +66,6 @@ class MockClaudeClient:
         self.logger.debug("Accessing messages property")
         return self._messages
 
-    def __getattr__(self, name):
-        self.logger.debug(f"Attempting to access attribute: {name}")
-        if name == 'messages':
-            return self.messages
-        raise AttributeError(f"'MockClaudeClient' object has no attribute '{name}'")
-
     async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
         self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}")
         await self._check_rate_limit()

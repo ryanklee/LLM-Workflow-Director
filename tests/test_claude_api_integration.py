@@ -1154,8 +1154,34 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
         mock_claude_client.logger.error(f"Unexpected error occurred: {str(e)}")
         raise
     
-    # Rest of the test case remains unchanged
-    # ...
+    # Test rate limiting
+    mock_claude_client.logger.debug("Testing rate limiting")
+    await mock_claude_client.set_rate_limit(3)
+    for i in range(3):
+        await messages.create(
+            model="claude-3-opus-20240229",
+            max_tokens=100,
+            messages=[{"role": "user", "content": f"Test prompt {i}"}]
+        )
+    
+    with pytest.raises(CustomRateLimitError):
+        await messages.create(
+            model="claude-3-opus-20240229",
+            max_tokens=100,
+            messages=[{"role": "user", "content": "Rate limit exceeded prompt"}]
+        )
+    mock_claude_client.logger.debug("Rate limiting test passed")
+
+    # Test error mode
+    mock_claude_client.logger.debug("Testing error mode")
+    await mock_claude_client.set_error_mode(True)
+    with pytest.raises(APIStatusError):
+        await messages.create(
+            model="claude-3-opus-20240229",
+            max_tokens=100,
+            messages=[{"role": "user", "content": "Error mode prompt"}]
+        )
+    mock_claude_client.logger.debug("Error mode test passed")
 
     mock_claude_client.logger.debug("All tests in test_mock_claude_client_custom_responses completed")
 
