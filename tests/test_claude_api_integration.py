@@ -69,6 +69,44 @@ async def mock_claude_client_with_responses(request):
             await mock_client.reset()
         logger.debug(f"MockClaudeClient reset completed")
 
+@pytest.fixture(autouse=True)
+async def reset_mock_claude_client(mock_claude_client):
+    await mock_claude_client.reset()
+    logger.info("Reset MockClaudeClient before test")
+    yield
+    await mock_claude_client.reset()
+    logger.info("Reset MockClaudeClient after test")
+
+@pytest.fixture(autouse=True)
+def setup_teardown(caplog, request):
+    caplog.set_level(logging.DEBUG)
+    logger = logging.getLogger(__name__)
+    logger.info(f"Starting test: {request.node.name}")
+    logger.debug(f"Test parameters: {request.node.callspec.params if hasattr(request.node, 'callspec') else 'No parameters'}")
+    logger.debug(f"Test function source:\n{inspect.getsource(request.node.obj)}")
+    yield
+    logger.info(f"Finished test: {request.node.name}")
+    try:
+        # Use getattr to safely access rep_call attribute
+        rep_call = getattr(request.node, 'rep_call', None)
+        if rep_call:
+            logger.debug(f"Test result: {'Passed' if rep_call.passed else 'Failed'}")
+            if not rep_call.passed:
+                logger.error(f"Test failed: {request.node.name}")
+                logger.error(f"Exception info: {rep_call.longrepr}")
+        else:
+            logger.warning("Unable to determine test result. rep_call attribute not found.")
+    except Exception as e:
+        logger.error(f"Error accessing test result: {str(e)}", exc_info=True)
+
+    logger.debug(f"Log output for {request.node.name}:\n" + caplog.text)
+    print(f"\nFull log output for {request.node.name}:")
+    print(caplog.text)
+    
+    logger.debug(f"Full test function:\n{inspect.getsource(request.node.obj)}")
+    logger.debug(f"Local variables at failure:\n{pprint.pformat(request.node.obj.__globals__)}")
+    logger.debug(f"Fixture values:\n{pprint.pformat(request.node.funcargs)}")
+
 @pytest.mark.asyncio
 async def test_claude_api_contract(pact):
     pact.given(

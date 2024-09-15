@@ -88,6 +88,8 @@ class MockClaudeClient:
         self._messages = self.Messages(self)
         self.last_reset_time = time.time()
         self.lock = asyncio.Lock()
+        self.rate_limit_threshold = 10  # Default value, can be changed with set_rate_limit
+        self.rate_limit_reset_time = 60  # Default value, can be changed
         
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
 
@@ -166,7 +168,7 @@ class MockClaudeClient:
                 "id": f"msg_{uuid.uuid4()}",
                 "type": "message",
                 "role": "assistant",
-                "content": [{"type": "text", "text": wrapped_response}],
+                "content":  [{"type": "text", "text": wrapped_response}],
                 "model": model,
                 "stop_reason": "end_turn",
                 "stop_sequence": None,
@@ -187,20 +189,26 @@ class MockClaudeClient:
             raise CustomRateLimitError("Rate limit exceeded")
 
     async def count_tokens(self, text: str) -> int:
-        return len(text.split())
+        token_count = len(text.split())
+        self.logger.debug(f"Counted {token_count} tokens for text: {text[:50]}...")
+        return token_count
 
     async def select_model(self, task: str) -> str:
         if "simple" in task.lower():
-            return "claude-3-haiku-20240307"
+            model = "claude-3-haiku-20240307"
         elif "complex" in task.lower():
-            return "claude-3-opus-20240229"
+            model = "claude-3-opus-20240229"
         else:
-            return "claude-3-sonnet-20240229"
+            model = "claude-3-sonnet-20240229"
+        self.logger.debug(f"Selected model {model} for task: {task}")
+        return model
 
     async def get_call_count(self):
+        self.logger.debug(f"Current call count: {self.call_count}")
         return self.call_count
 
     async def get_error_count(self):
+        self.logger.debug(f"Current error count: {self.error_count}")
         return self.error_count
 import asyncio
 from typing import Dict, List, Optional

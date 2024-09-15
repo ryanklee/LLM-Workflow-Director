@@ -8,11 +8,11 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
 1. Incomplete Refactoring (Highest Likelihood)
    - The MockClaudeClient class in src/mock_claude_client.py has not been fully refactored to accept the 'api_key' parameter.
    - Validation: Review the __init__ method of MockClaudeClient in src/mock_claude_client.py.
-   - Status: Confirmed. The __init__ method needs to be updated.
+   - Status: Confirmed. The __init__ method has been updated, but the issue persists.
 
-2. Inconsistent Test Fixture (High Likelihood)
-   - The test fixture `mock_claude_client_with_responses` might not have been updated to match the new MockClaudeClient implementation.
-   - Validation: Review the implementation of the test fixture and ensure it matches the current MockClaudeClient.
+2. Inconsistent Test Fixture (Highest Likelihood)
+   - The test fixtures in various test files have not been updated to match the new MockClaudeClient implementation.
+   - Validation: Review the implementation of all test fixtures using MockClaudeClient and ensure they match the current implementation.
    - Status: To be investigated.
 
 3. Multiple MockClaudeClient Implementations (Medium Likelihood)
@@ -20,9 +20,9 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
    - Validation: Search for all occurrences of MockClaudeClient in the project and ensure consistency.
    - Status: To be investigated.
 
-4. Incorrect Import in Test File (Low Likelihood)
-   - The test file might be importing a different version of MockClaudeClient than intended.
-   - Validation: Check the import statements in the test file and ensure they're correct.
+4. Incorrect Import in Test Files (Medium Likelihood)
+   - Some test files might be importing a different version of MockClaudeClient than intended.
+   - Validation: Check the import statements in all test files and ensure they're correct.
    - Status: To be investigated.
 
 5. Caching Issues (Low Likelihood)
@@ -30,43 +30,52 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
    - Validation: Clear Python cache, restart the test environment, and run the tests again.
    - Status: To be investigated if other hypotheses are invalidated.
 
+6. Asynchronous Code Issues (New Hypothesis)
+   - Some of the errors suggest problems with asynchronous code execution, particularly in token tracking and rate limiting.
+   - Validation: Review the implementation of asynchronous methods and ensure proper usage of async/await.
+   - Status: To be investigated.
+
 ## New Learnings
 
-1. The MockClaudeClient __init__ method has been partially updated but still doesn't accept the 'api_key' parameter.
-2. The error occurs during the setup of the test, specifically in the mock_claude_client_with_responses fixture.
-3. The test is failing before it reaches the actual test function, indicating a problem with test setup or fixture initialization.
-4. Multiple test files are affected by the same issue, suggesting a widespread problem with the MockClaudeClient implementation.
-5. The error is consistent across different test cases, reinforcing the likelihood of an issue with the MockClaudeClient class itself.
+1. The MockClaudeClient __init__ method has been updated to accept the 'api_key' parameter, but the issue persists.
+2. Multiple test files are affected by similar issues, suggesting a more widespread problem than initially thought.
+3. Some errors indicate issues with asynchronous code execution, particularly in token tracking and rate limiting.
+4. The errors are not limited to the MockClaudeClient, but also affect other components like TokenTracker and RateLimiter.
+5. Some tests are failing due to assertion errors, suggesting potential logic issues in the implementation.
 
 ## Next Steps
 
-1. Update the MockClaudeClient __init__ method in src/mock_claude_client.py to accept the 'api_key' parameter.
-2. Implement detailed logging in MockClaudeClient initialization to track parameter usage.
-3. Review and update all fixtures and test cases that use MockClaudeClient to ensure they're passing the 'api_key' parameter correctly.
-4. Add logging to the test fixtures to track their execution and parameter passing.
-5. Run the tests again with increased verbosity to gather more information about any remaining issues.
-6. Investigate the possibility of multiple MockClaudeClient implementations and consolidate if necessary.
+1. Review and update all test fixtures that use MockClaudeClient to ensure they're passing the 'api_key' parameter correctly.
+2. Investigate the asynchronous code implementation, particularly in TokenTracker and RateLimiter classes.
+3. Review the implementation of TokenTracker and RateLimiter to address assertion errors.
+4. Add more detailed logging throughout the codebase, especially in asynchronous methods and test fixtures.
+5. Verify the consistency of MockClaudeClient usage across all test files.
+6. Run the tests with increased verbosity and analyze the output for each failing test.
 
 ## Implementation Plan
 
-1. Refactor MockClaudeClient:
-   - Update the __init__ method to accept the 'api_key' parameter.
-   - Add comprehensive logging for initialization and parameter usage.
-   - Ensure all methods and attributes are consistent with the new implementation.
+1. Update Test Fixtures:
+   - Modify all fixtures in test files that use MockClaudeClient to pass the 'api_key' parameter.
+   - Add logging to track fixture setup and teardown.
 
-2. Update Test Files:
-   - Modify all fixtures and test cases that use MockClaudeClient to pass the 'api_key' parameter.
-   - Add additional logging in test setup to track MockClaudeClient initialization.
+2. Refactor Asynchronous Code:
+   - Review and update asynchronous methods in TokenTracker, RateLimiter, and other relevant classes.
+   - Ensure proper usage of async/await throughout the codebase.
 
-3. Enhance Overall Test Logging:
-   - Implement more detailed logging throughout the test files to help diagnose setup and execution issues.
+3. Enhance Logging:
+   - Implement more detailed logging in MockClaudeClient, TokenTracker, and RateLimiter classes.
+   - Add logging to capture the state of objects before and after key operations.
 
-4. Verify Imports and Usage:
-   - Double-check all import statements related to MockClaudeClient.
-   - Ensure all tests are using the MockClaudeClient consistently and correctly.
+4. Verify MockClaudeClient Consistency:
+   - Search for all occurrences of MockClaudeClient in the project.
+   - Ensure all imports and usages are consistent across test files.
 
-5. Consolidate MockClaudeClient Implementations:
-   - Search for any duplicate implementations of MockClaudeClient.
-   - If found, consolidate them into a single, consistent implementation.
+5. Address Assertion Errors:
+   - Review the implementation of methods causing assertion errors.
+   - Update the code to fix any logical issues found.
 
-We will start by updating the MockClaudeClient implementation in src/mock_claude_client.py.
+6. Run Tests with Verbosity:
+   - Execute the test suite with increased verbosity.
+   - Analyze the output to identify any remaining issues or inconsistencies.
+
+We will start by updating the test fixtures and enhancing logging in the relevant classes.
