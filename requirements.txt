@@ -107,7 +107,7 @@ python-json-logger==2.0.7
 python-slugify==8.0.4
 python-ulid==2.7.0
 pytz==2022.1
-PyYAML==5.4.1
+PyYAML==6.0.1
 regex==2024.7.24
 replicate==0.31.0
 requests==2.32.3
