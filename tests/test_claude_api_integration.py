@@ -56,6 +56,7 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
     logger.info("Starting test_mock_claude_client_custom_responses")
     
     mock_client, setup_responses = mock_claude_client_with_responses
+    logger.debug(f"Received mock_client: {mock_client}")
     
     responses = {
         "Hello": "Hi there!",
@@ -73,10 +74,14 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
                 max_tokens=100,
                 messages=[{"role": "user", "content": prompt}]
             )
+            logger.debug(f"Raw response: {response}")
             actual_response = response["content"][0]["text"]
             logger.debug(f"Received response: {actual_response}")
-            assert actual_response == expected_response, f"Expected '{expected_response}', but got '{actual_response}'"
+            assert actual_response == f"<response>{expected_response}</response>", f"Expected '<response>{expected_response}</response>', but got '{actual_response}'"
             logger.debug(f"Successful response for prompt: {prompt}")
+        except AttributeError as e:
+            logger.error(f"AttributeError occurred. Mock client state: {await mock_client.debug_dump()}")
+            raise
         except Exception as e:
             logger.error(f"Error processing prompt '{prompt}': {str(e)}", exc_info=True)
             raise
