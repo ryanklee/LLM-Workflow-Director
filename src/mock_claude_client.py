@@ -652,9 +652,24 @@ class MockClaudeClient:
     @property
     def messages(self):
         self.logger.debug("Accessing messages property")
-        if not hasattr(self, '_messages') or self._messages is None:
+        if self._messages is None:
             self.logger.warning("Messages instance not found, reinitializing")
             self._messages = self.Messages(self)
+        return self._messages
+
+    async def debug_dump(self):
+        self.logger.debug("Starting debug_dump method")
+        try:
+            state = {}
+            for attr, value in self.__dict__.items():
+                if attr != 'logger':
+                    state[attr] = str(value)
+                    self.logger.debug(f"{attr}: {value}")
+            self.logger.debug("Finished debug_dump method")
+            return state
+        except Exception as e:
+            self.logger.error(f"Error in debug_dump: {str(e)}", exc_info=True)
+            raise
         return self._messages
 
     async def debug_dump(self):
