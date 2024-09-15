@@ -795,6 +795,13 @@ class Messages:
     async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
         return await self.client.create(model, max_tokens, messages)
 
+class Messages:
+    def __init__(self, client):
+        self.client = client
+
+    async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+        return await self.client._create(model, max_tokens, messages)
+
 class MockClaudeClient:
     def __init__(self, rate_limit: int = 10, reset_time: int = 60):
         self.rate_limit = rate_limit
@@ -809,9 +816,8 @@ class MockClaudeClient:
         self.error_count = 0
         self.max_errors = 3
         self.messages = Messages(self)
-        self.messages = Messages(self)
 
-    async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+    async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
         await self._check_rate_limit()
         await asyncio.sleep(self.latency)
 
