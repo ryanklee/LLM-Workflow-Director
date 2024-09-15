@@ -52,22 +52,22 @@ async def mock_claude_client_with_responses(mock_claude_client, request):
         logger.debug(f"Verifying MockClaudeClient instance: {mock_claude_client}")
         if mock_claude_client is None:
             raise ValueError("mock_claude_client is None")
-        
+            
         try:
             state = await mock_claude_client.debug_dump()
             logger.debug(f"MockClaudeClient state: {state}")
         except Exception as e:
             logger.error(f"Error calling debug_dump: {str(e)}", exc_info=True)
             raise
-        
+            
         logger.debug("Ensuring 'messages' attribute is initialized")
         try:
-            messages = mock_claude_client.ensure_messages_initialized()
+            messages = await mock_claude_client.ensure_messages_initialized()
             logger.debug(f"Successfully initialized messages: {messages}")
         except Exception as e:
             logger.error(f"Error initializing messages: {str(e)}", exc_info=True)
             raise
-        
+            
         if messages is None:
             logger.error("MockClaudeClient 'messages' attribute is None")
             raise ValueError("MockClaudeClient 'messages' attribute is None")
