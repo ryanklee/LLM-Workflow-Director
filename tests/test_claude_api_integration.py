@@ -57,7 +57,8 @@ async def mock_claude_client_with_responses(mock_claude_client):
         if not asyncio.iscoroutinefunction(mock_claude_client.debug_dump):
             raise TypeError("debug_dump is not an async method")
         
-        await mock_claude_client.debug_dump()
+        state = await mock_claude_client.debug_dump()
+        logger.debug(f"MockClaudeClient state: {state}")
         
         assert hasattr(mock_claude_client, 'messages'), "MockClaudeClient instance does not have 'messages' attribute"
         assert mock_claude_client.messages is not None, "MockClaudeClient 'messages' attribute is None"

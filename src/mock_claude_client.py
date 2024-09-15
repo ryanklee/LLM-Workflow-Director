@@ -651,13 +651,17 @@ class MockClaudeClient:
 
     async def debug_dump(self):
         self.logger.debug("Starting debug_dump method")
-        state = {}
-        for attr, value in self.__dict__.items():
-            if attr != 'logger':
-                state[attr] = str(value)
-                self.logger.debug(f"{attr}: {value}")
-        self.logger.debug("Finished debug_dump method")
-        return state
+        try:
+            state = {}
+            for attr, value in self.__dict__.items():
+                if attr != 'logger':
+                    state[attr] = str(value)
+                    self.logger.debug(f"{attr}: {value}")
+            self.logger.debug("Finished debug_dump method")
+            return state
+        except Exception as e:
+            self.logger.error(f"Error in debug_dump: {str(e)}", exc_info=True)
+            raise
 
     @property
     def messages(self):
