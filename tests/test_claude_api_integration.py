@@ -64,11 +64,19 @@ async def mock_claude_client_with_responses(mock_claude_client):
             logger.error(f"Error calling debug_dump: {str(e)}", exc_info=True)
             raise
         
-        assert hasattr(mock_claude_client, 'messages'), "MockClaudeClient instance does not have 'messages' attribute"
-        assert mock_claude_client.messages is not None, "MockClaudeClient 'messages' attribute is None"
+        logger.debug(f"Checking for 'messages' attribute")
+        if not hasattr(mock_claude_client, 'messages'):
+            logger.error("MockClaudeClient instance does not have 'messages' attribute")
+            logger.debug(f"MockClaudeClient attributes: {dir(mock_claude_client)}")
+            raise AttributeError("MockClaudeClient instance does not have 'messages' attribute")
         
+        logger.debug("Accessing 'messages' attribute")
         messages = mock_claude_client.messages
         logger.debug(f"Successfully accessed messages property: {messages}")
+        
+        if messages is None:
+            logger.error("MockClaudeClient 'messages' attribute is None")
+            raise ValueError("MockClaudeClient 'messages' attribute is None")
     except Exception as e:
         logger.error(f"Error during MockClaudeClient verification: {str(e)}", exc_info=True)
         raise
