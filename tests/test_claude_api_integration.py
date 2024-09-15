@@ -36,7 +36,7 @@ async def claude_manager(mock_claude_client):
 @pytest_asyncio.fixture
 async def mock_claude_client_with_responses(mock_claude_client):
     logger = logging.getLogger(__name__)
-    logger.debug("Creating mock_claude_client_with_responses fixture")
+    logger.info("Initializing mock_claude_client_with_responses fixture")
     
     async def setup_responses(responses):
         logger.debug(f"Setting up responses: {responses}")
@@ -49,25 +49,19 @@ async def mock_claude_client_with_responses(mock_claude_client):
                 raise
     
     try:
-        logger.debug(f"Initializing MockClaudeClient instance")
-        if mock_claude_client is None:
-            logger.error("mock_claude_client is None, creating a new instance")
-            mock_claude_client = MockClaudeClient()
-        
         logger.debug(f"Verifying MockClaudeClient instance: {mock_claude_client}")
         await mock_claude_client.debug_dump()
         
-        # Add assertions to verify MockClaudeClient initialization
         assert hasattr(mock_claude_client, 'messages'), "MockClaudeClient instance does not have 'messages' attribute"
         assert mock_claude_client.messages is not None, "MockClaudeClient 'messages' attribute is None"
         
         messages = mock_claude_client.messages
         logger.debug(f"Successfully accessed messages property: {messages}")
     except Exception as e:
-        logger.error(f"Error during MockClaudeClient initialization or verification: {str(e)}", exc_info=True)
-        raise  # Raise the exception instead of creating a new instance
+        logger.error(f"Error during MockClaudeClient verification: {str(e)}", exc_info=True)
+        raise
     
-    logger.debug(f"Returning MockClaudeClient: {mock_claude_client}")
+    logger.info(f"Returning MockClaudeClient: {mock_claude_client}")
     return mock_claude_client, setup_responses
 
 @pytest.fixture
@@ -258,87 +252,35 @@ def run_async_fixture():
 @pytest.mark.asyncio
 async def test_mock_claude_client_custom_responses(mock_claude_client_with_responses):
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
+    logger.info("Starting test_mock_claude_client_custom_responses")
     
     try:
-        logger.debug("Starting test_mock_claude_client_custom_responses")
         mock_client, setup_responses = mock_claude_client_with_responses
         logger.debug(f"MockClaudeClient: {mock_client}")
-        logger.debug(f"MockClaudeClient type: {type(mock_client)}")
-        logger.debug(f"MockClaudeClient attributes: {dir(mock_client)}")
         
-        try:
-            debug_dump_result = await mock_client.debug_dump()
-            logger.debug(f"Initial debug dump result: {debug_dump_result}")
-        except Exception as e:
-            logger.error(f"Error during initial debug dump: {str(e)}", exc_info=True)
-
         responses = {
             "Hello": "Hi there!",
             "How are you?": "I'm doing well, thank you for asking.",
             "What's the weather like?": "I'm sorry, I don't have real-time weather information."
         }
-        try:
-            await setup_responses(responses)
-            logger.debug("Set custom responses")
-        except Exception as e:
-            logger.error(f"Error setting up responses: {str(e)}", exc_info=True)
-
-        try:
-            debug_dump_result = await mock_client.debug_dump()
-            logger.debug(f"Debug dump after setting responses: {debug_dump_result}")
-        except Exception as e:
-            logger.error(f"Error during debug dump after setting responses: {str(e)}", exc_info=True)
+        await setup_responses(responses)
+        logger.debug("Set custom responses")
 
         for prompt, expected_response in responses.items():
             logger.debug(f"Testing prompt: {prompt}")
-            try:
-                logger.debug("Attempting to access messages attribute")
-                messages = mock_client.messages
-                logger.debug(f"Successfully accessed messages attribute: {messages}")
-                logger.debug("Calling messages.create method")
-                response = await messages.create("claude-3-opus-20240229", 100, [{"role": "user", "content": prompt}])
-                actual_response = response["content"][0]["text"]
-                logger.debug(f"Received response: {actual_response}")
-                logger.debug(f"Expected response: <response>{expected_response}</response>")
-                assert actual_response == f"<response>{expected_response}</response>", f"Expected '<response>{expected_response}</response>', but got '{actual_response}'"
-                logger.debug(f"Successful response for prompt: {prompt}")
-            except AttributeError as ae:
-                logger.error(f"AttributeError accessing messages: {str(ae)}", exc_info=True)
-                logger.debug(f"MockClaudeClient attributes: {dir(mock_client)}")
-                await mock_client.debug_dump()
-                raise
-            except AssertionError as ae:
-                logger.error(f"Assertion error for prompt '{prompt}': {str(ae)}")
-                try:
-                    debug_dump_result = await mock_client.debug_dump()
-                    logger.debug(f"Debug dump after assertion error: {debug_dump_result}")
-                except Exception as e:
-                    logger.error(f"Error during debug dump after assertion error: {str(e)}", exc_info=True)
-                raise
-            except Exception as e:
-                logger.error(f"Error processing prompt '{prompt}': {str(e)}", exc_info=True)
-                try:
-                    debug_dump_result = await mock_client.debug_dump()
-                    logger.debug(f"Debug dump after exception: {debug_dump_result}")
-                except Exception as debug_error:
-                    logger.error(f"Error during debug dump after exception: {str(debug_error)}", exc_info=True)
-                raise
+            response = await mock_client.messages.create(
+                model="claude-3-opus-20240229",
+                max_tokens=100,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            actual_response = response["content"][0]["text"]
+            logger.debug(f"Received response: {actual_response}")
+            assert actual_response == f"<response>{expected_response}</response>", f"Expected '<response>{expected_response}</response>', but got '{actual_response}'"
+            logger.debug(f"Successful response for prompt: {prompt}")
 
-        logger.debug("Completed test_mock_claude_client_custom_responses")
-        try:
-            final_debug_dump = await mock_client.debug_dump()
-            logger.debug(f"Final debug dump: {final_debug_dump}")
-        except Exception as e:
-            logger.error(f"Error during final debug dump: {str(e)}", exc_info=True)
+        logger.info("Completed test_mock_claude_client_custom_responses successfully")
     except Exception as e:
-        logger.error(f"Unexpected error in test_mock_claude_client_custom_responses: {str(e)}", exc_info=True)
-        if 'mock_client' in locals():
-            try:
-                final_error_dump = await mock_client.debug_dump()
-                logger.debug(f"Debug dump after unexpected error: {final_error_dump}")
-            except Exception as debug_error:
-                logger.error(f"Error during final debug dump: {str(debug_error)}", exc_info=True)
+        logger.error(f"Error in test_mock_claude_client_custom_responses: {str(e)}", exc_info=True)
         raise
 
 # ... (rest of the test file remains unchanged)
