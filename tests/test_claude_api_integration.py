@@ -67,8 +67,12 @@ async def mock_claude_client_with_responses(mock_claude_client):
             raise AttributeError("MockClaudeClient instance does not have 'messages' attribute")
         
         logger.debug("Accessing 'messages' attribute")
-        messages = mock_claude_client.messages
-        logger.debug(f"Successfully accessed messages property: {messages}")
+        try:
+            messages = mock_claude_client.messages
+            logger.debug(f"Successfully accessed messages property: {messages}")
+        except Exception as e:
+            logger.error(f"Error accessing messages property: {str(e)}", exc_info=True)
+            raise
         
         if messages is None:
             logger.error("MockClaudeClient 'messages' attribute is None")

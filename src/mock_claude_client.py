@@ -640,7 +640,7 @@ class MockClaudeClient:
         self.call_count = 0
         self.error_count = 0
         self.max_errors = 3
-        self._messages = self.Messages(self)  # Initialize Messages instance here
+        self._messages = None  # Initialize as None
         self.logger.debug("Finished initialization of MockClaudeClient")
 
     def __str__(self):
@@ -652,6 +652,9 @@ class MockClaudeClient:
     @property
     def messages(self):
         self.logger.debug("Accessing messages property")
+        if self._messages is None:
+            self.logger.info("Initializing Messages instance")
+            self._messages = self.Messages(self)
         return self._messages
 
     async def debug_dump(self):
@@ -667,14 +670,6 @@ class MockClaudeClient:
         except Exception as e:
             self.logger.error(f"Error in debug_dump: {str(e)}", exc_info=True)
             raise
-
-    @property
-    def messages(self):
-        self.logger.debug("Accessing messages property")
-        if self._messages is None:
-            self.logger.warning("Messages instance is None, creating a new one")
-            self._messages = self.Messages(self)
-        return self._messages
 
     def __init__(self, rate_limit: int = 10, reset_time: int = 60):
         self.logger = logging.getLogger(__name__)
