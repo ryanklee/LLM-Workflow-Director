@@ -71,6 +71,7 @@ class MockClaudeClient:
         self._messages = None  # Initialize to None
         self.logger.debug("Finished initialization of MockClaudeClient")
 
+    @property
     def messages(self):
         self.logger.debug("Accessing messages property")
         try:
@@ -81,6 +82,11 @@ class MockClaudeClient:
         except Exception as e:
             self.logger.error(f"Error accessing messages property: {str(e)}")
             raise
+
+    def debug_dump(self):
+        self.logger.debug("Dumping MockClaudeClient state:")
+        for attr, value in self.__dict__.items():
+            self.logger.debug(f"{attr}: {value}")
 
     def debug_dump(self):
         self.logger.debug("Dumping MockClaudeClient state:")
