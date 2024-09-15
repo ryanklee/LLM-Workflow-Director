@@ -38,17 +38,21 @@ async def mock_claude_client_with_responses(request):
     logger = logging.getLogger(__name__)
     logger.info(f"Initializing mock_claude_client_with_responses fixture in test {request.node.name}")
     
-    mock_client = MockClaudeClient(api_key="test_api_key")
-    logger.debug(f"Created MockClaudeClient instance: {mock_client}")
-    
-    async def setup_responses(responses):
-        logger.debug(f"Setting up responses: {responses}")
-        for prompt, response in responses.items():
-            await mock_client.set_response(prompt, response)
-            logger.debug(f"Set response for prompt: {prompt}")
-    
-    logger.info(f"Returning MockClaudeClient: {mock_client}")
-    return mock_client, setup_responses
+    try:
+        mock_client = MockClaudeClient(api_key="test_api_key")
+        logger.debug(f"Created MockClaudeClient instance: {mock_client}")
+        
+        async def setup_responses(responses):
+            logger.debug(f"Setting up responses: {responses}")
+            for prompt, response in responses.items():
+                await mock_client.set_response(prompt, response)
+                logger.debug(f"Set response for prompt: {prompt}")
+        
+        logger.info(f"Returning MockClaudeClient: {mock_client}")
+        return mock_client, setup_responses
+    except Exception as e:
+        logger.error(f"Error creating MockClaudeClient: {str(e)}", exc_info=True)
+        raise
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_custom_responses(mock_claude_client_with_responses):
@@ -345,6 +349,9 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
                 logger.debug(f"Received response: {actual_response}")
                 assert actual_response == f"<response>{expected_response}</response>", f"Expected '<response>{expected_response}</response>', but got '{actual_response}'"
                 logger.debug(f"Successful response for prompt: {prompt}")
+            except AttributeError as e:
+                logger.error(f"AttributeError: {str(e)}. MockClaudeClient structure: {dir(mock_client)}")
+                raise
             except Exception as e:
                 logger.error(f"Error processing prompt '{prompt}': {str(e)}", exc_info=True)
                 raise
