@@ -77,19 +77,13 @@ class MockClaudeClient:
         self.logger.debug("Finished initialization of MockClaudeClient")
 
     async def debug_dump(self):
-        self.logger.debug("Dumping MockClaudeClient state:")
-        for attr, value in self.__dict__.items():
-            if attr != 'logger':
-                self.logger.debug(f"{attr}: {value}")
-        return "Debug dump completed"  # Return a string instead of None
-
-    async def debug_dump(self):
-        self.logger.debug("Dumping MockClaudeClient state:")
+        self.logger.debug("Starting debug_dump method")
         state = {}
         for attr, value in self.__dict__.items():
             if attr != 'logger':
                 state[attr] = str(value)
                 self.logger.debug(f"{attr}: {value}")
+        self.logger.debug("Finished debug_dump method")
         return state
 
     @property
@@ -103,6 +97,33 @@ class MockClaudeClient:
         except Exception as e:
             self.logger.error(f"Error accessing messages property: {str(e)}")
             raise
+
+    async def set_response(self, prompt: str, response: str):
+        self.logger.debug(f"Setting response for prompt: {prompt[:50]}...")
+        self.responses[prompt] = response
+
+    async def set_error_mode(self, mode: bool):
+        self.logger.debug(f"Setting error mode to: {mode}")
+        self.error_mode = mode
+
+    async def set_latency(self, latency: float):
+        self.logger.debug(f"Setting latency to: {latency}")
+        self.latency = latency
+
+    async def set_rate_limit(self, threshold: int):
+        self.logger.debug(f"Setting rate limit threshold to: {threshold}")
+        self.rate_limit_threshold = threshold
+
+    async def reset(self):
+        self.logger.debug("Resetting MockClaudeClient")
+        self.rate_limit_reached = False
+        self.error_mode = False
+        self.responses = {}
+        self.call_count = 0
+        self.last_call_time = 0
+        self.error_count = 0
+        self.latency = 0.1
+        self.logger.debug("Finished resetting MockClaudeClient")
 
     def debug_dump(self):
         self.logger.debug("Dumping MockClaudeClient state:")

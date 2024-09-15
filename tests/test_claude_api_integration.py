@@ -242,24 +242,33 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
     logger.setLevel(logging.DEBUG)
     
     try:
-        mock_client, setup_responses = mock_claude_client_with_responses
         logger.debug("Starting test_mock_claude_client_custom_responses")
+        mock_client, setup_responses = mock_claude_client_with_responses
         logger.debug(f"MockClaudeClient type: {type(mock_client)}")
         logger.debug(f"MockClaudeClient attributes: {dir(mock_client)}")
         
-        debug_dump_result = await mock_client.debug_dump()
-        logger.debug(f"Initial debug dump result: {debug_dump_result}")
+        try:
+            debug_dump_result = await mock_client.debug_dump()
+            logger.debug(f"Initial debug dump result: {debug_dump_result}")
+        except Exception as e:
+            logger.error(f"Error during initial debug dump: {str(e)}", exc_info=True)
 
         responses = {
             "Hello": "Hi there!",
             "How are you?": "I'm doing well, thank you for asking.",
             "What's the weather like?": "I'm sorry, I don't have real-time weather information."
         }
-        await setup_responses(responses)
+        try:
+            await setup_responses(responses)
+            logger.debug("Set custom responses")
+        except Exception as e:
+            logger.error(f"Error setting up responses: {str(e)}", exc_info=True)
 
-        logger.debug("Set custom responses")
-        debug_dump_result = await mock_client.debug_dump()
-        logger.debug(f"Debug dump after setting responses: {debug_dump_result}")
+        try:
+            debug_dump_result = await mock_client.debug_dump()
+            logger.debug(f"Debug dump after setting responses: {debug_dump_result}")
+        except Exception as e:
+            logger.error(f"Error during debug dump after setting responses: {str(e)}", exc_info=True)
 
         for prompt, expected_response in responses.items():
             logger.debug(f"Testing prompt: {prompt}")
@@ -271,18 +280,27 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
                 logger.debug(f"Successful response for prompt: {prompt}")
             except AssertionError as ae:
                 logger.error(f"Assertion error for prompt '{prompt}': {str(ae)}")
-                debug_dump_result = await mock_client.debug_dump()
-                logger.debug(f"Debug dump after assertion error: {debug_dump_result}")
+                try:
+                    debug_dump_result = await mock_client.debug_dump()
+                    logger.debug(f"Debug dump after assertion error: {debug_dump_result}")
+                except Exception as e:
+                    logger.error(f"Error during debug dump after assertion error: {str(e)}", exc_info=True)
                 raise
             except Exception as e:
                 logger.error(f"Error processing prompt '{prompt}': {str(e)}", exc_info=True)
-                debug_dump_result = await mock_client.debug_dump()
-                logger.debug(f"Debug dump after exception: {debug_dump_result}")
+                try:
+                    debug_dump_result = await mock_client.debug_dump()
+                    logger.debug(f"Debug dump after exception: {debug_dump_result}")
+                except Exception as debug_error:
+                    logger.error(f"Error during debug dump after exception: {str(debug_error)}", exc_info=True)
                 raise
 
         logger.debug("Completed test_mock_claude_client_custom_responses")
-        final_debug_dump = await mock_client.debug_dump()
-        logger.debug(f"Final debug dump: {final_debug_dump}")
+        try:
+            final_debug_dump = await mock_client.debug_dump()
+            logger.debug(f"Final debug dump: {final_debug_dump}")
+        except Exception as e:
+            logger.error(f"Error during final debug dump: {str(e)}", exc_info=True)
     except Exception as e:
         logger.error(f"Unexpected error in test_mock_claude_client_custom_responses: {str(e)}", exc_info=True)
         if 'mock_client' in locals():
