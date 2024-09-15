@@ -28,6 +28,58 @@ Example request:
 }
 ```
 
+## 3. Response Structure
+
+The response from the Messages API will have the following structure:
+
+```json
+{
+  "id": "msg_123abc",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    {
+      "type": "text",
+      "text": "Hello! How can I assist you today?"
+    }
+  ],
+  "model": "claude-3-opus-20240229",
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "usage": {
+    "input_tokens": 5,
+    "output_tokens": 9
+  }
+}
+```
+
+Key elements of the response:
+- "id": A unique identifier for the message
+- "role": Always "assistant" for Claude's responses
+- "content": An array of content objects, typically with "type" and "text" fields
+- "model": The model used to generate the response
+- "usage": Token usage information for the request and response
+
+## 2. Messages API
+
+- The messages API is the primary method for interacting with Claude models.
+- Use the POST /v1/messages endpoint to send messages and receive responses.
+- The request body should include:
+  - "model": The Claude model to use (e.g., "claude-3-opus-20240229")
+  - "messages": An array of message objects, each with "role" and "content"
+  - "max_tokens": Maximum number of tokens in the response
+
+Example request:
+```json
+{
+  "model": "claude-3-opus-20240229",
+  "max_tokens": 1000,
+  "messages": [
+    {"role": "user", "content": "Hello, Claude!"}
+  ]
+}
+```
+
 ## 3. Prompt Engineering Best Practices
 
 - Be clear and direct in instructions.

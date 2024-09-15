@@ -1125,31 +1125,47 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
     test_response = "This is a custom response"
     await mock_claude_client.set_response(test_prompt, test_response)
         
-    response = await mock_claude_client.generate_response(test_prompt)
+    response = await mock_claude_client.messages.create(
+        model="claude-3-opus-20240229",
+        max_tokens=100,
+        messages=[{"role": "user", "content": test_prompt}]
+    )
     expected_response = f"<response>{test_response}</response>"
-    assert response == expected_response, f"Expected custom response '{expected_response}', but got '{response}'"
+    assert response["content"][0]["text"] == expected_response, f"Expected custom response '{expected_response}', but got '{response['content'][0]['text']}'"
         
     # Test with default response
     default_prompt = "Default prompt"
-    default_response = await mock_claude_client.generate_response(default_prompt)
+    default_response = await mock_claude_client.messages.create(
+        model="claude-3-opus-20240229",
+        max_tokens=100,
+        messages=[{"role": "user", "content": default_prompt}]
+    )
     expected_default_response = "<response>Default mock response</response>"
-    assert default_response == expected_default_response, f"Expected default response '{expected_default_response}', but got '{default_response}'"
-
-    # Test response from create method
-    create_response = await mock_claude_client.messages.create(model="test-model", max_tokens=100, messages=[{"role": "user", "content": test_prompt}])
-    assert create_response["content"][0]["text"] == expected_response, f"Expected custom response '{expected_response}' from create method, but got '{create_response['content'][0]['text']}'"
+    assert default_response["content"][0]["text"] == expected_default_response, f"Expected default response '{expected_default_response}', but got '{default_response['content'][0]['text']}'"
 
     # Test rate limiting
     await mock_claude_client.set_rate_limit(3)
     for _ in range(3):
-        await mock_claude_client.messages.create(model="test-model", max_tokens=100, messages=[{"role": "user", "content": "Test"}])
+        await mock_claude_client.messages.create(
+            model="claude-3-opus-20240229",
+            max_tokens=100,
+            messages=[{"role": "user", "content": "Test"}]
+        )
     with pytest.raises(CustomRateLimitError):
-        await mock_claude_client.messages.create(model="test-model", max_tokens=100, messages=[{"role": "user", "content": "Test"}])
+        await mock_claude_client.messages.create(
+            model="claude-3-opus-20240229",
+            max_tokens=100,
+            messages=[{"role": "user", "content": "Test"}]
+        )
 
     # Test error mode
     await mock_claude_client.set_error_mode(True)
     with pytest.raises(APIStatusError):
-        await mock_claude_client.messages.create(model="test-model", max_tokens=100, messages=[{"role": "user", "content": "Test"}])
+        await mock_claude_client.messages.create(
+            model="claude-3-opus-20240229",
+            max_tokens=100,
+            messages=[{"role": "user", "content": "Test"}]
+        )
 
 @pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
