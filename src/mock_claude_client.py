@@ -85,7 +85,7 @@ class MockClaudeClient:
         self.max_errors = 3
         self.rate_limit_reset_time = 60  # seconds
         self.max_context_length = 200000  # 200k tokens
-        self._messages = None  # Initialize to None
+        self._messages = self.Messages(self)  # Initialize Messages instance
         self.last_reset_time = time.time()
         self.logger.debug("Finished initialization of MockClaudeClient")
 
