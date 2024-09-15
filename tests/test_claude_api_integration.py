@@ -49,10 +49,13 @@ async def mock_claude_client_with_responses(request):
                 logger.debug(f"Set response for prompt: {prompt}")
         
         logger.info(f"Returning MockClaudeClient: {mock_client}")
-        return mock_client, setup_responses
+        yield mock_client, setup_responses
     except Exception as e:
         logger.error(f"Error creating MockClaudeClient: {str(e)}", exc_info=True)
         raise
+    finally:
+        logger.info(f"Cleaning up mock_claude_client_with_responses fixture for test {request.node.name}")
+        await mock_client.reset()
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_custom_responses(mock_claude_client_with_responses):
@@ -73,7 +76,7 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
     for prompt, expected_response in responses.items():
         logger.debug(f"Testing prompt: {prompt}")
         try:
-            response = await mock_client.messages(
+            response = await mock_client.messages.create(
                 model="claude-3-opus-20240229",
                 max_tokens=100,
                 messages=[{"role": "user", "content": prompt}]
