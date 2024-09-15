@@ -267,6 +267,11 @@ class MockClaudeClient:
         self.max_errors = 3
         self._messages = None
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
         self.logger.debug("Initialized MockClaudeClient")
 
     @property
