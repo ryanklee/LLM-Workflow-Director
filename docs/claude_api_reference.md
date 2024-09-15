@@ -60,25 +60,42 @@ Key elements of the response:
 - "model": The model used to generate the response
 - "usage": Token usage information for the request and response
 
-## 2. Messages API
+## 4. Rate Limits and Error Handling
 
-- The messages API is the primary method for interacting with Claude models.
-- Use the POST /v1/messages endpoint to send messages and receive responses.
-- The request body should include:
-  - "model": The Claude model to use (e.g., "claude-3-opus-20240229")
-  - "messages": An array of message objects, each with "role" and "content"
-  - "max_tokens": Maximum number of tokens in the response
+- The API has rate limits based on requests per minute (RPM) and tokens per minute (TPM).
+- Implement exponential backoff for rate limit errors (HTTP 429).
+- Handle other potential errors, such as authentication issues (HTTP 401) or invalid requests (HTTP 400).
 
-Example request:
-```json
-{
-  "model": "claude-3-opus-20240229",
-  "max_tokens": 1000,
-  "messages": [
-    {"role": "user", "content": "Hello, Claude!"}
-  ]
-}
+## 5. Best Practices
+
+- Use system messages to set context or assign roles to Claude.
+- Keep track of the conversation history to maintain context across multiple interactions.
+- Be mindful of the token limit and manage long conversations by summarizing or truncating when necessary.
+- Implement proper error handling and retry mechanisms for API calls.
+- Use the appropriate Claude model based on the complexity of the task.
+
+## 6. Supported Models
+
+- Claude 3 Haiku: Fast and cost-effective for simpler tasks
+- Claude 3 Sonnet: Balanced performance for most general applications
+- Claude 3 Opus: Highest capability for complex tasks and reasoning
+
+## 7. Authentication and Client Initialization
+
+- Store your API key securely (e.g., in environment variables).
+- Initialize the client with your API key and the desired API version.
+- Example initialization (using a hypothetical Python client):
+
+```python
+from anthropic import Anthropic
+
+client = Anthropic(api_key="your-api-key")
 ```
+
+For detailed implementation guidance and the latest updates, always refer to the official Anthropic documentation:
+- https://docs.anthropic.com/claude/reference/messages_post
+- https://docs.anthropic.com/claude/docs/intro-to-claude
+- https://docs.anthropic.com/claude/docs/message-conventions
 
 ## 3. Prompt Engineering Best Practices
 

@@ -163,6 +163,24 @@ We will now implement the solution based on our analysis:
 
 We will implement these changes and then run the test suite to verify the fix.
 
+## Additional Considerations from Official Documentation
+
+Based on the official Anthropic documentation, we should consider the following points:
+
+1. API Structure: The Messages API is the primary method for interacting with Claude models. Our MockClaudeClient should accurately reflect this structure.
+
+2. Request Format: The request body should include 'model', 'messages' (an array of message objects with 'role' and 'content'), and 'max_tokens'. Our mock implementation should validate these parameters.
+
+3. Response Structure: The mock response should include 'id', 'type', 'role', 'content' (an array of content objects), 'model', 'stop_reason', 'stop_sequence', and 'usage' fields to accurately simulate the API response.
+
+4. Rate Limits: Implement proper rate limit simulation based on requests per minute (RPM) and tokens per minute (TPM).
+
+5. Error Handling: Simulate various error conditions, including rate limit errors (HTTP 429), authentication issues (HTTP 401), and invalid requests (HTTP 400).
+
+6. Model Selection: Implement logic to simulate different Claude models (Haiku, Sonnet, Opus) with appropriate characteristics.
+
+These considerations will help ensure that our MockClaudeClient more accurately represents the real Claude API, potentially resolving the current issue and preventing future discrepancies.
+
 ## Implementation
 
 We will now implement the solution based on our analysis:
