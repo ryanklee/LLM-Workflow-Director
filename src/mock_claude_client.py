@@ -656,10 +656,18 @@ class MockClaudeClient:
     @property
     def messages(self):
         self.logger.debug("Accessing messages property")
-        if self._messages is None:
-            self.logger.info("Initializing Messages instance")
-            self._messages = self.Messages(self)
-        return self._messages
+        return self.ensure_messages_initialized()
+
+    def ensure_messages_initialized(self):
+        self.logger.debug("Ensuring messages are initialized")
+        try:
+            if self._messages is None:
+                self.logger.info("Initializing Messages instance")
+                self._messages = self.Messages(self)
+            return self._messages
+        except Exception as e:
+            self.logger.error(f"Error initializing messages: {str(e)}", exc_info=True)
+            raise
 
     async def debug_dump(self):
         self.logger.debug("Starting debug_dump method")
