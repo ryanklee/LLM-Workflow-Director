@@ -1121,17 +1121,21 @@ async def test_mock_claude_client_latency(mock_claude_client):
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_custom_responses(mock_claude_client):
+    mock_claude_client.logger.debug("Starting test_mock_claude_client_custom_responses")
+
+    # Test custom response
     test_prompt = "Custom response prompt"
     test_response = "This is a custom response"
     await mock_claude_client.set_response(test_prompt, test_response)
     
-    mock_claude_client.logger.debug("Starting test_mock_claude_client_custom_responses")
+    mock_claude_client.logger.debug(f"Set custom response for prompt: {test_prompt}")
     
     response = await mock_claude_client.messages.create(
         model="claude-3-opus-20240229",
         max_tokens=100,
         messages=[{"role": "user", "content": test_prompt}]
     )
+    mock_claude_client.logger.debug(f"Received response: {response}")
     assert response["content"][0]["text"] == test_response, f"Expected custom response '{test_response}', but got '{response['content'][0]['text']}'"
     
     mock_claude_client.logger.debug("Custom response test passed")
@@ -1143,44 +1147,51 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
         max_tokens=100,
         messages=[{"role": "user", "content": default_prompt}]
     )
+    mock_claude_client.logger.debug(f"Received default response: {default_response}")
     assert default_response["content"][0]["text"] == "Default mock response", f"Expected default response 'Default mock response', but got '{default_response['content'][0]['text']}'"
     
     mock_claude_client.logger.debug("Default response test passed")
 
     # Test rate limiting
     await mock_claude_client.set_rate_limit(3)
-    for _ in range(3):
+    mock_claude_client.logger.debug("Set rate limit to 3")
+    for i in range(3):
         await mock_claude_client.messages.create(
             model="claude-3-opus-20240229",
             max_tokens=100,
-            messages=[{"role": "user", "content": "Test"}]
+            messages=[{"role": "user", "content": f"Test {i}"}]
         )
+        mock_claude_client.logger.debug(f"Made API call {i+1}")
     with pytest.raises(CustomRateLimitError):
         await mock_claude_client.messages.create(
             model="claude-3-opus-20240229",
             max_tokens=100,
-            messages=[{"role": "user", "content": "Test"}]
+            messages=[{"role": "user", "content": "Test rate limit"}]
         )
     
     mock_claude_client.logger.debug("Rate limiting test passed")
 
     # Test error mode
     await mock_claude_client.set_error_mode(True)
+    mock_claude_client.logger.debug("Set error mode to True")
     with pytest.raises(APIStatusError):
         await mock_claude_client.messages.create(
             model="claude-3-opus-20240229",
             max_tokens=100,
-            messages=[{"role": "user", "content": "Test"}]
+            messages=[{"role": "user", "content": "Test error mode"}]
         )
     
     mock_claude_client.logger.debug("Error mode test passed")
 
     # Test response structure
+    await mock_claude_client.set_error_mode(False)
+    mock_claude_client.logger.debug("Set error mode to False")
     response = await mock_claude_client.messages.create(
         model="claude-3-opus-20240229",
         max_tokens=100,
         messages=[{"role": "user", "content": "Test structure"}]
     )
+    mock_claude_client.logger.debug(f"Received response for structure test: {response}")
     assert "id" in response, "Response should contain an 'id' field"
     assert "type" in response, "Response should contain a 'type' field"
     assert "role" in response, "Response should contain a 'role' field"
@@ -1190,6 +1201,7 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
     assert "usage" in response, "Response should contain a 'usage' field"
     
     mock_claude_client.logger.debug("Response structure test passed")
+    mock_claude_client.logger.debug("All tests in test_mock_claude_client_custom_responses passed successfully")
 
 @pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
