@@ -678,17 +678,25 @@ class MockClaudeClient:
     @property
     def messages(self):
         self.logger.debug("Accessing messages property")
-        return self.ensure_messages_initialized()
+        return self._ensure_messages_initialized()
 
-    def ensure_messages_initialized(self):
-        self.logger.debug("Ensuring messages are initialized")
+    async def ensure_messages_initialized(self):
+        self.logger.debug("Ensuring messages are initialized (async)")
+        try:
+            return await self._ensure_messages_initialized()
+        except Exception as e:
+            self.logger.error(f"Error initializing messages (async): {str(e)}", exc_info=True)
+            raise
+
+    async def _ensure_messages_initialized(self):
+        self.logger.debug("Ensuring messages are initialized (internal async)")
         try:
             if self._messages is None:
                 self.logger.info("Initializing Messages instance")
                 self._messages = self.Messages(self)
             return self._messages
         except Exception as e:
-            self.logger.error(f"Error initializing messages: {str(e)}", exc_info=True)
+            self.logger.error(f"Error initializing messages (internal async): {str(e)}", exc_info=True)
             raise
 
     async def debug_dump(self):
