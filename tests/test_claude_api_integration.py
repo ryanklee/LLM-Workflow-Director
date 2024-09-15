@@ -97,6 +97,44 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
 
     logger.info("Completed test_mock_claude_client_custom_responses successfully")
 
+@pytest.mark.asyncio
+async def test_mock_claude_client_custom_responses(mock_claude_client_with_responses):
+    logger = logging.getLogger(__name__)
+    logger.info("Starting test_mock_claude_client_custom_responses")
+    
+    mock_client, setup_responses = mock_claude_client_with_responses
+    logger.debug(f"Received mock_client: {mock_client}")
+    
+    responses = {
+        "Hello": "Hi there!",
+        "How are you?": "I'm doing well, thank you for asking.",
+        "What's the weather like?": "I'm sorry, I don't have real-time weather information."
+    }
+    await setup_responses(responses)
+    logger.debug("Set custom responses")
+
+    for prompt, expected_response in responses.items():
+        logger.debug(f"Testing prompt: {prompt}")
+        try:
+            response = await mock_client.messages.create(
+                model="claude-3-opus-20240229",
+                max_tokens=100,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            logger.debug(f"Raw response: {response}")
+            actual_response = response["content"][0]["text"]
+            logger.debug(f"Received response: {actual_response}")
+            assert actual_response == f"<response>{expected_response}</response>", f"Expected '<response>{expected_response}</response>', but got '{actual_response}'"
+            logger.debug(f"Successful response for prompt: {prompt}")
+        except AttributeError as e:
+            logger.error(f"AttributeError occurred. Mock client state: {await mock_client.debug_dump()}")
+            raise
+        except Exception as e:
+            logger.error(f"Error processing prompt '{prompt}': {str(e)}", exc_info=True)
+            raise
+
+    logger.info("Completed test_mock_claude_client_custom_responses successfully")
+
 @pytest.fixture(scope="function", autouse=True)
 def function_logger(request):
     logger = logging.getLogger(__name__)
