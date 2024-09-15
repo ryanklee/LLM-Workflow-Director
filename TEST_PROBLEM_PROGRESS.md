@@ -30,9 +30,14 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
    - Validation: Review the test function and its use of the fixture, ensuring proper async/await usage.
    - Status: To be investigated.
 
-6. Parallel Execution Interference (New Hypothesis, Medium Likelihood)
+6. Parallel Execution Interference (Medium Likelihood)
    - The parallel execution environment (pytest-xdist) might be interfering with fixture initialization or attribute access.
    - Validation: Run the test without parallel execution and compare results.
+   - Status: To be investigated.
+
+7. Inconsistent Attribute Initialization (New Hypothesis, High Likelihood)
+   - The `messages` attribute might be initialized inconsistently across different methods or contexts.
+   - Validation: Review all initialization paths and ensure consistent attribute setup.
    - Status: To be investigated.
 
 ## New Learnings
@@ -43,6 +48,7 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
 4. The error persists despite previous attempts to initialize the `messages` attribute, suggesting a deeper structural issue.
 5. The test is running in a parallel environment (using pytest-xdist), which could potentially introduce timing or initialization issues.
 6. The error occurs during the setup phase of the test, before the actual test function is executed.
+7. The `messages` attribute might be initialized in some contexts but not others, leading to inconsistent behavior.
 
 ## Next Steps
 
@@ -53,6 +59,7 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
 5. Review the asynchronous flow in both the MockClaudeClient class and the fixture to ensure proper async/await usage.
 6. Investigate potential issues related to parallel test execution and fixture sharing.
 7. Run the test without parallel execution to isolate any pytest-xdist related issues.
+8. Review all initialization paths for the `messages` attribute to ensure consistency.
 
 ## Implementation Plan
 
@@ -61,6 +68,7 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
    - Implement a robust initialization process for the `messages` attribute.
    - Add detailed logging for object creation, attribute initialization, and method calls.
    - Implement comprehensive error handling and informative error messages.
+   - Ensure consistent initialization of the `messages` attribute across all methods and contexts.
 
 2. Update Fixture:
    - Add logging to track the entire lifecycle of the fixture, including MockClaudeClient instantiation.

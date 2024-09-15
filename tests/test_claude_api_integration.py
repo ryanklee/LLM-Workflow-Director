@@ -60,11 +60,8 @@ async def mock_claude_client_with_responses(mock_claude_client):
             logger.error(f"Error calling debug_dump: {str(e)}", exc_info=True)
             raise
         
-        logger.debug(f"Checking for 'messages' attribute")
-        if not hasattr(mock_claude_client, 'messages'):
-            logger.error("MockClaudeClient instance does not have 'messages' attribute")
-            logger.debug(f"MockClaudeClient attributes: {dir(mock_claude_client)}")
-            raise AttributeError("MockClaudeClient instance does not have 'messages' attribute")
+        logger.debug("Ensuring 'messages' attribute is initialized")
+        mock_claude_client.ensure_messages_initialized()
         
         logger.debug("Accessing 'messages' attribute")
         try:

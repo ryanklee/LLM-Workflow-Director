@@ -640,7 +640,7 @@ class MockClaudeClient:
         self.call_count = 0
         self.error_count = 0
         self.max_errors = 3
-        self._messages = self.Messages(self)  # Initialize immediately
+        self._messages = None  # Initialize to None
         self.logger.debug("Finished initialization of MockClaudeClient")
 
     def __str__(self):
@@ -653,7 +653,7 @@ class MockClaudeClient:
     def messages(self):
         self.logger.debug("Accessing messages property")
         if self._messages is None:
-            self.logger.warning("Messages instance not found, reinitializing")
+            self.logger.info("Initializing Messages instance")
             self._messages = self.Messages(self)
         return self._messages
 
@@ -670,6 +670,11 @@ class MockClaudeClient:
         except Exception as e:
             self.logger.error(f"Error in debug_dump: {str(e)}", exc_info=True)
             raise
+
+    def ensure_messages_initialized(self):
+        if self._messages is None:
+            self.logger.warning("Messages instance not initialized. Initializing now.")
+            self._messages = self.Messages(self)
         return self._messages
 
     async def debug_dump(self):
