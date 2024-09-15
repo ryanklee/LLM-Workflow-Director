@@ -54,6 +54,11 @@ class MockClaudeClient:
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
         self.logger.debug("Starting initialization of MockClaudeClient")
         self.rate_limit_reached = False
         self.error_mode = False
@@ -86,7 +91,8 @@ class MockClaudeClient:
     def debug_dump(self):
         self.logger.debug("Dumping MockClaudeClient state:")
         for attr, value in self.__dict__.items():
-            self.logger.debug(f"{attr}: {value}")
+            if attr != 'logger':
+                self.logger.debug(f"{attr}: {value}")
 
     def debug_dump(self):
         self.logger.debug("Dumping MockClaudeClient state:")
