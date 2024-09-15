@@ -105,6 +105,12 @@ class MockClaudeClient:
         self.logger.debug("Finished debug_dump method")
         return state
 
+    def __str__(self):
+        return f"MockClaudeClient(call_count={self.call_count}, error_count={self.error_count}, error_mode={self.error_mode})"
+
+    def __repr__(self):
+        return self.__str__()
+
     @property
     def messages(self):
         self.logger.debug("Accessing messages property")
