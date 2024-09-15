@@ -1124,7 +1124,9 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
     test_prompt = "Custom response prompt"
     test_response = "This is a custom response"
     await mock_claude_client.set_response(test_prompt, test_response)
-        
+    
+    mock_claude_client.logger.debug("Starting test_mock_claude_client_custom_responses")
+    
     response = await mock_claude_client.messages.create(
         model="claude-3-opus-20240229",
         max_tokens=100,
@@ -1132,7 +1134,9 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
     )
     expected_response = f"<response>{test_response}</response>"
     assert response["content"][0]["text"] == expected_response, f"Expected custom response '{expected_response}', but got '{response['content'][0]['text']}'"
-        
+    
+    mock_claude_client.logger.debug("Custom response test passed")
+    
     # Test with default response
     default_prompt = "Default prompt"
     default_response = await mock_claude_client.messages.create(
@@ -1142,6 +1146,8 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
     )
     expected_default_response = "<response>Default mock response</response>"
     assert default_response["content"][0]["text"] == expected_default_response, f"Expected default response '{expected_default_response}', but got '{default_response['content'][0]['text']}'"
+    
+    mock_claude_client.logger.debug("Default response test passed")
 
     # Test rate limiting
     await mock_claude_client.set_rate_limit(3)
@@ -1157,6 +1163,8 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
             max_tokens=100,
             messages=[{"role": "user", "content": "Test"}]
         )
+    
+    mock_claude_client.logger.debug("Rate limiting test passed")
 
     # Test error mode
     await mock_claude_client.set_error_mode(True)
@@ -1166,6 +1174,8 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
             max_tokens=100,
             messages=[{"role": "user", "content": "Test"}]
         )
+    
+    mock_claude_client.logger.debug("Error mode test passed")
 
 @pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
