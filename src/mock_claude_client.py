@@ -647,6 +647,17 @@ class MockClaudeClient:
         self._messages = None  # Initialize to None
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
 
+    def ensure_messages_initialized(self):
+        self.logger.debug("Ensuring messages are initialized")
+        try:
+            if self._messages is None:
+                self.logger.info("Initializing Messages instance")
+                self._messages = self.Messages(self)
+            return self._messages
+        except Exception as e:
+            self.logger.error(f"Error initializing messages: {str(e)}", exc_info=True)
+            raise
+
     def __del__(self):
         self.logger.debug(f"Destroying MockClaudeClient {id(self)}")
 
