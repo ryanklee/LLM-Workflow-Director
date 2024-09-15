@@ -48,6 +48,14 @@ async def mock_claude_client_with_responses(mock_claude_client):
                 logger.error(f"Error setting response for prompt '{prompt}': {str(e)}", exc_info=True)
                 raise
     
+    logger.debug(f"Verifying MockClaudeClient instance: {mock_claude_client}")
+    try:
+        messages = mock_claude_client.messages
+        logger.debug(f"Successfully accessed messages property: {messages}")
+    except Exception as e:
+        logger.error(f"Failed to access messages property: {str(e)}", exc_info=True)
+        raise
+    
     logger.debug(f"Returning MockClaudeClient: {mock_claude_client}")
     return mock_claude_client, setup_responses
 
@@ -274,8 +282,11 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
         for prompt, expected_response in responses.items():
             logger.debug(f"Testing prompt: {prompt}")
             try:
-                logger.debug(f"Accessing messages attribute: {mock_client.messages}")
-                response = await mock_client.messages.create("claude-3-opus-20240229", 100, [{"role": "user", "content": prompt}])
+                logger.debug("Attempting to access messages attribute")
+                messages = mock_client.messages
+                logger.debug(f"Successfully accessed messages attribute: {messages}")
+                logger.debug("Calling messages.create method")
+                response = await messages.create("claude-3-opus-20240229", 100, [{"role": "user", "content": prompt}])
                 actual_response = response["content"][0]["text"]
                 logger.debug(f"Received response: {actual_response}")
                 logger.debug(f"Expected response: <response>{expected_response}</response>")
