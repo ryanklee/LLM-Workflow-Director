@@ -64,6 +64,14 @@ async def mock_claude_client_with_responses(mock_claude_client, request):
         try:
             messages = await mock_claude_client.ensure_messages_initialized()
             logger.debug(f"Successfully initialized messages: {messages}")
+        except AttributeError as e:
+            logger.error(f"AttributeError: {str(e)}. Falling back to synchronous initialization.", exc_info=True)
+            try:
+                messages = mock_claude_client._ensure_messages_initialized()
+                logger.debug(f"Successfully initialized messages (sync): {messages}")
+            except Exception as e:
+                logger.error(f"Error initializing messages (sync): {str(e)}", exc_info=True)
+                raise
         except Exception as e:
             logger.error(f"Error initializing messages: {str(e)}", exc_info=True)
             raise

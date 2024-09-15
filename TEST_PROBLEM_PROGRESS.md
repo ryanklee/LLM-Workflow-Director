@@ -42,19 +42,20 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
 
 ## New Learnings
 
-1. The `ensure_messages_initialized` method is indeed missing from the MockClaudeClient class.
-2. The `messages` property and its initialization in MockClaudeClient need to be improved for consistency.
-3. The error occurs during the setup phase of the test, specifically in the `mock_claude_client_with_responses` fixture.
-4. Logging has been added to track the initialization process, revealing potential improvements in the fixture.
+1. The `ensure_messages_initialized` method is still missing from the MockClaudeClient class, despite previous attempts to implement it.
+2. The error occurs during the setup phase of the test, specifically in the `mock_claude_client_with_responses` fixture, indicating that our previous fix was incomplete or incorrect.
+3. The current implementation of MockClaudeClient may have inconsistencies between its synchronous and asynchronous methods.
+4. Our logging improvements have helped identify the exact point of failure, but more detailed logging is needed throughout the class initialization and method calls.
 
 ## Next Steps
 
-1. Implement the `ensure_messages_initialized` method in the MockClaudeClient class.
-2. Improve the `messages` property implementation and initialization in MockClaudeClient.
-3. Enhance the `mock_claude_client_with_responses` fixture with better error handling and logging.
-4. Add comprehensive logging throughout the MockClaudeClient class for better debugging.
-5. Review and update the test function to include additional checks and error handling.
-6. After implementing these changes, run the tests again to identify any remaining issues.
+1. Carefully review and correct the implementation of `ensure_messages_initialized` method in the MockClaudeClient class, ensuring it's properly defined as an asynchronous method.
+2. Double-check the `messages` property implementation and its interaction with `ensure_messages_initialized`.
+3. Enhance the `mock_claude_client_with_responses` fixture to handle both synchronous and asynchronous initialization of MockClaudeClient.
+4. Add more comprehensive logging throughout the MockClaudeClient class, particularly in the initialization process and all methods related to message handling.
+5. Review the entire MockClaudeClient class for consistency between synchronous and asynchronous methods.
+6. Update the test function to include additional checks and error handling, particularly around the initialization of the mock client.
+7. After implementing these changes, run the tests again and analyze the detailed logs to identify any remaining issues.
 
 ## Implementation Plan
 
