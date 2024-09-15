@@ -48,7 +48,7 @@ async def mock_claude_client_with_responses(request):
             logger.debug(f"Setting up responses: {responses}")
             for prompt, response in responses.items():
                 await mock_client.set_response(prompt, response)
-                logger.debug(f"Set response for prompt: {prompt}")
+                logger.debug(f"Set response for prompt: {prompt[:50]}...")
         
         logger.info(f"Returning MockClaudeClient: {mock_client}")
         yield mock_client, setup_responses
@@ -61,6 +61,7 @@ async def mock_claude_client_with_responses(request):
         logger.info(f"Cleaning up mock_claude_client_with_responses fixture for test {request.node.name}")
         if mock_client:
             await mock_client.reset()
+        logger.debug(f"MockClaudeClient reset completed")
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_custom_responses(mock_claude_client_with_responses):
