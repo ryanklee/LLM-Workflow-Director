@@ -696,21 +696,21 @@ class MockClaudeClient:
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         response = await self.create(model, self.max_test_tokens, [{"role": "user", "content": prompt}])
-        return response.content[0].text
+        return response['content'][0]['text']
 
-    def set_response(self, prompt: str, response: str):
+    async def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
 
-    def set_rate_limit(self, limit: int):
+    async def set_rate_limit(self, limit: int):
         self.rate_limit = limit
 
-    def get_call_count(self) -> int:
+    async def get_call_count(self) -> int:
         return self.call_count
 
-    def get_error_count(self) -> int:
+    async def get_error_count(self) -> int:
         return self.error_count
 
-    async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> MagicMock:
+    async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
         await self._check_rate_limit()
         await asyncio.sleep(self.latency)
 
@@ -729,7 +729,14 @@ class MockClaudeClient:
 
         self.call_count += 1
 
-        return MagicMock(content=[MagicMock(text=f"<response>{response}</response>")])
+        return {
+            "content": [{"text": f"<response>{response}</response>"}],
+            "model": model,
+            "usage": {
+                "input_tokens": sum(len(m["content"]) for m in messages),
+                "output_tokens": len(response)
+            }
+        }
 import asyncio
 from typing import Dict, List, Optional
 
