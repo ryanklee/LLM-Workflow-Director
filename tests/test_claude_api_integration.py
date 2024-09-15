@@ -1131,7 +1131,12 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
     mock_claude_client.logger.debug(f"Set custom response for prompt: {test_prompt}")
     
     try:
-        response = await mock_claude_client.messages.create(
+        mock_claude_client.logger.debug("Attempting to access 'messages' attribute")
+        messages = mock_claude_client.messages
+        mock_claude_client.logger.debug("Successfully accessed 'messages' attribute")
+        
+        mock_claude_client.logger.debug("Calling messages.create")
+        response = await messages.create(
             model="claude-3-opus-20240229",
             max_tokens=100,
             messages=[{"role": "user", "content": test_prompt}]
@@ -1142,6 +1147,11 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
     except AttributeError as e:
         mock_claude_client.logger.error(f"AttributeError occurred: {str(e)}")
         mock_claude_client.logger.debug(f"MockClaudeClient attributes: {dir(mock_claude_client)}")
+        mock_claude_client.logger.debug(f"MockClaudeClient type: {type(mock_claude_client)}")
+        mock_claude_client.logger.debug(f"MockClaudeClient __dict__: {mock_claude_client.__dict__}")
+        raise
+    except Exception as e:
+        mock_claude_client.logger.error(f"Unexpected error occurred: {str(e)}")
         raise
     
     # Rest of the test case remains unchanged

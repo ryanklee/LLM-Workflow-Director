@@ -55,13 +55,22 @@ class MockClaudeClient:
         self.max_errors = 3
         self.rate_limit_reset_time = 60  # seconds
         self.max_context_length = 200000  # 200k tokens
-        self._messages = self.Messages(self)  # Initialize immediately
-        self.logger.debug("Initialized MockClaudeClient with Messages instance")
+        self._messages = None  # Initialize to None
+        self.logger.debug("Initialized MockClaudeClient")
 
     @property
     def messages(self):
+        if self._messages is None:
+            self.logger.debug("Initializing Messages instance")
+            self._messages = self.Messages(self)
         self.logger.debug("Accessing messages property")
         return self._messages
+
+    def __getattr__(self, name):
+        self.logger.debug(f"Attempting to access attribute: {name}")
+        if name == 'messages':
+            return self.messages
+        raise AttributeError(f"'MockClaudeClient' object has no attribute '{name}'")
 
     async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
         self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}")
