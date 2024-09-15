@@ -972,6 +972,15 @@ class Messages:
         return await self.client._create(model, max_tokens, messages)
 
 class MockClaudeClient:
+    class Messages:
+        def __init__(self, client):
+            self.client = client
+            self.client.logger.debug("Initialized Messages class")
+
+        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+            self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}")
+            return await self.client._create(model, max_tokens, messages)
+
     def __init__(self, rate_limit: int = 10, reset_time: int = 60):
         self.rate_limit = rate_limit
         self.reset_time = reset_time
@@ -984,27 +993,41 @@ class MockClaudeClient:
         self.call_count = 0
         self.error_count = 0
         self.max_errors = 3
-        self.messages = Messages(self)
+        self._messages = None
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug("Initialized MockClaudeClient")
+
+    @property
+    def messages(self):
+        if self._messages is None:
+            self._messages = self.Messages(self)
+            self.logger.debug("Created Messages instance")
+        return self._messages
 
     async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+        self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}")
         await self._check_rate_limit()
         await asyncio.sleep(self.latency)
 
         if self.error_mode:
             self.error_count += 1
             if self.error_count <= self.max_errors:
-                raise APIStatusError("Simulated API error", response=None, body={})
+                self.logger.error("Simulated API error")
+                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
 
         prompt = messages[0]['content']
+        self.logger.debug(f"Received prompt: {prompt[:50]}...")
         if len(prompt) > self.max_test_tokens:
+            self.logger.warning(f"Prompt exceeds max tokens. Prompt length: {len(prompt)}, Max tokens: {self.max_test_tokens}")
             raise ValueError(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
 
         response = self.responses.get(prompt, "Default mock response")
         if len(response) > max_tokens:
+            self.logger.warning(f"Response exceeds max tokens. Truncating. Original length: {len(response)}")
             response = response[:max_tokens] + "..."
 
         self.call_count += 1
-
+        self.logger.debug(f"Returning response: {response[:50]}...")
         return {
             "content": [{"text": f"<response>{response}</response>"}],
             "model": model,
