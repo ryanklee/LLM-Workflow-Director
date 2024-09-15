@@ -55,14 +55,11 @@ class MockClaudeClient:
         self.max_errors = 3
         self.rate_limit_reset_time = 60  # seconds
         self.max_context_length = 200000  # 200k tokens
-        self._messages = None  # Initialize as None
-        self.logger.debug("Initialized MockClaudeClient")
+        self._messages = self.Messages(self)  # Initialize immediately
+        self.logger.debug("Initialized MockClaudeClient with Messages instance")
 
     @property
     def messages(self):
-        if self._messages is None:
-            self._messages = self.Messages(self)
-            self.logger.debug("Created Messages instance")
         self.logger.debug("Accessing messages property")
         return self._messages
 
