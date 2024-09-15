@@ -40,6 +40,7 @@ async def mock_claude_client_with_responses(request):
     
     mock_client = None
     try:
+        logger.debug("Attempting to create MockClaudeClient instance")
         mock_client = MockClaudeClient(api_key="test_api_key")
         logger.debug(f"Created MockClaudeClient instance: {mock_client}")
         
@@ -53,6 +54,8 @@ async def mock_claude_client_with_responses(request):
         yield mock_client, setup_responses
     except Exception as e:
         logger.error(f"Error creating MockClaudeClient: {str(e)}", exc_info=True)
+        logger.error(f"MockClaudeClient class: {MockClaudeClient}")
+        logger.error(f"MockClaudeClient.__init__ signature: {inspect.signature(MockClaudeClient.__init__)}")
         raise
     finally:
         logger.info(f"Cleaning up mock_claude_client_with_responses fixture for test {request.node.name}")
