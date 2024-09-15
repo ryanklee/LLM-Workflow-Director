@@ -9,12 +9,18 @@ from src.exceptions import RateLimitError as CustomRateLimitError
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+class Messages:
+    def __init__(self, client):
+        self.client = client
+
+    async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+        return await self.client._create(model, max_tokens, messages)
+
 class MockClaudeClient:
     def __init__(self):
         self.rate_limit_reached = False
         self.error_mode = False
         self.responses = {}
-        self.messages = self
         self.max_test_tokens = 1000
         self.call_count = 0
         self.rate_limit_threshold = 5  # Number of calls before rate limiting
@@ -26,7 +32,7 @@ class MockClaudeClient:
         self.max_errors = 3
         self.rate_limit_reset_time = 60  # seconds
         self.max_context_length = 200000  # 200k tokens
-        self.client = self
+        self.messages = Messages(self)
 
     async def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
@@ -52,11 +58,12 @@ class MockClaudeClient:
         else:
             return "claude-3-sonnet-20240229"
 
-    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
-        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+    async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+        self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}")
         await self._check_rate_limit()
         await self._simulate_latency()
         
+        prompt = messages[0]['content']
         if len(prompt) > self.max_test_tokens:
             raise ValueError(f"Prompt length ({len(prompt)} tokens) exceeds maximum context length of {self.max_test_tokens} tokens")
         
@@ -67,9 +74,24 @@ class MockClaudeClient:
                 raise APIStatusError("Simulated API error", response=MagicMock(), body={})
         
         response = self.responses.get(prompt, "Default mock response")
+        if len(response) > max_tokens:
+            response = response[:max_tokens] + "..."
+        
+        self.call_count += 1
         wrapped_response = f"<response>{response}</response>"
         self.logger.debug(f"Returning response: {wrapped_response[:50]}...")
-        return wrapped_response  # Return the response with XML wrapping
+        return {
+            "content": [{"text": wrapped_response}],
+            "model": model,
+            "usage": {
+                "input_tokens": sum(len(m["content"]) for m in messages),
+                "output_tokens": len(response)
+            }
+        }
+
+    async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
+        response = await self.messages.create(model, self.max_test_tokens, [{"role": "user", "content": prompt}])
+        return response["content"][0]["text"]
 
     async def count_tokens(self, text: str) -> int:
         return len(text.split())
