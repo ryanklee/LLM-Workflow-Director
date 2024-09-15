@@ -64,7 +64,7 @@ class MockClaudeClient:
             self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}")
             return await self.client._create(model, max_tokens, messages)
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, rate_limit: int = 10, reset_time: int = 60):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
@@ -74,8 +74,8 @@ class MockClaudeClient:
         self.logger.debug(f"Starting initialization of MockClaudeClient {id(self)} with api_key: {api_key[:5]}...")
         
         self.api_key = api_key
-        self.rate_limit_threshold = 5
-        self.rate_limit_reset_time = 60
+        self.rate_limit = rate_limit
+        self.reset_time = reset_time
         self.calls = 0
         self.last_reset = asyncio.get_event_loop().time()
         self.error_mode = False
