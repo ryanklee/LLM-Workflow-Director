@@ -81,6 +81,7 @@ class MockClaudeClient:
         for attr, value in self.__dict__.items():
             if attr != 'logger':
                 self.logger.debug(f"{attr}: {value}")
+        return None  # Explicitly return None to make the return value clear
 
     def debug_dump(self):
         self.logger.debug("Dumping MockClaudeClient state:")
