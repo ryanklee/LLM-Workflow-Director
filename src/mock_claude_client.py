@@ -56,7 +56,7 @@ class MockClaudeClient:
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
         self.logger.debug("Starting initialization of MockClaudeClient")
@@ -75,6 +75,12 @@ class MockClaudeClient:
         self.max_context_length = 200000  # 200k tokens
         self._messages = None  # Initialize to None
         self.logger.debug("Finished initialization of MockClaudeClient")
+
+    def __str__(self):
+        return f"MockClaudeClient(call_count={self.call_count}, error_count={self.error_count}, error_mode={self.error_mode})"
+
+    def __repr__(self):
+        return self.__str__()
 
     async def debug_dump(self):
         self.logger.debug("Starting debug_dump method")
@@ -418,12 +424,15 @@ class MockClaudeClient:
                     raise APIStatusError("Simulated API error", response=MagicMock(), body={})
             
             response = self.responses.get(prompt, "Default mock response")
-            wrapped_response = f"<response>{response}</response>"
+            wrapped_response = self._wrap_response(response)
             self.logger.debug(f"Generated response: {wrapped_response[:50]}...")
             return wrapped_response
         except Exception as e:
             self.logger.error(f"Error generating response: {str(e)}")
             raise
+
+    def _wrap_response(self, response: str) -> str:
+        return f"<response>{response}</response>"
 
     async def count_tokens(self, text: str) -> int:
         return len(text.split())
@@ -806,7 +815,7 @@ class MockClaudeClient:
             self.logger.warning(f"Response exceeds max tokens. Truncating. Original length: {len(response)}")
             response = response[:max_tokens] + "..."
 
-        wrapped_response = f"<response>{response}</response>"
+        wrapped_response = self._wrap_response(response)
         self.call_count += 1
         self.logger.debug(f"Returning response: {wrapped_response[:50]}...")
         return {

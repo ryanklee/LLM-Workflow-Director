@@ -244,6 +244,7 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
     try:
         logger.debug("Starting test_mock_claude_client_custom_responses")
         mock_client, setup_responses = mock_claude_client_with_responses
+        logger.debug(f"MockClaudeClient: {mock_client}")
         logger.debug(f"MockClaudeClient type: {type(mock_client)}")
         logger.debug(f"MockClaudeClient attributes: {dir(mock_client)}")
         
