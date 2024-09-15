@@ -38,6 +38,7 @@ async def mock_claude_client_with_responses(request):
     logger = logging.getLogger(__name__)
     logger.info(f"Initializing mock_claude_client_with_responses fixture in test {request.node.name}")
     
+    mock_client = None
     try:
         mock_client = MockClaudeClient(api_key="test_api_key")
         logger.debug(f"Created MockClaudeClient instance: {mock_client}")
@@ -55,7 +56,8 @@ async def mock_claude_client_with_responses(request):
         raise
     finally:
         logger.info(f"Cleaning up mock_claude_client_with_responses fixture for test {request.node.name}")
-        await mock_client.reset()
+        if mock_client:
+            await mock_client.reset()
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_custom_responses(mock_claude_client_with_responses):
@@ -348,6 +350,7 @@ async def test_mock_claude_client_custom_responses(mock_claude_client_with_respo
                     max_tokens=100,
                     messages=[{"role": "user", "content": prompt}]
                 )
+                logger.debug(f"Raw response: {response}")
                 actual_response = response["content"][0]["text"]
                 logger.debug(f"Received response: {actual_response}")
                 assert actual_response == f"<response>{expected_response}</response>", f"Expected '<response>{expected_response}</response>', but got '{actual_response}'"
