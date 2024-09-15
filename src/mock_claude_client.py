@@ -54,14 +54,12 @@ class MockClaudeClient:
         self.max_errors = 3
         self.rate_limit_reset_time = 60  # seconds
         self.max_context_length = 200000  # 200k tokens
-        self._messages = None
-        self.logger.debug("Initialized MockClaudeClient")
+        self._messages = self.Messages(self)  # Initialize Messages instance immediately
+        self.logger.debug("Initialized MockClaudeClient with Messages instance")
 
     @property
     def messages(self):
-        if self._messages is None:
-            self._messages = self.Messages(self)
-            self.logger.debug("Created Messages instance")
+        self.logger.debug("Accessing messages property")
         return self._messages
 
     async def set_response(self, prompt: str, response: str):
@@ -720,11 +718,11 @@ class Messages:
                 self.logger.error("Simulated API error")
                 raise APIStatusError("Simulated API error", response=MagicMock(), body={})
 
-        prompt = messages[0]['content']
+        prompt = messages[-1]['content']  # Use the last message as the prompt
         self.logger.debug(f"Received prompt: {prompt[:50]}...")
-        if len(prompt) > self.max_test_tokens:
-            self.logger.warning(f"Prompt exceeds max tokens. Prompt length: {len(prompt)}, Max tokens: {self.max_test_tokens}")
-            raise ValueError(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
+        if sum(len(m['content']) for m in messages) > self.max_context_length:
+            self.logger.warning(f"Total message length exceeds max context length")
+            raise ValueError(f"Total message length exceeds maximum context length ({self.max_context_length})")
 
         response = self.responses.get(prompt, "Default mock response")
         if len(response) > max_tokens:
@@ -734,8 +732,13 @@ class Messages:
         self.call_count += 1
         self.logger.debug(f"Returning response: {response[:50]}...")
         return {
-            "content": [{"text": f"<response>{response}</response>"}],
+            "id": f"msg_{uuid.uuid4()}",
+            "type": "message",
+            "role": "assistant",
+            "content": [{"type": "text", "text": response}],
             "model": model,
+            "stop_reason": "end_turn",
+            "stop_sequence": None,
             "usage": {
                 "input_tokens": sum(len(m["content"]) for m in messages),
                 "output_tokens": len(response)

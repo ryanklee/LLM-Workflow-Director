@@ -1132,8 +1132,7 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
         max_tokens=100,
         messages=[{"role": "user", "content": test_prompt}]
     )
-    expected_response = f"<response>{test_response}</response>"
-    assert response["content"][0]["text"] == expected_response, f"Expected custom response '{expected_response}', but got '{response['content'][0]['text']}'"
+    assert response["content"][0]["text"] == test_response, f"Expected custom response '{test_response}', but got '{response['content'][0]['text']}'"
     
     mock_claude_client.logger.debug("Custom response test passed")
     
@@ -1144,8 +1143,7 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
         max_tokens=100,
         messages=[{"role": "user", "content": default_prompt}]
     )
-    expected_default_response = "<response>Default mock response</response>"
-    assert default_response["content"][0]["text"] == expected_default_response, f"Expected default response '{expected_default_response}', but got '{default_response['content'][0]['text']}'"
+    assert default_response["content"][0]["text"] == "Default mock response", f"Expected default response 'Default mock response', but got '{default_response['content'][0]['text']}'"
     
     mock_claude_client.logger.debug("Default response test passed")
 
@@ -1176,6 +1174,22 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
         )
     
     mock_claude_client.logger.debug("Error mode test passed")
+
+    # Test response structure
+    response = await mock_claude_client.messages.create(
+        model="claude-3-opus-20240229",
+        max_tokens=100,
+        messages=[{"role": "user", "content": "Test structure"}]
+    )
+    assert "id" in response, "Response should contain an 'id' field"
+    assert "type" in response, "Response should contain a 'type' field"
+    assert "role" in response, "Response should contain a 'role' field"
+    assert "content" in response, "Response should contain a 'content' field"
+    assert "model" in response, "Response should contain a 'model' field"
+    assert "stop_reason" in response, "Response should contain a 'stop_reason' field"
+    assert "usage" in response, "Response should contain a 'usage' field"
+    
+    mock_claude_client.logger.debug("Response structure test passed")
 
 @pytest.mark.asyncio
 async def test_claude_api_rate_limiting(claude_manager, mock_claude_client):
