@@ -61,15 +61,9 @@ async def mock_claude_client_with_responses(mock_claude_client):
             raise
         
         logger.debug("Ensuring 'messages' attribute is initialized")
-        mock_claude_client.ensure_messages_initialized()
+        messages = mock_claude_client.ensure_messages_initialized()
         
-        logger.debug("Accessing 'messages' attribute")
-        try:
-            messages = mock_claude_client.messages
-            logger.debug(f"Successfully accessed messages property: {messages}")
-        except Exception as e:
-            logger.error(f"Error accessing messages property: {str(e)}", exc_info=True)
-            raise
+        logger.debug(f"Successfully initialized messages: {messages}")
         
         if messages is None:
             logger.error("MockClaudeClient 'messages' attribute is None")
