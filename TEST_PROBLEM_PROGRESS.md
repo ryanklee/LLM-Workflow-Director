@@ -30,6 +30,11 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
    - Validation: Review the test function and its use of the fixture, ensuring proper async/await usage.
    - Status: To be investigated.
 
+6. Parallel Execution Interference (New Hypothesis, Medium Likelihood)
+   - The parallel execution environment (pytest-xdist) might be interfering with fixture initialization or attribute access.
+   - Validation: Run the test without parallel execution and compare results.
+   - Status: To be investigated.
+
 ## New Learnings
 
 1. The error occurs in the fixture itself, not in the test function, indicating that the problem lies in the fixture setup or MockClaudeClient implementation.
@@ -37,6 +42,7 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
 3. The fixture is attempting to access the `messages` attribute, but it doesn't exist on the MockClaudeClient instance.
 4. The error persists despite previous attempts to initialize the `messages` attribute, suggesting a deeper structural issue.
 5. The test is running in a parallel environment (using pytest-xdist), which could potentially introduce timing or initialization issues.
+6. The error occurs during the setup phase of the test, before the actual test function is executed.
 
 ## Next Steps
 
@@ -46,6 +52,7 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
 4. Implement stronger type checking and error handling in the fixture to catch and report initialization issues early.
 5. Review the asynchronous flow in both the MockClaudeClient class and the fixture to ensure proper async/await usage.
 6. Investigate potential issues related to parallel test execution and fixture sharing.
+7. Run the test without parallel execution to isolate any pytest-xdist related issues.
 
 ## Implementation Plan
 
@@ -73,5 +80,6 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
 5. Address Parallel Execution Concerns:
    - Review fixture scoping and ensure proper isolation between parallel test runs.
    - Consider adding unique identifiers to MockClaudeClient instances for better tracking in logs.
+   - Test the fixture and MockClaudeClient in both parallel and non-parallel environments.
 
 We will implement these changes incrementally, starting with the MockClaudeClient updates, then move on to the fixture and test function improvements. After each step, we'll run the tests to gather more information and adjust our approach as needed.

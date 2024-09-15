@@ -90,6 +90,12 @@ def mock_claude_client():
     client.logger.debug(f"Created new MockClaudeClient instance: {id(client)}")
     return client
 
+@pytest.fixture(scope="function")
+def mock_claude_client():
+    client = MockClaudeClient()
+    client.logger.debug(f"Created new MockClaudeClient instance: {id(client)}")
+    return client
+
 @pytest.fixture
 def mock_claude_client_with_error_mode(mock_claude_client):
     async def set_error_mode(mode: bool):
