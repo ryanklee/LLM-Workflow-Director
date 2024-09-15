@@ -318,11 +318,11 @@ class Messages:
         if self.error_mode:
             self.error_count += 1
             if self.error_count <= self.max_errors:
-                self.logger.error("Simulated API error")
+                self.logger.error(f"Simulated API error. Error count: {self.error_count}")
                 raise APIStatusError("Simulated API error", response=MagicMock(), body={})
 
         prompt = messages[-1]['content']  # Use the last message as the prompt
-        self.logger.debug(f"Received prompt: {prompt[:50]}...")
+        self.logger.debug(f"Received prompt: {prompt[:50]}... (length: {len(prompt)})")
         if sum(len(m['content']) for m in messages) > self.max_context_length:
             self.logger.warning(f"Total message length exceeds max context length")
             raise ValueError(f"Total message length exceeds maximum context length ({self.max_context_length})")
