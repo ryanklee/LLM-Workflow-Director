@@ -18,6 +18,26 @@ class Messages:
         self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}")
         return await self.client._create(model, max_tokens, messages)
 
+import asyncio
+import time
+import logging
+from typing import Dict, Any, List
+from unittest.mock import MagicMock
+from anthropic import RateLimitError, APIError, APIStatusError
+from src.exceptions import RateLimitError as CustomRateLimitError
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+class Messages:
+    def __init__(self, client):
+        self.client = client
+        self.client.logger.debug("Initialized Messages class")
+
+    async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+        self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}")
+        return await self.client._create(model, max_tokens, messages)
+
 class MockClaudeClient:
     def __init__(self):
         self.rate_limit_reached = False
