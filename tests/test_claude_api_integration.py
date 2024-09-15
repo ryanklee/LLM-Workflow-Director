@@ -10,11 +10,16 @@ from anthropic import APIStatusError
 from src.exceptions import CustomRateLimitError, RateLimitError
 from src.llm_manager import LLMManager
 from src.claude_manager import ClaudeManager
+from pact import Consumer, Provider
 
 from typing import List, Union
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+@pytest.fixture(scope='module')
+def pact():
+    return Consumer('LLMWorkflowDirector').has_pact_with(Provider('ClaudeAPI'))
 
 @pytest_asyncio.fixture
 async def mock_claude_client():
@@ -62,6 +67,43 @@ async def mock_claude_client_with_responses(request):
         if mock_client:
             await mock_client.reset()
         logger.debug(f"MockClaudeClient reset completed")
+
+@pytest.mark.asyncio
+async def test_claude_api_contract(pact):
+    pact.given(
+        'A request for message creation'
+    ).upon_receiving(
+        'A valid message creation request'
+    ).with_request(
+        'POST', '/v1/messages',
+        body={
+            'model': 'claude-3-opus-20240229',
+            'max_tokens': 100,
+            'messages': [{'role': 'user', 'content': 'Hello, Claude!'}]
+        }
+    ).will_respond_with(200, body={
+        'id': pytest.matchers.like('msg_123abc'),
+        'type': 'message',
+        'role': 'assistant',
+        'content': [
+            {
+                'type': 'text',
+                'text': pytest.matchers.like('Hello! How can I assist you today?')
+            }
+        ],
+        'model': 'claude-3-opus-20240229',
+        'stop_reason': 'end_turn',
+        'stop_sequence': None,
+        'usage': {
+            'input_tokens': pytest.matchers.like(5),
+            'output_tokens': pytest.matchers.like(9)
+        }
+    })
+
+    async with pact:
+        claude_manager = ClaudeManager(client=None)  # We'll mock the client
+        result = await claude_manager.generate_response('Hello, Claude!', model='claude-3-opus-20240229')
+        assert result.startswith('Hello!')
 
 @pytest.mark.asyncio
 async def test_mock_claude_client_custom_responses(mock_claude_client_with_responses):
@@ -305,6 +347,14 @@ async def claude_manager(mock_claude_client):
     finally:
         await manager.close()
         logger.info("Closed ClaudeManager instance")
+
+@pytest.mark.asyncio
+async def test_claude_manager_generate_response(claude_manager, mock_claude_client_with_responses):
+    mock_client, setup_responses = mock_claude_client_with_responses
+    await setup_responses({"Hello, Claude!": "Hello! How can I assist you today?"})
+    
+    response = await claude_manager.generate_response("Hello, Claude!", model="claude-3-opus-20240229")
+    assert response == "Hello! How can I assist you today?"
 
 @pytest.fixture(autouse=True)
 async def reset_mock_claude_client(mock_claude_client):
