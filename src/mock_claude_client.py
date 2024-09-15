@@ -66,6 +66,44 @@ class MockClaudeClient:
         self.logger.debug("Accessing messages property")
         return self._messages
 
+    async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+        self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}")
+        await self._check_rate_limit()
+        await self._simulate_latency()
+        
+        prompt = messages[-1]['content']  # Use the last message as the prompt
+        self.logger.debug(f"Received prompt: {prompt[:50]}...")
+        if sum(len(m['content']) for m in messages) > self.max_context_length:
+            self.logger.warning(f"Total message length exceeds max context length")
+            raise ValueError(f"Total message length exceeds maximum context length ({self.max_context_length})")
+        
+        if self.error_mode:
+            self.error_count += 1
+            if self.error_count <= self.max_errors:
+                self.logger.error("Simulated API error")
+                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+        
+        response = self.responses.get(prompt, "Default mock response")
+        if len(response) > max_tokens:
+            self.logger.warning(f"Response exceeds max tokens. Truncating. Original length: {len(response)}")
+            response = response[:max_tokens] + "..."
+        
+        self.call_count += 1
+        self.logger.debug(f"Returning response: {response[:50]}...")
+        return {
+            "id": f"msg_{uuid.uuid4()}",
+            "type": "message",
+            "role": "assistant",
+            "content": [{"type": "text", "text": response}],
+            "model": model,
+            "stop_reason": "end_turn",
+            "stop_sequence": None,
+            "usage": {
+                "input_tokens": sum(len(m["content"]) for m in messages),
+                "output_tokens": len(response)
+            }
+        }
+
     async def set_response(self, prompt: str, response: str):
         self.responses[prompt] = response
         self.logger.debug(f"Set response for prompt: {prompt[:50]}...")

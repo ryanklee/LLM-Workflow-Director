@@ -1196,9 +1196,15 @@ async def test_mock_claude_client_custom_responses(mock_claude_client):
     assert "type" in response, "Response should contain a 'type' field"
     assert "role" in response, "Response should contain a 'role' field"
     assert "content" in response, "Response should contain a 'content' field"
+    assert isinstance(response["content"], list), "Content should be a list"
+    assert isinstance(response["content"][0], dict), "Content item should be a dictionary"
+    assert "type" in response["content"][0], "Content item should have a 'type' field"
+    assert "text" in response["content"][0], "Content item should have a 'text' field"
     assert "model" in response, "Response should contain a 'model' field"
     assert "stop_reason" in response, "Response should contain a 'stop_reason' field"
     assert "usage" in response, "Response should contain a 'usage' field"
+    assert "input_tokens" in response["usage"], "Usage should contain 'input_tokens'"
+    assert "output_tokens" in response["usage"], "Usage should contain 'output_tokens'"
     
     mock_claude_client.logger.debug("Response structure test passed")
     mock_claude_client.logger.debug("All tests in test_mock_claude_client_custom_responses passed successfully")
