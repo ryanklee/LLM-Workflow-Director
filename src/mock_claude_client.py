@@ -71,7 +71,6 @@ class MockClaudeClient:
         self._messages = None  # Initialize to None
         self.logger.debug("Finished initialization of MockClaudeClient")
 
-    @property
     def messages(self):
         self.logger.debug("Accessing messages property")
         try:
