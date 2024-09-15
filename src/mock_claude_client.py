@@ -592,7 +592,7 @@ logger = logging.getLogger(__name__)
 
 class MockClaudeClient:
     def __init__(self, api_key: str, rate_limit: int = 10, reset_time: int = 60):
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
