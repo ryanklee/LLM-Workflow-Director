@@ -26,15 +26,20 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
    - There might be a timing issue with setting up responses and calling the `generate_response` method.
    - Validation: Needs investigation into the order of operations in test setup and execution.
 
+6. Inconsistent Class Structure (New Hypothesis, Medium Likelihood)
+   - The MockClaudeClient class structure might be inconsistent with the actual Claude API client.
+   - Validation: Compare MockClaudeClient structure with the official Claude API client documentation.
+
 ## New Learnings
 
 1. The MockClaudeClient class is missing the expected `messages` attribute or property.
 2. The test is attempting to use a structure similar to the actual Claude API, which may not be fully implemented in the mock.
 3. The error occurs before any response generation or wrapping, indicating a structural issue in the mock client.
+4. The `messages` attribute is expected to be an object with a `create` method, not just a simple property.
 
 ## Next Steps
 
-1. Implement the `messages` attribute or property in MockClaudeClient.
+1. Implement the `messages` attribute as a property returning an object with a `create` method in MockClaudeClient.
 2. Review the Claude API documentation to ensure MockClaudeClient accurately reflects the expected structure.
 3. Add detailed logging in MockClaudeClient to track object initialization and method calls.
 4. Review the test fixture to ensure it's correctly setting up and returning the MockClaudeClient object.
@@ -47,7 +52,7 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
 Based on our new learnings, we will focus on the following:
 
 1. Update MockClaudeClient (Highest Priority):
-   - Implement the `messages` attribute or property to match the Claude API structure.
+   - Implement the `messages` property returning an object with a `create` method to match the Claude API structure.
    - Add detailed logging to track object initialization and method calls.
    - Ensure all async methods are correctly implemented and consistent in their behavior.
 
@@ -70,4 +75,4 @@ Based on our new learnings, we will focus on the following:
 
 ## Implementation
 
-We will now implement these changes, focusing on adding the `messages` attribute or property to MockClaudeClient and enhancing logging throughout the class. After implementation, we'll run the tests again with increased verbosity to verify the fix and gather more information about the test execution flow.
+We will now implement these changes, focusing on adding the `messages` property to MockClaudeClient and enhancing logging throughout the class. After implementation, we'll run the tests again with increased verbosity to verify the fix and gather more information about the test execution flow.

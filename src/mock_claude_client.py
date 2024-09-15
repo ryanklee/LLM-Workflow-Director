@@ -592,6 +592,18 @@ class Messages:
     async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
         return await self.client._create(model, max_tokens, messages)
 
+import asyncio
+import time
+import logging
+import uuid
+from typing import Dict, Any, List
+from unittest.mock import MagicMock
+from anthropic import RateLimitError, APIError, APIStatusError
+from src.exceptions import CustomRateLimitError
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 class MockClaudeClient:
     class Messages:
         def __init__(self, client):
@@ -603,6 +615,14 @@ class MockClaudeClient:
             return await self.client._create(model, max_tokens, messages)
 
     def __init__(self, rate_limit: int = 10, reset_time: int = 60):
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+        self.logger.debug("Starting initialization of MockClaudeClient")
+        
         self.rate_limit = rate_limit
         self.reset_time = reset_time
         self.calls = 0
@@ -615,14 +635,30 @@ class MockClaudeClient:
         self.error_count = 0
         self.max_errors = 3
         self._messages = None
-        self.logger = logging.getLogger(__name__)
-        self.logger.debug("Initialized MockClaudeClient")
+        self.logger.debug("Finished initialization of MockClaudeClient")
+
+    def __str__(self):
+        return f"MockClaudeClient(call_count={self.call_count}, error_count={self.error_count}, error_mode={self.error_mode})"
+
+    def __repr__(self):
+        return self.__str__()
+
+    async def debug_dump(self):
+        self.logger.debug("Starting debug_dump method")
+        state = {}
+        for attr, value in self.__dict__.items():
+            if attr != 'logger':
+                state[attr] = str(value)
+                self.logger.debug(f"{attr}: {value}")
+        self.logger.debug("Finished debug_dump method")
+        return state
 
     @property
     def messages(self):
+        self.logger.debug("Accessing messages property")
         if self._messages is None:
+            self.logger.debug("Creating new Messages instance")
             self._messages = self.Messages(self)
-            self.logger.debug("Created Messages instance")
         return self._messages
 
     async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
