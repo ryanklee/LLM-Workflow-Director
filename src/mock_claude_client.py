@@ -633,7 +633,7 @@ class MockClaudeClient:
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
-        self.logger.debug(f"Initializing MockClaudeClient {id(self)}")
+        self.logger.debug(f"Initializing MockClaudeClient {id(self)} with api_key: {api_key[:5]}...")
         
         self.api_key = api_key
         self.rate_limit = 10
