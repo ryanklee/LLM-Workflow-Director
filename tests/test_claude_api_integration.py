@@ -1024,6 +1024,9 @@ async def test_claude_api_rate_limiting(claude_manager, mock_claude_client, capl
 
 @pytest.mark.asyncio
 async def test_claude_api_with_custom_responses(claude_manager, mock_claude_client_with_responses):
+    mock_claude_client_with_responses.logger.debug("Starting test_claude_api_with_custom_responses")
+    mock_claude_client_with_responses.debug_dump()
+
     responses = {
         "Hello": "Hi there!",
         "How are you?": "I'm doing well, thank you for asking.",
@@ -1031,9 +1034,22 @@ async def test_claude_api_with_custom_responses(claude_manager, mock_claude_clie
     }
     await mock_claude_client_with_responses(responses)
 
+    mock_claude_client_with_responses.logger.debug("Set custom responses")
+    mock_claude_client_with_responses.debug_dump()
+
     for prompt, expected_response in responses.items():
-        response = await claude_manager.generate_response(prompt)
-        assert response == f"<response>{expected_response}</response>", f"Expected '{expected_response}', but got '{response}'"
+        mock_claude_client_with_responses.logger.debug(f"Testing prompt: {prompt}")
+        try:
+            response = await claude_manager.generate_response(prompt)
+            assert response == f"<response>{expected_response}</response>", f"Expected '{expected_response}', but got '{response}'"
+            mock_claude_client_with_responses.logger.debug(f"Successful response for prompt: {prompt}")
+        except Exception as e:
+            mock_claude_client_with_responses.logger.error(f"Error processing prompt '{prompt}': {str(e)}")
+            mock_claude_client_with_responses.debug_dump()
+            raise
+
+    mock_claude_client_with_responses.logger.debug("Completed test_claude_api_with_custom_responses")
+    mock_claude_client_with_responses.debug_dump()
 
 @pytest.mark.asyncio
 async def test_claude_api_error_handling(claude_manager, mock_claude_client_with_error_mode):
