@@ -623,26 +623,18 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(leve
 logger = logging.getLogger(__name__)
 
 class MockClaudeClient:
-    class Messages:
-        def __init__(self, client):
-            self.client = client
-            self.client.logger.debug(f"Initialized Messages class for client {id(client)}")
-
-        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
-            self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}")
-            return await self.client._create(model, max_tokens, messages)
-
-    def __init__(self, rate_limit: int = 10, reset_time: int = 60):
+    def __init__(self, api_key: str):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
-        self.logger.debug(f"Starting initialization of MockClaudeClient {id(self)}")
+        self.logger.debug(f"Initializing MockClaudeClient {id(self)}")
         
-        self.rate_limit = rate_limit
-        self.reset_time = reset_time
+        self.api_key = api_key
+        self.rate_limit = 10
+        self.reset_time = 60
         self.calls = 0
         self.last_reset = asyncio.get_event_loop().time()
         self.error_mode = False
@@ -652,22 +644,7 @@ class MockClaudeClient:
         self.call_count = 0
         self.error_count = 0
         self.max_errors = 3
-        self._messages = None  # Initialize to None
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
-
-    def ensure_messages_initialized(self):
-        self.logger.debug("Ensuring messages are initialized")
-        try:
-            if self._messages is None:
-                self.logger.info("Initializing Messages instance")
-                self._messages = self.Messages(self)
-            return self._messages
-        except Exception as e:
-            self.logger.error(f"Error initializing messages: {str(e)}", exc_info=True)
-            raise
-
-    def __del__(self):
-        self.logger.debug(f"Destroying MockClaudeClient {id(self)}")
 
     def __str__(self):
         return f"MockClaudeClient(call_count={self.call_count}, error_count={self.error_count}, error_mode={self.error_mode})"
@@ -675,29 +652,47 @@ class MockClaudeClient:
     def __repr__(self):
         return self.__str__()
 
-    @property
-    def messages(self):
-        self.logger.debug("Accessing messages property")
-        return self._ensure_messages_initialized()
+    async def messages(self, model: str, max_tokens: int, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
+        self.logger.debug(f"Messages method called with model: {model}, max_tokens: {max_tokens}")
+        return await self._create(model, max_tokens, messages, **kwargs)
 
-    async def ensure_messages_initialized(self):
-        self.logger.debug("Ensuring messages are initialized (async)")
-        try:
-            return await self._ensure_messages_initialized()
-        except Exception as e:
-            self.logger.error(f"Error initializing messages (async): {str(e)}", exc_info=True)
-            raise
+    async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
+        self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}")
+        await self._check_rate_limit()
+        await asyncio.sleep(self.latency)
 
-    async def _ensure_messages_initialized(self):
-        self.logger.debug("Ensuring messages are initialized (internal async)")
-        try:
-            if self._messages is None:
-                self.logger.info("Initializing Messages instance")
-                self._messages = self.Messages(self)
-            return self._messages
-        except Exception as e:
-            self.logger.error(f"Error initializing messages (internal async): {str(e)}", exc_info=True)
-            raise
+        if self.error_mode:
+            self.error_count += 1
+            if self.error_count <= self.max_errors:
+                self.logger.error("Simulated API error")
+                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+
+        prompt = messages[-1]['content']
+        self.logger.debug(f"Received prompt: {prompt[:50]}...")
+        if sum(len(m['content']) for m in messages) > self.max_test_tokens:
+            self.logger.warning(f"Total message length exceeds max test tokens")
+            raise ValueError(f"Total message length exceeds maximum test tokens ({self.max_test_tokens})")
+
+        response = self.responses.get(prompt, "Default mock response")
+        if len(response) > max_tokens:
+            self.logger.warning(f"Response exceeds max tokens. Truncating. Original length: {len(response)}")
+            response = response[:max_tokens] + "..."
+
+        self.call_count += 1
+        self.logger.debug(f"Returning response: {response[:50]}...")
+        return {
+            "id": f"msg_{uuid.uuid4()}",
+            "type": "message",
+            "role": "assistant",
+            "content": [{"type": "text", "text": response}],
+            "model": model,
+            "stop_reason": "end_turn",
+            "stop_sequence": None,
+            "usage": {
+                "input_tokens": sum(len(m["content"]) for m in messages),
+                "output_tokens": len(response)
+            }
+        }
 
     async def debug_dump(self):
         self.logger.debug("Starting debug_dump method")

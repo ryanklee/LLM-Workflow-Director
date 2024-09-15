@@ -34,49 +34,53 @@ async def claude_manager(mock_claude_client):
     logger.debug(f"Closed ClaudeManager instance")
 
 @pytest_asyncio.fixture
-async def mock_claude_client_with_responses(mock_claude_client, request):
+async def mock_claude_client_with_responses(request):
     logger = logging.getLogger(__name__)
-    logger.info(f"Initializing mock_claude_client_with_responses fixture for client {id(mock_claude_client)} in test {request.node.name}")
+    logger.info(f"Initializing mock_claude_client_with_responses fixture in test {request.node.name}")
+    
+    mock_client = MockClaudeClient(api_key="test_api_key")
     
     async def setup_responses(responses):
         logger.debug(f"Setting up responses: {responses}")
         for prompt, response in responses.items():
-            try:
-                await mock_claude_client.set_response(prompt, response)
-                logger.debug(f"Set response for prompt: {prompt}")
-            except Exception as e:
-                logger.error(f"Error setting response for prompt '{prompt}': {str(e)}", exc_info=True)
-                raise
+            mock_client.responses[prompt] = response
+            logger.debug(f"Set response for prompt: {prompt}")
     
-    try:
-        logger.debug(f"Verifying MockClaudeClient instance: {mock_claude_client}")
-        if mock_claude_client is None:
-            raise ValueError("mock_claude_client is None")
-            
-        try:
-            state = await mock_claude_client.debug_dump()
-            logger.debug(f"MockClaudeClient state: {state}")
-        except Exception as e:
-            logger.error(f"Error calling debug_dump: {str(e)}", exc_info=True)
-            raise
-            
-        logger.debug("Ensuring 'messages' attribute is initialized")
-        try:
-            messages = await mock_claude_client.ensure_messages_initialized()
-            logger.debug(f"Successfully initialized messages: {messages}")
-        except Exception as e:
-            logger.error(f"Error initializing messages: {str(e)}", exc_info=True)
-            raise
-            
-        if messages is None:
-            logger.error("MockClaudeClient 'messages' attribute is None")
-            raise ValueError("MockClaudeClient 'messages' attribute is None")
-    except Exception as e:
-        logger.error(f"Error during MockClaudeClient verification: {str(e)}", exc_info=True)
-        raise
+    logger.info(f"Returning MockClaudeClient: {mock_client}")
+    return mock_client, setup_responses
+
+@pytest.mark.asyncio
+async def test_mock_claude_client_custom_responses(mock_claude_client_with_responses):
+    logger = logging.getLogger(__name__)
+    logger.info("Starting test_mock_claude_client_custom_responses")
     
-    logger.info(f"Returning MockClaudeClient: {mock_claude_client}")
-    return mock_claude_client, setup_responses
+    mock_client, setup_responses = mock_claude_client_with_responses
+    
+    responses = {
+        "Hello": "Hi there!",
+        "How are you?": "I'm doing well, thank you for asking.",
+        "What's the weather like?": "I'm sorry, I don't have real-time weather information."
+    }
+    await setup_responses(responses)
+    logger.debug("Set custom responses")
+
+    for prompt, expected_response in responses.items():
+        logger.debug(f"Testing prompt: {prompt}")
+        try:
+            response = await mock_client.messages(
+                model="claude-3-opus-20240229",
+                max_tokens=100,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            actual_response = response["content"][0]["text"]
+            logger.debug(f"Received response: {actual_response}")
+            assert actual_response == expected_response, f"Expected '{expected_response}', but got '{actual_response}'"
+            logger.debug(f"Successful response for prompt: {prompt}")
+        except Exception as e:
+            logger.error(f"Error processing prompt '{prompt}': {str(e)}", exc_info=True)
+            raise
+
+    logger.info("Completed test_mock_claude_client_custom_responses successfully")
 
 @pytest.fixture(scope="function", autouse=True)
 def function_logger(request):

@@ -5,30 +5,30 @@ The test `test_mock_claude_client_custom_responses` in `tests/test_claude_api_in
 
 ## Updated Hypotheses (Ranked by Likelihood)
 
-1. Incomplete Method Implementation (Highest Likelihood)
-   - The `ensure_messages_initialized` and `_ensure_messages_initialized` methods are not implemented in the MockClaudeClient class.
-   - Validation: Check the MockClaudeClient class implementation for the missing methods.
-   - Status: Confirmed. The methods are missing in the MockClaudeClient class.
+1. Incorrect API Structure Implementation (Highest Likelihood)
+   - The MockClaudeClient class doesn't accurately reflect the structure of the official Claude API client.
+   - Validation: Compare MockClaudeClient implementation with official API documentation.
+   - Status: Confirmed. The `ensure_messages_initialized` method doesn't exist in the official API.
 
-2. Inconsistent Method Naming (High Likelihood)
-   - The methods might exist but with different names, causing the AttributeError.
-   - Validation: Review the MockClaudeClient class for similar methods or typos in method names.
-   - Status: Partially confirmed. The `ensure_messages_initialized` method is implemented, but not as an async method.
+2. Improper Client Initialization (High Likelihood)
+   - The MockClaudeClient may not be initialized correctly, leading to missing attributes.
+   - Validation: Review client initialization process in MockClaudeClient and compare with official SDK examples.
+   - Status: To be investigated.
 
-3. Asynchronous/Synchronous Method Mismatch (High Likelihood)
-   - The test might be calling asynchronous methods synchronously or vice versa.
-   - Validation: Review the test fixture and MockClaudeClient class for consistency in async/sync method usage.
-   - Status: Confirmed. The `ensure_messages_initialized` method is implemented as a synchronous method but called asynchronously.
+3. Incorrect Messages API Usage (High Likelihood)
+   - The test might be using the Messages API incorrectly, leading to attribute errors.
+   - Validation: Compare our Messages API usage with the official documentation.
+   - Status: To be investigated.
 
-4. Incorrect Property Implementation (Medium Likelihood)
-   - The `messages` property in MockClaudeClient is not correctly implemented or initialized.
-   - Validation: Review the MockClaudeClient class implementation, focusing on the `messages` property.
-   - Status: Partially confirmed. The `messages` property implementation exists but may need improvement.
+4. Asynchronous Method Implementation (Medium Likelihood)
+   - Our implementation of asynchronous methods may not match the official API's approach.
+   - Validation: Review asynchronous patterns in our code and compare with official streaming API documentation.
+   - Status: To be investigated.
 
-5. Fixture Initialization Issue (Medium Likelihood)
-   - The `mock_claude_client_with_responses` fixture is not properly initializing the MockClaudeClient instance.
-   - Validation: Add logging to track the fixture's execution and MockClaudeClient initialization.
-   - Status: Partially confirmed. Logging has been added, but initialization process needs improvement.
+5. Error Handling Discrepancies (Medium Likelihood)
+   - Our error handling might not accurately reflect the official API's error patterns.
+   - Validation: Compare our error handling with the official API error documentation.
+   - Status: To be investigated.
 
 ## New Learnings
 
