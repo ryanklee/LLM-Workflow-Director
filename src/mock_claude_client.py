@@ -801,3 +801,41 @@ class MockClaudeClient:
 
     async def count_tokens(self, text: str) -> int:
         return len(text.split())
+import asyncio
+from typing import Dict, List, Any
+
+class MockClaudeClient:
+    def __init__(self):
+        self.messages = []
+        self.lock = asyncio.Lock()
+
+    async def create_message(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+        async with self.lock:
+            message_id = f"msg_{len(self.messages) + 1}"
+            response = {
+                'id': message_id,
+                'type': 'message',
+                'role': 'assistant',
+                'content': [
+                    {
+                        'type': 'text',
+                        'text': f"Hello! This is a mock response for message {message_id}."
+                    }
+                ],
+                'model': model,
+                'stop_reason': 'end_turn',
+                'stop_sequence': None,
+                'usage': {
+                    'input_tokens': sum(len(m['content']) for m in messages),
+                    'output_tokens': len(response['content'][0]['text'])
+                }
+            }
+            self.messages.append(response)
+            return response
+
+    async def get_message(self, message_id: str) -> Dict[str, Any]:
+        async with self.lock:
+            for message in self.messages:
+                if message['id'] == message_id:
+                    return message
+            raise ValueError(f"Message with id {message_id} not found")

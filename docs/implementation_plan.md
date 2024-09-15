@@ -502,11 +502,15 @@ Throughout the implementation process, maintain regular communication with stake
     19.6. Review and update all tests to optimize string usage [TODO]
 
 20. Contract Testing Implementation (High)
-    20.1. Research and select a contract testing tool (e.g., Pact or Spring Cloud Contract) [TODO]
-    20.2. Set up the chosen contract testing tool in the project [TODO]
-    20.3. Define contract tests for all Claude API endpoints and behaviors [TODO]
+    20.1. Research and select a contract testing tool (e.g., Pact or Spring Cloud Contract) [COMPLETED]
+    20.2. Set up the chosen contract testing tool in the project [COMPLETED]
+    20.3. Define contract tests for all Claude API endpoints and behaviors [IN PROGRESS]
+        20.3.1. Implement contract test for create_message endpoint [COMPLETED]
+        20.3.2. Implement contract tests for other Claude API endpoints [TODO]
     20.4. Implement contract test execution in the CI/CD pipeline [TODO]
-    20.5. Create a mechanism to generate mock behaviors based on contract test results [TODO]
+    20.5. Create a mechanism to generate mock behaviors based on contract test results [IN PROGRESS]
+        20.5.1. Implement basic MockClaudeClient [COMPLETED]
+        20.5.2. Enhance MockClaudeClient to use contract test results [TODO]
     20.6. Implement versioning for contract tests to track API changes [TODO]
 
 21. Refactoring and Mocking Based on Contract Tests (High)
