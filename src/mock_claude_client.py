@@ -696,6 +696,9 @@ class MockClaudeClient:
             }
         }
 
+    async def messages(self):
+        return self
+
     async def _check_rate_limit(self):
         current_time = asyncio.get_event_loop().time()
         if current_time - self.last_reset > self.reset_interval:
