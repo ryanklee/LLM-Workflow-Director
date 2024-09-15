@@ -30,6 +30,18 @@ from src.exceptions import RateLimitError as CustomRateLimitError
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+import asyncio
+import time
+import logging
+import uuid
+from typing import Dict, Any, List
+from unittest.mock import MagicMock
+from anthropic import RateLimitError, APIError, APIStatusError
+from src.exceptions import RateLimitError as CustomRateLimitError
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 class MockClaudeClient:
     class Messages:
         def __init__(self, client):
@@ -41,6 +53,8 @@ class MockClaudeClient:
             return await self.client._create(model, max_tokens, messages)
 
     def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug("Starting initialization of MockClaudeClient")
         self.rate_limit_reached = False
         self.error_mode = False
         self.responses = {}
@@ -49,26 +63,30 @@ class MockClaudeClient:
         self.rate_limit_threshold = 5  # Number of calls before rate limiting
         self.last_call_time = 0
         self.latency = 0.1  # Default latency in seconds
-        self.logger = logging.getLogger(__name__)
         self.lock = asyncio.Lock()
         self.error_count = 0
         self.max_errors = 3
         self.rate_limit_reset_time = 60  # seconds
         self.max_context_length = 200000  # 200k tokens
         self._messages = None  # Initialize to None
-        self.logger.debug("Initialized MockClaudeClient")
+        self.logger.debug("Finished initialization of MockClaudeClient")
 
     @property
     def messages(self):
+        self.logger.debug("Accessing messages property")
         try:
             if self._messages is None:
                 self.logger.debug("Initializing Messages instance")
                 self._messages = self.Messages(self)
-            self.logger.debug("Accessing messages property")
             return self._messages
         except Exception as e:
             self.logger.error(f"Error accessing messages property: {str(e)}")
             raise
+
+    def debug_dump(self):
+        self.logger.debug("Dumping MockClaudeClient state:")
+        for attr, value in self.__dict__.items():
+            self.logger.debug(f"{attr}: {value}")
 
     async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
         self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}")
