@@ -1,5 +1,5 @@
 import pytest
-from pact import Consumer, Provider
+from pact import Consumer, Provider, Like
 
 @pytest.fixture(scope='session')
 def pact():
@@ -24,21 +24,21 @@ def test_create_message(pact, claude_client):
             'messages': [{'role': 'user', 'content': 'Hello, Claude!'}]
         }
     ).will_respond_with(200, body={
-        'id': pytest.matchers.like('msg_123abc'),
+        'id': Like('msg_123abc'),
         'type': 'message',
         'role': 'assistant',
         'content': [
             {
                 'type': 'text',
-                'text': pytest.matchers.like('Hello! How can I assist you today?')
+                'text': Like('Hello! How can I assist you today?')
             }
         ],
         'model': 'claude-3-opus-20240229',
         'stop_reason': 'end_turn',
         'stop_sequence': None,
         'usage': {
-            'input_tokens': pytest.matchers.like(5),
-            'output_tokens': pytest.matchers.like(9)
+            'input_tokens': Like(5),
+            'output_tokens': Like(9)
         }
     })
 
@@ -59,7 +59,7 @@ def test_count_tokens(pact, claude_client):
             'prompt': 'Hello, world!'
         }
     ).will_respond_with(200, body={
-        'token_count': pytest.matchers.like(3)
+        'token_count': Like(3)
     })
 
     with pact:
