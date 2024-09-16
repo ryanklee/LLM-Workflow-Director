@@ -14,7 +14,7 @@ def pact():
 @pytest.fixture
 def claude_client(pact):
     from src.mock_claude_client import MockClaudeClient
-    yield MockClaudeClient(base_url=f'http://{pact.host_name}:{pact.port}')
+    yield MockClaudeClient()
 
 def test_create_message(pact, claude_client):
     pact.given(
