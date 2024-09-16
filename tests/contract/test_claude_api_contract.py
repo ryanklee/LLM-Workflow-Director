@@ -15,13 +15,18 @@ def pact():
     pact.stop_service()
 
 @pytest.fixture
-def claude_client(pact):
+def pact_context(pact):
+    with pact:
+        yield pact
+
+@pytest.fixture
+async def claude_client():
     from src.mock_claude_client import MockClaudeClient
-    yield MockClaudeClient()
+    return MockClaudeClient()
 
 @pytest.mark.asyncio
-async def test_create_message(pact, claude_client):
-    pact.given(
+async def test_create_message(pact_context, claude_client):
+    pact_context.given(
         'A request to create a message'
     ).upon_receiving(
         'A valid message creation request'
@@ -51,14 +56,13 @@ async def test_create_message(pact, claude_client):
         }
     })
 
-    async with pact:
-        result = await claude_client.create_message('Hello, Claude!', max_tokens=1000)
-        assert result['role'] == 'assistant'
-        assert isinstance(result['content'][0]['text'], str)
+    result = await claude_client.create_message('Hello, Claude!', max_tokens=1000)
+    assert result['role'] == 'assistant'
+    assert isinstance(result['content'][0]['text'], str)
 
 @pytest.mark.asyncio
-async def test_count_tokens(pact, claude_client):
-    pact.given(
+async def test_count_tokens(pact_context, claude_client):
+    pact_context.given(
         'A request to count tokens'
     ).upon_receiving(
         'A valid token counting request'
@@ -72,7 +76,6 @@ async def test_count_tokens(pact, claude_client):
         'token_count': Like(3)
     })
 
-    async with pact:
-        result = await claude_client.count_tokens('Hello, world!')
-        assert isinstance(result, int)
-        assert result > 0
+    result = await claude_client.count_tokens('Hello, world!')
+    assert isinstance(result, int)
+    assert result > 0
