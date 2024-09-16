@@ -27,7 +27,13 @@ def pact_context(pact):
 
 @pytest.fixture
 async def claude_client():
-    return MockClaudeClient()
+    client = MockClaudeClient(api_key="test_api_key")
+    logger.debug(f"Created MockClaudeClient instance: {client}")
+    try:
+        yield client
+    finally:
+        logger.debug(f"Cleaning up MockClaudeClient instance: {client}")
+        await client.debug_dump()
 
 @pytest.mark.asyncio
 async def test_create_message(pact_context, claude_client):
