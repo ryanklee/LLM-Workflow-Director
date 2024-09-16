@@ -1,15 +1,21 @@
 import pytest
 from pact import Consumer, Provider, Like
+from pact.pact import Pact
 
 @pytest.fixture(scope='session')
 def pact():
-    return Consumer('LLMWorkflowDirector').has_pact_with(Provider('ClaudeAPI'))
+    return Consumer('LLMWorkflowDirector').has_pact_with(
+        Provider('ClaudeAPI'),
+        port=1234,
+        host_name='localhost',
+        pact_dir='./pacts'
+    )
 
 @pytest.fixture
-def claude_client():
-    # This should return a mock client or a real client configured for testing
+def claude_client(pact):
     from src.mock_claude_client import MockClaudeClient
-    return MockClaudeClient()
+    with pact.mock_service():
+        yield MockClaudeClient(base_url=f'http://{pact.host_name}:{pact.port}')
 
 def test_create_message(pact, claude_client):
     pact.given(
@@ -42,10 +48,9 @@ def test_create_message(pact, claude_client):
         }
     })
 
-    with pact:
-        result = claude_client.create_message('Hello, Claude!', max_tokens=1000)
-        assert result['role'] == 'assistant'
-        assert isinstance(result['content'][0]['text'], str)
+    result = claude_client.create_message('Hello, Claude!', max_tokens=1000)
+    assert result['role'] == 'assistant'
+    assert isinstance(result['content'][0]['text'], str)
 
 def test_count_tokens(pact, claude_client):
     pact.given(
@@ -62,7 +67,6 @@ def test_count_tokens(pact, claude_client):
         'token_count': Like(3)
     })
 
-    with pact:
-        result = claude_client.count_tokens('Hello, world!')
-        assert isinstance(result, int)
-        assert result > 0
+    result = claude_client.count_tokens('Hello, world!')
+    assert isinstance(result, int)
+    assert result > 0
