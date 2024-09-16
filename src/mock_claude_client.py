@@ -547,9 +547,9 @@ import asyncio
 import time
 import logging
 import uuid
-from typing import Dict, Any, List
+from typing import Dict, Any, List, AsyncGenerator
 from unittest.mock import MagicMock
-from anthropic import RateLimitError, APIError, APIStatusError
+from anthropic import APIStatusError
 from src.exceptions import CustomRateLimitError
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -561,7 +561,7 @@ class MockClaudeClient:
             self.client = client
             self.client.logger.debug("Initialized Messages class")
 
-        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any]:
+        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any] | AsyncGenerator[Dict[str, Any], None]:
             self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}, stream: {stream}")
             return await self.client._create(model, max_tokens, messages, stream)
 
@@ -626,25 +626,13 @@ class MockClaudeClient:
             self.logger.error(f"Error in debug_dump: {str(e)}", exc_info=True)
             raise
 
-    async def set_error_mode(self, mode: bool):
-        self.logger.debug(f"Setting error mode to: {mode}")
-        self.error_mode = mode
-
-    async def set_response(self, prompt: str, response: str):
-        self.logger.debug(f"Setting response for prompt: {prompt[:50]}...")
-        self.responses[prompt] = response
-
-    async def set_rate_limit(self, limit: int):
-        self.logger.debug(f"Setting rate limit to: {limit}")
-        self.rate_limit = limit
-
     def __str__(self):
         return f"MockClaudeClient(call_count={self.call_count}, error_count={self.error_count}, error_mode={self.error_mode})"
 
     def __repr__(self):
         return self.__str__()
 
-    async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any]:
+    async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any] | AsyncGenerator[Dict[str, Any], None]:
         self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}, stream: {stream}")
         try:
             await self._check_rate_limit()
@@ -711,103 +699,8 @@ class MockClaudeClient:
         else:
             return self.responses.get(prompt, "Default mock response")
 
-    async def debug_dump(self):
-        self.logger.debug("Starting debug_dump method")
-        try:
-            state = {}
-            for attr, value in self.__dict__.items():
-                if attr != 'logger':
-                    state[attr] = str(value)
-                    self.logger.debug(f"{attr}: {value}")
-            self.logger.debug("Finished debug_dump method")
-            return state
-        except Exception as e:
-            self.logger.error(f"Error in debug_dump: {str(e)}", exc_info=True)
-            raise
-
-    def ensure_messages_initialized(self):
-        if self._messages is None:
-            self.logger.warning("Messages instance not initialized. Initializing now.")
-            self._messages = self.Messages(self)
-        return self._messages
-
-    async def debug_dump(self):
-        self.logger.debug("Starting debug_dump method")
-        try:
-            state = {}
-            for attr, value in self.__dict__.items():
-                if attr != 'logger':
-                    state[attr] = str(value)
-                    self.logger.debug(f"{attr}: {value}")
-            self.logger.debug("Finished debug_dump method")
-            return state
-        except Exception as e:
-            self.logger.error(f"Error in debug_dump: {str(e)}", exc_info=True)
-            raise
-
-    async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
-        self.logger.debug(f"_create method called with model: {model}, max_tokens: {max_tokens}")
-        # ... (rest of the method implementation)
-
-    def __init__(self, api_key: str, rate_limit: int = 10, reset_time: int = 60):
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
-        handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
-        self.logger.debug(f"Starting initialization of MockClaudeClient with api_key: {api_key[:5]}...")
-        
-        self.api_key = api_key
-        self.rate_limit = rate_limit
-        self.reset_time = reset_time
-        self.calls = 0
-        self.last_reset = asyncio.get_event_loop().time()
-        self.error_mode = False
-        self.latency = 0
-        self.responses = {}
-        self.max_test_tokens = 1000
-        self.call_count = 0
-        self.error_count = 0
-        self.max_errors = 3
-        self._messages = None
-        self.logger.debug("Finished initialization of MockClaudeClient")
-
-    async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
-        self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}")
-        await self._check_rate_limit()
-        await asyncio.sleep(self.latency)
-
-        if self.error_mode:
-            self.error_count += 1
-            if self.error_count <= self.max_errors:
-                self.logger.error("Simulated API error")
-                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
-
-        prompt = messages[0]['content']
-        self.logger.debug(f"Received prompt: {prompt[:50]}...")
-        if len(prompt) > self.max_test_tokens:
-            self.logger.warning(f"Prompt exceeds max tokens. Prompt length: {len(prompt)}, Max tokens: {self.max_test_tokens}")
-            raise ValueError(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
-
-        response = self.responses.get(prompt, "Default mock response")
-        if len(response) > max_tokens:
-            self.logger.warning(f"Response exceeds max tokens. Truncating. Original length: {len(response)}")
-            response = response[:max_tokens] + "..."
-
-        self.call_count += 1
-        self.logger.debug(f"Returning response: {response[:50]}...")
-        return {
-            "content": [{"text": f"<response>{response}</response>"}],
-            "model": model,
-            "usage": {
-                "input_tokens": sum(len(m["content"]) for m in messages),
-                "output_tokens": len(response)
-            }
-        }
-
     async def _check_rate_limit(self):
-        current_time = asyncio.get_event_loop().time()
+        current_time = time.time()
         if current_time - self.last_reset > self.reset_time:
             self.calls = 0
             self.last_reset = current_time
@@ -816,21 +709,9 @@ class MockClaudeClient:
         if self.calls > self.rate_limit:
             raise CustomRateLimitError("Rate limit exceeded")
 
-    async def set_response(self, prompt: str, response: str):
-        self.responses[prompt] = response
-
-    async def set_error_mode(self, mode: bool):
-        self.error_mode = mode
-
-    async def set_latency(self, latency: float):
-        self.latency = latency
-
-    async def set_rate_limit(self, limit: int):
-        self.rate_limit = limit
-
     async def reset(self):
         self.calls = 0
-        self.last_reset = asyncio.get_event_loop().time()
+        self.last_reset = time.time()
         self.error_mode = False
         self.latency = 0
         self.responses = {}
@@ -838,15 +719,12 @@ class MockClaudeClient:
         self.error_count = 0
 
     async def count_tokens(self, text: str) -> int:
-        url = f"{self.base_url}/v1/tokenize"
-        body = {
-            "model": "claude-3-opus-20240229",
-            "prompt": text
-        }
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=body) as response:
-                result = await response.json()
-                return result['token_count']
+        # Simplified token counting for mock purposes
+        return len(text.split())
+
+    async def set_latency(self, latency: float):
+        self.logger.debug(f"Setting latency to: {latency}")
+        self.latency = latency
 import asyncio
 from typing import Dict, List, Any
 
