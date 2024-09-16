@@ -420,7 +420,21 @@ class Messages:
         return self.responses.get(prompt, "Default mock response")
 
     async def count_tokens(self, text: str) -> int:
-        return len(text.split())
+        self.logger.debug(f"Counting tokens for text: {text[:50]}...")
+        url = f"{self.base_url}/v1/tokenize"
+        body = {
+            "model": "claude-3-opus-20240229",
+            "prompt": text
+        }
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=body, headers={"X-API-Key": self.api_key}) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    self.logger.debug(f"Token count: {result['token_count']}")
+                    return result['token_count']
+                else:
+                    self.logger.error(f"Error counting tokens: {response.status}")
+                    raise APIStatusError(f"Error counting tokens: {response.status}", response=response, body={})
 
     async def _check_rate_limit(self):
         current_time = asyncio.get_event_loop().time()
