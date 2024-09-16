@@ -590,12 +590,19 @@ This structure provides a more comprehensive and organized set of requirements f
     17.6. The system shall be packaged as a Python module for easy distribution and deployment.
     17.7. The system shall support cross-platform compatibility (Windows, macOS, Linux).
 
-18. Vector Database Integration
-    18.1. The system shall integrate with a vector database for efficient storage and retrieval of project-related information.
-    18.2. The system shall provide interfaces for storing, updating, and querying vector embeddings.
-    18.3. The system shall use the vector database to enhance context retrieval for LLM interactions.
-    18.4. The system shall implement efficient indexing and search algorithms for the vector database.
-    18.5. The system shall ensure proper error handling and performance optimization for vector database operations.
+18. Chroma DB Integration
+    18.1. The system shall integrate with Chroma DB for efficient storage and retrieval of project-related information as vector embeddings.
+    18.2. The system shall use Chroma DB's Python client to provide interfaces for storing, updating, and querying vector embeddings.
+    18.3. The system shall use Chroma DB to enhance context retrieval for LLM interactions by performing similarity searches.
+    18.4. The system shall utilize Chroma DB's built-in indexing and search algorithms for efficient retrieval of relevant information.
+    18.5. The system shall implement proper error handling and performance optimization for Chroma DB operations.
+    18.6. The system shall support both in-memory and persistent storage options provided by Chroma DB.
+    18.7. The system shall utilize Chroma DB's collection management features to organize embeddings by project or domain.
+    18.8. The system shall leverage Chroma DB's metadata filtering capabilities to enhance search precision.
+    18.9. The system shall support Chroma DB's ability to store and query documents, embeddings, and metadata.
+    18.10. The system shall utilize Chroma DB's support for different distance functions (L2, IP, cosine) for similarity search.
+    18.11. The system shall implement Chroma DB's data persistence using PersistentClient for production environments.
+    18.12. The system shall support Chroma DB's ability to add, query, update, and delete embeddings and their associated metadata and documents.
 
 19. Claude API Integration and Usage Optimization
     19.1. The system shall integrate directly with Anthropic's Claude API for all LLM interactions.
