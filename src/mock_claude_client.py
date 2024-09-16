@@ -120,6 +120,20 @@ class MockClaudeClient:
         async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any]:
             self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}, stream: {stream}")
             return await self.client._create(model, max_tokens, messages, stream)
+
+    def __init__(self, api_key: str = "mock_api_key", base_url: str = "https://api.anthropic.com"):
+        self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        self.logger.setLevel(logging.DEBUG)
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+        self.logger.debug(f"Initializing MockClaudeClient {id(self)} with api_key: {api_key[:5]}, base_url: {base_url}")
+        
+        self.api_key = api_key
+        self.base_url = base_url
+        self.messages = self.Messages(self)
+
         self.calls = 0
         self.last_reset = asyncio.get_event_loop().time()
         self.error_mode = False
