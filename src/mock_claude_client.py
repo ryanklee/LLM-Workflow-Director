@@ -557,6 +557,13 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(leve
 logger = logging.getLogger(__name__)
 
 class MockClaudeClient:
+    class Messages:
+        def __init__(self, client):
+            self.client = client
+
+        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+            return await self.client._create(model, max_tokens, messages)
+
     def __init__(self, api_key: str, rate_limit: int = 10, reset_time: int = 60):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.logger.setLevel(logging.DEBUG)
@@ -578,7 +585,7 @@ class MockClaudeClient:
         self.call_count = 0
         self.error_count = 0
         self.max_errors = 3
-        self._messages = None
+        self.messages = self.Messages(self)
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
 
     def __str__(self):
