@@ -102,6 +102,20 @@ async def test_rate_limit_handling(pact_context, claude_client):
         }
     })
 
+    # Set a low rate limit for testing
+    await claude_client.set_rate_limit(5)
+    logger.debug(f"Set rate limit to 5")
+
+    # Simulate reaching the rate limit
+    for i in range(5):
+        logger.debug(f"Sending request {i+1}/5")
+        await claude_client.messages.create(
+            model='claude-3-opus-20240229',
+            max_tokens=100,
+            messages=[{'role': 'user', 'content': 'Test message'}]
+        )
+
+    logger.debug("Attempting to exceed rate limit")
     with pytest.raises(CustomRateLimitError) as exc_info:
         await claude_client.messages.create(
             model='claude-3-opus-20240229',
