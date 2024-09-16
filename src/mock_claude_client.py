@@ -602,6 +602,42 @@ class MockClaudeClient:
         self.logger.debug(f"Setting rate limit to: {limit}")
         self.rate_limit = limit
 
+    async def debug_dump(self):
+        self.logger.debug("Starting debug_dump method")
+        try:
+            state = {
+                "api_key": self.api_key[:5] + "...",
+                "rate_limit": self.rate_limit,
+                "reset_time": self.reset_time,
+                "calls": self.calls,
+                "last_reset": self.last_reset,
+                "error_mode": self.error_mode,
+                "latency": self.latency,
+                "max_test_tokens": self.max_test_tokens,
+                "call_count": self.call_count,
+                "error_count": self.error_count,
+                "max_errors": self.max_errors,
+                "context_length": len(self.context),
+                "responses_count": len(self.responses)
+            }
+            self.logger.debug(f"Debug dump state: {state}")
+            return state
+        except Exception as e:
+            self.logger.error(f"Error in debug_dump: {str(e)}", exc_info=True)
+            raise
+
+    async def set_error_mode(self, mode: bool):
+        self.logger.debug(f"Setting error mode to: {mode}")
+        self.error_mode = mode
+
+    async def set_response(self, prompt: str, response: str):
+        self.logger.debug(f"Setting response for prompt: {prompt[:50]}...")
+        self.responses[prompt] = response
+
+    async def set_rate_limit(self, limit: int):
+        self.logger.debug(f"Setting rate limit to: {limit}")
+        self.rate_limit = limit
+
     def __str__(self):
         return f"MockClaudeClient(call_count={self.call_count}, error_count={self.error_count}, error_mode={self.error_mode})"
 
