@@ -559,8 +559,10 @@ class MockClaudeClient:
     class Messages:
         def __init__(self, client):
             self.client = client
+            self.client.logger.debug("Initialized Messages class")
 
         async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+            self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}")
             return await self.client._create(model, max_tokens, messages)
 
     def __init__(self, api_key: str, rate_limit: int = 10, reset_time: int = 60):
