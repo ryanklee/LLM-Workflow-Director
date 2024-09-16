@@ -779,39 +779,41 @@ import asyncio
 import logging
 from typing import Dict, Any, List
 
+import asyncio
+import logging
+from typing import Dict, Any, List
+import uuid
+
 class MockClaudeClient:
     def __init__(self, api_key: str):
         self.api_key = api_key
-        self._messages = None
+        self._messages = []
         self.lock = asyncio.Lock()
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
         self.logger.debug(f"MockClaudeClient initialized with API key: {api_key[:5]}...")
 
     @property
     def messages(self):
-        if self._messages is None:
-            self._messages = self.Messages(self)
-            self.logger.debug("Messages instance created")
-        return self._messages
+        return self.Messages(self)
 
     class Messages:
         def __init__(self, client):
             self.client = client
             self.client.logger.debug("Messages inner class initialized")
 
-        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
-            self.client.logger.debug(f"Creating message with model: {model}, max_tokens: {max_tokens}")
-            return await self.client.create_message(messages[-1]['content'], max_tokens, model)
+        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any]:
+            self.client.logger.debug(f"Creating message with model: {model}, max_tokens: {max_tokens}, stream: {stream}")
+            return await self.client.create_message(messages[-1]['content'], max_tokens, model, stream)
 
-    async def create_message(self, prompt: str, max_tokens: int = 1000, model: str = 'claude-3-opus-20240229') -> Dict[str, Any]:
-        self.logger.debug(f"Creating message with prompt: {prompt[:50]}...")
+    async def create_message(self, prompt: str, max_tokens: int = 1000, model: str = 'claude-3-opus-20240229', stream: bool = False) -> Dict[str, Any]:
+        self.logger.debug(f"Creating message with prompt: {prompt[:50]}..., stream: {stream}")
         async with self.lock:
-            message_id = f"msg_{len(self.messages) + 1}"
+            message_id = f"msg_{uuid.uuid4()}"
             mock_response = {
                 'id': message_id,
                 'type': 'message',
@@ -830,23 +832,27 @@ class MockClaudeClient:
                     'output_tokens': len("Hello! How can I assist you today?".split())
                 }
             }
-            self.messages.append(mock_response)
+            self._messages.append(mock_response)
             self.logger.debug(f"Created message with ID: {message_id}")
-            return mock_response
+            
+            if stream:
+                async def response_generator():
+                    yield {'type': 'content_block_delta', 'delta': {'type': 'text', 'text': 'Hello!'}}
+                    yield {'type': 'content_block_delta', 'delta': {'type': 'text', 'text': ' How can I assist you today?'}}
+                    yield {'type': 'message_delta', 'delta': {'stop_reason': 'end_turn'}}
+                return response_generator()
+            else:
+                return mock_response
 
     async def count_tokens(self, text: str) -> int:
         token_count = len(text.split())
         self.logger.debug(f"Counted {token_count} tokens for text: {text[:50]}...")
         return token_count
 
-    class Messages:
-        def __init__(self, client):
-            self.client = client
-
-        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
-            prompt = messages[-1]['content']
-            return await self.client.create_message(prompt, max_tokens, model)
-
-    @property
-    def messages(self):
-        return self.Messages(self)
+    async def debug_dump(self) -> Dict[str, Any]:
+        self.logger.debug("Performing debug dump")
+        return {
+            'api_key': f"{self.api_key[:5]}...",
+            'message_count': len(self._messages),
+            'last_message': self._messages[-1] if self._messages else None
+        }
