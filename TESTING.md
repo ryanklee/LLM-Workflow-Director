@@ -9,7 +9,7 @@ This document outlines the testing practices and guidelines for the LLM-Workflow
 - Test functions are also prefixed with `test_`
 
 ## Running Tests
-To run all tests:
+To run all tests in parallel:
 ```
 pytest
 ```
@@ -19,12 +19,27 @@ To run specific test files:
 pytest tests/test_file_name.py
 ```
 
+To run tests with a specific number of workers:
+```
+pytest -n 4
+```
+
 ## Test Categories
 We use pytest marks to categorize our tests:
 - `@pytest.mark.fast`: Quick tests that should run frequently
 - `@pytest.mark.slow`: Slower tests that might take more time
 - `@pytest.mark.benchmark`: Performance benchmark tests
 - `@pytest.mark.asyncio`: Asynchronous tests
+
+To run only fast tests:
+```
+pytest -m fast
+```
+
+To run all tests except slow ones:
+```
+pytest -m "not slow"
+```
 
 ## Fixtures
 We use fixtures for setting up test environments and sharing resources across tests. Key fixtures include:
