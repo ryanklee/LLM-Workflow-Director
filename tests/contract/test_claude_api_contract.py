@@ -72,7 +72,7 @@ async def test_count_tokens(pact, claude_client):
         'token_count': Like(3)
     })
 
-    with pact:
+    async with pact:
         result = await claude_client.count_tokens('Hello, world!')
         assert isinstance(result, int)
         assert result > 0
