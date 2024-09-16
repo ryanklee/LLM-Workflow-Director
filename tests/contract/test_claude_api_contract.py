@@ -279,3 +279,112 @@ async def test_context_window(pact_context, claude_client):
     assert 'summary' in result['content'][0]['text'].lower()
     assert result['usage']['input_tokens'] > 1000  # Ensure it's processing a large context
     logger.info("test_context_window completed successfully")
+
+@pytest.mark.asyncio
+async def test_multi_turn_conversation(pact_context, claude_client):
+    logger.info("Starting test_multi_turn_conversation")
+    pact_context.given(
+        'A multi-turn conversation'
+    ).upon_receiving(
+        'A valid multi-turn conversation request'
+    ).with_request(
+        'POST', '/v1/messages',
+        headers={'X-API-Key': Like('sk-ant-api03-valid-key')},
+        body={
+            'model': 'claude-3-opus-20240229',
+            'max_tokens': 100,
+            'messages': [
+                {'role': 'user', 'content': 'Hello, Claude!'},
+                {'role': 'assistant', 'content': 'Hello! How can I assist you today?'},
+                {'role': 'user', 'content': 'Can you tell me a joke?'}
+            ]
+        }
+    ).will_respond_with(200, body={
+        'id': Like('msg_456def'),
+        'type': 'message',
+        'role': 'assistant',
+        'content': [
+            {
+                'type': 'text',
+                'text': Like('Sure, here\'s a joke for you:')
+            }
+        ],
+        'model': 'claude-3-opus-20240229',
+        'stop_reason': 'end_turn',
+        'stop_sequence': None,
+        'usage': {
+            'input_tokens': Like(20),
+            'output_tokens': Like(10)
+        }
+    })
+
+    result = await claude_client.messages.create(
+        model='claude-3-opus-20240229',
+        max_tokens=100,
+        messages=[
+            {'role': 'user', 'content': 'Hello, Claude!'},
+            {'role': 'assistant', 'content': 'Hello! How can I assist you today?'},
+            {'role': 'user', 'content': 'Can you tell me a joke?'}
+        ]
+    )
+    logger.debug(f"Received result: {result}")
+    assert 'joke' in result['content'][0]['text'].lower()
+    assert result['model'] == 'claude-3-opus-20240229'
+    assert result['type'] == 'message'
+    assert result['role'] == 'assistant'
+    assert 'usage' in result
+    logger.info("test_multi_turn_conversation completed successfully")
+
+@pytest.mark.asyncio
+async def test_system_message(pact_context, claude_client):
+    logger.info("Starting test_system_message")
+    pact_context.given(
+        'A request with a system message'
+    ).upon_receiving(
+        'A valid request with a system message'
+    ).with_request(
+        'POST', '/v1/messages',
+        headers={'X-API-Key': Like('sk-ant-api03-valid-key')},
+        body={
+            'model': 'claude-3-opus-20240229',
+            'max_tokens': 100,
+            'messages': [
+                {'role': 'system', 'content': 'You are a helpful assistant that speaks like Shakespeare.'},
+                {'role': 'user', 'content': 'Tell me about the weather.'}
+            ]
+        }
+    ).will_respond_with(200, body={
+        'id': Like('msg_789ghi'),
+        'type': 'message',
+        'role': 'assistant',
+        'content': [
+            {
+                'type': 'text',
+                'text': Like('Hark! The weather, thou doth inquire?')
+            }
+        ],
+        'model': 'claude-3-opus-20240229',
+        'stop_reason': 'end_turn',
+        'stop_sequence': None,
+        'usage': {
+            'input_tokens': Like(25),
+            'output_tokens': Like(15)
+        }
+    })
+
+    result = await claude_client.messages.create(
+        model='claude-3-opus-20240229',
+        max_tokens=100,
+        messages=[
+            {'role': 'system', 'content': 'You are a helpful assistant that speaks like Shakespeare.'},
+            {'role': 'user', 'content': 'Tell me about the weather.'}
+        ]
+    )
+    logger.debug(f"Received result: {result}")
+    assert any(word in result['content'][0]['text'].lower() for word in ['hark', 'thou', 'doth'])
+    assert 'weather' in result['content'][0]['text'].lower()
+    assert result['model'] == 'claude-3-opus-20240229'
+    assert result['type'] == 'message'
+    assert result['role'] == 'assistant'
+    assert 'usage' in result
+    logger.info("test_system_message completed successfully")
