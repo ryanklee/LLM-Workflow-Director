@@ -14,8 +14,7 @@ def pact():
 @pytest.fixture
 def claude_client(pact):
     from src.mock_claude_client import MockClaudeClient
-    with pact.mock_service():
-        yield MockClaudeClient(base_url=f'http://{pact.host_name}:{pact.port}')
+    yield MockClaudeClient(base_url=f'http://{pact.host_name}:{pact.port}')
 
 def test_create_message(pact, claude_client):
     pact.given(
@@ -48,9 +47,10 @@ def test_create_message(pact, claude_client):
         }
     })
 
-    result = claude_client.create_message('Hello, Claude!', max_tokens=1000)
-    assert result['role'] == 'assistant'
-    assert isinstance(result['content'][0]['text'], str)
+    with pact:
+        result = claude_client.create_message('Hello, Claude!', max_tokens=1000)
+        assert result['role'] == 'assistant'
+        assert isinstance(result['content'][0]['text'], str)
 
 def test_count_tokens(pact, claude_client):
     pact.given(
@@ -67,6 +67,7 @@ def test_count_tokens(pact, claude_client):
         'token_count': Like(3)
     })
 
-    result = claude_client.count_tokens('Hello, world!')
-    assert isinstance(result, int)
-    assert result > 0
+    with pact:
+        result = claude_client.count_tokens('Hello, world!')
+        assert isinstance(result, int)
+        assert result > 0
