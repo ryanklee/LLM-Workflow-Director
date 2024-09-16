@@ -561,9 +561,9 @@ class MockClaudeClient:
             self.client = client
             self.client.logger.debug("Initialized Messages class")
 
-        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
-            self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}")
-            return await self.client._create(model, max_tokens, messages)
+        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any]:
+            self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}, stream: {stream}")
+            return await self.client._create(model, max_tokens, messages, stream)
 
     def __init__(self, api_key: str, rate_limit: int = 10, reset_time: int = 60):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
@@ -587,6 +587,7 @@ class MockClaudeClient:
         self.error_count = 0
         self.max_errors = 3
         self.messages = self.Messages(self)
+        self.context = []
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
 
     def __str__(self):
@@ -595,33 +596,39 @@ class MockClaudeClient:
     def __repr__(self):
         return self.__str__()
 
-    async def messages(self, model: str, max_tokens: int, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
-        self.logger.debug(f"Messages method called with model: {model}, max_tokens: {max_tokens}")
-        return await self._create(model, max_tokens, messages, **kwargs)
+    async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any]:
+        self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}, stream: {stream}")
+        await self._check_rate_limit()
+        await asyncio.sleep(self.latency)
 
-    class Messages:
-        def __init__(self, client):
-            self.client = client
+        if self.error_mode:
+            self.error_count += 1
+            if self.error_count <= self.max_errors:
+                self.logger.error("Simulated API error")
+                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
 
-        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
-            self.client.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}")
-            
-            if self.client.error_mode:
-                self.client.error_count += 1
-                if self.client.error_count <= self.client.max_errors:
-                    self.client.logger.error("Simulated API error")
-                    raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+        self.context.extend(messages)
+        prompt = messages[-1]['content']
+        self.logger.debug(f"Received prompt: {prompt[:50]}...")
+        if len(prompt) > self.max_test_tokens:
+            self.logger.warning(f"Prompt exceeds max tokens. Prompt length: {len(prompt)}, Max tokens: {self.max_test_tokens}")
+            raise ValueError(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
 
-            prompt = messages[-1]['content']
-            self.client.logger.debug(f"Received prompt: {prompt[:50]}...")
-            
-            response = self.client.responses.get(prompt, "Default mock response")
-            if len(response) > max_tokens:
-                self.client.logger.warning(f"Response exceeds max tokens. Truncating. Original length: {len(response)}")
-                response = response[:max_tokens] + "..."
+        response = self._generate_response(prompt, model)
+        if len(response) > max_tokens:
+            self.logger.warning(f"Response exceeds max tokens. Truncating. Original length: {len(response)}")
+            response = response[:max_tokens] + "..."
 
-            self.client.call_count += 1
-            self.client.logger.debug(f"Returning response: {response[:50]}...")
+        self.call_count += 1
+        self.logger.debug(f"Returning response: {response[:50]}...")
+
+        if stream:
+            async def response_generator():
+                for chunk in response.split():
+                    yield {"type": "content_block_delta", "delta": {"type": "text", "text": chunk}}
+                yield {"type": "message_delta", "delta": {"stop_reason": "end_turn"}}
+            return response_generator()
+        else:
             return {
                 "id": f"msg_{uuid.uuid4()}",
                 "type": "message",
@@ -635,6 +642,16 @@ class MockClaudeClient:
                     "output_tokens": len(response)
                 }
             }
+
+    def _generate_response(self, prompt: str, model: str) -> str:
+        if "summary" in prompt.lower():
+            return "Here is a summary of the long context: [Summary content]"
+        elif "joke" in prompt.lower():
+            return "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
+        elif any(word in prompt.lower() for word in ['hark', 'thou', 'doth']):
+            return "Hark! Thou doth request a Shakespearean response, and so I shall provide!"
+        else:
+            return self.responses.get(prompt, "Default mock response")
 
     async def debug_dump(self):
         self.logger.debug("Starting debug_dump method")
