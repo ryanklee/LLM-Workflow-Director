@@ -22,9 +22,7 @@ def pact_context(pact):
 
 @pytest.fixture
 async def claude_client():
-    client = MockClaudeClient()
-    client.messages = client.Messages(client)
-    return client
+    return MockClaudeClient()
 
 @pytest.mark.asyncio
 async def test_create_message(pact_context, claude_client):
