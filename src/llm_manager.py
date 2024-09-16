@@ -148,7 +148,7 @@ class LLMManager:
         self.logger.debug(f"Tier: {tier}")
         self.logger.debug(f"Model: {model}")
         
-        start_time = await self._get_time()
+        start_time = time.time()
         self.logger.debug(f"Query start time: {start_time}")
         
         try:
@@ -165,7 +165,6 @@ class LLMManager:
                 return self.cache[cache_key]
 
             max_retries = 3
-            start_time = time.time()
             original_tier = tier
 
             while max_retries > 0:

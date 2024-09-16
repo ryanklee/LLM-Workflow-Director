@@ -133,19 +133,22 @@ class TokenOptimizer:
 class TokenTracker:
     def __init__(self):
         self.token_usage = {}
+        self.total_tokens = 0
         self.lock = asyncio.Lock()
 
     async def add_tokens(self, key, input_tokens, output_tokens):
         async with self.lock:
-            self.token_usage[key] = self.token_usage.get(key, 0) + input_tokens + output_tokens
+            total_tokens = input_tokens + output_tokens
+            self.token_usage[key] = self.token_usage.get(key, 0) + total_tokens
+            self.total_tokens += total_tokens
 
     async def get_token_usage(self, key):
         async with self.lock:
             return self.token_usage.get(key, 0)
 
-    async def get_total_token_usage(self):
+    async def get_total_tokens(self):
         async with self.lock:
-            return sum(self.token_usage.values())
+            return self.total_tokens
 
     async def count_tokens(self, text: str) -> int:
         # This is a simple approximation. For more accurate results, use a proper tokenizer.
@@ -154,3 +157,4 @@ class TokenTracker:
     async def reset(self):
         async with self.lock:
             self.token_usage.clear()
+            self.total_tokens = 0

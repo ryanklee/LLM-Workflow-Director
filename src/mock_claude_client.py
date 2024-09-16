@@ -73,7 +73,7 @@ class MockClaudeClient:
         self.messages = self.Messages(self)
 
         self.calls = 0
-        self.last_reset = asyncio.get_event_loop().time()
+        self.last_reset = time.time()
         self.error_mode = False
         self.latency = 0.1
         self.responses = {}
