@@ -72,6 +72,31 @@ class MockClaudeClient:
         self.base_url = base_url
         self.messages = self.Messages(self)
 
+        self.calls = 0
+        self.last_reset = asyncio.get_event_loop().time()
+        self.error_mode = False
+        self.latency = 0.1
+        self.responses = {}
+        self.max_test_tokens = 1000
+        self.call_count = 0
+        self.error_count = 0
+        self.max_errors = 3
+        self.max_context_length = 200000
+        self.last_reset_time = time.time()
+        self.lock = asyncio.Lock()
+        self.rate_limit_threshold = 10  # Default value, can be changed with set_rate_limit
+        self.rate_limit_reset_time = 60  # Default value, can be changed
+        
+        pact_file = Path(__file__).parent.parent / 'pacts' / 'llmworkflowdirector-claudeapi.json'
+        if pact_file.exists():
+            with open(pact_file, 'r') as f:
+                self.pact = json.load(f)
+        else:
+            self.logger.warning(f"Pact file not found: {pact_file}")
+            self.pact = None
+        
+        self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
+
     class Messages:
         def __init__(self, client):
             self.client = client
