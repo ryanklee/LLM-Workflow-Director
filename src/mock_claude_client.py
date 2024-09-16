@@ -71,16 +71,17 @@ class MockClaudeClient:
             self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}")
             return await self.client._create(model, max_tokens, messages)
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str = "mock_api_key", base_url: str = "https://api.anthropic.com"):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
-        self.logger.debug(f"Initializing MockClaudeClient {id(self)} with api_key: {api_key[:5]}...")
+        self.logger.debug(f"Initializing MockClaudeClient {id(self)} with api_key: {api_key[:5]}, base_url: {base_url}")
         
         self.api_key = api_key
+        self.base_url = base_url
         self.messages = self.Messages(self)
         self.calls = 0
         self.last_reset = asyncio.get_event_loop().time()
@@ -204,16 +205,15 @@ class MockClaudeClient:
             raise CustomRateLimitError("Rate limit exceeded")
 
     async def count_tokens(self, text: str) -> int:
-        await self._check_rate_limit()
-        await asyncio.sleep(self.latency)
-        self.call_count += 1
-        if self.error_mode:
-            self.error_count += 1
-            if self.error_count <= self.max_errors:
-                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
-        token_count = len(text.split())
-        self.logger.debug(f"Counted {token_count} tokens for text: {text[:50]}...")
-        return token_count
+        url = f"{self.base_url}/v1/tokenize"
+        body = {
+            "model": "claude-3-opus-20240229",
+            "prompt": text
+        }
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=body) as response:
+                result = await response.json()
+                return result['token_count']
 
     async def select_model(self, task: str) -> str:
         if "simple" in task.lower():
