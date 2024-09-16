@@ -27,7 +27,7 @@ def pact_context(pact):
 
 @pytest.fixture
 async def claude_client():
-    client = MockClaudeClient(api_key="test_api_key")
+    client = MockClaudeClient()
     logger.debug(f"Created MockClaudeClient instance: {client}")
     try:
         yield client
@@ -98,6 +98,14 @@ async def test_rate_limit_handling(pact_context, claude_client):
             'message': 'Rate limit exceeded'
         }
     })
+
+    # Simulate reaching the rate limit
+    for _ in range(claude_client.rate_limit_threshold):
+        await claude_client.messages.create(
+            model='claude-3-opus-20240229',
+            max_tokens=100,
+            messages=[{'role': 'user', 'content': 'Test message'}]
+        )
 
     with pytest.raises(CustomRateLimitError) as exc_info:
         await claude_client.messages.create(

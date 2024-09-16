@@ -812,7 +812,7 @@ from typing import Dict, Any, List
 import uuid
 
 class MockClaudeClient:
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str = "mock_api_key"):
         self.api_key = api_key
         self._messages = []
         self.lock = asyncio.Lock()
@@ -823,6 +823,10 @@ class MockClaudeClient:
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
         self.logger.debug(f"MockClaudeClient initialized with API key: {api_key[:5]}...")
+        self.rate_limit_threshold = 10
+        self.rate_limit_reset_time = 60
+        self.call_count = 0
+        self.last_reset_time = time.time()
 
     @property
     def messages(self):
@@ -838,8 +842,20 @@ class MockClaudeClient:
             return await self.client.create_message(messages[-1]['content'], max_tokens, model, stream)
 
     async def create_message(self, prompt: str, max_tokens: int = 1000, model: str = 'claude-3-opus-20240229', stream: bool = False) -> Dict[str, Any]:
-        self.logger.debug(f"Creating message with prompt: {prompt[:50]}..., stream: {stream}")
+        self.logger.debug(f"Creating message with prompt: {prompt[:50]}..., stream: {stream}, model: {model}, max_tokens: {max_tokens}")
         async with self.lock:
+            current_time = time.time()
+            if current_time - self.last_reset_time >= self.rate_limit_reset_time:
+                self.logger.info(f"Resetting rate limit. Old count: {self.call_count}")
+                self.call_count = 0
+                self.last_reset_time = current_time
+
+            self.call_count += 1
+            self.logger.debug(f"Current call count: {self.call_count}")
+            if self.call_count > self.rate_limit_threshold:
+                self.logger.warning(f"Rate limit exceeded. Count: {self.call_count}")
+                raise CustomRateLimitError("Rate limit exceeded")
+
             message_id = f"msg_{uuid.uuid4()}"
             mock_response = {
                 'id': message_id,
@@ -867,8 +883,10 @@ class MockClaudeClient:
                     yield {'type': 'content_block_delta', 'delta': {'type': 'text', 'text': 'Hello!'}}
                     yield {'type': 'content_block_delta', 'delta': {'type': 'text', 'text': ' How can I assist you today?'}}
                     yield {'type': 'message_delta', 'delta': {'stop_reason': 'end_turn'}}
+                self.logger.debug("Returning streaming response")
                 return response_generator()
             else:
+                self.logger.debug("Returning non-streaming response")
                 return mock_response
 
     async def count_tokens(self, text: str) -> int:
