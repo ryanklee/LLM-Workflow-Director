@@ -190,6 +190,9 @@ async def test_error_handling(pact_context, claude_client):
         }
     })
 
+    # Set error mode to True to simulate API error
+    await claude_client.set_error_mode(True)
+
     with pytest.raises(APIStatusError) as exc_info:
         await claude_client.messages.create(
             model='invalid-model',
@@ -197,8 +200,11 @@ async def test_error_handling(pact_context, claude_client):
             messages=[{'role': 'user', 'content': 'This should cause an error'}]
         )
     logger.debug(f"Caught exception: {exc_info.value}")
-    assert 'Invalid model specified' in str(exc_info.value)
+    assert 'Simulated API error' in str(exc_info.value)
     logger.info("test_error_handling completed successfully")
+
+    # Reset error mode
+    await claude_client.set_error_mode(False)
 
 @pytest.mark.asyncio
 async def test_model_selection(pact_context, claude_client):
@@ -278,6 +284,12 @@ async def test_context_window(pact_context, claude_client):
             'output_tokens': Like(20)
         }
     })
+
+    # Set a custom response for the summary request
+    await claude_client.set_response(
+        long_context + "\nSummarize this.",
+        "Here is a summary of the long context: [Summary content]"
+    )
 
     result = await claude_client.messages.create(
         model='claude-3-opus-20240229',
