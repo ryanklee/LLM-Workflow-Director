@@ -70,16 +70,23 @@ class MockClaudeClient:
         
         self.api_key = api_key
         self.base_url = base_url
-        self.messages = Messages(self)
+        self.messages = self.Messages(self)
 
-class Messages:
-    def __init__(self, client):
-        self.client = client
-        self.client.logger.debug(f"Initialized Messages class for client {id(client)}")
+    class Messages:
+        def __init__(self, client):
+            self.client = client
 
-    async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any]:
-        self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}, stream: {stream}")
-        return await self.client._create(model, max_tokens, messages, stream)
+        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any]:
+            return await self.client._create(model, max_tokens, messages, stream)
+
+    class Messages:
+        def __init__(self, client):
+            self.client = client
+            self.client.logger.debug(f"Initialized Messages class for client {id(client)}")
+
+        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any]:
+            self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}, stream: {stream}")
+            return await self.client._create(model, max_tokens, messages, stream)
         self.calls = 0
         self.last_reset = asyncio.get_event_loop().time()
         self.error_mode = False
