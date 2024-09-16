@@ -49,58 +49,67 @@ We will proceed with updating the MockClaudeClient implementation and then re-ru
 # Test Problem Analysis and Progress
 
 ## Problem Description
-All tests in `tests/contract/test_claude_api_contract.py` were failing with the error: `TypeError: MockClaudeClient.__init__() got an unexpected keyword argument 'api_key'`. This suggested that the `MockClaudeClient` class was not correctly implementing the expected interface.
+After resolving the initial `TypeError`, we now face new issues with the contract tests in `tests/contract/test_claude_api_contract.py`. Five tests are failing:
+
+1. `test_rate_limit_handling`: Failed to raise `CustomRateLimitError`
+2. `test_error_handling`: Failed to raise `APIStatusError`
+3. `test_context_window`: Assertion error, 'summary' not in response
+4. `test_multi_turn_conversation`: Assertion error, 'joke' not in response
+5. `test_system_message`: Assertion error, expected words not in response
 
 ## Hypotheses (Ranked by Likelihood)
 
-1. MockClaudeClient Implementation Issue (Highest Likelihood)
-   - The `MockClaudeClient` class was not correctly implementing the expected constructor signature.
-   - Validation: Reviewed the `MockClaudeClient` implementation in `src/mock_claude_client.py`.
-   - Status: Investigated and resolved.
+1. MockClaudeClient Implementation Mismatch (Highest Likelihood)
+   - The `MockClaudeClient` class may not be correctly implementing the expected behavior for rate limiting, error handling, and response generation.
+   - Validation: Review and update the `MockClaudeClient` implementation in `src/mock_claude_client.py`.
+   - Status: Under investigation.
 
-2. Test Fixture Configuration Problem (Medium Likelihood)
-   - The `claude_client` fixture might have been incorrectly set up, passing an unexpected argument.
-   - Validation: Checked the `claude_client` fixture in the test file.
-   - Status: Investigated and resolved.
+2. Incorrect Response Format (High Likelihood)
+   - The mock responses may not be formatted correctly to match the expected structure from the real Claude API.
+   - Validation: Check the response structure in `MockClaudeClient` and ensure it matches the expected format.
+   - Status: To be investigated.
 
-3. Import or Dependency Issue (Low Likelihood)
-   - There might have been a problem with imports or dependencies affecting the `MockClaudeClient` class.
-   - Validation: Verified imports and dependencies in both test and implementation files.
-   - Status: Not investigated, as the issue was resolved in hypotheses 1 and 2.
+3. Insufficient Context Handling (Medium Likelihood)
+   - The mock client may not be properly handling or utilizing the context provided in multi-turn conversations and system messages.
+   - Validation: Review the context handling in `MockClaudeClient` and ensure it's being used to generate appropriate responses.
+   - Status: To be investigated.
 
-## Resolution
+4. Test Case Mismatch (Medium Likelihood)
+   - The test cases might not be aligned with the current `MockClaudeClient` implementation, especially for streaming responses.
+   - Validation: Review test cases and ensure they match the expected behavior of the `MockClaudeClient`.
+   - Status: To be investigated after addressing Hypothesis 1 and 2.
 
-The issue was identified in the `MockClaudeClient` implementation. The following changes were made to resolve the issue:
-
-1. Updated the `MockClaudeClient` constructor to accept an `api_key` parameter.
-2. Implemented a `Messages` inner class to match the expected interface.
-3. Added logging to both the `MockClaudeClient` and the test fixture for better debugging.
-4. Updated the `claude_client` fixture in the test file to properly instantiate the `MockClaudeClient`.
+5. Error Simulation Issue (Medium Likelihood)
+   - The error simulation in `MockClaudeClient` may not be correctly implemented for rate limiting and API errors.
+   - Validation: Review and update the error simulation logic in `MockClaudeClient`.
+   - Status: To be investigated.
 
 ## Next Steps
 
-1. Re-run the tests to verify if the changes resolve the issue.
-2. If any tests are still failing, investigate the specific failures and update the implementation accordingly.
-3. Once all tests pass, consider adding more comprehensive tests to cover edge cases and ensure the robustness of the `MockClaudeClient` implementation.
+1. MockClaudeClient Implementation Update:
+   - Review and update the `MockClaudeClient` implementation, focusing on rate limiting, error handling, and response generation.
+   - Ensure the response format matches the expected structure from the real Claude API.
+   - Implement proper context handling for multi-turn conversations and system messages.
 
-## Implementation Plan
+2. Error Simulation Enhancement:
+   - Update the error simulation logic in `MockClaudeClient` to correctly raise `CustomRateLimitError` and `APIStatusError`.
 
-1. Test Execution:
-   - Run the tests in `tests/contract/test_claude_api_contract.py` to verify the fix.
+3. Test Execution:
+   - Run the tests in `tests/contract/test_claude_api_contract.py` to verify the changes.
 
-2. Error Analysis:
-   - If any tests still fail, carefully analyze the error messages and stack traces.
+4. Response Format Verification:
+   - Carefully review the response format in `MockClaudeClient` and ensure it matches the expected structure.
 
-3. Further Refinement:
-   - Based on the test results, make any necessary additional changes to the `MockClaudeClient` implementation.
+5. Context Handling Improvement:
+   - Enhance the context handling in `MockClaudeClient` to properly utilize provided context in generating responses.
 
-4. Documentation Update:
-   - Update the docstrings and comments in the `MockClaudeClient` class to reflect the changes and clarify the implementation.
+6. Test Case Review:
+   - Review and update test cases if necessary to align with the expected behavior of `MockClaudeClient`.
 
-5. Code Review:
-   - Conduct a final review of the changes to ensure they adhere to the project's coding standards and best practices.
+7. Logging Enhancement:
+   - Improve logging throughout the `MockClaudeClient` to aid in future debugging.
 
-We will proceed with running the tests and iterating on the solution if needed until all tests pass successfully.
+We will proceed with updating the `MockClaudeClient` implementation and then re-run the tests, iterating as necessary until all tests pass successfully.
 # Test Problem Analysis and Progress
 
 ## Problem Description
