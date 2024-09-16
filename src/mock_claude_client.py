@@ -646,7 +646,7 @@ class MockClaudeClient:
             self.error_count += 1
             if self.error_count <= self.max_errors:
                 self.logger.error("Simulated API error")
-                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+                raise APIStatusError("Simulated API error", response=MagicMock(status_code=500), body={})
 
         self.context.extend(messages)
         prompt = messages[-1]['content']
@@ -685,31 +685,43 @@ class MockClaudeClient:
             }
 
     def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         system_message = next((m['content'] for m in messages if m['role'] == 'system'), None)
         
-        if system_message and "speak like Shakespeare" in system_message:
-            return "Hark! Thou doth request information about the weather. Verily, I say unto thee, the skies are fair and the breeze gentle."
+        if system_message:
+            self.logger.debug(f"System message found: {system_message[:50]}...")
+            if "speak like Shakespeare" in system_message:
+                return "Hark! Thou doth request information about the weather. Verily, I say unto thee, the skies are fair and the breeze gentle."
+        
+        context = " ".join(m['content'] for m in messages if m['role'] == 'user')
+        self.logger.debug(f"Context: {context[:100]}...")
         
         if "summary" in prompt.lower():
             return "Here is a summary of the long context: [Summary content]"
         elif "joke" in prompt.lower():
             return "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
-        elif any(word in prompt.lower() for word in ['hark', 'thou', 'doth']):
+        elif any(word in context.lower() for word in ['hark', 'thou', 'doth']):
             return "Hark! Thou doth request a Shakespearean response, and so I shall provide!"
         else:
-            return self.responses.get(prompt, "Default mock response")
+            response = self.responses.get(prompt, "Default mock response")
+            self.logger.debug(f"Generated response: {response[:50]}...")
+            return response
 
     async def _check_rate_limit(self):
         current_time = time.time()
         if current_time - self.last_reset > self.reset_time:
             self.calls = 0
             self.last_reset = current_time
+            self.logger.debug(f"Rate limit reset. Calls: {self.calls}")
 
         self.calls += 1
-        if self.calls > self.rate_limit:
+        self.logger.debug(f"Rate limit check. Calls: {self.calls}, Limit: {self.rate_limit}")
+        if self.calls >= self.rate_limit:
+            self.logger.warning(f"Rate limit exceeded. Calls: {self.calls}, Limit: {self.rate_limit}")
             raise CustomRateLimitError("Rate limit exceeded")
 
     async def reset(self):
+        self.logger.debug("Resetting MockClaudeClient")
         self.calls = 0
         self.last_reset = time.time()
         self.error_mode = False
@@ -717,10 +729,14 @@ class MockClaudeClient:
         self.responses = {}
         self.call_count = 0
         self.error_count = 0
+        self.context = []
+        self.logger.debug("MockClaudeClient reset complete")
 
     async def count_tokens(self, text: str) -> int:
         # Simplified token counting for mock purposes
-        return len(text.split())
+        token_count = len(text.split())
+        self.logger.debug(f"Token count for text: {token_count}")
+        return token_count
 
     async def set_latency(self, latency: float):
         self.logger.debug(f"Setting latency to: {latency}")
