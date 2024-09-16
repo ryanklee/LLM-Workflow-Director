@@ -12,6 +12,13 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(leve
 logger = logging.getLogger(__name__)
 
 class MockClaudeClient:
+    class Messages:
+        def __init__(self, client):
+            self.client = client
+
+        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any] | AsyncGenerator[Dict[str, Any], None]:
+            return await self.client._create(model, max_tokens, messages, stream)
+
     def __init__(self, api_key: str = "mock_api_key", base_url: str = "https://api.anthropic.com"):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.logger.setLevel(logging.DEBUG)
@@ -40,13 +47,6 @@ class MockClaudeClient:
         self.rate_limit_reset_time = 60
         
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
-
-    class Messages:
-        def __init__(self, client):
-            self.client = client
-
-        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any] | AsyncGenerator[Dict[str, Any], None]:
-            return await self.client._create(model, max_tokens, messages, stream)
 
     async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) ->  Dict[str, Any] | AsyncGenerator[Dict[str, Any], None]:
         self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}, stream: {stream}")
