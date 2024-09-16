@@ -216,9 +216,8 @@ class MockClaudeClient:
             self._messages = self.Messages(self)
             self.logger.debug("Created Messages instance")
         return self._messages
-        self.logger = logging.getLogger(__name__)
 
-    async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+    async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
         self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}")
         await self._check_rate_limit()
         await asyncio.sleep(self.latency)
