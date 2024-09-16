@@ -774,12 +774,25 @@ class MockClaudeClient:
 import asyncio
 from typing import Dict, List, Any
 
+import asyncio
+import logging
+from typing import Dict, Any, List
+
 class MockClaudeClient:
-    def __init__(self):
+    def __init__(self, api_key: str):
+        self.api_key = api_key
         self.messages = []
         self.lock = asyncio.Lock()
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+        self.logger.debug(f"MockClaudeClient initialized with API key: {api_key[:5]}...")
 
     async def create_message(self, prompt: str, max_tokens: int = 1000, model: str = 'claude-3-opus-20240229') -> Dict[str, Any]:
+        self.logger.debug(f"Creating message with prompt: {prompt[:50]}...")
         async with self.lock:
             message_id = f"msg_{len(self.messages) + 1}"
             mock_response = {
@@ -801,7 +814,22 @@ class MockClaudeClient:
                 }
             }
             self.messages.append(mock_response)
+            self.logger.debug(f"Created message with ID: {message_id}")
             return mock_response
 
     async def count_tokens(self, text: str) -> int:
-        return len(text.split())
+        token_count = len(text.split())
+        self.logger.debug(f"Counted {token_count} tokens for text: {text[:50]}...")
+        return token_count
+
+    class Messages:
+        def __init__(self, client):
+            self.client = client
+
+        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+            prompt = messages[-1]['content']
+            return await self.client.create_message(prompt, max_tokens, model)
+
+    @property
+    def messages(self):
+        return self.Messages(self)
