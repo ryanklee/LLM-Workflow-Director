@@ -598,7 +598,12 @@ class MockClaudeClient:
 
     async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any]:
         self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}, stream: {stream}")
-        await self._check_rate_limit()
+        try:
+            await self._check_rate_limit()
+        except CustomRateLimitError as e:
+            self.logger.error(f"Rate limit exceeded: {str(e)}")
+            raise
+
         await asyncio.sleep(self.latency)
 
         if self.error_mode:
@@ -614,7 +619,7 @@ class MockClaudeClient:
             self.logger.warning(f"Prompt exceeds max tokens. Prompt length: {len(prompt)}, Max tokens: {self.max_test_tokens}")
             raise ValueError(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
 
-        response = self._generate_response(prompt, model)
+        response = self._generate_response(prompt, model, messages)
         if len(response) > max_tokens:
             self.logger.warning(f"Response exceeds max tokens. Truncating. Original length: {len(response)}")
             response = response[:max_tokens] + "..."
@@ -643,7 +648,12 @@ class MockClaudeClient:
                 }
             }
 
-    def _generate_response(self, prompt: str, model: str) -> str:
+    def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
+        system_message = next((m['content'] for m in messages if m['role'] == 'system'), None)
+        
+        if system_message and "speak like Shakespeare" in system_message:
+            return "Hark! Thou doth request information about the weather. Verily, I say unto thee, the skies are fair and the breeze gentle."
+        
         if "summary" in prompt.lower():
             return "Here is a summary of the long context: [Summary content]"
         elif "joke" in prompt.lower():
