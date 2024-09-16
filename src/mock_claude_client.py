@@ -47,7 +47,7 @@ import time
 import logging
 import uuid
 import aiohttp
-from typing import Dict, Any, List
+from typing import Dict, Any, List, AsyncGenerator
 from unittest.mock import MagicMock
 from anthropic import RateLimitError, APIError, APIStatusError
 from src.exceptions import CustomRateLimitError
@@ -57,10 +57,6 @@ logger = logging.getLogger(__name__)
 
 import json
 from pathlib import Path
-import logging
-import asyncio
-import time
-from typing import Dict, Any, List
 
 class MockClaudeClient:
     class Messages:
@@ -68,9 +64,9 @@ class MockClaudeClient:
             self.client = client
             self.client.logger.debug(f"Initialized Messages class for client {id(client)}")
 
-        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
-            self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}")
-            return await self.client._create(model, max_tokens, messages)
+        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any]:
+            self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}, stream: {stream}")
+            return await self.client._create(model, max_tokens, messages, stream)
 
     def __init__(self, api_key: str = "mock_api_key", base_url: str = "https://api.anthropic.com"):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
@@ -155,8 +151,8 @@ class MockClaudeClient:
         self.last_reset_time = time.time()
         self.logger.debug(f"Finished resetting MockClaudeClient {id(self)}")
 
-    async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
-        self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}")
+    async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any] | AsyncGenerator[Dict[str, Any], None]:
+        self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}, stream: {stream}")
         async with self.lock:
             await self._check_rate_limit()
             await asyncio.sleep(self.latency)
@@ -181,19 +177,33 @@ class MockClaudeClient:
             self.call_count += 1
             wrapped_response = f"<response>{response}</response>"
             self.logger.debug(f"Returning response: {wrapped_response[:50]}...")
-            return {
-                "id": f"msg_{uuid.uuid4()}",
-                "type": "message",
-                "role": "assistant",
-                "content":  [{"type": "text", "text": wrapped_response}],
-                "model": model,
-                "stop_reason": "end_turn",
-                "stop_sequence": None,
-                "usage": {
-                    "input_tokens": sum(len(m["content"]) for m in messages),
-                    "output_tokens": len(response)
+
+            if stream:
+                async def response_generator():
+                    for chunk in wrapped_response.split():
+                        yield {
+                            "type": "content_block_delta",
+                            "delta": {
+                                "type": "text",
+                                "text": chunk
+                            }
+                        }
+                    yield {"type": "message_delta", "delta": {"stop_reason": "end_turn"}}
+                return response_generator()
+            else:
+                return {
+                    "id": f"msg_{uuid.uuid4()}",
+                    "type": "message",
+                    "role": "assistant",
+                    "content": [{"type": "text", "text": wrapped_response}],
+                    "model": model,
+                    "stop_reason": "end_turn",
+                    "stop_sequence": None,
+                    "usage": {
+                        "input_tokens": sum(len(m["content"]) for m in messages),
+                        "output_tokens": len(response)
+                    }
                 }
-            }
 
     async def _check_rate_limit(self):
         current_time = time.time()
