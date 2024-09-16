@@ -452,6 +452,14 @@
     25.3. The system shall ensure that generated code and modifications adhere to the specified coding conventions.
     25.4. The system shall provide mechanisms for validating adherence to coding conventions throughout the project.
 
+26. Dependency Management
+    26.1. The system shall use Poetry for managing project dependencies.
+    26.2. The system shall maintain a pyproject.toml file for defining project metadata and dependencies.
+    26.3. The system shall use a poetry.lock file to ensure reproducible builds across different environments.
+    26.4. The system shall support dependency groups for separating main, development, and test dependencies.
+    26.5. The system shall provide mechanisms for easily updating and managing dependencies.
+    26.6. The system shall integrate dependency management with the CI/CD pipeline to ensure consistency.
+
 These revised requirements address the identified issues by:
 1. Incorporating LLM CLI and Claude-specific features and best practices.
 2. Enhancing LLM integration with tiered approaches and advanced context management.
@@ -460,8 +468,9 @@ These revised requirements address the identified issues by:
 5. Enhancing performance and scalability requirements, including vector database integration.
 6. Adding requirements for adaptive learning in LLM tier selection.
 7. Maintaining and expanding upon existing requirements for project structure, documentation, and coding conventions management.
+8. Introducing robust dependency management using Poetry.
 
-This structure provides a more comprehensive and organized set of requirements for the LLM-Workflow Director system, incorporating the latest capabilities of Claude models and the LLM CLI.
+This structure provides a more comprehensive and organized set of requirements for the LLM-Workflow Director system, incorporating the latest capabilities of Claude models, the LLM CLI, and modern Python project management practices.
 # LLM-Workflow Director Requirements (Python Implementation)
 
 1. Project Initialization
