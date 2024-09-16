@@ -782,7 +782,7 @@ from typing import Dict, Any, List
 class MockClaudeClient:
     def __init__(self, api_key: str):
         self.api_key = api_key
-        self.messages = []
+        self._messages = None
         self.lock = asyncio.Lock()
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
@@ -791,6 +791,22 @@ class MockClaudeClient:
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
         self.logger.debug(f"MockClaudeClient initialized with API key: {api_key[:5]}...")
+
+    @property
+    def messages(self):
+        if self._messages is None:
+            self._messages = self.Messages(self)
+            self.logger.debug("Messages instance created")
+        return self._messages
+
+    class Messages:
+        def __init__(self, client):
+            self.client = client
+            self.client.logger.debug("Messages inner class initialized")
+
+        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+            self.client.logger.debug(f"Creating message with model: {model}, max_tokens: {max_tokens}")
+            return await self.client.create_message(messages[-1]['content'], max_tokens, model)
 
     async def create_message(self, prompt: str, max_tokens: int = 1000, model: str = 'claude-3-opus-20240229') -> Dict[str, Any]:
         self.logger.debug(f"Creating message with prompt: {prompt[:50]}...")
