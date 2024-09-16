@@ -1,6 +1,8 @@
 import pytest
 from pact import Consumer, Provider, Like
 from src.mock_claude_client import MockClaudeClient
+from src.exceptions import CustomRateLimitError
+from anthropic import APIStatusError
 
 @pytest.fixture(scope='session')
 def pact():
