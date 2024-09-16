@@ -204,6 +204,13 @@ class MockClaudeClient:
             raise CustomRateLimitError("Rate limit exceeded")
 
     async def count_tokens(self, text: str) -> int:
+        await self._check_rate_limit()
+        await asyncio.sleep(self.latency)
+        self.call_count += 1
+        if self.error_mode:
+            self.error_count += 1
+            if self.error_count <= self.max_errors:
+                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
         token_count = len(text.split())
         self.logger.debug(f"Counted {token_count} tokens for text: {text[:50]}...")
         return token_count

@@ -40,3 +40,23 @@ def test_create_message(pact):
         result = claude_client.create_message('Hello, Claude!', max_tokens=1000)
         assert result['role'] == 'assistant'
         assert isinstance(result['content'][0]['text'], str)
+
+def test_count_tokens(pact):
+    pact.given(
+        'A request to count tokens'
+    ).upon_receiving(
+        'A valid token counting request'
+    ).with_request(
+        'POST', '/v1/tokenize',
+        body={
+            'model': 'claude-3-opus-20240229',
+            'prompt': 'Hello, world!'
+        }
+    ).will_respond_with(200, body={
+        'token_count': pytest.matchers.like(3)
+    })
+
+    with pact:
+        result = claude_client.count_tokens('Hello, world!')
+        assert isinstance(result, int)
+        assert result > 0
