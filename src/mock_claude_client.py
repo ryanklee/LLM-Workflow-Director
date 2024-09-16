@@ -646,7 +646,10 @@ class MockClaudeClient:
             self.error_count += 1
             if self.error_count <= self.max_errors:
                 self.logger.error("Simulated API error")
-                raise APIStatusError("Simulated API error", response=MagicMock(status_code=500), body={})
+                error_response = MagicMock()
+                error_response.status_code = 500
+                error_response.json.return_value = {"error": {"type": "server_error", "message": "Simulated API error"}}
+                raise APIStatusError("Simulated API error", response=error_response)
 
         self.context.extend(messages)
         prompt = messages[-1]['content']
@@ -690,8 +693,8 @@ class MockClaudeClient:
         
         if system_message:
             self.logger.debug(f"System message found: {system_message[:50]}...")
-            if "speak like Shakespeare" in system_message:
-                return "Hark! Thou doth request information about the weather. Verily, I say unto thee, the skies are fair and the breeze gentle."
+            if "speak like Shakespeare" in system_message.lower():
+                return "Hark! Thou doth request information. Verily, I shall provide a response most Shakespearean!"
         
         context = " ".join(m['content'] for m in messages if m['role'] == 'user')
         self.logger.debug(f"Context: {context[:100]}...")
@@ -703,7 +706,15 @@ class MockClaudeClient:
         elif any(word in context.lower() for word in ['hark', 'thou', 'doth']):
             return "Hark! Thou doth request a Shakespearean response, and so I shall provide!"
         else:
-            response = self.responses.get(prompt, "Default mock response")
+            # Check if there's a custom response for this prompt
+            response = self.responses.get(prompt)
+            if response:
+                self.logger.debug(f"Using custom response for prompt: {prompt[:50]}...")
+                return response
+            
+            # Generate a response based on the conversation history
+            conversation_history = [m['content'] for m in messages if m['role'] in ['user', 'assistant']]
+            response = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
             self.logger.debug(f"Generated response: {response[:50]}...")
             return response
 
@@ -716,9 +727,11 @@ class MockClaudeClient:
 
         self.calls += 1
         self.logger.debug(f"Rate limit check. Calls: {self.calls}, Limit: {self.rate_limit}")
-        if self.calls >= self.rate_limit:
+        if self.calls > self.rate_limit:
             self.logger.warning(f"Rate limit exceeded. Calls: {self.calls}, Limit: {self.rate_limit}")
             raise CustomRateLimitError("Rate limit exceeded")
+        elif self.calls == self.rate_limit:
+            self.logger.warning(f"Rate limit reached. Calls: {self.calls}, Limit: {self.rate_limit}")
 
     async def reset(self):
         self.logger.debug("Resetting MockClaudeClient")
