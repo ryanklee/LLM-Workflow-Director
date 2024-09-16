@@ -5,7 +5,13 @@ from pact import Consumer, Provider
 def pact():
     return Consumer('LLMWorkflowDirector').has_pact_with(Provider('ClaudeAPI'))
 
-def test_create_message(pact):
+@pytest.fixture
+def claude_client():
+    # This should return a mock client or a real client configured for testing
+    from src.mock_claude_client import MockClaudeClient
+    return MockClaudeClient()
+
+def test_create_message(pact, claude_client):
     pact.given(
         'A request to create a message'
     ).upon_receiving(
@@ -41,7 +47,7 @@ def test_create_message(pact):
         assert result['role'] == 'assistant'
         assert isinstance(result['content'][0]['text'], str)
 
-def test_count_tokens(pact):
+def test_count_tokens(pact, claude_client):
     pact.given(
         'A request to count tokens'
     ).upon_receiving(

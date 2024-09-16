@@ -854,6 +854,7 @@ class MockClaudeClient:
             }
             self.messages.append(response)
             return response
+            return response
 
     async def get_message(self, message_id: str) -> Dict[str, Any]:
         async with self.lock:
