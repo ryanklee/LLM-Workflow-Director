@@ -46,6 +46,7 @@ import asyncio
 import time
 import logging
 import uuid
+import aiohttp
 from typing import Dict, Any, List
 from unittest.mock import MagicMock
 from anthropic import RateLimitError, APIError, APIStatusError
