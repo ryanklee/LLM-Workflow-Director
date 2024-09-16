@@ -832,7 +832,7 @@ class MockClaudeClient:
         self.messages = []
         self.lock = asyncio.Lock()
 
-    async def create_message(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+    async def create_message(self, prompt: str, max_tokens: int = 1000, model: str = 'claude-3-opus-20240229') -> Dict[str, Any]:
         async with self.lock:
             message_id = f"msg_{len(self.messages) + 1}"
             mock_response = {
@@ -849,7 +849,7 @@ class MockClaudeClient:
                 'stop_reason': 'end_turn',
                 'stop_sequence': None,
                 'usage': {
-                    'input_tokens': sum(len(m['content']) for m in messages),
+                    'input_tokens': len(prompt),
                     'output_tokens': 0  # We'll update this after creating the response
                 }
             }
@@ -857,9 +857,5 @@ class MockClaudeClient:
             self.messages.append(mock_response)
             return mock_response
 
-    async def get_message(self, message_id: str) -> Dict[str, Any]:
-        async with self.lock:
-            for message in self.messages:
-                if message['id'] == message_id:
-                    return message
-            raise ValueError(f"Message with id {message_id} not found")
+    async def count_tokens(self, text: str) -> int:
+        return len(text.split())
