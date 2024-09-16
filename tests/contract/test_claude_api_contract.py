@@ -51,7 +51,7 @@ async def test_create_message(pact, claude_client):
         }
     })
 
-    with pact:
+    async with pact:
         result = await claude_client.create_message('Hello, Claude!', max_tokens=1000)
         assert result['role'] == 'assistant'
         assert isinstance(result['content'][0]['text'], str)
