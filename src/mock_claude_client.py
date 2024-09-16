@@ -590,6 +590,18 @@ class MockClaudeClient:
         self.context = []
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
 
+    async def set_error_mode(self, mode: bool):
+        self.logger.debug(f"Setting error mode to: {mode}")
+        self.error_mode = mode
+
+    async def set_response(self, prompt: str, response: str):
+        self.logger.debug(f"Setting response for prompt: {prompt[:50]}...")
+        self.responses[prompt] = response
+
+    async def set_rate_limit(self, limit: int):
+        self.logger.debug(f"Setting rate limit to: {limit}")
+        self.rate_limit = limit
+
     def __str__(self):
         return f"MockClaudeClient(call_count={self.call_count}, error_count={self.error_count}, error_mode={self.error_mode})"
 
