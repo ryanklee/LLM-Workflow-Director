@@ -842,18 +842,17 @@ class MockClaudeClient:
                 'content': [
                     {
                         'type': 'text',
-                        'text': f"Hello! This is a mock response for message {message_id}."
+                        'text': f"Hello! How can I assist you today?"
                     }
                 ],
                 'model': model,
                 'stop_reason': 'end_turn',
                 'stop_sequence': None,
                 'usage': {
-                    'input_tokens': len(prompt),
-                    'output_tokens': 0  # We'll update this after creating the response
+                    'input_tokens': len(prompt.split()),
+                    'output_tokens': len("Hello! How can I assist you today?".split())
                 }
             }
-            mock_response['usage']['output_tokens'] = len(mock_response['content'][0]['text'])
             self.messages.append(mock_response)
             return mock_response
 
