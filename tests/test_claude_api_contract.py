@@ -142,6 +142,35 @@ async def test_count_tokens(pact_context, claude_client):
     assert result > 0
 
 @pytest.mark.asyncio
+async def test_error_handling(pact_context, claude_client):
+    pact_context.given(
+        'A request that causes an API error'
+    ).upon_receiving(
+        'An invalid request causing an error'
+    ).with_request(
+        'POST', '/v1/messages',
+        headers={'X-API-Key': Like('sk-ant-api03-valid-key')},
+        body={
+            'model': 'invalid-model',
+            'max_tokens': 100,
+            'messages': [{'role': 'user', 'content': 'This should cause an error'}]
+        }
+    ).will_respond_with(400, body={
+        'error': {
+            'type': 'invalid_request_error',
+            'message': Like('Invalid model specified')
+        }
+    })
+
+    with pytest.raises(APIStatusError) as exc_info:
+        await claude_client.messages.create(
+            model='invalid-model',
+            max_tokens=100,
+            messages=[{'role': 'user', 'content': 'This should cause an error'}]
+        )
+    assert 'Invalid model specified' in str(exc_info.value)
+
+@pytest.mark.asyncio
 async def test_count_tokens(pact_context, claude_client):
     pact_context.given(
         'A request to count tokens'
