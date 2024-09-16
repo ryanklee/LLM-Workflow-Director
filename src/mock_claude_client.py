@@ -54,6 +54,13 @@ from src.exceptions import CustomRateLimitError
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
 logger = logging.getLogger(__name__)
 
+import json
+from pathlib import Path
+import logging
+import asyncio
+import time
+from typing import Dict, Any, List
+
 class MockClaudeClient:
     class Messages:
         def __init__(self, client):
@@ -90,6 +97,14 @@ class MockClaudeClient:
         self.lock = asyncio.Lock()
         self.rate_limit_threshold = 10  # Default value, can be changed with set_rate_limit
         self.rate_limit_reset_time = 60  # Default value, can be changed
+        
+        pact_file = Path(__file__).parent.parent / 'pacts' / 'llmworkflowdirector-claudeapi.json'
+        if pact_file.exists():
+            with open(pact_file, 'r') as f:
+                self.pact = json.load(f)
+        else:
+            self.logger.warning(f"Pact file not found: {pact_file}")
+            self.pact = None
         
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
 
