@@ -90,7 +90,6 @@ class MockClaudeClient:
         self.error_count = 0
         self.max_errors = 3
         self.max_context_length = 200000
-        self._messages = self.Messages(self)
         self.last_reset_time = time.time()
         self.lock = asyncio.Lock()
         self.rate_limit_threshold = 10  # Default value, can be changed with set_rate_limit
