@@ -2,7 +2,7 @@ aiohappyeyeballs==2.4.0
 aiohttp==3.10.5
 aiosignal==1.3.1
 annotated-types==0.7.0
-anthropic>=0.3.3,<0.5.0
+anthropic==0.3.11
 anyio==4.4.0
 argcomplete==3.5.0
 asgiref==3.8.1
@@ -25,7 +25,7 @@ distro==1.9.0
 distro-info==1.1+ubuntu0.2
 exceptiongroup==1.2.2
 execnet==2.1.1
-fastapi>=0.95.2,<0.96.0
+fastapi==0.95.2
 filelock==3.15.4
 flake8==7.1.1
 Flask==2.0.1
@@ -41,7 +41,7 @@ httplib2==0.20.2
 httpx==0.27.2
 huggingface-hub==0.24.6
 idna==3.8
-importlib-metadata>=6.8.0
+importlib-metadata==8.5.0
 iniconfig==2.0.0
 itsdangerous==2.2.0
 jeepney==0.7.1
@@ -65,7 +65,7 @@ multidict==6.0.5
 neo4j==5.23.1
 netifaces==0.11.0
 nltk==3.6.5
-numpy>=1.26.4,<2.0.0
+numpy==1.26.4
 oauthlib==3.2.0
 openai==1.42.0
 packaging==24.1
@@ -75,18 +75,17 @@ pipx==1.0.0
 platformdirs==4.2.2
 pluggy==1.5.0
 prometheus-client==0.14.1
-psutil>=5.9.0,<7.0.0
+psutil==6.0.0
 py==1.11.0
 py-cpuinfo==9.0.0
 pycairo==1.26.1
 pycodestyle==2.12.1
-pydantic>=2.0.0,<3.0.0
-pydantic_core>=2.0.0,<3.0.0
+pydantic==2.9.1
+pydantic_core==2.23.3
 pyee==11.1.0
 pyflakes==3.2.0
-Pygments>=2.13.0,<3.0.0
-# PyGObject is removed from here and will be installed separately
-meson==1.3.0  # Add meson as a build dependency
+Pygments==2.18.0
+meson==1.3.0
 pyinotify==0.9.6
 PyJWT==2.3.0
 pyparsing==2.4.7
@@ -99,7 +98,6 @@ pytest-mock==3.10.0
 pytest-timeout==2.3.1
 pytest-xdist==3.5.0
 pytest-testmon==2.1.1
-coverage==7.6.1
 pact-python==2.2.1
 python-apt==2.4.0+ubuntu3
 python-dateutil==2.9.0.post0
@@ -112,7 +110,7 @@ PyYAML==6.0.2
 regex==2024.7.24
 replicate==0.31.0
 requests==2.32.3
-scipy>=1.13.1,<2.0.0
+scipy==1.14.1
 seaborn==0.11.2
 SecretStorage==3.3.1
 six==1.16.0
@@ -121,7 +119,7 @@ SQLAlchemy==1.4.46
 sqlite-fts4==1.0.3
 sqlite-migrate==0.1b0
 sqlite-utils==3.37
-starlette>=0.27.0,<0.28.0
+starlette==0.27.0
 systemd-python==234
 tabulate==0.9.0
 tenacity==9.0.0
