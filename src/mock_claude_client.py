@@ -102,6 +102,14 @@ class MockClaudeClient:
             self.client = client
 
         async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any]:
+            self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}, stream: {stream}")
+            return await self.client._create(model, max_tokens, messages, stream)
+
+    class Messages:
+        def __init__(self, client):
+            self.client = client
+
+        async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any]:
             return await self.client._create(model, max_tokens, messages, stream)
 
     class Messages:
