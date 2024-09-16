@@ -605,14 +605,14 @@ This structure provides a more comprehensive and organized set of requirements f
     18.12. The system shall support Chroma DB's ability to add, query, update, and delete embeddings and their associated metadata and documents.
 
 19. Claude API Integration and Usage Optimization
-    19.1. The system shall integrate directly with Anthropic's Claude API for all LLM interactions.
+    19.1. The system shall integrate directly with Anthropic's Claude API for all LLM interactions, focusing on the Messages API endpoint.
     19.2. The system shall implement a Python-based client using Anthropic's official Python SDK for Claude API communication.
     19.3. The system shall support Anthropic's Claude models (Claude 3 Haiku, Sonnet, and Opus) as the primary LLM models.
     19.4. The system shall implement a custom templating system for generating consistent prompts optimized for Claude models.
     19.5. The system shall implement a caching mechanism to optimize performance and reduce API costs.
-    19.6. The system shall support streaming responses from the Claude API for long-running tasks.
+    19.6. The system shall support streaming responses from the Claude API for long-running tasks, as detailed in the streaming documentation.
     19.7. The system shall provide an abstraction layer for LLM interactions, allowing for potential integration of additional LLM providers in the future.
-    19.8. The system shall implement error handling and retry mechanisms for Claude API communication.
+    19.8. The system shall implement error handling and retry mechanisms for Claude API communication, based on the official error documentation.
     19.9. The system shall implement a tiered LLM approach, using faster, cheaper models (e.g., Claude 3 Haiku) for initial processing and more powerful models (e.g., Claude 3 Opus) for complex tasks.
     19.10. The system shall implement prompt engineering techniques optimized for Claude models, including:
         a. Clear and direct language in prompts.
@@ -626,11 +626,13 @@ This structure provides a more comprehensive and organized set of requirements f
     19.12. The system shall implement a mechanism to dynamically select the appropriate Claude model based on task complexity and performance requirements.
     19.13. The system shall integrate Claude's tool use capabilities for enhanced task completion and reasoning.
     19.14. The system shall utilize Claude's embedding functionality for efficient information retrieval and context management.
-    19.15. The system shall implement rate limiting for Claude API calls to comply with provider restrictions.
+    19.15. The system shall implement rate limiting for Claude API calls to comply with provider restrictions, as detailed in the rate limits documentation.
     19.16. The system shall track and optimize token usage across all Claude API interactions.
     19.17. The system shall provide detailed usage reports including token consumption and associated costs.
     19.18. The system shall implement cost optimization strategies, including model selection based on task complexity and caching of frequent queries.
     19.19. The system shall provide mechanisms for setting and enforcing budget limits on Claude API usage.
+    19.20. The system shall implement proper API key management for authentication, using the `X-API-Key` header in requests.
+    19.21. The system shall stay updated with the latest Claude API version and implement version compatibility checks.
 
 20. Claude API Architecture and Performance Optimization
     20.1. The system shall implement direct Claude API calls within the main Python application.
