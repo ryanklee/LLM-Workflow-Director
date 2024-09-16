@@ -834,7 +834,7 @@ class MockClaudeClient:
     async def create_message(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
         async with self.lock:
             message_id = f"msg_{len(self.messages) + 1}"
-            response = {
+            mock_response = {
                 'id': message_id,
                 'type': 'message',
                 'role': 'assistant',
@@ -849,10 +849,12 @@ class MockClaudeClient:
                 'stop_sequence': None,
                 'usage': {
                     'input_tokens': sum(len(m['content']) for m in messages),
-                    'output_tokens': len(response['content'][0]['text'])
+                    'output_tokens': 0  # We'll update this after creating the response
                 }
             }
-            self.messages.append(response)
+            mock_response['usage']['output_tokens'] = len(mock_response['content'][0]['text'])
+            self.messages.append(mock_response)
+            return mock_response
             return response
             return response
 
