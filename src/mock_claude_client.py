@@ -847,7 +847,15 @@ class MockClaudeClient:
         self.error_count = 0
 
     async def count_tokens(self, text: str) -> int:
-        return len(text.split())
+        url = f"{self.base_url}/v1/tokenize"
+        body = {
+            "model": "claude-3-opus-20240229",
+            "prompt": text
+        }
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=body) as response:
+                result = await response.json()
+                return result['token_count']
 import asyncio
 from typing import Dict, List, Any
 
