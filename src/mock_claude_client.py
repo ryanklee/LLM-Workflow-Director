@@ -1000,6 +1000,10 @@ class MockClaudeClient:
         self.call_count = 0
         self.last_reset_time = time.time()
 
+    async def set_rate_limit(self, limit: int):
+        self.logger.debug(f"Setting rate limit to: {limit}")
+        self.rate_limit_threshold = limit
+
     @property
     def messages(self):
         return self.Messages(self)
