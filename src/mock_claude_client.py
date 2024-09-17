@@ -48,6 +48,10 @@ class MockClaudeClient:
         
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
 
+    async def set_rate_limit(self, limit: int):
+        self.logger.debug(f"Setting rate limit to: {limit}")
+        self.rate_limit_threshold = limit
+
     async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) ->  Dict[str, Any] | AsyncGenerator[Dict[str, Any], None]:
         self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}, stream: {stream}")
         async with self.lock:
