@@ -52,6 +52,10 @@ class MockClaudeClient:
         self.logger.debug(f"Setting rate limit to: {limit}")
         self.rate_limit_threshold = limit
 
+    async def set_error_mode(self, mode: bool):
+        self.logger.debug(f"Setting error mode to: {mode}")
+        self.error_mode = mode
+
     async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) ->  Dict[str, Any] | AsyncGenerator[Dict[str, Any], None]:
         self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}, stream: {stream}")
         async with self.lock:
@@ -999,6 +1003,7 @@ class MockClaudeClient:
         self.rate_limit_reset_time = 60
         self.call_count = 0
         self.last_reset_time = time.time()
+        self.error_mode = False
 
     async def set_rate_limit(self, limit: int):
         self.logger.debug(f"Setting rate limit to: {limit}")
@@ -1031,6 +1036,10 @@ class MockClaudeClient:
             if self.call_count > self.rate_limit_threshold:
                 self.logger.warning(f"Rate limit exceeded. Count: {self.call_count}")
                 raise CustomRateLimitError("Rate limit exceeded")
+
+            if self.error_mode:
+                self.logger.warning("Error mode is active. Raising APIStatusError.")
+                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
 
             message_id = f"msg_{uuid.uuid4()}"
             mock_response = {
