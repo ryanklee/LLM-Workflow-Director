@@ -38,6 +38,14 @@ async def claude_client():
         await client.debug_dump()  # This will log the final state of the client
     logger.info("claude_client fixture teardown complete")
 
+@pytest.fixture(autouse=True)
+async def reset_mock_claude_client(claude_client):
+    await claude_client.set_rate_limit(10)
+    await claude_client.set_error_mode(False)
+    yield
+    await claude_client.set_rate_limit(10)
+    await claude_client.set_error_mode(False)
+
 @pytest.mark.asyncio
 async def test_create_message(pact_context, claude_client):
     logger.info("Starting test_create_message")
@@ -124,6 +132,10 @@ async def test_rate_limit_handling(pact_context, claude_client):
         )
     assert 'Rate limit exceeded' in str(exc_info.value)
     logger.info("test_rate_limit_handling completed successfully")
+
+    # Reset rate limit for other tests
+    await claude_client.set_rate_limit(10)
+    logger.debug("Reset rate limit to default (10)")
 
     # Reset rate limit for other tests
     await claude_client.set_rate_limit(10)
