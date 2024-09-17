@@ -49,8 +49,9 @@ class MockClaudeClient:
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
 
     async def set_rate_limit(self, limit: int):
-        self.logger.debug(f"Setting rate limit to: {limit}")
+        self.logger.info(f"Setting rate limit to: {limit}")
         self.rate_limit_threshold = limit
+        self.logger.debug(f"Rate limit updated. New threshold: {self.rate_limit_threshold}")
 
     async def set_error_mode(self, mode: bool):
         self.logger.debug(f"Setting error mode to: {mode}")
@@ -1005,6 +1006,10 @@ class MockClaudeClient:
         self.last_reset_time = time.time()
         self.error_mode = False
 
+    async def set_error_mode(self, mode: bool):
+        self.logger.debug(f"Setting error mode to: {mode}")
+        self.error_mode = mode
+
     async def set_rate_limit(self, limit: int):
         self.logger.debug(f"Setting rate limit to: {limit}")
         self.rate_limit_threshold = limit
@@ -1023,7 +1028,7 @@ class MockClaudeClient:
             return await self.client.create_message(messages[-1]['content'], max_tokens, model, stream)
 
     async def create_message(self, prompt: str, max_tokens: int = 1000, model: str = 'claude-3-opus-20240229', stream: bool = False) -> Dict[str, Any]:
-        self.logger.debug(f"Creating message with prompt: {prompt[:50]}..., stream: {stream}, model: {model}, max_tokens: {max_tokens}")
+        self.logger.info(f"Creating message with prompt: {prompt[:50]}..., stream: {stream}, model: {model}, max_tokens: {max_tokens}")
         async with self.lock:
             current_time = time.time()
             if current_time - self.last_reset_time >= self.rate_limit_reset_time:
@@ -1034,12 +1039,14 @@ class MockClaudeClient:
             self.call_count += 1
             self.logger.debug(f"Current call count: {self.call_count}")
             if self.call_count > self.rate_limit_threshold:
-                self.logger.warning(f"Rate limit exceeded. Count: {self.call_count}")
+                self.logger.warning(f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}")
                 raise CustomRateLimitError("Rate limit exceeded")
 
             if self.error_mode:
                 self.logger.warning("Error mode is active. Raising APIStatusError.")
                 raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+
+            self.logger.debug(f"Message creation successful. Call count: {self.call_count}")
 
             message_id = f"msg_{uuid.uuid4()}"
             mock_response = {
