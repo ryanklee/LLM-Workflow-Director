@@ -125,6 +125,10 @@ async def test_rate_limit_handling(pact_context, claude_client):
     assert 'Rate limit exceeded' in str(exc_info.value)
     logger.info("test_rate_limit_handling completed successfully")
 
+    # Reset rate limit for other tests
+    await claude_client.set_rate_limit(10)
+    logger.debug("Reset rate limit to default (10)")
+
 @pytest.mark.asyncio
 async def test_error_handling(pact_context, claude_client):
     logger.info("Starting test_error_handling")
