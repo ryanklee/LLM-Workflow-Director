@@ -590,6 +590,18 @@ class MockClaudeClient:
         self.context = []
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
 
+    async def set_rate_limit(self, limit: int):
+        self.logger.debug(f"Setting rate limit to: {limit}")
+        self.rate_limit = limit
+
+    async def set_error_mode(self, mode: bool):
+        self.logger.debug(f"Setting error mode to: {mode}")
+        self.error_mode = mode
+
+    async def set_response(self, prompt: str, response: str):
+        self.logger.debug(f"Setting response for prompt: {prompt[:50]}...")
+        self.responses[prompt] = response
+
     async def set_error_mode(self, mode: bool):
         self.logger.debug(f"Setting error mode to: {mode}")
         self.error_mode = mode
@@ -687,36 +699,54 @@ class MockClaudeClient:
                 }
             }
 
-    def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
+    def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> Dict[str, Any]:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         system_message = next((m['content'] for m in messages if m['role'] == 'system'), None)
         
         if system_message:
             self.logger.debug(f"System message found: {system_message[:50]}...")
             if "speak like Shakespeare" in system_message.lower():
-                return "Hark! Thou doth request information. Verily, I shall provide a response most Shakespearean!"
-        
-        context = " ".join(m['content'] for m in messages if m['role'] == 'user')
-        self.logger.debug(f"Context: {context[:100]}...")
-        
-        if "summary" in prompt.lower():
-            return "Here is a summary of the long context: [Summary content]"
-        elif "joke" in prompt.lower():
-            return "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
-        elif any(word in context.lower() for word in ['hark', 'thou', 'doth']):
-            return "Hark! Thou doth request a Shakespearean response, and so I shall provide!"
+                response_text = "Hark! Thou doth request information. Verily, I shall provide a response most Shakespearean!"
+            else:
+                response_text = f"Acknowledging system message: {system_message[:30]}..."
         else:
-            # Check if there's a custom response for this prompt
-            response = self.responses.get(prompt)
-            if response:
-                self.logger.debug(f"Using custom response for prompt: {prompt[:50]}...")
-                return response
+            context = " ".join(m['content'] for m in messages if m['role'] == 'user')
+            self.logger.debug(f"Context: {context[:100]}...")
             
-            # Generate a response based on the conversation history
-            conversation_history = [m['content'] for m in messages if m['role'] in ['user', 'assistant']]
-            response = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
-            self.logger.debug(f"Generated response: {response[:50]}...")
-            return response
+            if "summary" in prompt.lower():
+                response_text = "Here is a summary of the long context: [Summary content]"
+            elif "joke" in prompt.lower():
+                response_text = "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
+            elif any(word in context.lower() for word in ['hark', 'thou', 'doth']):
+                response_text = "Hark! Thou doth request a Shakespearean response, and so I shall provide!"
+            else:
+                # Check if there's a custom response for this prompt
+                response_text = self.responses.get(prompt)
+                if not response_text:
+                    # Generate a response based on the conversation history
+                    conversation_history = [m['content'] for m in messages if m['role'] in ['user', 'assistant']]
+                    response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
+
+        self.logger.debug(f"Generated response: {response_text[:50]}...")
+        
+        return {
+            "id": f"msg_{uuid.uuid4()}",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "text",
+                    "text": response_text
+                }
+            ],
+            "model": model,
+            "stop_reason": "end_turn",
+            "stop_sequence": None,
+            "usage": {
+                "input_tokens": sum(len(m["content"]) for m in messages),
+                "output_tokens": len(response_text)
+            }
+        }
 
     async def _check_rate_limit(self):
         current_time = time.time()
