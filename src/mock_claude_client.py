@@ -602,6 +602,141 @@ class MockClaudeClient:
         self.logger.debug(f"Setting response for prompt: {prompt[:50]}...")
         self.responses[prompt] = response
 
+    async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any] | AsyncGenerator[Dict[str, Any], None]:
+        self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}, stream: {stream}")
+        try:
+            await self._check_rate_limit()
+        except CustomRateLimitError as e:
+            self.logger.error(f"Rate limit exceeded: {str(e)}")
+            raise
+
+        await asyncio.sleep(self.latency)
+
+        if self.error_mode:
+            self.error_count += 1
+            if self.error_count <= self.max_errors:
+                self.logger.error("Simulated API error")
+                error_response = MagicMock()
+                error_response.status_code = 500
+                error_response.json.return_value = {"error": {"type": "server_error", "message": "Simulated API error"}}
+                raise APIStatusError("Simulated API error", response=error_response)
+
+        self.context.extend(messages)
+        prompt = messages[-1]['content']
+        self.logger.debug(f"Received prompt: {prompt[:50]}...")
+        if len(prompt) > self.max_test_tokens:
+            self.logger.warning(f"Prompt exceeds max tokens. Prompt length: {len(prompt)}, Max tokens: {self.max_test_tokens}")
+            raise ValueError(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
+
+        response = self._generate_response(prompt, model, messages)
+        if len(response) > max_tokens:
+            self.logger.warning(f"Response exceeds max tokens. Truncating. Original length: {len(response)}")
+            response = response[:max_tokens] + "..."
+
+        self.call_count += 1
+        self.logger.debug(f"Returning response: {response[:50]}...")
+
+        if stream:
+            async def response_generator():
+                for chunk in response.split():
+                    yield {"type": "content_block_delta", "delta": {"type": "text", "text": chunk}}
+                yield {"type": "message_delta", "delta": {"stop_reason": "end_turn"}}
+            return response_generator()
+        else:
+            return {
+                "id": f"msg_{uuid.uuid4()}",
+                "type": "message",
+                "role": "assistant",
+                "content": [{"type": "text", "text": response}],
+                "model": model,
+                "stop_reason": "end_turn",
+                "stop_sequence": None,
+                "usage": {
+                    "input_tokens": sum(len(m["content"]) for m in messages),
+                    "output_tokens": len(response)
+                }
+            }
+
+    def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        system_message = next((m['content'] for m in messages if m['role'] == 'system'), None)
+        
+        if system_message:
+            self.logger.debug(f"System message found: {system_message[:50]}...")
+            if "speak like Shakespeare" in system_message.lower():
+                response_text = "Hark! Thou doth request information. Verily, I shall provide a response most Shakespearean!"
+            else:
+                response_text = f"Acknowledging system message: {system_message[:30]}..."
+        else:
+            context = " ".join(m['content'] for m in messages if m['role'] == 'user')
+            self.logger.debug(f"Context: {context[:100]}...")
+            
+            if "summary" in prompt.lower():
+                response_text = "Here is a summary of the long context: [Summary content]"
+            elif "joke" in prompt.lower():
+                response_text = "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
+            elif any(word in context.lower() for word in ['hark', 'thou', 'doth']):
+                response_text = "Hark! Thou doth request a Shakespearean response, and so I shall provide!"
+            else:
+                # Check if there's a custom response for this prompt
+                response_text = self.responses.get(prompt)
+                if not response_text:
+                    # Generate a response based on the conversation history
+                    conversation_history = [m['content'] for m in messages if m['role'] in ['user', 'assistant']]
+                    response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
+
+        self.logger.debug(f"Generated response: {response_text[:50]}...")
+        return response_text
+
+    async def _check_rate_limit(self):
+        current_time = time.time()
+        if current_time - self.last_reset > self.reset_time:
+            self.calls = 0
+            self.last_reset = current_time
+            self.logger.debug(f"Rate limit reset. Calls: {self.calls}")
+
+        self.calls += 1
+        self.logger.debug(f"Rate limit check. Calls: {self.calls}, Limit: {self.rate_limit}")
+        if self.calls > self.rate_limit:
+            self.logger.warning(f"Rate limit exceeded. Calls: {self.calls}, Limit: {self.rate_limit}")
+            raise CustomRateLimitError("Rate limit exceeded")
+        elif self.calls == self.rate_limit:
+            self.logger.warning(f"Rate limit reached. Calls: {self.calls}, Limit: {self.rate_limit}")
+
+    async def reset(self):
+        self.logger.debug("Resetting MockClaudeClient")
+        self.calls = 0
+        self.last_reset = time.time()
+        self.error_mode = False
+        self.latency = 0
+        self.responses = {}
+        self.call_count = 0
+        self.error_count = 0
+        self.context = []
+        self.logger.debug("MockClaudeClient reset complete")
+
+    async def count_tokens(self, text: str) -> int:
+        # Simplified token counting for mock purposes
+        token_count = len(text.split())
+        self.logger.debug(f"Token count for text: {token_count}")
+        return token_count
+
+    async def set_latency(self, latency: float):
+        self.logger.debug(f"Setting latency to: {latency}")
+        self.latency = latency
+
+    async def set_rate_limit(self, limit: int):
+        self.logger.debug(f"Setting rate limit to: {limit}")
+        self.rate_limit = limit
+
+    async def set_error_mode(self, mode: bool):
+        self.logger.debug(f"Setting error mode to: {mode}")
+        self.error_mode = mode
+
+    async def set_response(self, prompt: str, response: str):
+        self.logger.debug(f"Setting response for prompt: {prompt[:50]}...")
+        self.responses[prompt] = response
+
     async def set_error_mode(self, mode: bool):
         self.logger.debug(f"Setting error mode to: {mode}")
         self.error_mode = mode

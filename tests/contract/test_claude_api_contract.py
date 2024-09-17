@@ -218,6 +218,98 @@ async def test_context_window(pact_context, claude_client):
     logger.info("test_context_window completed successfully")
 
 @pytest.mark.asyncio
+async def test_error_handling(pact_context, claude_client):
+    logger.info("Starting test_error_handling")
+    pact_context.given(
+        'A request that causes an API error'
+    ).upon_receiving(
+        'An invalid request causing an error'
+    ).with_request(
+        'POST', '/v1/messages',
+        headers={'X-API-Key': Like('sk-ant-api03-valid-key')},
+        body={
+            'model': 'invalid-model',
+            'max_tokens': 100,
+            'messages': [{'role': 'user', 'content': 'This should cause an error'}]
+        }
+    ).will_respond_with(400, body={
+        'error': {
+            'type': 'invalid_request_error',
+            'message': Like('Invalid model specified')
+        }
+    })
+
+    # Set error mode to True to simulate API error
+    await claude_client.set_error_mode(True)
+    logger.debug("Set error mode to True")
+
+    with pytest.raises(APIStatusError) as exc_info:
+        await claude_client.messages.create(
+            model='invalid-model',
+            max_tokens=100,
+            messages=[{'role': 'user', 'content': 'This should cause an error'}]
+        )
+    logger.debug(f"Caught exception: {exc_info.value}")
+    assert 'Simulated API error' in str(exc_info.value)
+    logger.info("test_error_handling completed successfully")
+
+    # Reset error mode
+    await claude_client.set_error_mode(False)
+    logger.debug("Reset error mode to False")
+
+@pytest.mark.asyncio
+async def test_context_window(pact_context, claude_client):
+    logger.info("Starting test_context_window")
+    long_context = "This is a very long context. " * 1000  # 5000 words, well within 200k token limit
+    pact_context.given(
+        'A request with a large context window'
+    ).upon_receiving(
+        'A valid large context request'
+    ).with_request(
+        'POST', '/v1/messages',
+        headers={'X-API-Key': Like('sk-ant-api03-valid-key')},
+        body={
+            'model': 'claude-3-opus-20240229',
+            'max_tokens': 100,
+            'messages': [{'role': 'user', 'content': long_context + "\nSummarize this."}]
+        }
+    ).will_respond_with(200, body={
+        'id': Like('msg_123abc'),
+        'type': 'message',
+        'role': 'assistant',
+        'content': [
+            {
+                'type': 'text',
+                'text': Like('Here is a summary of the long context...')
+            }
+        ],
+        'model': 'claude-3-opus-20240229',
+        'stop_reason': 'end_turn',
+        'stop_sequence': None,
+        'usage': {
+            'input_tokens': Like(5000),
+            'output_tokens': Like(20)
+        }
+    })
+
+    # Set a custom response for the summary request
+    await claude_client.set_response(
+        long_context + "\nSummarize this.",
+        "Here is a summary of the long context: [Summary content]"
+    )
+    logger.debug("Set custom response for long context summary")
+
+    result = await claude_client.messages.create(
+        model='claude-3-opus-20240229',
+        max_tokens=100,
+        messages=[{'role': 'user', 'content': long_context + "\nSummarize this."}]
+    )
+    logger.debug(f"Received result: {result}")
+    assert 'summary' in result['content'][0]['text'].lower()
+    assert result['usage']['input_tokens'] > 1000  # Ensure it's processing a large context
+    logger.info("test_context_window completed successfully")
+
+@pytest.mark.asyncio
 async def test_streaming_response(pact_context, claude_client):
     logger.info("Starting test_streaming_response")
     pact_context.given(
