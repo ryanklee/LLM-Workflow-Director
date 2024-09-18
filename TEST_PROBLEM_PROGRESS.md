@@ -1293,57 +1293,63 @@ After implementing the initial fixes, we are now facing one test failure in `tes
 
 1. `test_system_message`: Assertion error, response doesn't start with 'Hark!'
 
+## Updated Understanding
+
+Based on the official Claude API documentation, we've gained new insights into system message handling:
+
+1. System messages are used to set the context or assign roles to Claude.
+2. The Messages API is the recommended way to interact with Claude, including for system messages.
+3. System messages should be included as the first message in the conversation, with a role of "system".
+
 ## Hypotheses (Ranked by Likelihood)
 
-1. Inconsistent Shakespearean Response Generation (Highest Likelihood)
+1. Incorrect System Message Implementation (Highest Likelihood)
+   - The `MockClaudeClient` may not be correctly implementing the system message as per the Claude API specifications.
+   - Validation: Review and update the system message handling in the `_generate_response` method of `MockClaudeClient` to align with the official API behavior.
+   - Status: To be implemented based on new information.
+
+2. Inconsistent Shakespearean Response Generation (High Likelihood)
    - The `_generate_response` method is not consistently applying the Shakespearean style when a system message is present.
-   - Validation: Review and update the logic in `_generate_response` to ensure Shakespearean responses are always generated when appropriate.
-   - Status: Implemented, but issue persists. Further investigation needed.
+   - Validation: Update the logic to ensure Shakespearean responses are always generated when appropriate, starting with "Hark!".
+   - Status: Needs refinement based on official API behavior.
 
-2. System Message Handling in MockClaudeClient (High Likelihood)
-   - The `MockClaudeClient` class may not be correctly handling system messages, particularly for Shakespearean language.
-   - Validation: Review and update the system message handling in the `_generate_response` method of `MockClaudeClient`.
-   - Status: Partially implemented, but issue persists. Further refinement needed.
+3. Pact Contract Test Mismatch (Medium Likelihood)
+   - The Pact contract test for system messages might not accurately represent the expected Claude API behavior.
+   - Validation: Review and update the Pact contract test to ensure it aligns with the official Claude API documentation.
+   - Status: To be investigated and potentially updated.
 
-3. Inconsistent Response Prefix (Medium Likelihood)
-   - The response generation logic may be adding "Hello!" to non-Shakespearean responses, interfering with the Shakespearean prefix.
-   - Validation: Review the response generation logic to ensure "Hello!" is not added to Shakespearean responses.
-   - Status: To be investigated.
-
-4. Logging Inadequacy (Medium Likelihood)
+4. Logging Inadequacy (Low Likelihood)
    - The current logging might not provide enough information to diagnose the issue with system message handling.
    - Validation: Enhance logging in MockClaudeClient, particularly for system message processing and response generation.
-   - Status: Partially implemented, further enhancements needed.
-
-5. Test Case Mismatch (Low Likelihood)
-   - The test case for system messages might not be aligned with the current MockClaudeClient implementation or expected Claude API behavior.
-   - Validation: Review and update the `test_system_message` test case to ensure it matches the expected behavior.
-   - Status: To be investigated if other hypotheses don't fully resolve the issue.
+   - Status: To be improved if needed after implementing primary fixes.
 
 ## Next Steps
 
-1. Refine Shakespearean Response Generation
-   - Update the `_generate_response` method in MockClaudeClient to consistently generate Shakespearean responses when a system message indicates Shakespearean language.
+1. Update System Message Handling
+   - Modify the `MockClaudeClient` to correctly process system messages as per the Claude API documentation.
+   - Ensure system messages are treated as the first message in the conversation with a role of "system".
+
+2. Refine Shakespearean Response Generation
+   - Update the `_generate_response` method to consistently generate Shakespearean responses when a Shakespearean system message is present.
    - Ensure that Shakespearean responses always start with "Hark!" regardless of the model used.
-   - Remove any "Hello!" prefix from Shakespearean responses.
 
-2. Enhance System Message Handling
-   - Improve the system message detection and processing in the `_generate_response` method.
-   - Implement a more robust check for Shakespearean language instructions in system messages.
+3. Review and Update Pact Contract Test
+   - Examine the current Pact contract test for system messages.
+   - Update the test to accurately represent the expected Claude API behavior, including the correct structure for system messages.
 
-3. Improve Logging
-   - Add more detailed logging for the decision-making process in `_generate_response`.
+4. Enhance Logging
+   - Add more detailed logging for the system message processing and response generation in `MockClaudeClient`.
    - Log the content of system messages, the detected language style, and the resulting response style chosen.
 
-4. Implement Solution
+5. Implement Solution
    - Update the `_generate_response` method in `src/mock_claude_client.py` to address the identified issues.
-   - Enhance logging throughout the method for better debugging.
+   - Ensure the implementation aligns with the official Claude API behavior.
 
-5. Re-run Tests
+6. Re-run Tests
    - Execute the tests in `tests/contract/test_claude_api_contract.py` to verify if the implemented changes resolve the remaining issue.
    - Analyze the test results and identify any remaining issues.
 
-We will proceed with implementing these changes and then re-run the tests to verify the solution.
+We will proceed with implementing these changes based on the official Claude API documentation and then re-run the tests to verify the solution.
 
 2. Re-run Tests
    - Execute the tests in `tests/contract/test_claude_api_contract.py` to verify if the implemented changes resolve the remaining issue.

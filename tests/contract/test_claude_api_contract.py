@@ -581,9 +581,9 @@ async def test_multi_turn_conversation(pact_context, claude_client):
 async def test_system_message(pact_context, claude_client):
     logger.info("Starting test_system_message")
     pact_context.given(
-        'A request with a system message'
+        'A request with a Shakespearean system message'
     ).upon_receiving(
-        'A valid request with a system message'
+        'A valid request with a Shakespearean system message'
     ).with_request(
         'POST', '/v1/messages',
         headers={'X-API-Key': Like('sk-ant-api03-valid-key')},
@@ -623,9 +623,9 @@ async def test_system_message(pact_context, claude_client):
         ]
     )
     logger.debug(f"Received result: {result}")
-    assert result['content'][0]['text'].startswith('Hark!')
-    assert any(word in result['content'][0]['text'].lower() for word in ['thou', 'doth', 'verily', 'forsooth', 'prithee', 'anon'])
-    assert 'weather' in result['content'][0]['text'].lower()
+    assert result['content'][0]['text'].startswith('Hark!'), f"Response does not start with 'Hark!': {result['content'][0]['text']}"
+    assert any(word in result['content'][0]['text'].lower() for word in ['thou', 'doth', 'verily', 'forsooth', 'prithee', 'anon']), f"Response does not contain Shakespearean words: {result['content'][0]['text']}"
+    assert 'weather' in result['content'][0]['text'].lower(), f"Response does not mention weather: {result['content'][0]['text']}"
     assert result['model'] == 'claude-3-opus-20240229'
     assert result['type'] == 'message'
     assert result['role'] == 'assistant'
