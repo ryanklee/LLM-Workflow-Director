@@ -667,10 +667,10 @@ class MockClaudeClient:
         if is_shakespearean:
             if not response_text.startswith("Hark!"):
                 response_text = f"Hark! {response_text}"
-                self.logger.info("Added 'Hark!' to the beginning of the Shakespearean response")
+            self.logger.info(f"Final Shakespearean response: {response_text[:50]}...")
         else:
             response_text = f"Hello! {response_text}"
-            self.logger.info("Added 'Hello!' to the beginning of the non-Shakespearean response")
+            self.logger.info(f"Final non-Shakespearean response: {response_text[:50]}...")
 
         # Adjust response length based on the model
         original_length = len(response_text)
