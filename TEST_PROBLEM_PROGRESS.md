@@ -1,67 +1,60 @@
 # Test Problem Analysis and Progress
 
 ## Problem Description
-After implementing the initial fixes, we are still facing one test failure in `tests/contract/test_claude_api_contract.py`:
+Three tests in `tests/contract/test_claude_api_contract.py` are failing:
 
-1. `test_system_message`: Assertion error, response doesn't start with 'Hark!'
+1. `test_create_message`: Assertion error, response doesn't start with 'Hello!'
+2. `test_model_selection`: Assertion error, response doesn't start with 'Hello!'
+3. `test_system_message`: Assertion error, response doesn't start with 'Hark!'
 
 ## Hypotheses (Ranked by Likelihood)
 
-1. Inconsistent Shakespearean Response Generation (Highest Likelihood)
-   - The `_generate_response` method is not consistently applying the Shakespearean style when a system message is present.
-   - Validation: Review and update the logic in `_generate_response` to ensure Shakespearean responses are always generated when appropriate.
-   - Status: Implemented, but issue persists. Further investigation needed.
+1. MockClaudeClient Response Generation Issue (Highest Likelihood)
+   - The `MockClaudeClient` class is not correctly generating responses that match the expected format for different scenarios.
+   - Validation: Review and update the response generation logic in the `_generate_response` method of `MockClaudeClient`.
+   - Status: To be investigated and implemented.
 
-2. System Message Handling in MockClaudeClient (High Likelihood)
-   - The `MockClaudeClient` class may not be correctly handling system messages, particularly for Shakespearean language.
+2. Test Case Mismatch (Medium Likelihood)
+   - The test cases might not be aligned with the current MockClaudeClient implementation or expected Claude API behavior.
+   - Validation: Review and update test cases to match the expected behavior of the MockClaudeClient and Claude API.
+   - Status: To be investigated if Hypothesis 1 doesn't fully resolve the issue.
+
+3. Incorrect System Message Handling (Medium Likelihood)
+   - The MockClaudeClient may not be correctly processing system messages, particularly for Shakespearean language.
    - Validation: Review and update the system message handling in the `_generate_response` method of `MockClaudeClient`.
-   - Status: Partially implemented, but issue persists. Further refinement needed.
+   - Status: To be investigated alongside Hypothesis 1.
 
-3. Inconsistent Response Prefix (High Likelihood)
-   - The response generation logic may be adding "Hello!" to all responses, interfering with the Shakespearean prefix.
-   - Validation: Review the response generation logic to ensure "Hello!" is not added to Shakespearean responses.
-   - Status: To be investigated and implemented.
-
-4. Logging Inadequacy (Medium Likelihood)
-   - The current logging might not provide enough information to diagnose the issue with system message handling.
-   - Validation: Enhance logging in MockClaudeClient, particularly for system message processing and response generation.
-   - Status: Partially implemented, further enhancements needed.
-
-5. Test Case Mismatch (Low Likelihood)
-   - The test case for system messages might not be aligned with the current MockClaudeClient implementation or expected Claude API behavior.
-   - Validation: Review and update the `test_system_message` test case to ensure it matches the expected behavior.
+4. Model-Specific Response Generation (Low Likelihood)
+   - The MockClaudeClient might not be correctly differentiating responses based on the selected model (Haiku, Sonnet, Opus).
+   - Validation: Review and update the model-specific response generation in MockClaudeClient.
    - Status: To be investigated if other hypotheses don't fully resolve the issue.
-
-6. Model-Specific Behavior Not Implemented (New Hypothesis, Medium Likelihood)
-   - The MockClaudeClient may not be correctly implementing model-specific behavior, particularly for the Claude 3 Opus model used in the test.
-   - Validation: Review and update the `_generate_response` method to ensure it handles different models correctly.
-   - Status: To be investigated and implemented.
 
 ## Next Steps
 
-1. Refine Shakespearean Response Generation and Remove Inconsistent Prefix
-   - Update the `_generate_response` method in MockClaudeClient to consistently generate Shakespearean responses when a system message indicates Shakespearean language.
-   - Ensure that Shakespearean responses always start with "Hark!" regardless of the model used.
-   - Remove any "Hello!" prefix from Shakespearean responses.
-   - Implement model-specific behavior, particularly for the Claude 3 Opus model.
+1. Implement Response Generation Improvements
+   - Update the `_generate_response` method in MockClaudeClient to correctly handle different scenarios:
+     a. Default responses should start with "Hello!"
+     b. System messages for Shakespearean language should generate responses starting with "Hark!"
+     c. Different models (Haiku, Sonnet, Opus) should generate appropriate responses
+   - Enhance logging for response generation to aid in debugging.
 
-2. Enhance System Message Handling
-   - Improve the system message detection and processing in the `_generate_response` method.
-   - Implement a more robust check for Shakespearean language instructions in system messages.
+2. Review and Update Test Cases
+   - Ensure test cases align with the expected behavior of the updated MockClaudeClient.
+   - Add more specific assertions to catch subtle differences in response formats.
 
-3. Improve Logging
-   - Add more detailed logging for the decision-making process in `_generate_response`.
-   - Log the content of system messages, the detected language style, and the resulting response style chosen.
+3. Enhance System Message Handling
+   - Implement more sophisticated system message processing in MockClaudeClient.
+   - Add specific handling for Shakespearean language system messages.
 
-4. Implement Solution
-   - Update the `_generate_response` method in `src/mock_claude_client.py` to address the identified issues.
-   - Enhance logging throughout the method for better debugging.
+4. Implement Model-Specific Response Generation
+   - Add logic to generate different responses based on the selected Claude model.
+   - Ensure response length and content are appropriate for each model (Haiku, Sonnet, Opus).
 
 5. Re-run Tests
-   - Execute the tests in `tests/contract/test_claude_api_contract.py` to verify if the implemented changes resolve the remaining issue.
+   - Execute the tests in `tests/contract/test_claude_api_contract.py` to verify if the implemented changes resolve the issues.
    - Analyze the test results and identify any remaining issues.
 
-We will proceed with implementing these changes and then re-run the tests to verify the solution.
+We will proceed with implementing the response generation improvements and enhanced logging, then re-run the tests to verify the changes.
 # Test Problem Analysis and Progress
 
 ## Problem Description
