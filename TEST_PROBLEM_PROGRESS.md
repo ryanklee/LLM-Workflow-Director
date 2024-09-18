@@ -57,72 +57,60 @@ We will proceed with implementing the system message handling improvements and e
 # Test Problem Analysis and Progress
 
 ## Problem Description
-After implementing the initial fixes, we are still facing numerous test failures across various components of the system. The main issues can be categorized as follows:
+After implementing the initial fixes, we are still facing three test failures in `tests/contract/test_claude_api_contract.py`:
 
-1. Asynchronous Code Handling: Many tests are failing due to improper handling of coroutines and async functions.
-2. MockClaudeClient Implementation: There are still issues with the MockClaudeClient, particularly with its initialization and behavior.
-3. Token Tracking and Optimization: Tests related to token tracking and optimization are failing, indicating potential issues in these components.
-4. Workflow Director and LLM Manager: Several tests for these core components are failing, suggesting implementation mismatches or incomplete functionality.
-5. Contract Tests: Some contract tests are still failing, particularly those related to rate limiting and error handling.
+1. `test_create_message`: Assertion error, response doesn't start with 'Hello!'
+2. `test_model_selection`: Assertion error, response doesn't start with 'Hello!'
+3. `test_system_message`: Assertion error, response doesn't start with 'Hark!'
 
 ## Hypotheses (Ranked by Likelihood)
 
-1. Asynchronous Code Mishandling (Highest Likelihood)
-   - Many test failures are due to coroutines not being properly awaited or async functions being called synchronously.
-   - Validation: Review all test files and ensure proper use of async/await, especially in fixture setup and test execution.
-   - Status: New hypothesis, to be investigated.
+1. MockClaudeClient Response Generation Issue (Highest Likelihood)
+   - The `MockClaudeClient` class is not correctly generating responses that match the expected format for different scenarios.
+   - Validation: Review and update the response generation logic in the `_generate_response` method of `MockClaudeClient`.
+   - Status: To be investigated and implemented.
 
-2. MockClaudeClient Initialization Issue (High Likelihood)
-   - The MockClaudeClient is failing to initialize properly in many tests, possibly due to a missing required argument.
-   - Validation: Review the MockClaudeClient constructor and update all test files to properly initialize it.
-   - Status: New hypothesis, to be investigated.
+2. Test Case Mismatch (Medium Likelihood)
+   - The test cases might not be aligned with the current MockClaudeClient implementation or expected Claude API behavior.
+   - Validation: Review and update test cases to match the expected behavior of the MockClaudeClient and Claude API.
+   - Status: To be investigated if Hypothesis 1 doesn't fully resolve the issue.
 
-3. Token Tracker and Optimizer Async Implementation (High Likelihood)
-   - The TokenTracker and TokenOptimizer classes may not be properly implemented as async classes.
-   - Validation: Review these classes and ensure all methods that should be async are properly defined and used.
-   - Status: New hypothesis, to be investigated.
+3. Incorrect System Message Handling (Medium Likelihood)
+   - The MockClaudeClient may not be correctly processing system messages, particularly for Shakespearean language.
+   - Validation: Review and update the system message handling in the `_generate_response` method of `MockClaudeClient`.
+   - Status: To be investigated alongside Hypothesis 1.
 
-4. Workflow Director and LLM Manager Async Issues (Medium Likelihood)
-   - These core components may have inconsistencies in their async implementations.
-   - Validation: Review these classes, ensuring all methods that interact with async components are properly implemented.
-   - Status: New hypothesis, to be investigated.
-
-5. Incorrect Error Simulation in MockClaudeClient (Medium Likelihood)
-   - The error simulation for rate limiting and API errors may not be correctly implemented.
-   - Validation: Review and update the error simulation logic in MockClaudeClient.
-   - Status: Carried over from previous analysis, still to be investigated.
+4. Model-Specific Response Generation (Low Likelihood)
+   - The MockClaudeClient might not be correctly differentiating responses based on the selected model (Haiku, Sonnet, Opus).
+   - Validation: Review and update the model-specific response generation in MockClaudeClient.
+   - Status: To be investigated if other hypotheses don't fully resolve the issue.
 
 ## Next Steps
 
-1. Asynchronous Code Review:
-   - Systematically review all test files and core components to ensure proper async/await usage.
-   - Update tests to properly handle async fixtures and function calls.
+1. Implement Response Generation Improvements
+   - Update the `_generate_response` method in MockClaudeClient to correctly handle different scenarios:
+     a. Default responses should start with "Hello!"
+     b. System messages for Shakespearean language should generate responses starting with "Hark!"
+     c. Different models (Haiku, Sonnet, Opus) should generate appropriate responses
+   - Enhance logging for response generation to aid in debugging.
 
-2. MockClaudeClient Update:
-   - Review the MockClaudeClient constructor and update its initialization across all test files.
-   - Ensure it properly simulates the real Claude API's behavior, including error cases.
+2. Review and Update Test Cases
+   - Ensure test cases align with the expected behavior of the updated MockClaudeClient.
+   - Add more specific assertions to catch subtle differences in response formats.
 
-3. Token Tracking and Optimization Refactor:
-   - Review and update the TokenTracker and TokenOptimizer classes to properly implement async methods.
-   - Update all interactions with these classes to use await where necessary.
+3. Enhance System Message Handling
+   - Implement more sophisticated system message processing in MockClaudeClient.
+   - Add specific handling for Shakespearean language system messages.
 
-4. Workflow Director and LLM Manager Review:
-   - Carefully review these core components to ensure consistent async implementation.
-   - Update any methods that should be async and ensure they're properly awaited in tests.
+4. Implement Model-Specific Response Generation
+   - Add logic to generate different responses based on the selected Claude model.
+   - Ensure response length and content are appropriate for each model (Haiku, Sonnet, Opus).
 
-5. Error Simulation Enhancement:
-   - Update the error simulation logic in MockClaudeClient to correctly raise CustomRateLimitError and APIStatusError.
-   - Ensure these errors are properly caught and handled in tests.
+5. Re-run Tests
+   - Execute the tests in `tests/contract/test_claude_api_contract.py` to verify if the implemented changes resolve the issues.
+   - Analyze the test results and identify any remaining issues.
 
-6. Logging Enhancement:
-   - Improve logging throughout all components, especially MockClaudeClient, to aid in future debugging.
-   - Add more detailed logging in test fixtures and test functions to help diagnose issues.
-
-7. Test Execution and Iteration:
-   - After each significant change, run the full test suite to identify any improvements or regressions.
-   - Iterate on the changes, focusing on the most critical failures first.
-
-We will proceed with these steps, starting with the asynchronous code review and MockClaudeClient updates, as these seem to be the most pressing issues affecting a large number of tests.
+We will proceed with implementing the response generation improvements and enhanced logging, then re-run the tests to verify the changes.
 # Test Problem Analysis and Progress
 
 ## Problem Description
