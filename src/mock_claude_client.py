@@ -629,6 +629,8 @@ class MockClaudeClient:
 
     def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
         self.logger.info(f"Generating response for prompt: {prompt[:50]}... using model: {model}")
+        self.logger.debug(f"Full messages: {messages}")
+        
         system_message = next((m['content'] for m in messages if m['role'] == 'system'), None)
         
         if system_message:
@@ -637,7 +639,7 @@ class MockClaudeClient:
                 response_text = "Hark! Thou doth request information. Verily, I shall provide a response most Shakespearean!"
                 self.logger.info("Generating Shakespearean response")
             else:
-                response_text = f"Hello! Acknowledging system message: {system_message[:30]}..."
+                response_text = f"Acknowledging system message: {system_message[:30]}..."
                 self.logger.info("Generating response with system message acknowledgment")
         else:
             context = " ".join(m['content'] for m in messages if m['role'] == 'user')
@@ -648,10 +650,10 @@ class MockClaudeClient:
             if response_text:
                 self.logger.info(f"Using custom response: {response_text[:50]}...")
             elif "summary" in prompt.lower():
-                response_text = "Hello! Here is a summary of the long context: [Summary content]"
+                response_text = "Here is a summary of the long context: [Summary content]"
                 self.logger.info("Generating summary response")
             elif "joke" in prompt.lower():
-                response_text = "Hello! Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
+                response_text = "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
                 self.logger.info("Generating joke response")
             elif any(word in context.lower() for word in ['hark', 'thou', 'doth']):
                 response_text = "Hark! Thou doth request a Shakespearean response, and so I shall provide!"
@@ -661,11 +663,11 @@ class MockClaudeClient:
                 conversation_history = [m['content'] for m in messages if m['role'] in ['user', 'assistant']]
                 self.logger.info(f"Generating response based on model: {model}")
                 if model == 'claude-3-haiku-20240307':
-                    response_text = f"Hello! {' '.join(conversation_history[-1:])[:30]}..."
+                    response_text = f"{' '.join(conversation_history[-1:])[:30]}..."
                 elif model == 'claude-3-sonnet-20240229':
-                    response_text = f"Hello! Based on our conversation: {' '.join(conversation_history[-2:])[:50]}..."
+                    response_text = f"Based on our conversation: {' '.join(conversation_history[-2:])[:50]}..."
                 else:  # claude-3-opus-20240229 or default
-                    response_text = f"Hello! Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
+                    response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
 
         # Adjust response length based on the model
         original_length = len(response_text)
