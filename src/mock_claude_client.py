@@ -1229,18 +1229,18 @@ class MockClaudeClient:
             conversation_history = [m['content'] for m in messages if m['role'] in ['user', 'assistant']]
             self.logger.info(f"Generating response based on model: {model}")
             if model == 'claude-3-haiku-20240307':
-                response_text = f"Hello! {' '.join(conversation_history[-1:])[:20]}..."
+                response_text = f"{' '.join(conversation_history[-1:])[:20]}..."
             elif model == 'claude-3-sonnet-20240229':
-                response_text = f"Hello! Based on our conversation: {' '.join(conversation_history[-2:])[:40]}..."
+                response_text = f"Based on our conversation: {' '.join(conversation_history[-2:])[:40]}..."
             else:  # claude-3-opus-20240229 or default
-                response_text = f"Hello! Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
+                response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
 
         # Ensure Shakespearean responses always start with "Hark!"
         if is_shakespearean:
             if not response_text.startswith("Hark!"):
                 response_text = f"Hark! {response_text}"
             self.logger.info("Ensured Shakespearean response starts with 'Hark!'")
-        elif not response_text.startswith("Hello!"):
+        else:
             response_text = f"Hello! {response_text}"
             self.logger.info("Added 'Hello!' to the beginning of the non-Shakespearean response")
 
