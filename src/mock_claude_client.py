@@ -1236,8 +1236,14 @@ class MockClaudeClient:
                 response_text = f"Hello! Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
 
         # Ensure Shakespearean responses always start with "Hark!"
-        if is_shakespearean and not response_text.startswith("Hark!"):
-            response_text = f"Hark! {response_text}"
+        if is_shakespearean:
+            if not response_text.startswith("Hark!"):
+                response_text = f"Hark! {response_text}"
+                self.logger.info("Added 'Hark!' to the beginning of the Shakespearean response")
+        else:
+            if response_text.startswith("Hark!"):
+                response_text = response_text[6:]  # Remove "Hark! " if it's not supposed to be Shakespearean
+                self.logger.info("Removed 'Hark!' from the beginning of a non-Shakespearean response")
 
         # Adjust response length based on the model
         original_length = len(response_text)
