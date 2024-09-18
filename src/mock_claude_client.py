@@ -604,6 +604,23 @@ class MockClaudeClient:
         self.responses[prompt] = response
         self.logger.debug(f"Custom response set successfully for prompt: {prompt[:50]}...")
 
+    async def set_rate_limit(self, limit: int):
+        self.logger.debug(f"Setting rate limit to: {limit}")
+        self.rate_limit = limit
+
+    async def set_error_mode(self, mode: bool):
+        self.logger.debug(f"Setting error mode to: {mode}")
+        self.error_mode = mode
+
+    async def set_latency(self, latency: float):
+        self.logger.debug(f"Setting latency to: {latency}")
+        self.latency = latency
+
+    async def set_response(self, prompt: str, response: str):
+        self.logger.debug(f"Setting custom response for prompt: {prompt[:50]}...")
+        self.responses[prompt] = response
+        self.logger.debug(f"Custom response set successfully for prompt: {prompt[:50]}...")
+
     def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         system_message = next((m['content'] for m in messages if m['role'] == 'system'), None)
@@ -744,6 +761,20 @@ class MockClaudeClient:
         self.call_count += 1
         self.logger.debug(f"Returning response: {response[:50]}...")
 
+        result = {
+            "id": f"msg_{uuid.uuid4()}",
+            "type": "message",
+            "role": "assistant",
+            "content": [{"type": "text", "text": response}],
+            "model": model,
+            "stop_reason": "end_turn",
+            "stop_sequence": None,
+            "usage": {
+                "input_tokens": sum(len(m["content"]) for m in messages),
+                "output_tokens": len(response)
+            }
+        }
+
         if stream:
             async def response_generator():
                 for chunk in response.split():
@@ -751,19 +782,7 @@ class MockClaudeClient:
                 yield {"type": "message_delta", "delta": {"stop_reason": "end_turn"}}
             return response_generator()
         else:
-            return {
-                "id": f"msg_{uuid.uuid4()}",
-                "type": "message",
-                "role": "assistant",
-                "content": [{"type": "text", "text": response}],
-                "model": model,
-                "stop_reason": "end_turn",
-                "stop_sequence": None,
-                "usage": {
-                    "input_tokens": sum(len(m["content"]) for m in messages),
-                    "output_tokens": len(response)
-                }
-            }
+            return result
 
     def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
