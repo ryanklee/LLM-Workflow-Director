@@ -1438,48 +1438,40 @@ One test in `tests/contract/test_claude_api_contract.py` is failing:
 
 ## Hypotheses (Ranked by Likelihood)
 
-1. Inconsistent Shakespearean Response Generation (Highest Likelihood)
-   - The `_generate_response` method is not consistently applying the Shakespearean style when a system message is present.
-   - Validation: Review and update the logic in `_generate_response` to ensure Shakespearean responses are always generated when appropriate.
-   - Status: Implemented, but issue persists. Further investigation needed.
+1. Inconsistent System Message Handling (Highest Likelihood)
+   - The `_generate_response` method may not be correctly identifying or processing system messages for Shakespearean language.
+   - Validation: Review and update the system message detection and processing logic in `_generate_response`.
+   - Status: To be implemented and tested.
 
-2. System Message Handling in MockClaudeClient (High Likelihood)
-   - The `MockClaudeClient` class may not be correctly handling system messages, particularly for Shakespearean language.
-   - Validation: Review and update the system message handling in the `_generate_response` method of `MockClaudeClient`.
-   - Status: Partially implemented, but issue persists. Further refinement needed.
+2. Shakespearean Response Generation Issue (High Likelihood)
+   - The Shakespearean response generation logic may not be consistently applying the "Hark!" prefix.
+   - Validation: Ensure that all Shakespearean responses start with "Hark!" regardless of other factors.
+   - Status: To be implemented and tested.
 
-3. Logging Inadequacy (Medium Likelihood)
-   - The current logging might not provide enough information to diagnose the issue with system message handling.
-   - Validation: Enhance logging in MockClaudeClient, particularly for system message processing and response generation.
-   - Status: Partially implemented, further enhancements needed.
-
-4. Model-Specific Behavior Interference (New Hypothesis, Medium Likelihood)
-   - The model-specific behavior implementation might be interfering with the Shakespearean response generation.
+3. Model-Specific Behavior Interference (Medium Likelihood)
+   - The model-specific behavior implementation might be overriding the Shakespearean response generation.
    - Validation: Review the interaction between model-specific logic and Shakespearean response generation.
-   - Status: To be investigated.
+   - Status: To be investigated after addressing hypotheses 1 and 2.
+
+4. Logging Inadequacy (Low Likelihood)
+   - While logging has been improved, it may still not provide enough detail for thorough debugging.
+   - Validation: Further enhance logging, particularly around system message processing and response generation decisions.
+   - Status: To be implemented alongside other changes.
 
 ## Next Steps
 
-1. Refine Shakespearean Response Generation and System Message Handling
-   - Update the `_generate_response` method in MockClaudeClient to consistently generate Shakespearean responses when a system message indicates Shakespearean language.
-   - Ensure that Shakespearean responses always start with "Hark!" regardless of the model used.
-   - Implement a more robust check for Shakespearean language instructions in system messages.
+1. Refine System Message Handling and Shakespearean Response Generation
+   - Update the `_generate_response` method in MockClaudeClient to more robustly detect and process system messages for Shakespearean language.
+   - Implement a foolproof mechanism to ensure all Shakespearean responses start with "Hark!".
+   - Add detailed logging for each step of the decision-making process.
 
-2. Improve Logging
-   - Add more detailed logging for the decision-making process in `_generate_response`.
-   - Log the content of system messages, the detected language style, and the resulting response style chosen.
-
-3. Review Model-Specific Behavior
-   - Examine the interaction between model-specific logic and Shakespearean response generation.
-   - Ensure that model-specific behavior doesn't override Shakespearean responses when required.
-
-4. Implement Solution
+2. Implement Solution
    - Update the `_generate_response` method in `src/mock_claude_client.py` to address the identified issues.
    - Enhance logging throughout the method for better debugging.
 
-5. Re-run Tests
-   - Execute the tests in `tests/contract/test_claude_api_contract.py` to verify if the implemented changes resolve the remaining issue.
-   - Analyze the test results and identify any remaining issues.
+3. Re-run Tests
+   - Execute the tests in `tests/contract/test_claude_api_contract.py` to verify if the implemented changes resolve the issue.
+   - Analyze the test results and update hypotheses if needed.
 
 We will proceed with implementing these changes and then re-run the tests to verify the solution.
 # Test Problem Analysis and Progress
