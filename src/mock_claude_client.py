@@ -657,11 +657,11 @@ class MockClaudeClient:
                 self.logger.info(f"Generated Shakespearean response: {response_text[:50]}...")
             else:
                 if model == 'claude-3-haiku-20240307':
-                    response_text = f"{' '.join(conversation_history[-1:])[:20]}..."
+                    response_text = f"Hello! {' '.join(conversation_history[-1:])[:20]}..."
                 elif model == 'claude-3-sonnet-20240229':
-                    response_text = f"Based on our conversation: {' '.join(conversation_history[-2:])[:40]}..."
+                    response_text = f"Hello! Based on our conversation: {' '.join(conversation_history[-2:])[:40]}..."
                 else:  # claude-3-opus-20240229 or default
-                    response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
+                    response_text = f"Hello! Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
 
         # Ensure Shakespearean responses always start with "Hark!"
         if is_shakespearean:
@@ -669,8 +669,9 @@ class MockClaudeClient:
                 response_text = f"Hark! {response_text}"
             self.logger.info(f"Final Shakespearean response: {response_text[:50]}...")
         else:
-            # Remove "Hello!" prefix for non-Shakespearean responses
-            response_text = response_text.lstrip("Hello! ")
+            # Ensure non-Shakespearean responses start with "Hello!"
+            if not response_text.startswith("Hello!"):
+                response_text = f"Hello! {response_text}"
             self.logger.info(f"Final non-Shakespearean response: {response_text[:50]}...")
 
         # Adjust response length based on the model
