@@ -3,7 +3,7 @@
 ## Problem Description
 After implementing the initial fixes, we are still facing one test failure in `tests/contract/test_claude_api_contract.py`:
 
-1. `test_system_message`: The response doesn't start with 'Hark!' as expected.
+1. `test_system_message`: Assertion error, response doesn't start with 'Hark!'
 
 ## Hypotheses (Ranked by Likelihood)
 
@@ -22,10 +22,20 @@ After implementing the initial fixes, we are still facing one test failure in `t
    - Validation: Review Pact contract definitions for system messages and ensure they match the latest Claude API documentation.
    - Status: To be investigated if other hypotheses don't fully resolve the issue.
 
-4. Logging Inadequacy (Medium Likelihood)
+4. Logging Inadequacy (New Hypothesis, Medium Likelihood)
    - The current logging might not provide enough information to diagnose the issue with system message handling.
    - Validation: Enhance logging in MockClaudeClient, particularly for system message processing.
    - Status: To be implemented alongside Hypothesis 1.
+
+## Implemented Changes
+
+1. MockClaudeClient Improvements
+   - Updated the `_generate_response` method to handle different models (Haiku, Sonnet, Opus) with appropriate response lengths.
+   - Improved the default response generation to start with "Hello!" for general queries.
+
+2. Logging Enhancement
+   - Added more detailed logging in MockClaudeClient, particularly in the `_generate_response` method.
+   - Implemented logging for model selection.
 
 ## Next Steps
 
