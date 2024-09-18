@@ -1216,10 +1216,10 @@ class MockClaudeClient:
             self.logger.info(f"System message found: {system_message[:100]}...")
             if "speak like Shakespeare" in system_message.lower():
                 response_text = self._generate_shakespearean_response(prompt)
-                self.logger.info("Generating Shakespearean response")
+                self.logger.info(f"Generating Shakespearean response: {response_text[:50]}...")
             else:
                 response_text = f"Hello! Acknowledging system message: {system_message[:30]}..."
-                self.logger.info("Generating response with system message acknowledgment")
+                self.logger.info(f"Generating response with system message acknowledgment: {response_text[:50]}...")
         else:
             context = " ".join(m['content'] for m in messages if m['role'] == 'user')
             self.logger.info(f"Context: {context[:100]}...")
@@ -1236,7 +1236,7 @@ class MockClaudeClient:
                 self.logger.info("Generating joke response")
             elif any(word in context.lower() for word in ['hark', 'thou', 'doth']):
                 response_text = self._generate_shakespearean_response(prompt)
-                self.logger.info("Generating Shakespearean response based on context")
+                self.logger.info(f"Generating Shakespearean response based on context: {response_text[:50]}...")
             else:
                 # Generate a response based on the model and conversation history
                 conversation_history = [m['content'] for m in messages if m['role'] in ['user', 'assistant']]
@@ -1259,7 +1259,7 @@ class MockClaudeClient:
         else:
             self.logger.info(f"Opus response length: {len(response_text)} characters")
 
-        self.logger.info(f"Generated response for {model}: {response_text[:50]}...")
+        self.logger.info(f"Final generated response for {model}: {response_text[:50]}...")
         return response_text
 
     def _generate_shakespearean_response(self, prompt: str) -> str:
