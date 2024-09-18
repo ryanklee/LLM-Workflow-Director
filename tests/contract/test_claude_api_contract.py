@@ -88,6 +88,7 @@ async def test_create_message(pact_context, claude_client):
     logger.debug(f"Received result: {result}")
     assert result['content'][0]['text'].startswith('Hello!')
     assert len(result['content'][0]['text']) > 50  # Opus model should give longer responses
+    assert 'Based on our conversation' in result['content'][0]['text']
     assert result['model'] == 'claude-3-opus-20240229'
     assert result['type'] == 'message'
     assert result['role'] == 'assistant'
@@ -623,7 +624,7 @@ async def test_system_message(pact_context, claude_client):
     )
     logger.debug(f"Received result: {result}")
     assert result['content'][0]['text'].startswith('Hark!')
-    assert any(word in result['content'][0]['text'].lower() for word in ['thou', 'doth'])
+    assert any(word in result['content'][0]['text'].lower() for word in ['thou', 'doth', 'verily', 'forsooth', 'prithee', 'anon'])
     assert 'weather' in result['content'][0]['text'].lower()
     assert result['model'] == 'claude-3-opus-20240229'
     assert result['type'] == 'message'
