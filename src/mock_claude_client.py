@@ -1136,6 +1136,45 @@ class MockClaudeClient:
         self.call_count = 0
         self.last_reset_time = time.time()
         self.error_mode = False
+        self.responses = {}
+        self.context = []
+
+    async def set_response(self, prompt: str, response: str):
+        self.logger.debug(f"Setting custom response for prompt: {prompt[:50]}...")
+        self.responses[prompt] = response
+        self.logger.debug(f"Custom response set successfully for prompt: {prompt[:50]}...")
+
+    def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        system_message = next((m['content'] for m in messages if m['role'] == 'system'), None)
+        
+        if system_message:
+            self.logger.debug(f"System message found: {system_message[:50]}...")
+            if "speak like Shakespeare" in system_message.lower():
+                response_text = "Hark! Thou doth request information. Verily, I shall provide a response most Shakespearean!"
+            else:
+                response_text = f"Acknowledging system message: {system_message[:30]}..."
+        else:
+            context = " ".join(m['content'] for m in messages if m['role'] == 'user')
+            self.logger.debug(f"Context: {context[:100]}...")
+            
+            # Check if there's a custom response for this prompt
+            response_text = self.responses.get(prompt)
+            if response_text:
+                self.logger.debug(f"Using custom response: {response_text[:50]}...")
+            elif "summary" in prompt.lower():
+                response_text = "Here is a summary of the long context: [Summary content]"
+            elif "joke" in prompt.lower():
+                response_text = "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
+            elif any(word in context.lower() for word in ['hark', 'thou', 'doth']):
+                response_text = "Hark! Thou doth request a Shakespearean response, and so I shall provide!"
+            else:
+                # Generate a response based on the conversation history
+                conversation_history = [m['content'] for m in messages if m['role'] in ['user', 'assistant']]
+                response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
+
+        self.logger.debug(f"Generated response: {response_text[:50]}...")
+        return response_text
 
     async def set_error_mode(self, mode: bool):
         self.logger.debug(f"Setting error mode to: {mode}")
@@ -1180,6 +1219,7 @@ class MockClaudeClient:
             self.logger.debug(f"Message creation successful. Call count: {self.call_count}")
 
             message_id = f"msg_{uuid.uuid4()}"
+            response_text = self._generate_response(prompt, model, self.context + [{'role': 'user', 'content': prompt}])
             mock_response = {
                 'id': message_id,
                 'type': 'message',
@@ -1187,7 +1227,7 @@ class MockClaudeClient:
                 'content': [
                     {
                         'type': 'text',
-                        'text': f"Hello! How can I assist you today?"
+                        'text': response_text
                     }
                 ],
                 'model': model,
@@ -1195,16 +1235,18 @@ class MockClaudeClient:
                 'stop_sequence': None,
                 'usage': {
                     'input_tokens': len(prompt.split()),
-                    'output_tokens': len("Hello! How can I assist you today?".split())
+                    'output_tokens': len(response_text.split())
                 }
             }
             self._messages.append(mock_response)
+            self.context.append({'role': 'user', 'content': prompt})
+            self.context.append({'role': 'assistant', 'content': response_text})
             self.logger.debug(f"Created message with ID: {message_id}")
             
             if stream:
                 async def response_generator():
-                    yield {'type': 'content_block_delta', 'delta': {'type': 'text', 'text': 'Hello!'}}
-                    yield {'type': 'content_block_delta', 'delta': {'type': 'text', 'text': ' How can I assist you today?'}}
+                    for word in response_text.split():
+                        yield {'type': 'content_block_delta', 'delta': {'type': 'text', 'text': word + ' '}}
                     yield {'type': 'message_delta', 'delta': {'stop_reason': 'end_turn'}}
                 self.logger.debug("Returning streaming response")
                 return response_generator()
