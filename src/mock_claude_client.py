@@ -691,7 +691,7 @@ class MockClaudeClient:
     def _generate_shakespearean_response(self, prompt: str) -> str:
         self.logger.info(f"Generating Shakespearean response for prompt: {prompt[:50]}...")
         shakespearean_words = ["thou", "doth", "verily", "forsooth", "prithee", "anon"]
-        response = f"Hark! {random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
+        response = f"{random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
         response += f"{random.choice(shakespearean_words)} {random.choice(shakespearean_words)} "
         response += f"[Shakespearean response to '{prompt[:20]}...']"
         self.logger.debug(f"Generated Shakespearean response: {response}")
@@ -1244,12 +1244,10 @@ class MockClaudeClient:
 
         # Ensure Shakespearean responses always start with "Hark!" and non-Shakespearean with "Hello!"
         if is_shakespearean:
-            if not response_text.startswith("Hark!"):
-                response_text = f"Hark! {response_text.lstrip('Hello! ')}"
+            response_text = f"Hark! {response_text.lstrip('Hark! ').lstrip('Hello! ')}"
             self.logger.info(f"Ensured Shakespearean response starts with 'Hark!': {response_text[:50]}...")
         else:
-            if not response_text.startswith("Hello!"):
-                response_text = f"Hello! {response_text}"
+            response_text = f"Hello! {response_text.lstrip('Hark! ').lstrip('Hello! ')}"
             self.logger.info(f"Ensured non-Shakespearean response starts with 'Hello!': {response_text[:50]}...")
 
         # Adjust response length based on the model
@@ -1263,7 +1261,7 @@ class MockClaudeClient:
         else:
             self.logger.info(f"Opus response length: {len(response_text)} characters")
 
-        self.logger.info(f"Final generated response for {model}: {response_text[:50]}...")
+        self.logger.debug(f"Final generated response for {model}: {response_text}")
         return response_text
 
     def _generate_shakespearean_response(self, prompt: str) -> str:
