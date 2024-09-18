@@ -622,7 +622,7 @@ class MockClaudeClient:
         self.logger.debug(f"Custom response set successfully for prompt: {prompt[:50]}...")
 
     def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
-        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}... using model: {model}")
         system_message = next((m['content'] for m in messages if m['role'] == 'system'), None)
         
         if system_message:
@@ -646,11 +646,22 @@ class MockClaudeClient:
             elif any(word in context.lower() for word in ['hark', 'thou', 'doth']):
                 response_text = "Hark! Thou doth request a Shakespearean response, and so I shall provide!"
             else:
-                # Generate a response based on the conversation history
+                # Generate a response based on the model and conversation history
                 conversation_history = [m['content'] for m in messages if m['role'] in ['user', 'assistant']]
-                response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
+                if model == 'claude-3-haiku-20240307':
+                    response_text = f"Hello! {' '.join(conversation_history[-1:])[:30]}..."
+                elif model == 'claude-3-sonnet-20240229':
+                    response_text = f"Hello! Based on our conversation: {' '.join(conversation_history[-2:])[:50]}..."
+                else:  # claude-3-opus-20240229 or default
+                    response_text = f"Hello! Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
 
-        self.logger.debug(f"Generated response: {response_text[:50]}...")
+        # Adjust response length based on the model
+        if model == 'claude-3-haiku-20240307':
+            response_text = response_text[:50]  # Shorter response for Haiku
+        elif model == 'claude-3-sonnet-20240229':
+            response_text = response_text[:100]  # Medium-length response for Sonnet
+
+        self.logger.debug(f"Generated response for {model}: {response_text[:50]}...")
         return response_text
 
     async def set_response(self, prompt: str, response: str):

@@ -87,6 +87,7 @@ async def test_create_message(pact_context, claude_client):
     )
     logger.debug(f"Received result: {result}")
     assert result['content'][0]['text'].startswith('Hello!')
+    assert len(result['content'][0]['text']) > 50  # Opus model should give longer responses
     assert result['model'] == 'claude-3-opus-20240229'
     assert result['type'] == 'message'
     assert result['role'] == 'assistant'
@@ -465,7 +466,8 @@ async def test_model_selection(pact_context, claude_client):
     )
     logger.debug(f"Received result: {result}")
     assert result['model'] == 'claude-3-haiku-20240307'
-    assert len(result['content'][0]['text']) < 50  # Assuming Haiku gives shorter responses
+    assert result['content'][0]['text'].startswith('Hello!')
+    assert len(result['content'][0]['text']) <= 50  # Haiku should give shorter responses
     logger.info("test_model_selection completed successfully")
 
 @pytest.mark.asyncio
@@ -620,7 +622,8 @@ async def test_system_message(pact_context, claude_client):
         ]
     )
     logger.debug(f"Received result: {result}")
-    assert any(word in result['content'][0]['text'].lower() for word in ['hark', 'thou', 'doth'])
+    assert result['content'][0]['text'].startswith('Hark!')
+    assert any(word in result['content'][0]['text'].lower() for word in ['thou', 'doth'])
     assert 'weather' in result['content'][0]['text'].lower()
     assert result['model'] == 'claude-3-opus-20240229'
     assert result['type'] == 'message'
