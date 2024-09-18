@@ -607,6 +607,11 @@ class MockClaudeClient:
     async def set_response(self, prompt: str, response: str):
         self.logger.debug(f"Setting custom response for prompt: {prompt[:50]}...")
         self.responses[prompt] = response
+        self.logger.debug(f"Custom response set successfully for prompt: {prompt[:50]}...")
+
+    async def set_response(self, prompt: str, response: str):
+        self.logger.debug(f"Setting custom response for prompt: {prompt[:50]}...")
+        self.responses[prompt] = response
 
     async def set_rate_limit(self, limit: int):
         self.logger.debug(f"Setting rate limit to: {limit}")
@@ -754,6 +759,11 @@ class MockClaudeClient:
 
         self.logger.debug(f"Generated response: {response_text[:50]}...")
         return response_text
+
+    async def set_response(self, prompt: str, response: str):
+        self.logger.debug(f"Setting custom response for prompt: {prompt[:50]}...")
+        self.responses[prompt] = response
+        self.logger.debug(f"Custom response set successfully for prompt: {prompt[:50]}...")
 
     async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any] | AsyncGenerator[Dict[str, Any], None]:
         self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}, stream: {stream}")
