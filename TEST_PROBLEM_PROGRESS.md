@@ -8,52 +8,62 @@ After implementing the initial fixes, we are still facing one test failure in `t
 ## Hypotheses (Ranked by Likelihood)
 
 1. System Message Handling in MockClaudeClient (Highest Likelihood)
-   - The `MockClaudeClient` class may not be correctly handling system messages, particularly for Shakespearean language.
+   - The `MockClaudeClient` class is not correctly handling system messages, particularly for Shakespearean language.
    - Validation: Review and update the system message handling in the `_generate_response` method of `MockClaudeClient`.
+   - Status: Implemented changes, but issue persists. Further investigation needed.
+
+2. Inconsistent Response Generation (New Hypothesis, High Likelihood)
+   - The `_generate_response` method may not consistently apply the Shakespearean style when a system message is present.
+   - Validation: Review the logic in `_generate_response` to ensure Shakespearean responses are always generated when appropriate.
    - Status: To be investigated and implemented.
 
-2. Test Case Mismatch (Medium Likelihood)
+3. Test Case Mismatch (Medium Likelihood)
    - The test case for system messages might not be aligned with the current MockClaudeClient implementation or expected Claude API behavior.
    - Validation: Review and update the `test_system_message` test case to ensure it matches the expected behavior.
-   - Status: To be investigated if Hypothesis 1 doesn't fully resolve the issue.
+   - Status: To be investigated if Hypothesis 1 and 2 don't fully resolve the issue.
 
-3. Pact Contract Definition Issue (Low Likelihood)
+4. Logging Inadequacy (Medium Likelihood)
+   - The current logging might not provide enough information to diagnose the issue with system message handling.
+   - Validation: Enhance logging in MockClaudeClient, particularly for system message processing.
+   - Status: Partially implemented, further enhancements needed.
+
+5. Pact Contract Definition Issue (Low Likelihood)
    - The Pact contract definition for system messages might not accurately represent the expected Claude API behavior.
    - Validation: Review Pact contract definitions for system messages and ensure they match the latest Claude API documentation.
    - Status: To be investigated if other hypotheses don't fully resolve the issue.
-
-4. Logging Inadequacy (New Hypothesis, Medium Likelihood)
-   - The current logging might not provide enough information to diagnose the issue with system message handling.
-   - Validation: Enhance logging in MockClaudeClient, particularly for system message processing.
-   - Status: To be implemented alongside Hypothesis 1.
 
 ## Implemented Changes
 
 1. MockClaudeClient Improvements
    - Updated the `_generate_response` method to handle different models (Haiku, Sonnet, Opus) with appropriate response lengths.
    - Improved the default response generation to start with "Hello!" for general queries.
+   - Implemented initial Shakespearean response generation.
 
 2. Logging Enhancement
    - Added more detailed logging in MockClaudeClient, particularly in the `_generate_response` method.
-   - Implemented logging for model selection.
+   - Implemented logging for model selection and system message detection.
 
 ## Next Steps
 
-1. Implement System Message Handling Improvements
-   - Update the `_generate_response` method in MockClaudeClient to correctly handle system messages, especially for Shakespearean language.
-   - Enhance logging for system message processing to aid in debugging.
+1. Refine System Message Handling
+   - Update the `_generate_response` method in MockClaudeClient to consistently handle system messages, especially for Shakespearean language.
+   - Ensure that Shakespearean responses always start with "Hark!" when appropriate.
 
-2. Re-run Tests
+2. Enhance Logging
+   - Add more detailed logging for the decision-making process in `_generate_response`.
+   - Log the content of system messages and the resulting response style chosen.
+
+3. Re-run Tests
    - Execute the tests in `tests/contract/test_claude_api_contract.py` to verify if the implemented changes resolve the remaining issue.
    - Analyze the test results and identify any remaining issues.
 
-3. Test Case Review
+4. Test Case Review
    - If necessary, review and update the `test_system_message` test case to ensure it aligns with the expected behavior of the updated `MockClaudeClient`.
 
-4. Pact Contract Review
+5. Pact Contract Review
    - If issues persist, review the Pact contract definitions for system messages to ensure they accurately represent the expected Claude API behavior.
 
-We will proceed with implementing the system message handling improvements and enhanced logging, then re-run the tests to verify the changes.
+We will proceed with refining the system message handling and enhancing logging, then re-run the tests to verify the changes.
 # Test Problem Analysis and Progress
 
 ## Problem Description
