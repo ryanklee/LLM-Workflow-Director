@@ -1417,3 +1417,49 @@ Three tests in `tests/contract/test_claude_api_contract.py` are failing:
    - Analyze any remaining failures and update hypotheses as needed.
 
 We will proceed with these steps, starting with the MockClaudeClient implementation update, as this seems to be the most pressing issue affecting multiple tests.
+# Test Problem Analysis and Progress
+
+## Problem Description
+Three tests in `tests/contract/test_claude_api_contract.py` are failing:
+
+1. `test_create_message`: Assertion error, response doesn't start with 'Hello!'
+2. `test_model_selection`: Assertion error, response doesn't start with 'Hello!'
+3. `test_system_message`: Assertion error, response doesn't start with 'Hark!'
+
+## Hypotheses (Ranked by Likelihood)
+
+1. MockClaudeClient Implementation Issue (Highest Likelihood)
+   - The `MockClaudeClient` class is not correctly implementing the expected behavior for different models and system messages.
+   - Validation: Review and update the `MockClaudeClient` implementation in `src/mock_claude_client.py`.
+   - Status: To be investigated.
+
+2. Test Case Mismatch (Medium Likelihood)
+   - The test cases might not be aligned with the current MockClaudeClient implementation or expected Claude API behavior.
+   - Validation: Review and update test cases to match the expected behavior of the MockClaudeClient and Claude API.
+   - Status: To be investigated if Hypothesis 1 doesn't fully resolve the issue.
+
+3. Pact Contract Definition Issue (Low Likelihood)
+   - The Pact contract definitions might not accurately represent the expected Claude API behavior.
+   - Validation: Review Pact contract definitions and ensure they match the latest Claude API documentation.
+   - Status: To be investigated if other hypotheses don't fully resolve the issue.
+
+## Next Steps
+
+1. Implement MockClaudeClient Improvements
+   - Update the `_generate_response` method to handle different models (Haiku, Sonnet, Opus) with appropriate response lengths.
+   - Enhance the handling of system messages, particularly for Shakespearean language.
+   - Improve the default response generation to start with "Hello!" for general queries.
+
+2. Enhance Logging
+   - Add more detailed logging in MockClaudeClient, particularly in the `_generate_response` method.
+   - Implement logging for model selection and system message handling.
+
+3. Update Test Cases
+   - Review and update test cases to ensure they align with the expected behavior of different Claude models.
+   - Adjust assertions for response lengths and content based on the selected model.
+
+4. Re-run Tests
+   - After implementing changes, re-run the tests to verify if the issues are resolved.
+   - Analyze any remaining failures and update hypotheses as needed.
+
+We will proceed with these steps, starting with the MockClaudeClient implementation update, as this seems to be the most pressing issue affecting multiple tests.
