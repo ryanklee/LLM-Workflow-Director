@@ -1328,56 +1328,61 @@ Three tests in `tests/contract/test_claude_api_contract.py` were failing:
 # Test Problem Analysis and Progress
 
 ## Problem Description
-Three tests in `tests/contract/test_claude_api_contract.py` are failing:
+After implementing the initial fixes, one test in `tests/contract/test_claude_api_contract.py` is still failing:
 
-1. `test_create_message`: Assertion error, response doesn't start with 'Hello!'
-2. `test_model_selection`: Assertion error, response doesn't start with 'Hello!'
-3. `test_system_message`: Assertion error, response doesn't start with 'Hark!'
+1. `test_system_message`: Assertion error, response doesn't start with 'Hark!'
+
+The other two previously failing tests (`test_create_message` and `test_model_selection`) now pass.
 
 ## Hypotheses (Ranked by Likelihood)
 
-1. MockClaudeClient Implementation Issue (Highest Likelihood)
-   - The `MockClaudeClient` class was not correctly implementing the expected behavior for different models and system messages.
-   - Validation: Reviewed and updated the `MockClaudeClient` implementation in `src/mock_claude_client.py`.
-   - Status: Implemented and awaiting verification.
+1. System Message Handling in MockClaudeClient (Highest Likelihood)
+   - The `MockClaudeClient` class may not be correctly handling system messages, particularly for Shakespearean language.
+   - Validation: Review and update the system message handling in the `_generate_response` method of `MockClaudeClient`.
+   - Status: To be investigated and implemented.
 
 2. Test Case Mismatch (Medium Likelihood)
-   - The test cases might not be aligned with the current MockClaudeClient implementation or expected Claude API behavior.
-   - Validation: Review and update test cases to match the expected behavior of the MockClaudeClient and Claude API.
+   - The test case for system messages might not be aligned with the current MockClaudeClient implementation or expected Claude API behavior.
+   - Validation: Review and update the `test_system_message` test case to ensure it matches the expected behavior.
    - Status: To be investigated if Hypothesis 1 doesn't fully resolve the issue.
 
 3. Pact Contract Definition Issue (Low Likelihood)
-   - The Pact contract definitions might not accurately represent the expected Claude API behavior.
-   - Validation: Review Pact contract definitions and ensure they match the latest Claude API documentation.
+   - The Pact contract definition for system messages might not accurately represent the expected Claude API behavior.
+   - Validation: Review Pact contract definitions for system messages and ensure they match the latest Claude API documentation.
    - Status: To be investigated if other hypotheses don't fully resolve the issue.
+
+4. Logging Inadequacy (New Hypothesis, Medium Likelihood)
+   - The current logging might not provide enough information to diagnose the issue with system message handling.
+   - Validation: Enhance logging in MockClaudeClient, particularly for system message processing.
+   - Status: To be implemented alongside Hypothesis 1.
 
 ## Implemented Changes
 
 1. MockClaudeClient Improvements
    - Updated the `_generate_response` method to handle different models (Haiku, Sonnet, Opus) with appropriate response lengths.
-   - Enhanced the handling of system messages, particularly for Shakespearean language.
    - Improved the default response generation to start with "Hello!" for general queries.
 
 2. Logging Enhancement
    - Added more detailed logging in MockClaudeClient, particularly in the `_generate_response` method.
-   - Implemented logging for model selection and system message handling.
+   - Implemented logging for model selection.
 
 ## Next Steps
 
-1. Re-run Tests
-   - Execute the tests in `tests/contract/test_claude_api_contract.py` to verify if the implemented changes resolve the issues.
+1. Implement System Message Handling Improvements
+   - Update the `_generate_response` method in MockClaudeClient to correctly handle system messages, especially for Shakespearean language.
+   - Enhance logging for system message processing to aid in debugging.
+
+2. Re-run Tests
+   - Execute the tests in `tests/contract/test_claude_api_contract.py` to verify if the implemented changes resolve the remaining issue.
    - Analyze the test results and identify any remaining issues.
 
-2. Further Refinement
-   - Based on the test results, make additional adjustments to the `MockClaudeClient` implementation as needed.
-
 3. Test Case Review
-   - If necessary, review and update test cases to ensure they align with the expected behavior of the updated `MockClaudeClient`.
+   - If necessary, review and update the `test_system_message` test case to ensure it aligns with the expected behavior of the updated `MockClaudeClient`.
 
 4. Pact Contract Review
-   - If issues persist, review the Pact contract definitions to ensure they accurately represent the expected Claude API behavior.
+   - If issues persist, review the Pact contract definitions for system messages to ensure they accurately represent the expected Claude API behavior.
 
-We will proceed with running the tests and iterating on the implementation until all tests pass successfully.
+We will proceed with implementing the system message handling improvements and enhanced logging, then re-run the tests to verify the changes.
 
 2. Enhance Logging
    - Add more detailed logging in MockClaudeClient, particularly in the `_generate_response` method.
