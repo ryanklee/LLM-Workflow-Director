@@ -17,10 +17,10 @@ After implementing the initial fixes, we are still facing one test failure in `t
    - Validation: Review and update the system message handling in the `_generate_response` method of `MockClaudeClient`.
    - Status: Partially implemented, but issue persists. Further refinement needed.
 
-3. Inconsistent Response Prefix (Medium Likelihood)
-   - The response generation logic may be adding "Hello!" to non-Shakespearean responses, interfering with the Shakespearean prefix.
+3. Inconsistent Response Prefix (High Likelihood)
+   - The response generation logic may be adding "Hello!" to all responses, interfering with the Shakespearean prefix.
    - Validation: Review the response generation logic to ensure "Hello!" is not added to Shakespearean responses.
-   - Status: To be investigated.
+   - Status: To be investigated and implemented.
 
 4. Logging Inadequacy (Medium Likelihood)
    - The current logging might not provide enough information to diagnose the issue with system message handling.
@@ -32,12 +32,18 @@ After implementing the initial fixes, we are still facing one test failure in `t
    - Validation: Review and update the `test_system_message` test case to ensure it matches the expected behavior.
    - Status: To be investigated if other hypotheses don't fully resolve the issue.
 
+6. Model-Specific Behavior Not Implemented (New Hypothesis, Medium Likelihood)
+   - The MockClaudeClient may not be correctly implementing model-specific behavior, particularly for the Claude 3 Opus model used in the test.
+   - Validation: Review and update the `_generate_response` method to ensure it handles different models correctly.
+   - Status: To be investigated and implemented.
+
 ## Next Steps
 
-1. Refine Shakespearean Response Generation
+1. Refine Shakespearean Response Generation and Remove Inconsistent Prefix
    - Update the `_generate_response` method in MockClaudeClient to consistently generate Shakespearean responses when a system message indicates Shakespearean language.
    - Ensure that Shakespearean responses always start with "Hark!" regardless of the model used.
    - Remove any "Hello!" prefix from Shakespearean responses.
+   - Implement model-specific behavior, particularly for the Claude 3 Opus model.
 
 2. Enhance System Message Handling
    - Improve the system message detection and processing in the `_generate_response` method.
