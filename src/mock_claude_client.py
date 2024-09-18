@@ -636,7 +636,7 @@ class MockClaudeClient:
         if system_message:
             self.logger.info(f"System message found: {system_message[:50]}...")
             if "speak like Shakespeare" in system_message.lower():
-                response_text = "Hark! Thou doth request information. Verily, I shall provide a response most Shakespearean!"
+                response_text = self._generate_shakespearean_response(prompt)
                 self.logger.info("Generating Shakespearean response")
             else:
                 response_text = f"Acknowledging system message: {system_message[:30]}..."
@@ -656,7 +656,7 @@ class MockClaudeClient:
                 response_text = "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
                 self.logger.info("Generating joke response")
             elif any(word in context.lower() for word in ['hark', 'thou', 'doth']):
-                response_text = "Hark! Thou doth request a Shakespearean response, and so I shall provide!"
+                response_text = self._generate_shakespearean_response(prompt)
                 self.logger.info("Generating Shakespearean response based on context")
             else:
                 # Generate a response based on the model and conversation history
@@ -682,6 +682,15 @@ class MockClaudeClient:
 
         self.logger.info(f"Generated response for {model}: {response_text[:50]}...")
         return response_text
+
+    def _generate_shakespearean_response(self, prompt: str) -> str:
+        self.logger.info(f"Generating Shakespearean response for prompt: {prompt[:50]}...")
+        shakespearean_words = ["Hark", "thou", "doth", "verily", "forsooth", "prithee", "anon"]
+        response = f"Hark! {random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
+        response += f"{random.choice(shakespearean_words)} {random.choice(shakespearean_words)} "
+        response += f"[Shakespearean response to '{prompt[:20]}...']"
+        self.logger.debug(f"Generated Shakespearean response: {response}")
+        return response
 
     async def set_response(self, prompt: str, response: str):
         self.logger.debug(f"Setting custom response for prompt: {prompt[:50]}...")
@@ -1294,6 +1303,9 @@ class MockClaudeClient:
             self.logger.debug(f"Message creation successful. Call count: {self.call_count}")
 
             message_id = f"msg_{uuid.uuid4()}"
+            system_message = next((m['content'] for m in self.context if m['role'] == 'system'), None)
+            self.logger.info(f"System message: {system_message[:50] if system_message else 'None'}")
+            
             response_text = self._generate_response(prompt, model, self.context + [{'role': 'user', 'content': prompt}])
             mock_response = {
                 'id': message_id,
@@ -1317,6 +1329,7 @@ class MockClaudeClient:
             self.context.append({'role': 'user', 'content': prompt})
             self.context.append({'role': 'assistant', 'content': response_text})
             self.logger.debug(f"Created message with ID: {message_id}")
+            self.logger.info(f"Response text: {response_text[:100]}...")
             
             if stream:
                 async def response_generator():
