@@ -1160,6 +1160,7 @@ class MockClaudeClient:
         self.error_mode = False
         self.responses = {}
         self.context = []
+        self.logger.info(f"MockClaudeClient initialized with rate_limit_threshold: {self.rate_limit_threshold}, rate_limit_reset_time: {self.rate_limit_reset_time}")
 
     async def set_response(self, prompt: str, response: str):
         self.logger.debug(f"Setting custom response for prompt: {prompt[:50]}...")
