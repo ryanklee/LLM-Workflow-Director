@@ -739,7 +739,7 @@ class MockClaudeClient:
         self.responses[prompt] = response
 
     async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any] | AsyncGenerator[Dict[str, Any], None]:
-        self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}, stream: {stream}")
+        self.logger.info(f"Creating response for model: {model}, max_tokens: {max_tokens}, stream: {stream}")
         try:
             await self._check_rate_limit()
         except CustomRateLimitError as e:
@@ -759,7 +759,7 @@ class MockClaudeClient:
 
         self.context.extend(messages)
         prompt = messages[-1]['content']
-        self.logger.debug(f"Received prompt: {prompt[:50]}...")
+        self.logger.info(f"Received prompt: {prompt[:50]}...")
         if len(prompt) > self.max_test_tokens:
             self.logger.warning(f"Prompt exceeds max tokens. Prompt length: {len(prompt)}, Max tokens: {self.max_test_tokens}")
             raise ValueError(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
@@ -770,7 +770,7 @@ class MockClaudeClient:
             response = response[:max_tokens] + "..."
 
         self.call_count += 1
-        self.logger.debug(f"Returning response: {response[:50]}...")
+        self.logger.info(f"Returning response: {response[:50]}...")
 
         result = {
             "id": f"msg_{uuid.uuid4()}",
@@ -796,7 +796,7 @@ class MockClaudeClient:
             return result
 
     def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
-        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}..., model: {model}")
         system_message = next((m['content'] for m in messages if m['role'] == 'system'), None)
         
         if system_message:
@@ -804,7 +804,7 @@ class MockClaudeClient:
             if "speak like Shakespeare" in system_message.lower():
                 response_text = "Hark! Thou doth request information. Verily, I shall provide a response most Shakespearean!"
             else:
-                response_text = f"Acknowledging system message: {system_message[:30]}..."
+                response_text = f"Hello! Acknowledging system message: {system_message[:30]}..."
         else:
             context = " ".join(m['content'] for m in messages if m['role'] == 'user')
             self.logger.debug(f"Context: {context[:100]}...")
@@ -814,17 +814,28 @@ class MockClaudeClient:
             if response_text:
                 self.logger.debug(f"Using custom response: {response_text[:50]}...")
             elif "summary" in prompt.lower():
-                response_text = "Here is a summary of the long context: [Summary content]"
+                response_text = "Hello! Here is a summary of the long context: [Summary content]"
             elif "joke" in prompt.lower():
-                response_text = "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
+                response_text = "Hello! Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
             elif any(word in context.lower() for word in ['hark', 'thou', 'doth']):
                 response_text = "Hark! Thou doth request a Shakespearean response, and so I shall provide!"
             else:
-                # Generate a response based on the conversation history
+                # Generate a response based on the model and conversation history
                 conversation_history = [m['content'] for m in messages if m['role'] in ['user', 'assistant']]
-                response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
+                if model == 'claude-3-haiku-20240307':
+                    response_text = f"Hello! {' '.join(conversation_history[-1:])[:30]}..."
+                elif model == 'claude-3-sonnet-20240229':
+                    response_text = f"Hello! Based on our conversation: {' '.join(conversation_history[-2:])[:50]}..."
+                else:  # claude-3-opus-20240229 or default
+                    response_text = f"Hello! Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
 
-        self.logger.debug(f"Generated response: {response_text[:50]}...")
+        # Adjust response length based on the model
+        if model == 'claude-3-haiku-20240307':
+            response_text = response_text[:50]  # Shorter response for Haiku
+        elif model == 'claude-3-sonnet-20240229':
+            response_text = response_text[:100]  # Medium-length response for Sonnet
+
+        self.logger.debug(f"Generated response for {model}: {response_text[:50]}...")
         return response_text
 
     async def set_response(self, prompt: str, response: str):
