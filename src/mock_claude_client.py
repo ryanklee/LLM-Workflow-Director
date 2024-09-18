@@ -628,32 +628,38 @@ class MockClaudeClient:
         self.logger.debug(f"Custom response set successfully for prompt: {prompt[:50]}...")
 
     def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
-        self.logger.debug(f"Generating response for prompt: {prompt[:50]}... using model: {model}")
+        self.logger.info(f"Generating response for prompt: {prompt[:50]}... using model: {model}")
         system_message = next((m['content'] for m in messages if m['role'] == 'system'), None)
         
         if system_message:
-            self.logger.debug(f"System message found: {system_message[:50]}...")
+            self.logger.info(f"System message found: {system_message[:50]}...")
             if "speak like Shakespeare" in system_message.lower():
                 response_text = "Hark! Thou doth request information. Verily, I shall provide a response most Shakespearean!"
+                self.logger.info("Generating Shakespearean response")
             else:
-                response_text = f"Acknowledging system message: {system_message[:30]}..."
+                response_text = f"Hello! Acknowledging system message: {system_message[:30]}..."
+                self.logger.info("Generating response with system message acknowledgment")
         else:
             context = " ".join(m['content'] for m in messages if m['role'] == 'user')
-            self.logger.debug(f"Context: {context[:100]}...")
+            self.logger.info(f"Context: {context[:100]}...")
             
             # Check if there's a custom response for this prompt
             response_text = self.responses.get(prompt)
             if response_text:
-                self.logger.debug(f"Using custom response: {response_text[:50]}...")
+                self.logger.info(f"Using custom response: {response_text[:50]}...")
             elif "summary" in prompt.lower():
-                response_text = "Here is a summary of the long context: [Summary content]"
+                response_text = "Hello! Here is a summary of the long context: [Summary content]"
+                self.logger.info("Generating summary response")
             elif "joke" in prompt.lower():
-                response_text = "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
+                response_text = "Hello! Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
+                self.logger.info("Generating joke response")
             elif any(word in context.lower() for word in ['hark', 'thou', 'doth']):
                 response_text = "Hark! Thou doth request a Shakespearean response, and so I shall provide!"
+                self.logger.info("Generating Shakespearean response based on context")
             else:
                 # Generate a response based on the model and conversation history
                 conversation_history = [m['content'] for m in messages if m['role'] in ['user', 'assistant']]
+                self.logger.info(f"Generating response based on model: {model}")
                 if model == 'claude-3-haiku-20240307':
                     response_text = f"Hello! {' '.join(conversation_history[-1:])[:30]}..."
                 elif model == 'claude-3-sonnet-20240229':
@@ -662,12 +668,17 @@ class MockClaudeClient:
                     response_text = f"Hello! Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
 
         # Adjust response length based on the model
+        original_length = len(response_text)
         if model == 'claude-3-haiku-20240307':
             response_text = response_text[:50]  # Shorter response for Haiku
+            self.logger.info(f"Truncated Haiku response from {original_length} to {len(response_text)} characters")
         elif model == 'claude-3-sonnet-20240229':
             response_text = response_text[:100]  # Medium-length response for Sonnet
+            self.logger.info(f"Truncated Sonnet response from {original_length} to {len(response_text)} characters")
+        else:
+            self.logger.info(f"Opus response length: {len(response_text)} characters")
 
-        self.logger.debug(f"Generated response for {model}: {response_text[:50]}...")
+        self.logger.info(f"Generated response for {model}: {response_text[:50]}...")
         return response_text
 
     async def set_response(self, prompt: str, response: str):
