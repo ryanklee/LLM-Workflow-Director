@@ -602,6 +602,11 @@ class MockClaudeClient:
     async def set_response(self, prompt: str, response: str):
         self.logger.debug(f"Setting custom response for prompt: {prompt[:50]}...")
         self.responses[prompt] = response
+        self.logger.debug(f"Custom response set successfully for prompt: {prompt[:50]}...")
+
+    async def set_response(self, prompt: str, response: str):
+        self.logger.debug(f"Setting custom response for prompt: {prompt[:50]}...")
+        self.responses[prompt] = response
 
     async def set_rate_limit(self, limit: int):
         self.logger.debug(f"Setting rate limit to: {limit}")
@@ -749,6 +754,61 @@ class MockClaudeClient:
 
         self.logger.debug(f"Generated response: {response_text[:50]}...")
         return response_text
+
+    async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any] | AsyncGenerator[Dict[str, Any], None]:
+        self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}, stream: {stream}")
+        try:
+            await self._check_rate_limit()
+        except CustomRateLimitError as e:
+            self.logger.error(f"Rate limit exceeded: {str(e)}")
+            raise
+
+        await asyncio.sleep(self.latency)
+
+        if self.error_mode:
+            self.error_count += 1
+            if self.error_count <= self.max_errors:
+                self.logger.error("Simulated API error")
+                error_response = MagicMock()
+                error_response.status_code = 500
+                error_response.json.return_value = {"error": {"type": "server_error", "message": "Simulated API error"}}
+                raise APIStatusError("Simulated API error", response=error_response)
+
+        self.context.extend(messages)
+        prompt = messages[-1]['content']
+        self.logger.debug(f"Received prompt: {prompt[:50]}...")
+        if len(prompt) > self.max_test_tokens:
+            self.logger.warning(f"Prompt exceeds max tokens. Prompt length: {len(prompt)}, Max tokens: {self.max_test_tokens}")
+            raise ValueError(f"Test input exceeds maximum allowed tokens ({self.max_test_tokens})")
+
+        response = self._generate_response(prompt, model, messages)
+        if len(response) > max_tokens:
+            self.logger.warning(f"Response exceeds max tokens. Truncating. Original length: {len(response)}")
+            response = response[:max_tokens] + "..."
+
+        self.call_count += 1
+        self.logger.debug(f"Returning response: {response[:50]}...")
+
+        if stream:
+            async def response_generator():
+                for chunk in response.split():
+                    yield {"type": "content_block_delta", "delta": {"type": "text", "text": chunk}}
+                yield {"type": "message_delta", "delta": {"stop_reason": "end_turn"}}
+            return response_generator()
+        else:
+            return {
+                "id": f"msg_{uuid.uuid4()}",
+                "type": "message",
+                "role": "assistant",
+                "content": [{"type": "text", "text": response}],
+                "model": model,
+                "stop_reason": "end_turn",
+                "stop_sequence": None,
+                "usage": {
+                    "input_tokens": sum(len(m["content"]) for m in messages),
+                    "output_tokens": len(response)
+                }
+            }
 
     async def _check_rate_limit(self):
         current_time = time.time()
