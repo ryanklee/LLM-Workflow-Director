@@ -46,6 +46,12 @@ class MockClaudeClient:
         self.rate_limit_threshold = 10
         self.rate_limit_reset_time = 60
         
+        # Add file handler for persistent logging
+        file_handler = logging.FileHandler('mock_claude_client.log')
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(formatter)
+        self.logger.addHandler(file_handler)
+        
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
 
     async def set_rate_limit(self, limit: int):
