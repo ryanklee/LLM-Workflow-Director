@@ -657,11 +657,11 @@ class MockClaudeClient:
                 self.logger.info(f"Generated Shakespearean response: {response_text[:50]}...")
             else:
                 if model == 'claude-3-haiku-20240307':
-                    response_text = f"Hello! {' '.join(conversation_history[-1:])[:20]}..."
+                    response_text = f"{' '.join(conversation_history[-1:])[:20]}..."
                 elif model == 'claude-3-sonnet-20240229':
-                    response_text = f"Hello! Based on our conversation: {' '.join(conversation_history[-2:])[:40]}..."
+                    response_text = f"Based on our conversation: {' '.join(conversation_history[-2:])[:40]}..."
                 else:  # claude-3-opus-20240229 or default
-                    response_text = f"Hello! Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
+                    response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
 
         # Ensure Shakespearean responses always start with "Hark!"
         if is_shakespearean:
@@ -691,7 +691,7 @@ class MockClaudeClient:
     def _generate_shakespearean_response(self, prompt: str) -> str:
         self.logger.info(f"Generating Shakespearean response for prompt: {prompt[:50]}...")
         shakespearean_words = ["thou", "doth", "verily", "forsooth", "prithee", "anon"]
-        response = f"{random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
+        response = f"Hark! {random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
         response += f"{random.choice(shakespearean_words)} {random.choice(shakespearean_words)} "
         response += f"[Shakespearean response to '{prompt[:20]}...']"
         self.logger.debug(f"Generated Shakespearean response: {response}")
