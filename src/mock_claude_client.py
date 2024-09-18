@@ -669,7 +669,8 @@ class MockClaudeClient:
                 response_text = f"Hark! {response_text}"
             self.logger.info(f"Final Shakespearean response: {response_text[:50]}...")
         else:
-            response_text = f"Hello! {response_text}"
+            # Remove "Hello!" prefix for non-Shakespearean responses
+            response_text = response_text.lstrip("Hello! ")
             self.logger.info(f"Final non-Shakespearean response: {response_text[:50]}...")
 
         # Adjust response length based on the model
@@ -683,7 +684,7 @@ class MockClaudeClient:
         else:
             self.logger.info(f"Opus response length: {len(response_text)} characters")
 
-        self.logger.info(f"Final generated response for {model}: {response_text[:50]}...")
+        self.logger.debug(f"Final generated response for {model}: {response_text}")
         return response_text
 
     def _generate_shakespearean_response(self, prompt: str) -> str:
