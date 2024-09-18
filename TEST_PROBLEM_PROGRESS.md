@@ -1493,40 +1493,44 @@ One test in `tests/contract/test_claude_api_contract.py` is failing:
    - Validation: Review and update the system message handling in the `_generate_response` method of `MockClaudeClient`.
    - Status: Partially implemented, but issue persists. Further refinement needed.
 
-3. Inconsistent Response Prefix (Medium Likelihood)
-   - The response generation logic may be adding "Hello!" to Shakespearean responses, interfering with the required "Hark!" prefix.
+3. Inconsistent Response Prefix (High Likelihood)
+   - The response generation logic is adding "Hello!" to all responses, including Shakespearean ones, interfering with the required "Hark!" prefix.
    - Validation: Review the response generation logic to ensure "Hello!" is not added to Shakespearean responses.
-   - Status: To be investigated.
+   - Status: To be investigated and implemented.
 
-4. Logging Inadequacy (Low Likelihood)
+4. Logging Inadequacy (Medium Likelihood)
    - The current logging might not provide enough information to diagnose the issue with system message handling.
    - Validation: Enhance logging in MockClaudeClient, particularly for system message processing and response generation.
-   - Status: Partially implemented, further enhancements may be needed.
+   - Status: Partially implemented, further enhancements needed.
 
 ## Next Steps
 
-1. Refine Shakespearean Response Generation
-   - Update the `_generate_response` method in MockClaudeClient to consistently generate Shakespearean responses when a system message indicates Shakespearean language.
-   - Ensure that Shakespearean responses always start with "Hark!" regardless of the model used.
-   - Remove any "Hello!" prefix from Shakespearean responses.
+1. Address Inconsistent Response Prefix
+   - Update the `_generate_response` method to differentiate between Shakespearean and non-Shakespearean responses.
+   - Ensure that Shakespearean responses always start with "Hark!" and remove the "Hello!" prefix for these responses.
+   - Keep the "Hello!" prefix for non-Shakespearean responses.
 
 2. Enhance System Message Handling
    - Improve the system message detection and processing in the `_generate_response` method.
    - Implement a more robust check for Shakespearean language instructions in system messages.
 
-3. Improve Logging
+3. Refine Shakespearean Response Generation
+   - Update the `_generate_response` method to consistently generate Shakespearean responses when a system message indicates Shakespearean language.
+   - Ensure that Shakespearean responses always start with "Hark!" regardless of the model used.
+
+4. Improve Logging
    - Add more detailed logging for the decision-making process in `_generate_response`.
    - Log the content of system messages, the detected language style, and the resulting response style chosen.
 
-4. Implement Solution
+5. Implement Solution
    - Update the `_generate_response` method in `src/mock_claude_client.py` to address the identified issues.
    - Enhance logging throughout the method for better debugging.
 
-5. Re-run Tests
+6. Re-run Tests
    - Execute the tests in `tests/contract/test_claude_api_contract.py` to verify if the implemented changes resolve the remaining issue.
    - Analyze the test results and identify any remaining issues.
 
-We will proceed with implementing these changes and then re-run the tests to verify the solution.
+We will proceed with implementing these changes, focusing on addressing the inconsistent response prefix issue, and then re-run the tests to verify the solution.
 # Test Problem Analysis and Progress
 
 ## Problem Description

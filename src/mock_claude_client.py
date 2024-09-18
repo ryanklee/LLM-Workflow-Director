@@ -1241,14 +1241,15 @@ class MockClaudeClient:
             else:  # claude-3-opus-20240229 or default
                 response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
 
-        # Ensure Shakespearean responses always start with "Hark!"
+        # Ensure Shakespearean responses always start with "Hark!" and non-Shakespearean with "Hello!"
         if is_shakespearean:
             if not response_text.startswith("Hark!"):
                 response_text = f"Hark! {response_text}"
             self.logger.info("Ensured Shakespearean response starts with 'Hark!'")
         else:
-            response_text = f"Hello! {response_text}"
-            self.logger.info("Added 'Hello!' to the beginning of the non-Shakespearean response")
+            if not response_text.startswith("Hello!"):
+                response_text = f"Hello! {response_text}"
+            self.logger.info("Ensured non-Shakespearean response starts with 'Hello!'")
 
         # Adjust response length based on the model
         original_length = len(response_text)
