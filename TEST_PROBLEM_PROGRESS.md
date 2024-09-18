@@ -1290,64 +1290,58 @@ Three tests in `tests/contract/test_claude_api_contract.py` were failing:
 # Test Problem Analysis and Progress
 
 ## Problem Description
-After implementing the initial fixes, we are now facing three test failures in `tests/contract/test_claude_api_contract.py`:
+After implementing the initial fixes, we are now facing one test failure in `tests/contract/test_claude_api_contract.py`:
 
-1. `test_create_message`: Assertion error, response doesn't start with 'Hello!'
-2. `test_model_selection`: Assertion error, response doesn't start with 'Hello!'
-3. `test_system_message`: Assertion error, response doesn't start with 'Hark!'
+1. `test_system_message`: Assertion error, response doesn't start with 'Hark!'
 
 ## Hypotheses (Ranked by Likelihood)
 
-1. Inconsistent Response Prefix (Highest Likelihood)
-   - The `_generate_response` method in MockClaudeClient may be inconsistently applying or removing prefixes like "Hello!" and "Hark!".
-   - Validation: Review and update the logic in `_generate_response` to ensure correct prefixes are applied based on the model and system message.
-   - Status: To be implemented and tested.
+1. Inconsistent Shakespearean Response Generation (Highest Likelihood)
+   - The `_generate_response` method is not consistently applying the Shakespearean style when a system message is present.
+   - Validation: Review and update the logic in `_generate_response` to ensure Shakespearean responses are always generated when appropriate.
+   - Status: Implemented, but issue persists. Further investigation needed.
 
-2. Model-Specific Response Generation (High Likelihood)
-   - The response generation logic may not be correctly differentiating between different Claude models (Haiku, Sonnet, Opus).
-   - Validation: Review and update the model-specific response generation in `_generate_response`.
-   - Status: To be implemented and tested.
-
-3. System Message Handling in MockClaudeClient (Medium Likelihood)
+2. System Message Handling in MockClaudeClient (High Likelihood)
    - The `MockClaudeClient` class may not be correctly handling system messages, particularly for Shakespearean language.
    - Validation: Review and update the system message handling in the `_generate_response` method of `MockClaudeClient`.
    - Status: Partially implemented, but issue persists. Further refinement needed.
 
+3. Inconsistent Response Prefix (Medium Likelihood)
+   - The response generation logic may be adding "Hello!" to non-Shakespearean responses, interfering with the Shakespearean prefix.
+   - Validation: Review the response generation logic to ensure "Hello!" is not added to Shakespearean responses.
+   - Status: To be investigated.
+
 4. Logging Inadequacy (Medium Likelihood)
-   - The current logging might not provide enough information to diagnose issues with response generation and prefixing.
-   - Validation: Enhance logging in MockClaudeClient, particularly for response generation and prefixing decisions.
+   - The current logging might not provide enough information to diagnose the issue with system message handling.
+   - Validation: Enhance logging in MockClaudeClient, particularly for system message processing and response generation.
    - Status: Partially implemented, further enhancements needed.
 
 5. Test Case Mismatch (Low Likelihood)
-   - The test cases might not be aligned with the current MockClaudeClient implementation or expected Claude API behavior.
-   - Validation: Review and update the test cases to ensure they match the expected behavior.
-   - Status: To be investigated if other hypotheses don't fully resolve the issues.
+   - The test case for system messages might not be aligned with the current MockClaudeClient implementation or expected Claude API behavior.
+   - Validation: Review and update the `test_system_message` test case to ensure it matches the expected behavior.
+   - Status: To be investigated if other hypotheses don't fully resolve the issue.
 
 ## Next Steps
 
-1. Implement Consistent Response Prefixing
-   - Update the `_generate_response` method in MockClaudeClient to consistently apply the correct prefixes based on the model and system message.
-   - Ensure that responses start with "Hello!" for general queries and "Hark!" for Shakespearean responses.
-   - Remove any unintended prefixes that may have been introduced in previous fixes.
+1. Refine Shakespearean Response Generation
+   - Update the `_generate_response` method in MockClaudeClient to consistently generate Shakespearean responses when a system message indicates Shakespearean language.
+   - Ensure that Shakespearean responses always start with "Hark!" regardless of the model used.
+   - Remove any "Hello!" prefix from Shakespearean responses.
 
-2. Refine Model-Specific Response Generation
-   - Implement clear logic for generating responses based on the selected Claude model (Haiku, Sonnet, Opus).
-   - Ensure that response length and content are appropriate for each model.
-
-3. Enhance System Message Handling
+2. Enhance System Message Handling
    - Improve the system message detection and processing in the `_generate_response` method.
    - Implement a more robust check for Shakespearean language instructions in system messages.
 
-4. Improve Logging
-   - Add detailed logging for the decision-making process in `_generate_response`, including model selection, system message processing, and prefix application.
+3. Improve Logging
+   - Add more detailed logging for the decision-making process in `_generate_response`.
    - Log the content of system messages, the detected language style, and the resulting response style chosen.
 
-5. Implement Solution
+4. Implement Solution
    - Update the `_generate_response` method in `src/mock_claude_client.py` to address the identified issues.
    - Enhance logging throughout the method for better debugging.
 
-6. Re-run Tests
-   - Execute the tests in `tests/contract/test_claude_api_contract.py` to verify if the implemented changes resolve the issues.
+5. Re-run Tests
+   - Execute the tests in `tests/contract/test_claude_api_contract.py` to verify if the implemented changes resolve the remaining issue.
    - Analyze the test results and identify any remaining issues.
 
 We will proceed with implementing these changes and then re-run the tests to verify the solution.
