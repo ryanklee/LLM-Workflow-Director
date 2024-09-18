@@ -1245,12 +1245,12 @@ class MockClaudeClient:
         # Ensure Shakespearean responses always start with "Hark!" and non-Shakespearean with "Hello!"
         if is_shakespearean:
             if not response_text.startswith("Hark!"):
-                response_text = f"Hark! {response_text}"
-            self.logger.info("Ensured Shakespearean response starts with 'Hark!'")
+                response_text = f"Hark! {response_text.lstrip('Hello! ')}"
+            self.logger.info(f"Ensured Shakespearean response starts with 'Hark!': {response_text[:50]}...")
         else:
             if not response_text.startswith("Hello!"):
                 response_text = f"Hello! {response_text}"
-            self.logger.info("Ensured non-Shakespearean response starts with 'Hello!'")
+            self.logger.info(f"Ensured non-Shakespearean response starts with 'Hello!': {response_text[:50]}...")
 
         # Adjust response length based on the model
         original_length = len(response_text)
