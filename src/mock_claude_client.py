@@ -604,6 +604,43 @@ class MockClaudeClient:
         self.responses[prompt] = response
         self.logger.debug(f"Custom response set successfully for prompt: {prompt[:50]}...")
 
+    def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
+        self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
+        system_message = next((m['content'] for m in messages if m['role'] == 'system'), None)
+        
+        if system_message:
+            self.logger.debug(f"System message found: {system_message[:50]}...")
+            if "speak like Shakespeare" in system_message.lower():
+                response_text = "Hark! Thou doth request information. Verily, I shall provide a response most Shakespearean!"
+            else:
+                response_text = f"Acknowledging system message: {system_message[:30]}..."
+        else:
+            context = " ".join(m['content'] for m in messages if m['role'] == 'user')
+            self.logger.debug(f"Context: {context[:100]}...")
+            
+            # Check if there's a custom response for this prompt
+            response_text = self.responses.get(prompt)
+            if response_text:
+                self.logger.debug(f"Using custom response: {response_text[:50]}...")
+            elif "summary" in prompt.lower():
+                response_text = "Here is a summary of the long context: [Summary content]"
+            elif "joke" in prompt.lower():
+                response_text = "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
+            elif any(word in context.lower() for word in ['hark', 'thou', 'doth']):
+                response_text = "Hark! Thou doth request a Shakespearean response, and so I shall provide!"
+            else:
+                # Generate a response based on the conversation history
+                conversation_history = [m['content'] for m in messages if m['role'] in ['user', 'assistant']]
+                response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
+
+        self.logger.debug(f"Generated response: {response_text[:50]}...")
+        return response_text
+
+    async def set_response(self, prompt: str, response: str):
+        self.logger.debug(f"Setting custom response for prompt: {prompt[:50]}...")
+        self.responses[prompt] = response
+        self.logger.debug(f"Custom response set successfully for prompt: {prompt[:50]}...")
+
     async def set_response(self, prompt: str, response: str):
         self.logger.debug(f"Setting custom response for prompt: {prompt[:50]}...")
         self.responses[prompt] = response
