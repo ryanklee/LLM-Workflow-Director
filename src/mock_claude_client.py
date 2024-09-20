@@ -1237,29 +1237,30 @@ class MockClaudeClient:
         response_text = self.responses.get(prompt)
         if response_text:
             self.logger.info(f"Using custom response: {response_text[:50]}...")
-        elif is_shakespearean:
-            response_text = self._generate_shakespearean_response(prompt)
-            self.logger.info(f"Generated Shakespearean response: {response_text[:50]}...")
         else:
             # Generate a response based on the model and conversation history
             conversation_history = [m['content'] for m in messages if m['role'] in ['user', 'assistant']]
             self.logger.info(f"Generating response based on model: {model}")
-            if model == 'claude-3-haiku-20240307':
-                response_text = f"{' '.join(conversation_history[-1:])[:20]}..."
+            
+            if is_shakespearean:
+                response_text = self._generate_shakespearean_response(prompt)
+                self.logger.info(f"Generated Shakespearean response: {response_text[:50]}...")
+            elif model == 'claude-3-haiku-20240307':
+                response_text = f"Hello! {' '.join(conversation_history[-1:])[:20]}..."
             elif model == 'claude-3-sonnet-20240229':
-                response_text = f"Based on our conversation: {' '.join(conversation_history[-2:])[:40]}..."
+                response_text = f"Hello! Based on our conversation: {' '.join(conversation_history[-2:])[:40]}..."
             else:  # claude-3-opus-20240229 or default
-                response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
+                response_text = f"Hello! Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
 
-        # Ensure Shakespearean responses always start with "Hark!" and remove "Hello!" from non-Shakespearean responses
+        # Ensure Shakespearean responses always start with "Hark!" and non-Shakespearean with "Hello!"
         if is_shakespearean:
             if not response_text.startswith("Hark!"):
                 response_text = f"Hark! {response_text}"
             self.logger.info(f"Ensured Shakespearean response starts with 'Hark!': {response_text[:50]}...")
         else:
-            if response_text.startswith("Hello! "):
-                response_text = response_text[7:]
-            self.logger.info(f"Removed 'Hello!' from non-Shakespearean response if present: {response_text[:50]}...")
+            if not response_text.startswith("Hello!"):
+                response_text = f"Hello! {response_text}"
+            self.logger.info(f"Ensured non-Shakespearean response starts with 'Hello!': {response_text[:50]}...")
 
         # Adjust response length based on the model
         original_length = len(response_text)
