@@ -996,12 +996,10 @@ class MockClaudeClient:
         self.logger.debug(f"Original response: {response_text[:50]}...")
         
         if self.is_shakespearean:
-            if not response_text.startswith("Hark!"):
-                response_text = f"Hark! {response_text.lstrip('Hello! ')}"
+            response_text = f"Hark! {response_text.lstrip('Hark! ').lstrip('Hello! ')}"
             self.logger.info(f"Applied Shakespearean prefix: {response_text[:50]}...")
         else:
-            if not response_text.startswith("Hello!"):
-                response_text = f"Hello! {response_text.lstrip('Hark! ')}"
+            response_text = f"Hello! {response_text.lstrip('Hark! ').lstrip('Hello! ')}"
             self.logger.info(f"Applied non-Shakespearean prefix: {response_text[:50]}...")
         
         self.logger.debug(f"Final response after prefix application: {response_text[:50]}...")
@@ -1045,6 +1043,11 @@ class MockClaudeClient:
                     "is_shakespearean": self.is_shakespearean,
                     "last_system_message": getattr(self, 'last_system_message', None),
                     "last_shakespearean_response": getattr(self, 'last_shakespearean_response', None)
+                },
+                "method_implementations": {
+                    "_ensure_shakespearean_prefix": self._ensure_shakespearean_prefix.__code__.co_code,
+                    "_generate_shakespearean_response": self._generate_shakespearean_response.__code__.co_code,
+                    "_apply_response_prefix": self._apply_response_prefix.__code__.co_code
                 }
             }
             self.logger.debug(f"Debug dump state: {state}")
