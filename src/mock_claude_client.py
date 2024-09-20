@@ -1727,7 +1727,12 @@ class MockClaudeClient:
                 "is_shakespearean": self.is_shakespearean,
                 "last_system_message": self.context[-2]['content'] if len(self.context) >= 2 and self.context[-2]['role'] == 'system' else None,
                 "last_user_message": self.context[-1]['content'] if self.context and self.context[-1]['role'] == 'user' else None,
-                "last_response": self.context[-1]['content'] if self.context and self.context[-1]['role'] == 'assistant' else None
+                "last_response": self.context[-1]['content'] if self.context and self.context[-1]['role'] == 'assistant' else None,
+                "shakespearean_methods": {
+                    "_apply_response_prefix": hasattr(self, '_apply_response_prefix'),
+                    "_ensure_shakespearean_prefix": hasattr(self, '_ensure_shakespearean_prefix'),
+                    "_generate_shakespearean_response": hasattr(self, '_generate_shakespearean_response'),
+                }
             }
             self.logger.debug(f"Debug dump state: {state}")
             return state
