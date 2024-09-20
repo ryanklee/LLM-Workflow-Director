@@ -981,6 +981,7 @@ class MockClaudeClient:
         self.logger.info(f"Generating response for prompt: {prompt[:50]}... using model: {model}")
         
         self._process_system_message(messages)
+        self.logger.info(f"Shakespearean mode after processing system message: {self.is_shakespearean}")
         
         context = " ".join(m['content'] for m in messages if m['role'] == 'user')
         self.logger.info(f"Context: {context[:100]}...")
@@ -1004,7 +1005,9 @@ class MockClaudeClient:
             else:  # claude-3-opus-20240229 or default
                 response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
 
+        self.logger.info(f"Response before applying prefix: {response_text[:50]}...")
         response_text = self._apply_response_prefix(response_text)
+        self.logger.info(f"Response after applying prefix: {response_text[:50]}...")
 
         # Adjust response length based on the model
         original_length = len(response_text)
@@ -1023,7 +1026,7 @@ class MockClaudeClient:
     def _generate_shakespearean_response(self, prompt: str) -> str:
         self.logger.info(f"Generating Shakespearean response for prompt: {prompt[:50]}...")
         shakespearean_words = ["thou", "doth", "verily", "forsooth", "prithee", "anon"]
-        response = f"{random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
+        response = f"Hark! {random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
         response += f"{random.choice(shakespearean_words)} {random.choice(shakespearean_words)} "
         response += f"[Shakespearean response to '{prompt[:20]}...']"
         self.logger.debug(f"Generated Shakespearean response: {response}")

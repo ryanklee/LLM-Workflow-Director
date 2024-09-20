@@ -1773,22 +1773,23 @@ One test in `tests/contract/test_claude_api_contract.py` is still failing:
 - The current implementation is prioritizing general response formatting over specific system message instructions.
 - The Shakespearean prefix is not being applied consistently, even when a Shakespearean system message is detected.
 - The response generation logic may not be properly considering the system message when determining the response format.
+- The `is_shakespearean` flag may not be set correctly or used consistently throughout the response generation process.
 
 ## Hypotheses (Ranked by Likelihood)
 
-1. Incorrect System Message Processing (Highest Likelihood)
-   - The `_generate_response` method may not be correctly identifying or processing the Shakespearean system message.
-   - Validation: Review and update the system message processing logic in `_generate_response`, ensuring it correctly identifies and handles Shakespearean instructions.
+1. Incomplete Response Prefix Application (Highest Likelihood)
+   - The `_apply_response_prefix` method may not be correctly applying the Shakespearean prefix "Hark!" when needed.
+   - Validation: Review and update the `_apply_response_prefix` method, ensuring it consistently applies "Hark!" for Shakespearean responses.
    - Status: To be implemented and tested.
 
-2. Response Prefix Application Failure (High Likelihood)
-   - The Shakespearean prefix "Hark!" is not being applied consistently, even when Shakespearean mode is detected.
-   - Validation: Ensure that the Shakespearean prefix is applied as the final step in response generation, overriding any other prefixes.
-   - Status: To be implemented and tested.
-
-3. Inconsistent Shakespearean Mode Tracking (Medium Likelihood)
-   - The Shakespearean mode may not be consistently tracked throughout the response generation process.
+2. Inconsistent Shakespearean Mode Tracking (High Likelihood)
+   - The `self.is_shakespearean` flag may not be set correctly or checked consistently throughout the response generation process.
    - Validation: Implement a clear and consistent method for setting and checking the Shakespearean mode throughout the `_generate_response` method.
+   - Status: To be implemented and tested.
+
+3. Incorrect System Message Processing (Medium Likelihood)
+   - The `_process_system_message` method may not be correctly identifying or processing the Shakespearean system message.
+   - Validation: Review and update the system message processing logic, ensuring it correctly identifies and handles Shakespearean instructions.
    - Status: To be implemented and tested.
 
 4. Model-Specific Behavior Interference (Low Likelihood)
@@ -1800,25 +1801,22 @@ One test in `tests/contract/test_claude_api_contract.py` is still failing:
 
 We will implement solutions addressing the top three hypotheses:
 
-1. Update System Message Processing:
-   - Implement a dedicated `_process_system_message` method in `src/mock_claude_client.py`.
-   - Ensure Shakespearean instructions are correctly identified and flagged.
-   - Update the `_generate_response` method to use the new system message processing logic.
-
-2. Improve Response Prefix Application:
-   - Create a separate `_apply_response_prefix` method in `src/mock_claude_client.py`.
-   - Ensure the Shakespearean prefix "Hark!" takes precedence when Shakespearean mode is active.
+1. Refine Response Prefix Application:
+   - Update the `_apply_response_prefix` method in `src/mock_claude_client.py`.
+   - Ensure the Shakespearean prefix "Hark!" is always applied when `self.is_shakespearean` is True.
    - Apply this method as the final step in response generation.
 
-3. Implement Consistent Shakespearean Mode Tracking:
-   - Add a `self.is_shakespearean` flag to the MockClaudeClient class in `src/mock_claude_client.py`.
-   - Update this flag based on system message processing.
-   - Use this flag consistently throughout the response generation process.
+2. Improve Shakespearean Mode Tracking:
+   - Review and update how `self.is_shakespearean` is set and used throughout the MockClaudeClient class.
+   - Ensure consistent checking of this flag in all relevant methods.
+
+3. Enhance System Message Processing:
+   - Review the `_process_system_message` method to ensure it correctly identifies Shakespearean instructions.
+   - Update the method to set `self.is_shakespearean` based on the system message content.
 
 4. Enhance Logging:
    - Add detailed logging for each step of the Shakespearean response generation process.
    - Log the state of the Shakespearean flag, system message content, and final response format.
-   - Implement a `debug_dump` method in `src/mock_claude_client.py` to dump the current state for easier debugging.
 
 ## Next Steps
 
@@ -1846,5 +1844,6 @@ To help diagnose the issue, we'll track the actual response content for the fail
 | Test Run | Response Content |
 |----------|------------------|
 | 4        | "Hello! Based on our conversation: Tell me about the weather., here's my response: [Generated response]" |
+| 5        | TBD              |
 
 This will help us identify if the Shakespearean prefix is being applied at all and if there are any patterns in the response generation that we need to address.
