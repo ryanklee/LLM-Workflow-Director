@@ -161,7 +161,7 @@ class MockClaudeClient:
     def _generate_shakespearean_response(self, prompt: str) -> str:
         self.logger.info(f"Generating Shakespearean response for prompt: {prompt[:50]}...")
         shakespearean_words = ["thou", "doth", "verily", "forsooth", "prithee", "anon"]
-        response = f"Hark! {random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
+        response = f"{random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
         response += f"{random.choice(shakespearean_words)} {random.choice(shakespearean_words)} "
         response += f"[Shakespearean response to '{prompt[:20]}...']"
         self.logger.debug(f"Generated Shakespearean response: {response}")
@@ -170,13 +170,32 @@ class MockClaudeClient:
     def _apply_response_prefix(self, response_text: str) -> str:
         if self.is_shakespearean:
             if not response_text.startswith("Hark!"):
-                response_text = f"Hark! {response_text.lstrip('Hello! ')}"
+                response_text = f"Hark! {response_text}"
             self.logger.info(f"Applied Shakespearean prefix: {response_text[:50]}...")
         else:
             if not response_text.startswith("Hello!"):
-                response_text = f"Hello! {response_text.lstrip('Hark! ')}"
+                response_text = f"Hello! {response_text}"
             self.logger.info(f"Applied non-Shakespearean prefix: {response_text[:50]}...")
         return response_text
+
+    async def debug_dump(self):
+        self.logger.debug("Starting debug_dump method")
+        try:
+            state = {
+                "api_key": self.api_key[:5] + "...",
+                "rate_limit_threshold": self.rate_limit_threshold,
+                "rate_limit_reset_time": self.rate_limit_reset_time,
+                "call_count": self.call_count,
+                "last_reset_time": self.last_reset_time,
+                "error_mode": self.error_mode,
+                "is_shakespearean": self.is_shakespearean,
+                "responses_count": len(self.responses)
+            }
+            self.logger.debug(f"Debug dump state: {state}")
+            return state
+        except Exception as e:
+            self.logger.error(f"Error in debug_dump: {str(e)}", exc_info=True)
+            raise
 
     async def _check_rate_limit(self):
         current_time = time.time()
