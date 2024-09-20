@@ -222,6 +222,7 @@ class MockClaudeClient:
         self.max_context_length = 200000
         self._messages = None
         self.lock = asyncio.Lock()
+        self.is_shakespearean = False
         
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
 
