@@ -1553,6 +1553,7 @@ One test in `tests/contract/test_claude_api_contract.py` is still failing:
 - The implemented changes did not fully resolve the issue with Shakespearean response generation.
 - The system message handling may still be inconsistent or not properly integrated with the response generation logic.
 - The interaction between model-specific behavior and Shakespearean response generation needs closer examination.
+- The current implementation may be prioritizing general response formatting over specific system message instructions.
 
 ## Hypotheses (Ranked by Likelihood)
 
@@ -1566,15 +1567,15 @@ One test in `tests/contract/test_claude_api_contract.py` is still failing:
    - Validation: Ensure that the Shakespearean prefix is applied as the final step in response generation, after any model-specific formatting.
    - Status: To be implemented and tested.
 
-3. Model-Specific Behavior Interference (Medium Likelihood)
-   - The model-specific behavior implementation might be overriding the Shakespearean response generation.
-   - Validation: Review the interaction between model-specific logic and Shakespearean response generation.
-   - Status: To be investigated if hypotheses 1 and 2 don't fully resolve the issue.
-
-4. Inconsistent Shakespearean Flag Setting (New Hypothesis, Medium Likelihood)
+3. Inconsistent Shakespearean Flag Setting (Medium Likelihood)
    - The flag or variable indicating Shakespearean mode may not be consistently set or checked throughout the response generation process.
    - Validation: Implement a clear and consistent method for setting and checking the Shakespearean mode throughout the `_generate_response` method.
    - Status: To be implemented and tested.
+
+4. Model-Specific Behavior Interference (Low Likelihood)
+   - The model-specific behavior implementation might be overriding the Shakespearean response generation.
+   - Validation: Review the interaction between model-specific logic and Shakespearean response generation.
+   - Status: To be investigated if hypotheses 1, 2, and 3 don't fully resolve the issue.
 
 5. Logging Inadequacy (Low Likelihood)
    - Current logging may not provide enough detail to pinpoint where the Shakespearean response generation is failing.
@@ -1588,18 +1589,22 @@ We will implement solutions addressing the top three hypotheses:
 1. Update System Message Processing:
    - Implement a more robust system message detection mechanism in `_generate_response`.
    - Ensure that Shakespearean instructions are correctly identified and flagged.
+   - Add a dedicated method for processing system messages.
 
 2. Refine Response Prefix Application:
    - Modify the response generation logic to apply the Shakespearean prefix as the final step.
    - Implement a check to ensure "Hark!" is always prepended to Shakespearean responses.
+   - Create a separate method for applying the appropriate prefix based on the response type.
 
 3. Implement Consistent Shakespearean Flag:
    - Add a clear flag or variable to indicate Shakespearean mode.
    - Ensure this flag is checked at all relevant points in the response generation process.
+   - Implement a method to set and get the Shakespearean mode flag.
 
 4. Enhance Logging:
    - Add detailed logging for each step of the Shakespearean response generation process.
    - Log the state of the Shakespearean flag, system message content, and final response format.
+   - Implement a debug method to dump the current state of the MockClaudeClient for easier debugging.
 
 ## Next Steps
 
