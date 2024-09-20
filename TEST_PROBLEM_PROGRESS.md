@@ -1651,38 +1651,50 @@ Three tests in `tests/contract/test_claude_api_contract.py` are failing:
 
 ## Hypotheses (Ranked by Likelihood)
 
-1. MockClaudeClient Implementation Issue (Highest Likelihood)
-   - The `MockClaudeClient` class is not correctly implementing the expected behavior for different models and system messages.
-   - Validation: Review and update the `MockClaudeClient` implementation in `src/mock_claude_client.py`.
-   - Status: To be investigated.
+1. Inconsistent Response Prefix (Highest Likelihood)
+   - The `_generate_response` method is not consistently applying the correct prefix for different scenarios.
+   - Validation: Review and update the response generation logic to ensure correct prefixes are applied.
+   - Status: To be implemented and tested.
 
-2. Test Case Mismatch (Medium Likelihood)
-   - The test cases might not be aligned with the current MockClaudeClient implementation or expected Claude API behavior.
-   - Validation: Review and update test cases to match the expected behavior of the MockClaudeClient and Claude API.
-   - Status: To be investigated if Hypothesis 1 doesn't fully resolve the issue.
+2. System Message Handling (High Likelihood)
+   - The handling of system messages, particularly for Shakespearean language, is not working as expected.
+   - Validation: Review and update the system message processing in the `_generate_response` method.
+   - Status: To be implemented and tested.
 
-3. Pact Contract Definition Issue (Low Likelihood)
-   - The Pact contract definitions might not accurately represent the expected Claude API behavior.
-   - Validation: Review Pact contract definitions and ensure they match the latest Claude API documentation.
-   - Status: To be investigated if other hypotheses don't fully resolve the issue.
+3. Model-Specific Behavior (Medium Likelihood)
+   - The response generation for different models (Haiku, Sonnet, Opus) may not be correctly implemented.
+   - Validation: Review and update the model-specific response generation logic.
+   - Status: To be implemented and tested.
+
+4. Logging Inadequacy (Low Likelihood)
+   - Current logging might not provide enough information to diagnose issues in response generation.
+   - Validation: Enhance logging throughout the `_generate_response` method.
+   - Status: To be implemented alongside other changes.
+
+## Current Implementation Being Tested
+
+We are implementing a solution that addresses the top three hypotheses:
+
+1. Refining the response prefix logic
+2. Improving system message handling
+3. Enhancing model-specific response generation
+
+The changes focus on the `_generate_response` method in the `MockClaudeClient` class.
 
 ## Next Steps
 
-1. Implement MockClaudeClient Improvements
-   - Update the `_generate_response` method to handle different models (Haiku, Sonnet, Opus) with appropriate response lengths.
-   - Enhance the handling of system messages, particularly for Shakespearean language.
-   - Improve the default response generation to start with "Hello!" for general queries.
+1. Implement Solution
+   - Update the `_generate_response` method in `src/mock_claude_client.py` to address the identified issues:
+     a. Implement consistent response prefix logic
+     b. Enhance system message handling, particularly for Shakespearean language
+     c. Refine model-specific response generation
+   - Enhance logging throughout the method for better debugging
 
-2. Enhance Logging
-   - Add more detailed logging in MockClaudeClient, particularly in the `_generate_response` method.
-   - Implement logging for model selection and system message handling.
+2. Re-run Tests
+   - Execute the tests in `tests/contract/test_claude_api_contract.py` to verify if the implemented changes resolve the issues
+   - Analyze the test results and identify any remaining issues
 
-3. Update Test Cases
-   - Review and update test cases to ensure they align with the expected behavior of different Claude models.
-   - Adjust assertions for response lengths and content based on the selected model.
+3. Iterate and Refine
+   - Based on the test results and any new insights gained, iterate on the solution and refine the implementation as needed
 
-4. Re-run Tests
-   - After implementing changes, re-run the tests to verify if the issues are resolved.
-   - Analyze any remaining failures and update hypotheses as needed.
-
-We will proceed with these steps, starting with the MockClaudeClient implementation update, as this seems to be the most pressing issue affecting multiple tests.
+We will proceed with implementing these changes, focusing on addressing the inconsistent response generation, system message handling, and model-specific behavior, and then re-run the tests to verify the solution.
