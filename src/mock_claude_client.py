@@ -764,11 +764,19 @@ class MockClaudeClient:
         system_message = next((m['content'] for m in messages if m['role'] == 'system'), None)
         if system_message:
             self.logger.info(f"System message found: {system_message[:100]}...")
-            self._set_shakespearean_mode("speak like Shakespeare" in system_message.lower())
+            shakespearean_score = self._calculate_shakespearean_score(system_message)
+            self._set_shakespearean_mode(shakespearean_score > 0.5)
         else:
             self.logger.info("No system message found")
             self._set_shakespearean_mode(False)
         self.logger.debug(f"Shakespearean mode after processing: {self.is_shakespearean}")
+
+    def _calculate_shakespearean_score(self, message: str) -> float:
+        shakespearean_keywords = ["shakespeare", "elizabethan", "bard", "iambic pentameter", "sonnet", "thou", "thee", "thy", "hark"]
+        message_lower = message.lower()
+        score = sum(keyword in message_lower for keyword in shakespearean_keywords) / len(shakespearean_keywords)
+        self.logger.debug(f"Calculated Shakespearean score: {score}")
+        return score
 
     def _set_shakespearean_mode(self, is_shakespearean: bool) -> None:
         self.is_shakespearean = is_shakespearean
@@ -786,6 +794,12 @@ class MockClaudeClient:
             self.logger.info(f"Applied non-Shakespearean prefix: {response_text[:50]}...")
         
         self.logger.debug(f"Final response after prefix application: {response_text[:50]}...")
+        return response_text
+
+    def _ensure_shakespearean_prefix(self, response_text: str) -> str:
+        if self.is_shakespearean and not response_text.startswith("Hark!"):
+            self.logger.warning("Shakespearean prefix missing. Applying it now.")
+            return f"Hark! {response_text.lstrip('Hello! ')}"
         return response_text
 
     async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any] | AsyncGenerator[Dict[str, Any], None]:
