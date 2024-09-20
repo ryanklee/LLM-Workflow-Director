@@ -634,11 +634,8 @@ class MockClaudeClient:
         
         system_message = next((m['content'] for m in messages if m['role'] == 'system'), None)
         
-        is_shakespearean = False
-        if system_message:
-            self.logger.info(f"System message found: {system_message[:100]}...")
-            is_shakespearean = "speak like Shakespeare" in system_message.lower()
-            self.logger.info(f"Shakespearean mode: {is_shakespearean}")
+        is_shakespearean = system_message and "speak like Shakespeare" in system_message.lower()
+        self.logger.info(f"Shakespearean mode: {is_shakespearean}")
         
         context = " ".join(m['content'] for m in messages if m['role'] == 'user')
         self.logger.info(f"Context: {context[:100]}...")
@@ -669,9 +666,9 @@ class MockClaudeClient:
                 response_text = f"Hark! {response_text}"
             self.logger.info(f"Final Shakespearean response: {response_text[:50]}...")
         else:
-            # Ensure non-Shakespearean responses start with "Hello!"
-            if not response_text.startswith("Hello!"):
-                response_text = f"Hello! {response_text}"
+            # Remove "Hello!" prefix if present
+            if response_text.startswith("Hello! "):
+                response_text = response_text[7:]
             self.logger.info(f"Final non-Shakespearean response: {response_text[:50]}...")
 
         # Adjust response length based on the model
