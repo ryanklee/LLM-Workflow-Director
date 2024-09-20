@@ -170,11 +170,11 @@ class MockClaudeClient:
     def _apply_response_prefix(self, response_text: str) -> str:
         if self.is_shakespearean:
             if not response_text.startswith("Hark!"):
-                response_text = f"Hark! {response_text.lstrip('Hello! ')}"
+                response_text = f"Hark! {response_text}"
             self.logger.info(f"Applied Shakespearean prefix: {response_text[:50]}...")
         else:
             if not response_text.startswith("Hello!"):
-                response_text = f"Hello! {response_text.lstrip('Hark! ')}"
+                response_text = f"Hello! {response_text}"
             self.logger.info(f"Applied non-Shakespearean prefix: {response_text[:50]}...")
         return response_text
 
