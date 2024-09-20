@@ -982,6 +982,20 @@ class MockClaudeClient:
         self.logger.debug(f"Final response after ensuring prefix: {response_text[:50]}...")
         return response_text
 
+    def _ensure_shakespearean_prefix(self, response_text: str) -> str:
+        self.logger.debug(f"Ensuring Shakespearean prefix. Current Shakespearean mode: {self.is_shakespearean}")
+        self.logger.debug(f"Original response: {response_text[:50]}...")
+        
+        if self.is_shakespearean and not response_text.startswith("Hark!"):
+            response_text = f"Hark! {response_text.lstrip('Hello! ')}"
+            self.logger.info(f"Ensured Shakespearean prefix: {response_text[:50]}...")
+        elif not self.is_shakespearean and not response_text.startswith("Hello!"):
+            response_text = f"Hello! {response_text.lstrip('Hark! ')}"
+            self.logger.info(f"Ensured non-Shakespearean prefix: {response_text[:50]}...")
+        
+        self.logger.debug(f"Final response after ensuring prefix: {response_text[:50]}...")
+        return response_text
+
     def _generate_shakespearean_response(self, prompt: str) -> str:
         self.logger.info(f"Generating Shakespearean response for prompt: {prompt[:50]}...")
         shakespearean_words = ["thou", "doth", "verily", "forsooth", "prithee", "anon"]
@@ -1366,6 +1380,11 @@ class MockClaudeClient:
                     "is_shakespearean": self.is_shakespearean,
                     "last_system_message": getattr(self, 'last_system_message', None),
                     "last_shakespearean_response": getattr(self, 'last_shakespearean_response', None)
+                },
+                "method_implementations": {
+                    "_ensure_shakespearean_prefix": self._ensure_shakespearean_prefix.__code__.co_code,
+                    "_generate_shakespearean_response": self._generate_shakespearean_response.__code__.co_code,
+                    "_apply_response_prefix": self._apply_response_prefix.__code__.co_code
                 }
             }
             self.logger.debug(f"Debug dump state: {state}")
