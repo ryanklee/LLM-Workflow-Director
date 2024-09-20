@@ -1853,9 +1853,15 @@ We will update this file with the results of the next test run after implementin
 # Test Problem Analysis and Progress
 
 ## Problem Description
-One test in `tests/contract/test_claude_api_contract.py` is still failing:
+Seven tests in `tests/contract/test_claude_api_contract.py` are failing:
 
-1. `test_system_message`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
+1. `test_create_message`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
+2. `test_rate_limit_handling`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
+3. `test_context_window`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
+4. `test_streaming_response`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
+5. `test_model_selection`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
+6. `test_multi_turn_conversation`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
+7. `test_system_message`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
 
 ## Learnings from Test Failures
 - The implemented changes introduced a new error related to a missing method.
@@ -1924,7 +1930,7 @@ One test in `tests/contract/test_claude_api_contract.py` is still failing:
 | 8        | 2024-09-26 | 1             | test_system_message still failing        |
 | 9        | 2024-09-27 | 1             | test_system_message still failing        |
 | 10       | 2024-09-28 | 1             | test_system_message still failing        |
-| 11       | 2024-09-29 | 1             | AttributeError: '_ensure_shakespearean_prefix' |
+| 11       | 2024-09-29 | 7             | AttributeError: '_ensure_shakespearean_prefix' |
 
 ## Response Content Tracking
 
