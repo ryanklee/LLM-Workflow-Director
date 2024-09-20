@@ -121,19 +121,21 @@ class MockClaudeClient:
                 }
 
     def _process_system_message(self, messages: List[Dict[str, str]]) -> None:
+        self.logger.info("Processing system message")
         system_message = next((m['content'] for m in messages if m['role'] == 'system'), None)
         if system_message:
-            self.logger.info(f"Processing system message: {system_message[:100]}...")
+            self.logger.info(f"System message found: {system_message[:100]}...")
             self.is_shakespearean = "speak like Shakespeare" in system_message.lower()
             self.logger.info(f"Shakespearean mode set to: {self.is_shakespearean}")
         else:
             self.logger.info("No system message found")
             self.is_shakespearean = False
-        
         self.logger.debug(f"Final Shakespearean mode after processing: {self.is_shakespearean}")
 
     def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
         self.logger.info(f"Generating response for prompt: {prompt[:50]}... using model: {model}")
+        
+        self._process_system_message(messages)
         self.logger.info(f"Current Shakespearean mode: {self.is_shakespearean}")
         
         context = " ".join(m['content'] for m in messages if m['role'] == 'user')
@@ -148,17 +150,26 @@ class MockClaudeClient:
             conversation_history = [m['content'] for m in messages if m['role'] in ['user', 'assistant']]
             self.logger.info(f"Generating response based on model: {model}")
             
-            if model == 'claude-3-haiku-20240307':
+            if self.is_shakespearean:
+                response_text = self._generate_shakespearean_response(prompt)
+                self.logger.info(f"Generated Shakespearean response: {response_text[:50]}...")
+            elif model == 'claude-3-haiku-20240307':
                 response_text = f"{' '.join(conversation_history[-1:])[:20]}..."
             elif model == 'claude-3-sonnet-20240229':
                 response_text = f"Based on our conversation: {' '.join(conversation_history[-2:])[:40]}..."
             else:  # claude-3-opus-20240229 or default
                 response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
 
-        # Generate Shakespearean response if needed
-        if self.is_shakespearean:
-            response_text = self._generate_shakespearean_response(prompt)
-            self.logger.info(f"Generated Shakespearean response: {response_text[:50]}...")
+        # Adjust response length based on the model
+        original_length = len(response_text)
+        if model == 'claude-3-haiku-20240307':
+            response_text = response_text[:50]  # Shorter response for Haiku
+            self.logger.info(f"Truncated Haiku response from {original_length} to {len(response_text)} characters")
+        elif model == 'claude-3-sonnet-20240229':
+            response_text = response_text[:100]  # Medium-length response for Sonnet
+            self.logger.info(f"Truncated Sonnet response from {original_length} to {len(response_text)} characters")
+        else:
+            self.logger.info(f"Opus response length: {len(response_text)} characters")
 
         # Apply response prefix as the final step
         response_text = self._apply_response_prefix(response_text)
@@ -168,7 +179,7 @@ class MockClaudeClient:
     def _generate_shakespearean_response(self, prompt: str) -> str:
         self.logger.info(f"Generating Shakespearean response for prompt: {prompt[:50]}...")
         shakespearean_words = ["thou", "doth", "verily", "forsooth", "prithee", "anon"]
-        response = f"{random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
+        response = f"Hark! {random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
         response += f"{random.choice(shakespearean_words)} {random.choice(shakespearean_words)} "
         response += f"[Shakespearean response to '{prompt[:20]}...']"
         self.logger.debug(f"Generated Shakespearean response: {response}")
