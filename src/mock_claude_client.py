@@ -804,9 +804,14 @@ class MockClaudeClient:
         return response_text
 
     def _ensure_shakespearean_prefix(self, response_text: str) -> str:
+        self.logger.debug(f"Ensuring Shakespearean prefix. Current Shakespearean mode: {self.is_shakespearean}")
+        self.logger.debug(f"Original response: {response_text[:50]}...")
+        
         if self.is_shakespearean and not response_text.startswith("Hark!"):
-            self.logger.warning("Shakespearean prefix missing. Applying it now.")
-            return f"Hark! {response_text.lstrip('Hello! ')}"
+            response_text = f"Hark! {response_text.lstrip('Hello! ')}"
+            self.logger.info(f"Ensured Shakespearean prefix: {response_text[:50]}...")
+        
+        self.logger.debug(f"Final response after ensuring prefix: {response_text[:50]}...")
         return response_text
 
     async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any] | AsyncGenerator[Dict[str, Any], None]:
