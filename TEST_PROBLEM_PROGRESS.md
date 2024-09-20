@@ -1688,52 +1688,78 @@ We will update this table with the results of the next test run to track our pro
 # Test Problem Analysis and Progress
 
 ## Problem Description
-One test in `tests/contract/test_claude_api_contract.py` is failing:
+One test in `tests/contract/test_claude_api_contract.py` is still failing:
 
 1. `test_system_message`: Assertion error, response doesn't start with 'Hark!'
 
+## Learnings from Test Failures
+- The implemented changes did not fully resolve the issue with Shakespearean response generation.
+- The system message handling is still inconsistent, particularly for Shakespearean language instructions.
+- The current implementation may be prioritizing general response formatting over specific system message instructions.
+- The Shakespearean prefix is not being applied consistently, even when a Shakespearean system message is detected.
+
 ## Hypotheses (Ranked by Likelihood)
 
-1. Inconsistent System Message Handling (Highest Likelihood)
-   - The `_generate_response` method may not be correctly identifying or processing system messages for Shakespearean language.
-   - Validation: Review and update the system message detection and processing logic in `_generate_response`.
-   - Status: Implemented and awaiting verification.
+1. Incorrect System Message Processing (Highest Likelihood)
+   - The `_generate_response` method may not be correctly identifying or processing the Shakespearean system message.
+   - Validation: Review and update the system message processing logic in `_generate_response`, ensuring it correctly identifies and handles Shakespearean instructions.
+   - Status: To be implemented and tested.
 
-2. Shakespearean Response Generation Issue (High Likelihood)
-   - The Shakespearean response generation logic may not be consistently applying the "Hark!" prefix.
-   - Validation: Ensure that all Shakespearean responses start with "Hark!" regardless of other factors.
-   - Status: Implemented and awaiting verification.
+2. Response Prefix Application Failure (High Likelihood)
+   - The Shakespearean prefix "Hark!" is not being applied consistently, even when Shakespearean mode is detected.
+   - Validation: Ensure that the Shakespearean prefix is applied as the final step in response generation, overriding any other prefixes.
+   - Status: To be implemented and tested.
 
-3. Model-Specific Behavior Interference (Medium Likelihood)
+3. Inconsistent Shakespearean Mode Tracking (Medium Likelihood)
+   - The Shakespearean mode may not be consistently tracked throughout the response generation process.
+   - Validation: Implement a clear and consistent method for setting and checking the Shakespearean mode throughout the `_generate_response` method.
+   - Status: To be implemented and tested.
+
+4. Model-Specific Behavior Interference (Low Likelihood)
    - The model-specific behavior implementation might be overriding the Shakespearean response generation.
    - Validation: Review the interaction between model-specific logic and Shakespearean response generation.
-   - Status: To be investigated if hypotheses 1 and 2 don't fully resolve the issue.
+   - Status: To be investigated if hypotheses 1, 2, and 3 don't fully resolve the issue.
 
-4. Logging Inadequacy (Low Likelihood)
-   - While logging has been improved, it may still not provide enough detail for thorough debugging.
-   - Validation: Further enhance logging, particularly around system message processing and response generation decisions.
-   - Status: Implemented alongside other changes, awaiting test results.
+## Implementation Plan
 
-## Implemented Changes
+We will implement solutions addressing the top three hypotheses:
 
-1. Updated the `_generate_response` method in MockClaudeClient to improve system message detection and Shakespearean response generation.
-2. Implemented a foolproof mechanism to ensure all Shakespearean responses start with "Hark!".
-3. Added detailed logging for each step of the decision-making process in the `_generate_response` method.
+1. Update System Message Processing:
+   - Implement a dedicated `_process_system_message` method to handle system message detection and processing.
+   - Ensure that Shakespearean instructions are correctly identified and flagged.
+   - Update the `_generate_response` method to use the new system message processing logic.
+
+2. Improve Response Prefix Application:
+   - Create a separate `_apply_response_prefix` method to handle prefix application.
+   - Ensure that the Shakespearean prefix "Hark!" always takes precedence when Shakespearean mode is active.
+   - Apply this method as the final step in response generation.
+
+3. Implement Consistent Shakespearean Mode Tracking:
+   - Add a `self.is_shakespearean` flag to the MockClaudeClient class.
+   - Update this flag based on system message processing.
+   - Use this flag consistently throughout the response generation process.
+
+4. Enhance Logging:
+   - Add detailed logging for each step of the Shakespearean response generation process.
+   - Log the state of the Shakespearean flag, system message content, and final response format.
+   - Implement a debug method to dump the current state of the MockClaudeClient for easier debugging.
 
 ## Next Steps
 
-1. Re-run Tests
-   - Execute the tests in `tests/contract/test_claude_api_contract.py` to verify if the implemented changes resolve the issue.
-   - Analyze the test results and update hypotheses if needed.
+1. Implement the solutions outlined above in the MockClaudeClient class.
+2. Re-run the tests to verify if the implemented changes resolve the issue.
+3. Analyze the test results and update hypotheses if needed.
+4. If the issue persists, investigate the Model-Specific Behavior Interference hypothesis more deeply.
 
-2. Further Investigation (if needed)
-   - If the issue persists, investigate the Model-Specific Behavior Interference hypothesis.
-   - Review and potentially refactor the interaction between model-specific logic and Shakespearean response generation.
+## Test Results Tracking
 
-3. Continuous Improvement
-   - Regardless of test results, consider implementing additional logging and error handling to improve future debugging capabilities.
+| Test Run | Date       | Failing Tests | Notes                                    |
+|----------|------------|---------------|------------------------------------------|
+| 1        | 2024-09-19 | 1             | test_system_message fails                |
+| 2        | 2024-09-20 | 1             | test_system_message still failing        |
+| 3        | TBD        | TBD           | After implementing current changes       |
 
-We have implemented the changes addressing the top two hypotheses and are now awaiting test results to determine if further action is needed.
+We will update this table with the results of the next test run to track our progress.
 # Test Problem Analysis and Progress
 
 ## Problem Description
