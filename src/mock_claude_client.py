@@ -965,8 +965,11 @@ class MockClaudeClient:
         else:
             self.logger.info("No system message found")
             self.is_shakespearean = False
+        self.logger.debug(f"Final Shakespearean mode after processing: {self.is_shakespearean}")
 
     def _apply_response_prefix(self, response_text: str) -> str:
+        self.logger.debug(f"Applying response prefix. Current Shakespearean mode: {self.is_shakespearean}")
+        self.logger.debug(f"Original response: {response_text[:50]}...")
         if self.is_shakespearean:
             if not response_text.startswith("Hark!"):
                 response_text = f"Hark! {response_text.lstrip('Hello! ')}"
@@ -975,13 +978,14 @@ class MockClaudeClient:
             if not response_text.startswith("Hello!"):
                 response_text = f"Hello! {response_text.lstrip('Hark! ')}"
             self.logger.info(f"Applied non-Shakespearean prefix: {response_text[:50]}...")
+        self.logger.debug(f"Final response after prefix application: {response_text[:50]}...")
         return response_text
 
     def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
         self.logger.info(f"Generating response for prompt: {prompt[:50]}... using model: {model}")
         
         self._process_system_message(messages)
-        self.logger.info(f"Shakespearean mode after processing system message: {self.is_shakespearean}")
+        self.logger.info(f"Current Shakespearean mode: {self.is_shakespearean}")
         
         context = " ".join(m['content'] for m in messages if m['role'] == 'user')
         self.logger.info(f"Context: {context[:100]}...")
@@ -1005,9 +1009,8 @@ class MockClaudeClient:
             else:  # claude-3-opus-20240229 or default
                 response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
 
-        self.logger.info(f"Response before applying prefix: {response_text[:50]}...")
         response_text = self._apply_response_prefix(response_text)
-        self.logger.info(f"Response after applying prefix: {response_text[:50]}...")
+        self.logger.debug(f"Final generated response for {model}: {response_text}")
 
         # Adjust response length based on the model
         original_length = len(response_text)
