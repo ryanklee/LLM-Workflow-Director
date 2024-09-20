@@ -900,6 +900,9 @@ class MockClaudeClient:
     def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
         self.logger.info(f"Generating response for prompt: {prompt[:50]}... using model: {model}")
         
+        self._process_system_message(messages)
+        self.logger.info(f"Current Shakespearean mode: {self.is_shakespearean}")
+        
         context = " ".join(m['content'] for m in messages if m['role'] == 'user')
         self.logger.info(f"Context: {context[:100]}...")
         
@@ -933,38 +936,51 @@ class MockClaudeClient:
         else:
             self.logger.info(f"Opus response length: {len(response_text)} characters")
 
-        # Apply response prefix as the final step
+        # Apply response prefix and ensure Shakespearean prefix
         response_text = self._apply_response_prefix(response_text)
+        response_text = self._ensure_shakespearean_prefix(response_text)
         self.logger.debug(f"Final generated response for {model}: {response_text}")
         return response_text
 
     def _generate_shakespearean_response(self, prompt: str) -> str:
         self.logger.info(f"Generating Shakespearean response for prompt: {prompt[:50]}...")
         shakespearean_words = ["thou", "doth", "verily", "forsooth", "prithee", "anon"]
-        response = f"{random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
+        response = f"Hark! {random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
         response += f"{random.choice(shakespearean_words)} {random.choice(shakespearean_words)} "
         response += f"[Shakespearean response to '{prompt[:20]}...']"
         self.logger.debug(f"Generated Shakespearean response: {response}")
         return response
+
+    def _ensure_shakespearean_prefix(self, response_text: str) -> str:
+        self.logger.debug(f"Ensuring Shakespearean prefix. Current Shakespearean mode: {self.is_shakespearean}")
+        self.logger.debug(f"Original response: {response_text[:50]}...")
+        
+        if self.is_shakespearean and not response_text.startswith("Hark!"):
+            response_text = f"Hark! {response_text.lstrip('Hello! ')}"
+            self.logger.info(f"Ensured Shakespearean prefix: {response_text[:50]}...")
+        
+        self.logger.debug(f"Final response after ensuring prefix: {response_text[:50]}...")
+        return response_text
 
     async def debug_dump(self):
         self.logger.debug("Starting debug_dump method")
         try:
             state = {
                 "api_key": self.api_key[:5] + "...",
-                "rate_limit": self.rate_limit,
-                "reset_time": self.reset_time,
-                "calls": self.calls,
-                "last_reset": self.last_reset,
-                "error_mode": self.error_mode,
-                "latency": self.latency,
-                "max_test_tokens": self.max_test_tokens,
+                "rate_limit_threshold": self.rate_limit_threshold,
+                "rate_limit_reset_time": self.rate_limit_reset_time,
                 "call_count": self.call_count,
-                "error_count": self.error_count,
-                "max_errors": self.max_errors,
-                "context_length": len(self.context),
+                "last_reset_time": self.last_reset_time,
+                "error_mode": self.error_mode,
+                "is_shakespearean": self.is_shakespearean,
                 "responses_count": len(self.responses),
-                "is_shakespearean": self.is_shakespearean
+                "shakespearean_methods": {
+                    "_process_system_message": hasattr(self, '_process_system_message'),
+                    "_generate_shakespearean_response": hasattr(self, '_generate_shakespearean_response'),
+                    "_apply_response_prefix": hasattr(self, '_apply_response_prefix'),
+                    "_ensure_shakespearean_prefix": hasattr(self, '_ensure_shakespearean_prefix')
+                },
+                "last_response": getattr(self, 'last_response', None)
             }
             self.logger.debug(f"Debug dump state: {state}")
             return state
