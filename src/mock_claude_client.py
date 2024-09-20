@@ -945,6 +945,7 @@ class MockClaudeClient:
         response_text = self._apply_response_prefix(response_text)
         response_text = self._ensure_shakespearean_prefix(response_text)
         self.logger.debug(f"Final generated response for {model}: {response_text}")
+        self.last_response = response_text  # Store the last response for debugging
         return response_text
 
     def _generate_shakespearean_response(self, prompt: str) -> str:
