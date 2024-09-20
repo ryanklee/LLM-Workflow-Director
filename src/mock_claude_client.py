@@ -191,29 +191,26 @@ class MockClaudeClient:
         return response_text
 
     def debug_dump(self):
-        state = {
-            "is_shakespearean": self.is_shakespearean,
-            "last_response": getattr(self, 'last_response', None),
-            "last_system_message": getattr(self, 'last_system_message', None),
-        }
-        self.logger.debug(f"MockClaudeClient state: {state}")
-        return state
+        try:
+            state = {
+                "is_shakespearean": self.is_shakespearean,
+                "last_response": getattr(self, 'last_response', None),
+                "last_system_message": getattr(self, 'last_system_message', None),
                 "rate_limit_threshold": self.rate_limit_threshold,
                 "rate_limit_reset_time": self.rate_limit_reset_time,
                 "call_count": self.call_count,
                 "last_reset_time": self.last_reset_time,
                 "error_mode": self.error_mode,
-                "is_shakespearean": self.is_shakespearean,
                 "responses_count": len(self.responses)
             }
-            self.logger.debug(f"Debug dump state: {state}")
+            self.logger.debug(f"MockClaudeClient state: {state}")
             return state
         except Exception as e:
             self.logger.error(f"Error in debug_dump: {str(e)}", exc_info=True)
             raise
 
     async def debug_dump(self):
-        self.logger.debug("Starting debug_dump method")
+        self.logger.debug("Starting async debug_dump method")
         try:
             state = {
                 "api_key": self.api_key[:5] + "...",
