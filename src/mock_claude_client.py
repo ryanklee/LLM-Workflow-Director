@@ -992,26 +992,36 @@ class MockClaudeClient:
         system_message = next((m['content'] for m in messages if m['role'] == 'system'), None)
         if system_message:
             self.logger.info(f"Processing system message: {system_message[:100]}...")
-            self.is_shakespearean = "speak like Shakespeare" in system_message.lower()
-            self.logger.info(f"Shakespearean mode set to: {self.is_shakespearean}")
+            self._set_shakespearean_mode("speak like Shakespeare" in system_message.lower())
         else:
             self.logger.info("No system message found")
-            self.is_shakespearean = False
+            self._set_shakespearean_mode(False)
         self.logger.debug(f"Final Shakespearean mode after processing: {self.is_shakespearean}")
+
+    def _set_shakespearean_mode(self, is_shakespearean: bool) -> None:
+        self.is_shakespearean = is_shakespearean
+        self.logger.info(f"Shakespearean mode set to: {self.is_shakespearean}")
 
     def _apply_response_prefix(self, response_text: str) -> str:
         self.logger.debug(f"Applying response prefix. Current Shakespearean mode: {self.is_shakespearean}")
         self.logger.debug(f"Original response: {response_text[:50]}...")
+        
         if self.is_shakespearean:
-            if not response_text.startswith("Hark!"):
-                response_text = f"Hark! {response_text.lstrip('Hello! ')}"
+            response_text = f"Hark! {response_text.lstrip('Hark! ').lstrip('Hello! ')}"
             self.logger.info(f"Applied Shakespearean prefix: {response_text[:50]}...")
         else:
-            if not response_text.startswith("Hello!"):
-                response_text = f"Hello! {response_text.lstrip('Hark! ')}"
+            response_text = f"Hello! {response_text.lstrip('Hark! ').lstrip('Hello! ')}"
             self.logger.info(f"Applied non-Shakespearean prefix: {response_text[:50]}...")
+        
         self.logger.debug(f"Final response after prefix application: {response_text[:50]}...")
         return response_text
+
+    def debug_dump(self) -> Dict[str, Any]:
+        return {
+            "is_shakespearean": self.is_shakespearean,
+            "last_response": getattr(self, 'last_response', None),
+            "last_system_message": getattr(self, 'last_system_message', None),
+        }
 
     def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
         self.logger.info(f"Generating response for prompt: {prompt[:50]}... using model: {model}")
