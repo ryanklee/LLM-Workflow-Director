@@ -635,8 +635,10 @@ class MockClaudeClient:
         system_message = next((m['content'] for m in messages if m['role'] == 'system'), None)
         self.logger.debug(f"System message: {system_message}")
         
-        is_shakespearean = system_message and "speak like Shakespeare" in system_message.lower()
-        self.logger.info(f"Shakespearean mode: {is_shakespearean}")
+        is_shakespearean = False
+        if system_message:
+            is_shakespearean = "speak like Shakespeare" in system_message.lower()
+            self.logger.info(f"Shakespearean mode detected in system message: {is_shakespearean}")
         
         context = " ".join(m['content'] for m in messages if m['role'] == 'user')
         self.logger.info(f"Context: {context[:100]}...")
@@ -661,14 +663,6 @@ class MockClaudeClient:
                 else:  # claude-3-opus-20240229 or default
                     response_text = f"{' '.join(conversation_history[-3:])[:60]}..."
 
-        # Ensure Shakespearean responses always start with "Hark!" and non-Shakespearean with "Hello!"
-        if is_shakespearean:
-            response_text = f"Hark! {response_text.lstrip('Hark! ')}"
-            self.logger.info(f"Final Shakespearean response: {response_text[:50]}...")
-        else:
-            response_text = f"Hello! {response_text.lstrip('Hello! ')}"
-            self.logger.info(f"Final non-Shakespearean response: {response_text[:50]}...")
-
         # Adjust response length based on the model
         original_length = len(response_text)
         if model == 'claude-3-haiku-20240307':
@@ -679,6 +673,14 @@ class MockClaudeClient:
             self.logger.info(f"Truncated Sonnet response from {original_length} to {len(response_text)} characters")
         else:
             self.logger.info(f"Opus response length: {len(response_text)} characters")
+
+        # Ensure Shakespearean responses always start with "Hark!" and non-Shakespearean with "Hello!"
+        if is_shakespearean:
+            response_text = f"Hark! {response_text.lstrip('Hark! ')}"
+            self.logger.info(f"Final Shakespearean response: {response_text[:50]}...")
+        else:
+            response_text = f"Hello! {response_text.lstrip('Hello! ')}"
+            self.logger.info(f"Final non-Shakespearean response: {response_text[:50]}...")
 
         self.logger.debug(f"Final generated response for {model}: {response_text}")
         return response_text
