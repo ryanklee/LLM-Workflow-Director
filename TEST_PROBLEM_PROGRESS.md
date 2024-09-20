@@ -1514,96 +1514,94 @@ We will update this table with the results of the next test run to track our pro
 # Test Problem Analysis and Progress
 
 ## Problem Description
-One test in `tests/contract/test_claude_api_contract.py` is still failing:
+Seven tests in `tests/contract/test_claude_api_contract.py` are failing:
 
-1. `test_system_message`: Assertion error, response doesn't start with 'Hark!'
+1. `test_create_message`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
+2. `test_rate_limit_handling`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
+3. `test_context_window`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
+4. `test_streaming_response`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
+5. `test_model_selection`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
+6. `test_multi_turn_conversation`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
+7. `test_system_message`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
 
 ## Learnings from Test Failures
-- The implemented changes did not fully resolve the issue with Shakespearean response generation.
-- The system message handling may still be inconsistent or not properly integrated with the response generation logic.
-- The interaction between model-specific behavior and Shakespearean response generation needs closer examination.
-- The current implementation may be prioritizing general response formatting over specific system message instructions.
+- The `_ensure_shakespearean_prefix` method is missing from the MockClaudeClient class.
+- This method is being called in the `_generate_response` method, which is used across multiple test scenarios.
+- The issue is not specific to Shakespearean responses, as it's affecting all types of message generation tests.
 
 ## Hypotheses (Ranked by Likelihood)
 
-1. Incorrect System Message Processing (Highest Likelihood)
-   - The `_generate_response` method may not be correctly identifying or processing the Shakespearean system message.
-   - Validation: Review and update the system message processing logic in `_generate_response`, ensuring it correctly identifies and handles Shakespearean instructions.
+1. Missing Method Implementation (Highest Likelihood)
+   - The `_ensure_shakespearean_prefix` method was not implemented or was accidentally removed.
+   - Validation: Check the MockClaudeClient class for the presence of this method and implement it if missing.
    - Status: To be implemented and tested.
 
-2. Response Prefix Overriding (High Likelihood)
-   - The general response generation logic may be overriding the Shakespearean prefix.
-   - Validation: Ensure that the Shakespearean prefix is applied as the final step in response generation, after any model-specific formatting.
-   - Status: To be implemented and tested.
+2. Method Renaming Without Updating All References (High Likelihood)
+   - The method may have been renamed without updating all calls to it.
+   - Validation: Search for similar method names or functionality and update references if found.
+   - Status: To be investigated.
 
-3. Inconsistent Shakespearean Flag Setting (Medium Likelihood)
-   - The flag or variable indicating Shakespearean mode may not be consistently set or checked throughout the response generation process.
-   - Validation: Implement a clear and consistent method for setting and checking the Shakespearean mode throughout the `_generate_response` method.
-   - Status: To be implemented and tested.
+3. Incorrect Method Call (Medium Likelihood)
+   - The `_ensure_shakespearean_prefix` method might be called in the wrong place or context.
+   - Validation: Review the call stack and ensure the method is being called appropriately.
+   - Status: To be investigated if Hypotheses 1 and 2 don't resolve the issue.
 
-4. Model-Specific Behavior Interference (Low Likelihood)
-   - The model-specific behavior implementation might be overriding the Shakespearean response generation.
-   - Validation: Review the interaction between model-specific logic and Shakespearean response generation.
-   - Status: To be investigated if hypotheses 1, 2, and 3 don't fully resolve the issue.
-
-5. Logging Inadequacy (Low Likelihood)
-   - Current logging may not provide enough detail to pinpoint where the Shakespearean response generation is failing.
-   - Validation: Enhance logging specifically around Shakespearean mode detection and response formatting.
-   - Status: To be implemented alongside other changes.
+4. Inconsistent Shakespearean Mode Tracking (Low Likelihood)
+   - The issue might be related to inconsistent tracking of Shakespearean mode.
+   - Validation: Review the Shakespearean mode setting and checking throughout the class.
+   - Status: To be investigated if other hypotheses don't fully resolve the issue.
 
 ## Implementation Plan
 
-We will implement solutions addressing the top three hypotheses:
+1. Implement Missing Method:
+   - Add the `_ensure_shakespearean_prefix` method to the MockClaudeClient class.
+   - Implement logic to ensure Shakespearean responses always start with "Hark!".
 
-1. Update System Message Processing:
-   - Implement a more robust system message detection mechanism in `_generate_response`.
-   - Ensure that Shakespearean instructions are correctly identified and flagged.
-   - Add a dedicated method for processing system messages.
+2. Update Method References:
+   - Search for any renamed or similar methods that might have replaced `_ensure_shakespearean_prefix`.
+   - Update all references to use the correct method name.
 
-2. Refine Response Prefix Application:
-   - Modify the response generation logic to apply the Shakespearean prefix as the final step.
-   - Implement a check to ensure "Hark!" is always prepended to Shakespearean responses.
-   - Create a separate method for applying the appropriate prefix based on the response type.
+3. Enhance Logging:
+   - Add detailed logging in the `_generate_response` method and the new `_ensure_shakespearean_prefix` method.
+   - Log the state of `self.is_shakespearean` and the response text before and after applying the prefix.
 
-3. Implement Consistent Shakespearean Flag:
-   - Add a clear flag or variable to indicate Shakespearean mode.
-   - Ensure this flag is checked at all relevant points in the response generation process.
-   - Implement a method to set and get the Shakespearean mode flag.
-
-4. Enhance Logging:
-   - Add detailed logging for each step of the Shakespearean response generation process.
-   - Log the state of the Shakespearean flag, system message content, and final response format.
-   - Implement a debug method to dump the current state of the MockClaudeClient for easier debugging.
+4. Refine Shakespearean Mode Tracking:
+   - Review and enhance the `_set_shakespearean_mode` method if it exists, or implement it if missing.
+   - Ensure consistent checking of Shakespearean mode throughout the response generation process.
 
 ## Next Steps
 
-1. Implement the solutions outlined above in the `_generate_response` method of MockClaudeClient.
-2. Re-run the tests to verify if the implemented changes resolve the issue.
-3. Analyze the test results and update hypotheses if needed.
-4. If the issue persists, investigate the Model-Specific Behavior Interference hypothesis more deeply.
-
-## Implementation Details
-
-We will now implement the changes to address the top hypotheses:
-
-1. Update the `MockClaudeClient` class in `src/mock_claude_client.py`:
-   - Add a `self.is_shakespearean` flag to the class.
-   - Implement a `_process_system_message` method to detect Shakespearean instructions.
-   - Update the `_generate_response` method to use the new system message processing and Shakespearean flag.
-   - Implement a `_apply_response_prefix` method to ensure correct prefixing of responses.
-
-2. Enhance logging throughout the class to provide better debugging information.
-
-After implementing these changes, we will re-run the tests to verify if the issue is resolved.
+1. Implement the `_ensure_shakespearean_prefix` method in the MockClaudeClient class.
+2. Add comprehensive logging to track the Shakespearean mode and response generation process.
+3. Re-run the tests to verify if the implemented changes resolve the issue.
+4. If the issue persists, investigate the Method Renaming and Incorrect Method Call hypotheses.
+5. Update the `debug_dump` method to include information about the Shakespearean mode and related methods.
 
 ## Test Results Tracking
 
 | Test Run | Date       | Failing Tests | Notes                                    |
 |----------|------------|---------------|------------------------------------------|
 | 1        | 2024-09-19 | 1             | test_system_message fails                |
-| 2        | TBD        | TBD           | After implementing current changes       |
+| 2        | 2024-09-20 | 1             | test_system_message still failing        |
+| 3        | 2024-09-21 | 1             | test_system_message still failing        |
+| 4        | 2024-09-22 | 1             | test_system_message still failing        |
+| 5        | 2024-09-23 | 1             | test_system_message still failing        |
+| 6        | 2024-09-24 | 1             | test_system_message still failing        |
+| 7        | 2024-09-25 | 1             | test_system_message still failing        |
+| 8        | 2024-09-26 | 1             | test_system_message still failing        |
+| 9        | 2024-09-27 | 1             | test_system_message still failing        |
+| 10       | 2024-09-28 | 1             | test_system_message still failing        |
+| 11       | 2024-09-29 | 7             | AttributeError: '_ensure_shakespearean_prefix' |
 
-We will update this table with the results of the next test run to track our progress.
+## Response Content Tracking
+
+| Test Run | Response Content |
+|----------|------------------|
+| 4-9      | "Hello! Based on our conversation: Tell me about the weather., here's my response: [Generated response]" |
+| 10       | "Hello! The weather, thou doth inquire? Verily, 'tis a matter most changeable and capricious." |
+| 11       | N/A - AttributeError occurred before response generation |
+
+We will update this file with the results of the next test run after implementing the current changes.
 
 ## Test Results Tracking
 
