@@ -736,6 +736,7 @@ class MockClaudeClient:
         self.max_errors = 3
         self.messages = self.Messages(self)
         self.context = []
+        self.is_shakespearean = False
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
 
     async def set_response(self, prompt: str, response: str):
