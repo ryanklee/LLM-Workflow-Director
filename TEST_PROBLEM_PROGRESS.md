@@ -1767,35 +1767,64 @@ One test in `tests/contract/test_claude_api_contract.py` is still failing:
 
 1. `test_system_message`: Assertion error, response doesn't start with 'Hark!'
 
-## Implemented Changes
-We have implemented the following changes in the `src/mock_claude_client.py` file:
+## Learnings from Test Failures
+- The implemented changes did not fully resolve the issue with Shakespearean response generation.
+- The system message handling is still inconsistent, particularly for Shakespearean language instructions.
+- The current implementation is prioritizing general response formatting over specific system message instructions.
+- The Shakespearean prefix is not being applied consistently, even when a Shakespearean system message is detected.
 
-1. Reordered Response Generation Steps:
-   - Moved the Shakespearean prefix application to the end of the `_generate_response` method.
-   - Ensured that model-specific formatting doesn't overwrite the Shakespearean prefix.
+## Hypotheses (Ranked by Likelihood)
 
-2. Refined Response Prefix Application:
-   - Updated the `_apply_response_prefix` method to always apply "Hark!" for Shakespearean responses.
-   - Added a check to prevent duplicate prefixes.
+1. Incorrect System Message Processing (Highest Likelihood)
+   - The `_generate_response` method may not be correctly identifying or processing the Shakespearean system message.
+   - Validation: Review and update the system message processing logic in `_generate_response`, ensuring it correctly identifies and handles Shakespearean instructions.
+   - Status: To be implemented and tested.
 
-3. Enhanced Shakespearean Mode Tracking:
-   - Added explicit checks for `self.is_shakespearean` throughout the response generation process.
-   - Implemented a `_set_shakespearean_mode` method to centralize mode changes and logging.
+2. Response Prefix Application Failure (High Likelihood)
+   - The Shakespearean prefix "Hark!" is not being applied consistently, even when Shakespearean mode is detected.
+   - Validation: Ensure that the Shakespearean prefix is applied as the final step in response generation, overriding any other prefixes.
+   - Status: To be implemented and tested.
 
-4. Improved System Message Processing:
-   - Enhanced the `_process_system_message` method with more robust Shakespearean instruction detection.
-   - Added detailed logging for system message processing.
+3. Inconsistent Shakespearean Mode Tracking (Medium Likelihood)
+   - The Shakespearean mode may not be consistently tracked throughout the response generation process.
+   - Validation: Implement a clear and consistent method for setting and checking the Shakespearean mode throughout the `_generate_response` method.
+   - Status: To be implemented and tested.
 
-5. Enhanced Logging:
-   - Added comprehensive logging throughout the response generation process.
-   - Implemented a `debug_dump` method for full state logging.
+4. Model-Specific Behavior Interference (Low Likelihood)
+   - The model-specific behavior implementation might be overriding the Shakespearean response generation.
+   - Validation: Review the interaction between model-specific logic and Shakespearean response generation.
+   - Status: To be investigated if hypotheses 1, 2, and 3 don't fully resolve the issue.
+
+## Implementation Plan
+
+We will implement solutions addressing the top three hypotheses:
+
+1. Update System Message Processing:
+   - Implement a dedicated `_process_system_message` method to handle system message detection and processing.
+   - Ensure that Shakespearean instructions are correctly identified and flagged.
+   - Update the `_generate_response` method to use the new system message processing logic.
+
+2. Improve Response Prefix Application:
+   - Create a separate `_apply_response_prefix` method to handle prefix application.
+   - Ensure that the Shakespearean prefix "Hark!" always takes precedence when Shakespearean mode is active.
+   - Apply this method as the final step in response generation.
+
+3. Implement Consistent Shakespearean Mode Tracking:
+   - Add a `self.is_shakespearean` flag to the MockClaudeClient class.
+   - Update this flag based on system message processing.
+   - Use this flag consistently throughout the response generation process.
+
+4. Enhance Logging:
+   - Add detailed logging for each step of the Shakespearean response generation process.
+   - Log the state of the Shakespearean flag, system message content, and final response format.
+   - Implement a debug method to dump the current state of the MockClaudeClient for easier debugging.
 
 ## Next Steps
 
-1. Re-run the tests to verify if the implemented changes resolve the issue.
-2. Analyze the test results and update hypotheses if needed.
-3. If the issue persists, investigate potential interactions between different response generation steps.
-4. Consider adding more specific test cases to cover edge cases in Shakespearean response generation.
+1. Implement the solutions outlined above in the MockClaudeClient class.
+2. Re-run the tests to verify if the implemented changes resolve the issue.
+3. Analyze the test results and update hypotheses if needed.
+4. If the issue persists, investigate the Model-Specific Behavior Interference hypothesis more deeply.
 
 ## Test Results Tracking
 
@@ -1807,7 +1836,7 @@ We have implemented the following changes in the `src/mock_claude_client.py` fil
 | 4        | 2024-09-22 | 1             | test_system_message still failing        |
 | 5        | 2024-09-23 | 1             | test_system_message still failing        |
 | 6        | 2024-09-24 | 1             | test_system_message still failing        |
-| 7        | TBD        | TBD           | After implementing current changes       |
+| 7        | 2024-09-25 | 1             | test_system_message still failing        |
 
 ## Response Content Tracking
 
@@ -1816,6 +1845,6 @@ We have implemented the following changes in the `src/mock_claude_client.py` fil
 | 4        | "Hello! Based on our conversation: Tell me about the weather., here's my response: [Generated response]" |
 | 5        | "Hello! Based on our conversation: Tell me about the weather., here's my response: [Generated response]" |
 | 6        | "Hello! Based on our conversation: Tell me about the weather., here's my response: [Generated response]" |
-| 7        | TBD              |
+| 7        | "Hello! Based on our conversation: Tell me about the weather., here's my response: [Generated response]" |
 
 We will update this file with the results of the next test run after implementing the current changes.
