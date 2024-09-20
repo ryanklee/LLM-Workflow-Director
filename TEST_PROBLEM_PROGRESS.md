@@ -1629,7 +1629,7 @@ One test in `tests/contract/test_claude_api_contract.py` is still failing:
 
 ## Learnings from Test Failures
 - The implemented changes did not fully resolve the issue with Shakespearean response generation.
-- The system message handling may still be inconsistent or not properly integrated with the response generation logic.
+- The system message handling is still inconsistent, particularly for Shakespearean language instructions.
 - The current implementation is prioritizing general response formatting over specific system message instructions.
 - The Shakespearean prefix is not being applied consistently, even when a Shakespearean system message is detected.
 
@@ -1686,14 +1686,12 @@ We will implement solutions addressing the top three hypotheses:
 3. Analyze the test results and update hypotheses if needed.
 4. If the issue persists, investigate the Model-Specific Behavior Interference hypothesis more deeply.
 
-We will proceed with implementing these changes and then re-run the tests to verify the solution.
-
 ## Test Results Tracking
 
 | Test Run | Date       | Failing Tests | Notes                                    |
 |----------|------------|---------------|------------------------------------------|
 | 1        | 2024-09-19 | 1             | test_system_message fails                |
-| 2        | TBD        | TBD           | After implementing current changes       |
+| 2        | 2024-09-20 | 1             | test_system_message still failing        |
 
 We will update this table with the results of the next test run to track our progress.
 # Test Problem Analysis and Progress
