@@ -1603,6 +1603,7 @@ class MockClaudeClient:
         response_text = self._generate_base_response(prompt, model, messages)
         response_text = self._apply_response_prefix(response_text)
         response_text = self._adjust_response_length(response_text, model)
+        response_text = self._ensure_shakespearean_prefix(response_text)
         
         self.logger.debug(f"Final generated response for {model}: {response_text}")
         return response_text
@@ -1678,7 +1679,10 @@ class MockClaudeClient:
                 "error_mode": self.error_mode,
                 "context_length": len(self.context),
                 "responses_count": len(self.responses),
-                "is_shakespearean": self.is_shakespearean
+                "is_shakespearean": self.is_shakespearean,
+                "last_system_message": self.context[-2]['content'] if len(self.context) >= 2 and self.context[-2]['role'] == 'system' else None,
+                "last_user_message": self.context[-1]['content'] if self.context and self.context[-1]['role'] == 'user' else None,
+                "last_response": self.context[-1]['content'] if self.context and self.context[-1]['role'] == 'assistant' else None
             }
             self.logger.debug(f"Debug dump state: {state}")
             return state
