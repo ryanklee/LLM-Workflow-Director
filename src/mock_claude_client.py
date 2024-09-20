@@ -1212,18 +1212,27 @@ class MockClaudeClient:
         self.logger.debug(f"Final response after prefix application: {response_text[:50]}...")
         return response_text
 
-    def debug_dump(self) -> Dict[str, Any]:
-        return {
-            "is_shakespearean": self.is_shakespearean,
-            "last_response": getattr(self, 'last_response', None),
-            "last_system_message": getattr(self, 'last_system_message', None),
-        }
-
-    def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
-        self.logger.info(f"Generating response for prompt: {prompt[:50]}... using model: {model}")
+    def _ensure_shakespearean_prefix(self, response_text: str) -> str:
+        self.logger.debug(f"Ensuring Shakespearean prefix. Current Shakespearean mode: {self.is_shakespearean}")
+        self.logger.debug(f"Original response: {response_text[:50]}...")
         
-        self._process_system_message(messages)
-        self.logger.info(f"Current Shakespearean mode: {self.is_shakespearean}")
+        if self.is_shakespearean and not response_text.startswith("Hark!"):
+            response_text = f"Hark! {response_text.lstrip('Hello! ')}"
+            self.logger.info(f"Ensured Shakespearean prefix: {response_text[:50]}...")
+        
+        self.logger.debug(f"Final response after ensuring prefix: {response_text[:50]}...")
+        return response_text
+
+    def _generate_shakespearean_response(self, prompt: str) -> str:
+        self.logger.info(f"Generating Shakespearean response for prompt: {prompt[:50]}...")
+        shakespearean_words = ["thou", "doth", "verily", "forsooth", "prithee", "anon"]
+        response = f"Hark! {random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
+        response += f"{random.choice(shakespearean_words)} {random.choice(shakespearean_words)} "
+        response += f"[Shakespearean response to '{prompt[:20]}...']"
+        self.logger.debug(f"Generated Shakespearean response: {response}")
+        return response
+
+    async def debug_dump(self):
         
         context = " ".join(m['content'] for m in messages if m['role'] == 'user')
         self.logger.info(f"Context: {context[:100]}...")
