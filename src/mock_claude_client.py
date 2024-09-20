@@ -1215,6 +1215,7 @@ class MockClaudeClient:
         self.error_mode = False
         self.responses = {}
         self.context = []
+        self.is_shakespearean = False
         self.logger.info(f"MockClaudeClient initialized with rate_limit_threshold: {self.rate_limit_threshold}, rate_limit_reset_time: {self.rate_limit_reset_time}")
 
     async def set_response(self, prompt: str, response: str):
@@ -1225,30 +1226,26 @@ class MockClaudeClient:
     def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
         self.logger.info(f"Generating response for prompt: {prompt[:50]}... using model: {model}")
         
-        system_message = next((m['content'] for m in messages if m['role'] == 'system'), None)
-        self.logger.info(f"System message: {system_message[:100] if system_message else 'None'}")
-        
-        is_shakespearean = self._detect_shakespearean_mode(system_message)
-        self.logger.info(f"Shakespearean mode: {is_shakespearean}")
+        self._process_system_message(messages)
+        self.logger.info(f"Shakespearean mode: {self.is_shakespearean}")
         
         context = " ".join(m['content'] for m in messages if m['role'] == 'user')
         self.logger.info(f"Context: {context[:100]}...")
         
-        response_text = self._generate_base_response(prompt, model, messages, is_shakespearean)
-        
-        response_text = self._apply_response_prefix(response_text, is_shakespearean)
-        
+        response_text = self._generate_base_response(prompt, model, messages)
+        response_text = self._apply_response_prefix(response_text)
         response_text = self._adjust_response_length(response_text, model)
         
         self.logger.debug(f"Final generated response for {model}: {response_text}")
         return response_text
 
-    def _detect_shakespearean_mode(self, system_message: Optional[str]) -> bool:
-        is_shakespearean = system_message and "speak like Shakespeare" in system_message.lower()
-        self.logger.info(f"Detected Shakespearean mode: {is_shakespearean}")
-        return is_shakespearean
+    def _process_system_message(self, messages: List[Dict[str, str]]):
+        system_message = next((m['content'] for m in messages if m['role'] == 'system'), None)
+        self.logger.info(f"System message: {system_message[:100] if system_message else 'None'}")
+        self.is_shakespearean = system_message and "speak like Shakespeare" in system_message.lower()
+        self.logger.info(f"Set Shakespearean mode to: {self.is_shakespearean}")
 
-    def _generate_base_response(self, prompt: str, model: str, messages: List[Dict[str, str]], is_shakespearean: bool) -> str:
+    def _generate_base_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
         response_text = self.responses.get(prompt)
         if response_text:
             self.logger.info(f"Using custom response: {response_text[:50]}...")
@@ -1256,7 +1253,7 @@ class MockClaudeClient:
             conversation_history = [m['content'] for m in messages if m['role'] in ['user', 'assistant']]
             self.logger.info(f"Generating response based on model: {model}")
             
-            if is_shakespearean:
+            if self.is_shakespearean:
                 response_text = self._generate_shakespearean_response(prompt)
                 self.logger.info(f"Generated Shakespearean response: {response_text[:50]}...")
             elif model == 'claude-3-haiku-20240307':
@@ -1268,8 +1265,8 @@ class MockClaudeClient:
         
         return response_text
 
-    def _apply_response_prefix(self, response_text: str, is_shakespearean: bool) -> str:
-        if is_shakespearean:
+    def _apply_response_prefix(self, response_text: str) -> str:
+        if self.is_shakespearean:
             if not response_text.startswith("Hark!"):
                 response_text = f"Hark! {response_text.lstrip('Hello! ')}"
             self.logger.info(f"Applied Shakespearean prefix: {response_text[:50]}...")
@@ -1294,12 +1291,32 @@ class MockClaudeClient:
     def _generate_shakespearean_response(self, prompt: str) -> str:
         self.logger.info(f"Generating Shakespearean response for prompt: {prompt[:50]}...")
         shakespearean_words = ["thou", "doth", "verily", "forsooth", "prithee", "anon"]
-        response = f"Hark! {random.choice(shakespearean_words).capitalize()}, {prompt.lower()}. "
+        response = f"{random.choice(shakespearean_words).capitalize()}, {prompt.lower()}. "
         response += f"{random.choice(shakespearean_words).capitalize()} {random.choice(shakespearean_words)}, "
         response += f"I say in response to thy query '{prompt[:20]}...' "
         response += f"[Shakespearean response]"  
         self.logger.debug(f"Generated Shakespearean response: {response}")
         return response
+
+    async def debug_dump(self):
+        self.logger.debug("Starting debug_dump method")
+        try:
+            state = {
+                "api_key": self.api_key[:5] + "...",
+                "rate_limit_threshold": self.rate_limit_threshold,
+                "rate_limit_reset_time": self.rate_limit_reset_time,
+                "call_count": self.call_count,
+                "last_reset_time": self.last_reset_time,
+                "error_mode": self.error_mode,
+                "context_length": len(self.context),
+                "responses_count": len(self.responses),
+                "is_shakespearean": self.is_shakespearean
+            }
+            self.logger.debug(f"Debug dump state: {state}")
+            return state
+        except Exception as e:
+            self.logger.error(f"Error in debug_dump: {str(e)}", exc_info=True)
+            raise
 
     def _generate_shakespearean_response(self, prompt: str) -> str:
         self.logger.info(f"Generating Shakespearean response for prompt: {prompt[:50]}...")
