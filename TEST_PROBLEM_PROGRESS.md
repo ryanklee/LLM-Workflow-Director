@@ -1768,15 +1768,12 @@ One test in `tests/contract/test_claude_api_contract.py` is still failing:
 1. `test_system_message`: Assertion error, response doesn't start with 'Hark!'
 
 ## Learnings from Test Failures
-- The implemented changes did not fully resolve the issue with Shakespearean response generation.
-- The system message handling is still inconsistent, particularly for Shakespearean language instructions.
-- The current implementation is prioritizing general response formatting over specific system message instructions.
-- The Shakespearean prefix is not being applied consistently, even when a Shakespearean system message is detected.
-- The response generation logic may not be properly considering the system message when determining the response format.
-- The `is_shakespearean` flag may not be set correctly or used consistently throughout the response generation process.
+- The implemented changes have partially resolved the issue with Shakespearean response generation, but the test `test_system_message` is still failing.
+- The system message handling is still not consistent, particularly for Shakespearean language instructions.
+- The response prefix application logic is not correctly handling the Shakespearean prefix "Hark!" in all cases.
+- The Shakespearean mode tracking through the `self.is_shakespearean` flag is not being used consistently throughout the response generation process.
 
 ## Hypotheses (Ranked by Likelihood)
-
 1. Incomplete Response Prefix Application (Highest Likelihood)
    - The `_apply_response_prefix` method may not be correctly applying the Shakespearean prefix "Hark!" when needed.
    - Validation: Review and update the `_apply_response_prefix` method, ensuring it consistently applies "Hark!" for Shakespearean responses.
@@ -1798,9 +1795,6 @@ One test in `tests/contract/test_claude_api_contract.py` is still failing:
    - Status: To be investigated if hypotheses 1, 2, and 3 don't fully resolve the issue.
 
 ## Implementation Plan
-
-We will implement solutions addressing the top three hypotheses:
-
 1. Refine Response Prefix Application:
    - Update the `_apply_response_prefix` method in `src/mock_claude_client.py`.
    - Ensure the Shakespearean prefix "Hark!" is always applied when `self.is_shakespearean` is True.
@@ -1819,7 +1813,6 @@ We will implement solutions addressing the top three hypotheses:
    - Log the state of the Shakespearean flag, system message content, and final response format.
 
 ## Next Steps
-
 1. Implement the solutions outlined above in the MockClaudeClient class.
 2. Re-run the tests to verify if the implemented changes resolve the issue.
 3. Analyze the test results and update hypotheses if needed.
@@ -1835,15 +1828,11 @@ We will implement solutions addressing the top three hypotheses:
 | 4        | 2024-09-22 | 1             | test_system_message still failing        |
 | 5        | TBD        | TBD           | After implementing current changes       |
 
-We will update this table with the results of the next test run to track our progress.
-
 ## Response Content Tracking
-
-To help diagnose the issue, we'll track the actual response content for the failing test:
 
 | Test Run | Response Content |
 |----------|------------------|
 | 4        | "Hello! Based on our conversation: Tell me about the weather., here's my response: [Generated response]" |
 | 5        | TBD              |
 
-This will help us identify if the Shakespearean prefix is being applied at all and if there are any patterns in the response generation that we need to address.
+The next step is to implement the solutions outlined in the Implementation Plan and re-run the tests to see if the issue is resolved. I'll update the TEST_PROBLEM_PROGRESS.md file with the results of the next test run.
