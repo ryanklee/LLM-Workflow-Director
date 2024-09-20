@@ -230,7 +230,7 @@ class MockClaudeClient:
             raise
 
     async def debug_dump(self):
-        self.logger.debug("Starting async debug_dump method")
+        self.logger.debug("Starting debug_dump method")
         try:
             state = {
                 "api_key": self.api_key[:5] + "...",
@@ -240,7 +240,14 @@ class MockClaudeClient:
                 "last_reset_time": self.last_reset_time,
                 "error_mode": self.error_mode,
                 "is_shakespearean": self.is_shakespearean,
-                "responses_count": len(self.responses)
+                "responses_count": len(self.responses),
+                "shakespearean_methods": {
+                    "_process_system_message": hasattr(self, '_process_system_message'),
+                    "_generate_shakespearean_response": hasattr(self, '_generate_shakespearean_response'),
+                    "_apply_response_prefix": hasattr(self, '_apply_response_prefix'),
+                    "_ensure_shakespearean_prefix": hasattr(self, '_ensure_shakespearean_prefix')
+                },
+                "last_response": getattr(self, 'last_response', None)
             }
             self.logger.debug(f"Debug dump state: {state}")
             return state
@@ -1253,7 +1260,19 @@ class MockClaudeClient:
 
         # Apply response prefix as the final step
         response_text = self._apply_response_prefix(response_text)
+        response_text = self._ensure_shakespearean_prefix(response_text)
         self.logger.debug(f"Final generated response for {model}: {response_text}")
+        return response_text
+
+    def _ensure_shakespearean_prefix(self, response_text: str) -> str:
+        self.logger.debug(f"Ensuring Shakespearean prefix. Current Shakespearean mode: {self.is_shakespearean}")
+        self.logger.debug(f"Original response: {response_text[:50]}...")
+        
+        if self.is_shakespearean and not response_text.startswith("Hark!"):
+            response_text = f"Hark! {response_text.lstrip('Hello! ')}"
+            self.logger.info(f"Ensured Shakespearean prefix: {response_text[:50]}...")
+        
+        self.logger.debug(f"Final response after ensuring prefix: {response_text[:50]}...")
         return response_text
 
     def _generate_shakespearean_response(self, prompt: str) -> str:
