@@ -259,7 +259,14 @@ class MockClaudeClient:
                 "last_reset_time": self.last_reset_time,
                 "error_mode": self.error_mode,
                 "is_shakespearean": self.is_shakespearean,
-                "responses_count": len(self.responses)
+                "responses_count": len(self.responses),
+                "shakespearean_methods": {
+                    "_process_system_message": hasattr(self, '_process_system_message'),
+                    "_generate_shakespearean_response": hasattr(self, '_generate_shakespearean_response'),
+                    "_apply_response_prefix": hasattr(self, '_apply_response_prefix'),
+                    "_ensure_shakespearean_prefix": hasattr(self, '_ensure_shakespearean_prefix')
+                },
+                "last_response": getattr(self, 'last_response', None)
             }
             self.logger.debug(f"Debug dump state: {state}")
             return state
