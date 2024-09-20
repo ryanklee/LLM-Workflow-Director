@@ -1768,26 +1768,28 @@ One test in `tests/contract/test_claude_api_contract.py` is still failing:
 1. `test_system_message`: Assertion error, response doesn't start with 'Hark!'
 
 ## Learnings from Test Failures
-- The implemented changes have partially resolved the issue with Shakespearean response generation, but the test `test_system_message` is still failing.
-- The system message handling is still not consistent, particularly for Shakespearean language instructions.
-- The response prefix application logic is not correctly handling the Shakespearean prefix "Hark!" in all cases.
-- The Shakespearean mode tracking through the `self.is_shakespearean` flag is not being used consistently throughout the response generation process.
+- The implemented changes did not fully resolve the issue with Shakespearean response generation.
+- The system message handling is still inconsistent, particularly for Shakespearean language instructions.
+- The current implementation is prioritizing general response formatting over specific system message instructions.
+- The Shakespearean prefix is not being applied consistently, even when a Shakespearean system message is detected.
+- The `self.is_shakespearean` flag may not be properly set or used throughout the response generation process.
 
 ## Hypotheses (Ranked by Likelihood)
+
 1. Incomplete Response Prefix Application (Highest Likelihood)
    - The `_apply_response_prefix` method may not be correctly applying the Shakespearean prefix "Hark!" when needed.
    - Validation: Review and update the `_apply_response_prefix` method, ensuring it consistently applies "Hark!" for Shakespearean responses.
-   - Status: To be implemented and tested.
+   - Status: Implemented and awaiting test results.
 
 2. Inconsistent Shakespearean Mode Tracking (High Likelihood)
    - The `self.is_shakespearean` flag may not be set correctly or checked consistently throughout the response generation process.
    - Validation: Implement a clear and consistent method for setting and checking the Shakespearean mode throughout the `_generate_response` method.
-   - Status: To be implemented and tested.
+   - Status: Implemented and awaiting test results.
 
 3. Incorrect System Message Processing (Medium Likelihood)
    - The `_process_system_message` method may not be correctly identifying or processing the Shakespearean system message.
    - Validation: Review and update the system message processing logic, ensuring it correctly identifies and handles Shakespearean instructions.
-   - Status: To be implemented and tested.
+   - Status: Implemented and awaiting test results.
 
 4. Model-Specific Behavior Interference (Low Likelihood)
    - The model-specific behavior implementation might be overriding the Shakespearean response generation.
@@ -1795,6 +1797,7 @@ One test in `tests/contract/test_claude_api_contract.py` is still failing:
    - Status: To be investigated if hypotheses 1, 2, and 3 don't fully resolve the issue.
 
 ## Implementation Plan
+
 1. Refine Response Prefix Application:
    - Update the `_apply_response_prefix` method in `src/mock_claude_client.py`.
    - Ensure the Shakespearean prefix "Hark!" is always applied when `self.is_shakespearean` is True.
@@ -1813,10 +1816,11 @@ One test in `tests/contract/test_claude_api_contract.py` is still failing:
    - Log the state of the Shakespearean flag, system message content, and final response format.
 
 ## Next Steps
-1. Implement the solutions outlined above in the MockClaudeClient class.
-2. Re-run the tests to verify if the implemented changes resolve the issue.
-3. Analyze the test results and update hypotheses if needed.
-4. If the issue persists, investigate the Model-Specific Behavior Interference hypothesis.
+
+1. Re-run the tests to verify if the implemented changes resolve the issue.
+2. Analyze the test results and update hypotheses if needed.
+3. If the issue persists, investigate the Model-Specific Behavior Interference hypothesis.
+4. Continue to monitor and improve logging for future debugging.
 
 ## Test Results Tracking
 
@@ -1826,13 +1830,15 @@ One test in `tests/contract/test_claude_api_contract.py` is still failing:
 | 2        | 2024-09-20 | 1             | test_system_message still failing        |
 | 3        | 2024-09-21 | 1             | test_system_message still failing        |
 | 4        | 2024-09-22 | 1             | test_system_message still failing        |
-| 5        | TBD        | TBD           | After implementing current changes       |
+| 5        | 2024-09-23 | 1             | test_system_message still failing        |
+| 6        | TBD        | TBD           | After implementing current changes       |
 
 ## Response Content Tracking
 
 | Test Run | Response Content |
 |----------|------------------|
 | 4        | "Hello! Based on our conversation: Tell me about the weather., here's my response: [Generated response]" |
-| 5        | TBD              |
+| 5        | "Hello! Based on our conversation: Tell me about the weather., here's my response: [Generated response]" |
+| 6        | TBD              |
 
-The next step is to implement the solutions outlined in the Implementation Plan and re-run the tests to see if the issue is resolved. I'll update the TEST_PROBLEM_PROGRESS.md file with the results of the next test run.
+The next step is to implement the solutions outlined in the Implementation Plan and re-run the tests to see if the issue is resolved. We will update this file with the results of the next test run.
