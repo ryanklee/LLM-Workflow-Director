@@ -1255,10 +1255,12 @@ class MockClaudeClient:
         self.logger.debug(f"Original response: {response_text[:50]}...")
         
         if self.is_shakespearean:
-            response_text = f"Hark! {response_text.lstrip('Hark! ').lstrip('Hello! ')}"
+            if not response_text.startswith("Hark!"):
+                response_text = f"Hark! {response_text.lstrip('Hello! ')}"
             self.logger.info(f"Applied Shakespearean prefix: {response_text[:50]}...")
         else:
-            response_text = f"Hello! {response_text.lstrip('Hark! ').lstrip('Hello! ')}"
+            if not response_text.startswith("Hello!"):
+                response_text = f"Hello! {response_text.lstrip('Hark! ')}"
             self.logger.info(f"Applied non-Shakespearean prefix: {response_text[:50]}...")
         
         self.logger.debug(f"Final response after prefix application: {response_text[:50]}...")
@@ -1271,6 +1273,9 @@ class MockClaudeClient:
         if self.is_shakespearean and not response_text.startswith("Hark!"):
             response_text = f"Hark! {response_text.lstrip('Hello! ')}"
             self.logger.info(f"Ensured Shakespearean prefix: {response_text[:50]}...")
+        elif not self.is_shakespearean and not response_text.startswith("Hello!"):
+            response_text = f"Hello! {response_text.lstrip('Hark! ')}"
+            self.logger.info(f"Ensured non-Shakespearean prefix: {response_text[:50]}...")
         
         self.logger.debug(f"Final response after ensuring prefix: {response_text[:50]}...")
         return response_text
@@ -1283,6 +1288,10 @@ class MockClaudeClient:
         response += f"[Shakespearean response to '{prompt[:20]}...']"
         self.logger.debug(f"Generated Shakespearean response: {response}")
         return response
+
+    def _set_shakespearean_mode(self, is_shakespearean: bool) -> None:
+        self.is_shakespearean = is_shakespearean
+        self.logger.info(f"Shakespearean mode set to: {self.is_shakespearean}")
 
     async def debug_dump(self):
         self.logger.debug("Starting debug_dump method")
@@ -1300,9 +1309,15 @@ class MockClaudeClient:
                     "_process_system_message": hasattr(self, '_process_system_message'),
                     "_generate_shakespearean_response": hasattr(self, '_generate_shakespearean_response'),
                     "_apply_response_prefix": hasattr(self, '_apply_response_prefix'),
-                    "_ensure_shakespearean_prefix": hasattr(self, '_ensure_shakespearean_prefix')
+                    "_ensure_shakespearean_prefix": hasattr(self, '_ensure_shakespearean_prefix'),
+                    "_set_shakespearean_mode": hasattr(self, '_set_shakespearean_mode')
                 },
-                "last_response": getattr(self, 'last_response', None)
+                "last_response": getattr(self, 'last_response', None),
+                "shakespearean_mode_tracking": {
+                    "is_shakespearean": self.is_shakespearean,
+                    "last_system_message": getattr(self, 'last_system_message', None),
+                    "last_shakespearean_response": getattr(self, 'last_shakespearean_response', None)
+                }
             }
             self.logger.debug(f"Debug dump state: {state}")
             return state
