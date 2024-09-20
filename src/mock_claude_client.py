@@ -656,16 +656,18 @@ class MockClaudeClient:
                 if model == 'claude-3-haiku-20240307':
                     response_text = f"{' '.join(conversation_history[-1:])[:20]}..."
                 elif model == 'claude-3-sonnet-20240229':
-                    response_text = f"Based on our conversation: {' '.join(conversation_history[-2:])[:40]}..."
+                    response_text = f"{' '.join(conversation_history[-2:])[:40]}..."
                 else:  # claude-3-opus-20240229 or default
-                    response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
+                    response_text = f"{' '.join(conversation_history[-3:])[:60]}..."
 
         # Ensure Shakespearean responses always start with "Hark!" and non-Shakespearean with "Hello!"
         if is_shakespearean:
-            response_text = f"Hark! {response_text.lstrip('Hark! ')}"
+            if not response_text.startswith("Hark!"):
+                response_text = f"Hark! {response_text}"
             self.logger.info(f"Final Shakespearean response: {response_text[:50]}...")
         else:
-            response_text = f"Hello! {response_text.lstrip('Hello! ')}"
+            if not response_text.startswith("Hello!"):
+                response_text = f"Hello! {response_text}"
             self.logger.info(f"Final non-Shakespearean response: {response_text[:50]}...")
 
         # Adjust response length based on the model
