@@ -155,6 +155,10 @@ class MockClaudeClient:
             else:  # claude-3-opus-20240229 or default
                 response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
 
+        # Ensure Shakespearean responses always start with "Hark!"
+        if self.is_shakespearean and not response_text.startswith("Hark!"):
+            response_text = f"Hark! {response_text}"
+
         self.logger.debug(f"Final generated response for {model}: {response_text}")
         return response_text
 
@@ -168,13 +172,8 @@ class MockClaudeClient:
         return response
 
     def _apply_response_prefix(self, response_text: str) -> str:
-        if self.is_shakespearean:
-            if not response_text.startswith("Hark!"):
-                response_text = f"Hark! {response_text}"
-            self.logger.info(f"Applied Shakespearean prefix: {response_text[:50]}...")
-        else:
-            if not response_text.startswith("Hello!"):
-                response_text = f"Hello! {response_text}"
+        if not self.is_shakespearean and not response_text.startswith("Hello!"):
+            response_text = f"Hello! {response_text}"
             self.logger.info(f"Applied non-Shakespearean prefix: {response_text[:50]}...")
         return response_text
 
