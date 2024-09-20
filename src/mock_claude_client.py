@@ -162,7 +162,7 @@ class MockClaudeClient:
     def _generate_shakespearean_response(self, prompt: str) -> str:
         self.logger.info(f"Generating Shakespearean response for prompt: {prompt[:50]}...")
         shakespearean_words = ["thou", "doth", "verily", "forsooth", "prithee", "anon"]
-        response = f"{random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
+        response = f"Hark! {random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
         response += f"{random.choice(shakespearean_words)} {random.choice(shakespearean_words)} "
         response += f"[Shakespearean response to '{prompt[:20]}...']"
         self.logger.debug(f"Generated Shakespearean response: {response}")
@@ -171,11 +171,11 @@ class MockClaudeClient:
     def _apply_response_prefix(self, response_text: str) -> str:
         if self.is_shakespearean:
             if not response_text.startswith("Hark!"):
-                response_text = f"Hark! {response_text}"
+                response_text = f"Hark! {response_text.lstrip('Hello! ')}"
             self.logger.info(f"Applied Shakespearean prefix: {response_text[:50]}...")
         else:
             if not response_text.startswith("Hello!"):
-                response_text = f"Hello! {response_text}"
+                response_text = f"Hello! {response_text.lstrip('Hark! ')}"
             self.logger.info(f"Applied non-Shakespearean prefix: {response_text[:50]}...")
         return response_text
 
