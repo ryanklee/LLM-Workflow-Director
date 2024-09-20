@@ -1027,43 +1027,55 @@ Remember to run the tests and update this document with the results of the test 
 # Test Problem Analysis and Progress
 
 ## Problem Description
-Three tests in `tests/contract/test_claude_api_contract.py` were failing:
-
-1. `test_context_window`: AttributeError: 'MockClaudeClient' object has no attribute 'set_response'
-2. `test_multi_turn_conversation`: Assertion error, 'joke' not in response
-3. `test_system_message`: Assertion error, expected words not in response
+All tests in `tests/contract/test_claude_api_contract.py` were failing with various errors, primarily related to the `_messages` attribute being `None` and issues with Shakespearean response generation.
 
 ## Hypotheses (Ranked by Likelihood)
 
 1. MockClaudeClient Implementation Issue (Highest Likelihood)
-   - The `MockClaudeClient` class was missing the `set_response` method.
-   - The response generation in `MockClaudeClient` was not context-aware for multi-turn conversations and system messages.
+   - The `MockClaudeClient` class was not correctly initializing the `_messages` attribute.
+   - The response generation in `MockClaudeClient` was not consistently handling Shakespearean responses.
    - Validation: Reviewed and updated the `MockClaudeClient` implementation in `src/mock_claude_client.py`.
    - Status: Implemented and awaiting verification.
 
-2. Test Case Mismatch (Medium Likelihood)
-   - The test cases might not be aligned with the current MockClaudeClient implementation.
-   - Validation: Review test cases and ensure they match the expected behavior of the MockClaudeClient.
-   - Status: To be investigated if Hypothesis 1 doesn't fully resolve the issue.
+2. Inconsistent System Message Handling (High Likelihood)
+   - The system message processing may not have been consistent across different types of requests.
+   - Validation: Updated the system message handling in the `_generate_response` method.
+   - Status: Implemented and awaiting verification.
 
-3. Pact Contract Definition Issue (Low Likelihood)
+3. Test Case Mismatch (Medium Likelihood)
+   - Some test cases might not be aligned with the current MockClaudeClient implementation.
+   - Validation: Review test cases and ensure they match the expected behavior of the MockClaudeClient.
+   - Status: To be investigated if Hypotheses 1 and 2 don't fully resolve the issues.
+
+4. Pact Contract Definition Issue (Low Likelihood)
    - The Pact contract definitions might not accurately represent the expected Claude API behavior.
    - Validation: Review Pact contract definitions and ensure they match the latest Claude API documentation.
-   - Status: To be investigated if other hypotheses don't fully resolve the issue.
+   - Status: To be investigated if other hypotheses don't fully resolve the issues.
 
 ## Implemented Changes
 
-1. Added `set_response` method to MockClaudeClient
-2. Enhanced response generation in MockClaudeClient to be more context-aware
-3. Improved logging in MockClaudeClient for better debugging
+1. Properly initialized the `_messages` attribute as an empty list in the MockClaudeClient constructor.
+2. Updated the `_apply_response_prefix` method to handle both Shakespearean and non-Shakespearean responses more consistently.
+3. Modified the `_generate_shakespearean_response` method to always start with "Hark!" for consistency.
+4. Enhanced logging throughout the MockClaudeClient for better debugging.
 
 ## Next Steps
 
-1. Re-run tests to verify if the implemented changes resolve the issues
-2. If issues persist, investigate Test Case Mismatch hypothesis
-3. Update test cases if necessary to align with MockClaudeClient behavior
-4. If problems still occur, review Pact contract definitions
-5. Continue to monitor and improve logging for future debugging
+1. Re-run all tests to verify if the implemented changes resolve the issues.
+2. Analyze the test results and update hypotheses if needed.
+3. If issues persist, investigate the Test Case Mismatch hypothesis.
+4. Update test cases if necessary to align with the updated MockClaudeClient behavior.
+5. If problems still occur, review Pact contract definitions.
+6. Continue to monitor and improve logging for future debugging.
+
+## Test Results Tracking
+
+| Test Run | Date       | Failing Tests | Notes                                    |
+|----------|------------|---------------|------------------------------------------|
+| 1        | 2024-09-19 | All           | Initial failures due to _messages issues |
+| 2        | TBD        | TBD           | After implementing current changes       |
+
+We will update this table with the results of the next test run to track our progress.
 # Test Problem Analysis and Progress
 
 ## Problem Description

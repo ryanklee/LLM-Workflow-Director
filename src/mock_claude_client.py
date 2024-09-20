@@ -1208,7 +1208,7 @@ class MockClaudeClient:
 
     def __init__(self, api_key: str = "mock_api_key"):
         self.api_key = api_key
-        self._messages = None
+        self._messages = []
         self.lock = asyncio.Lock()
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
@@ -1294,7 +1294,7 @@ class MockClaudeClient:
             self.logger.info(f"Applied Shakespearean prefix: {response_text[:50]}...")
         else:
             if not response_text.startswith("Hello!"):
-                response_text = f"Hello! {response_text}"
+                response_text = f"Hello! {response_text.lstrip('Hark! ')}"
             self.logger.info(f"Applied non-Shakespearean prefix: {response_text[:50]}...")
         return response_text
 
@@ -1313,7 +1313,7 @@ class MockClaudeClient:
     def _generate_shakespearean_response(self, prompt: str) -> str:
         self.logger.info(f"Generating Shakespearean response for prompt: {prompt[:50]}...")
         shakespearean_words = ["thou", "doth", "verily", "forsooth", "prithee", "anon"]
-        response = f"{random.choice(shakespearean_words).capitalize()}, {prompt.lower()}. "
+        response = f"Hark! {random.choice(shakespearean_words).capitalize()}, {prompt.lower()}. "
         response += f"{random.choice(shakespearean_words).capitalize()} {random.choice(shakespearean_words)}, "
         response += f"I say in response to thy query '{prompt[:20]}...' "
         response += f"[Shakespearean response]"  
