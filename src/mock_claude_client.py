@@ -268,6 +268,11 @@ class MockClaudeClient:
                     "is_shakespearean": self.is_shakespearean,
                     "last_system_message": getattr(self, 'last_system_message', None),
                     "last_shakespearean_response": getattr(self, 'last_shakespearean_response', None)
+                },
+                "method_implementations": {
+                    "_ensure_shakespearean_prefix": self._ensure_shakespearean_prefix.__code__.co_code,
+                    "_generate_shakespearean_response": self._generate_shakespearean_response.__code__.co_code,
+                    "_apply_response_prefix": self._apply_response_prefix.__code__.co_code
                 }
             }
             self.logger.debug(f"Debug dump state: {state}")
