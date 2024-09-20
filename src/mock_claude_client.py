@@ -132,6 +132,7 @@ class MockClaudeClient:
 
     def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
         self.logger.info(f"Generating response for prompt: {prompt[:50]}... using model: {model}")
+        self.logger.info(f"Current Shakespearean mode: {self.is_shakespearean}")
         
         context = " ".join(m['content'] for m in messages if m['role'] == 'user')
         self.logger.info(f"Context: {context[:100]}...")
@@ -154,10 +155,6 @@ class MockClaudeClient:
                 response_text = f"Based on our conversation: {' '.join(conversation_history[-2:])[:40]}..."
             else:  # claude-3-opus-20240229 or default
                 response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
-
-        # Ensure Shakespearean responses always start with "Hark!"
-        if self.is_shakespearean and not response_text.startswith("Hark!"):
-            response_text = f"Hark! {response_text}"
 
         self.logger.debug(f"Final generated response for {model}: {response_text}")
         return response_text
