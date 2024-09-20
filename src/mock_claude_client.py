@@ -1273,9 +1273,10 @@ class MockClaudeClient:
     def _generate_shakespearean_response(self, prompt: str) -> str:
         self.logger.info(f"Generating Shakespearean response for prompt: {prompt[:50]}...")
         shakespearean_words = ["thou", "doth", "verily", "forsooth", "prithee", "anon"]
-        response = f"Hark! {random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
-        response += f"{random.choice(shakespearean_words)} {random.choice(shakespearean_words)} "
-        response += f"[Shakespearean response to '{prompt[:20]}...']"
+        response = f"Hark! {random.choice(shakespearean_words).capitalize()}, {prompt.lower()}. "
+        response += f"{random.choice(shakespearean_words).capitalize()} {random.choice(shakespearean_words)}, "
+        response += f"I say in response to thy query '{prompt[:20]}...' "
+        response += f"[Shakespearean response]"  
         self.logger.debug(f"Generated Shakespearean response: {response}")
         return response
 
