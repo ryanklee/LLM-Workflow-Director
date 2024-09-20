@@ -148,23 +148,27 @@ class MockClaudeClient:
             conversation_history = [m['content'] for m in messages if m['role'] in ['user', 'assistant']]
             self.logger.info(f"Generating response based on model: {model}")
             
-            if self.is_shakespearean:
-                response_text = self._generate_shakespearean_response(prompt)
-                self.logger.info(f"Generated Shakespearean response: {response_text[:50]}...")
-            elif model == 'claude-3-haiku-20240307':
+            if model == 'claude-3-haiku-20240307':
                 response_text = f"{' '.join(conversation_history[-1:])[:20]}..."
             elif model == 'claude-3-sonnet-20240229':
                 response_text = f"Based on our conversation: {' '.join(conversation_history[-2:])[:40]}..."
             else:  # claude-3-opus-20240229 or default
                 response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
 
+        # Generate Shakespearean response if needed
+        if self.is_shakespearean:
+            response_text = self._generate_shakespearean_response(prompt)
+            self.logger.info(f"Generated Shakespearean response: {response_text[:50]}...")
+
+        # Apply response prefix as the final step
+        response_text = self._apply_response_prefix(response_text)
         self.logger.debug(f"Final generated response for {model}: {response_text}")
         return response_text
 
     def _generate_shakespearean_response(self, prompt: str) -> str:
         self.logger.info(f"Generating Shakespearean response for prompt: {prompt[:50]}...")
         shakespearean_words = ["thou", "doth", "verily", "forsooth", "prithee", "anon"]
-        response = f"Hark! {random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
+        response = f"{random.choice(shakespearean_words).capitalize()} {prompt.lower()} "
         response += f"{random.choice(shakespearean_words)} {random.choice(shakespearean_words)} "
         response += f"[Shakespearean response to '{prompt[:20]}...']"
         self.logger.debug(f"Generated Shakespearean response: {response}")
@@ -176,21 +180,24 @@ class MockClaudeClient:
         
         if self.is_shakespearean:
             if not response_text.startswith("Hark!"):
-                response_text = f"Hark! {response_text.lstrip('Hello! ')}"
+                response_text = f"Hark! {response_text}"
             self.logger.info(f"Applied Shakespearean prefix: {response_text[:50]}...")
         else:
             if not response_text.startswith("Hello!"):
-                response_text = f"Hello! {response_text.lstrip('Hark! ')}"
+                response_text = f"Hello! {response_text}"
             self.logger.info(f"Applied non-Shakespearean prefix: {response_text[:50]}...")
         
         self.logger.debug(f"Final response after prefix application: {response_text[:50]}...")
         return response_text
 
-    async def debug_dump(self):
-        self.logger.debug("Starting debug_dump method")
-        try:
-            state = {
-                "api_key": self.api_key[:5] + "...",
+    def debug_dump(self):
+        state = {
+            "is_shakespearean": self.is_shakespearean,
+            "last_response": getattr(self, 'last_response', None),
+            "last_system_message": getattr(self, 'last_system_message', None),
+        }
+        self.logger.debug(f"MockClaudeClient state: {state}")
+        return state
                 "rate_limit_threshold": self.rate_limit_threshold,
                 "rate_limit_reset_time": self.rate_limit_reset_time,
                 "call_count": self.call_count,
