@@ -153,14 +153,27 @@ class MockClaudeClient:
             if self.is_shakespearean:
                 response_text = self._generate_shakespearean_response(prompt)
                 self.logger.info(f"Generated Shakespearean response: {response_text[:50]}...")
-            elif model == 'claude-3-haiku-20240307':
-                response_text = f"{' '.join(conversation_history[-1:])[:20]}..."
-            elif model == 'claude-3-sonnet-20240229':
-                response_text = f"Based on our conversation: {' '.join(conversation_history[-2:])[:40]}..."
-            else:  # claude-3-opus-20240229 or default
-                response_text = f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
+            else:
+                response_text = self._generate_model_specific_response(model, conversation_history)
 
         # Adjust response length based on the model
+        response_text = self._adjust_response_length(response_text, model)
+
+        # Apply response prefix as the final step
+        response_text = self._apply_response_prefix(response_text)
+        self.logger.debug(f"Final generated response for {model}: {response_text}")
+        self.last_response = response_text  # Store the last response for debugging
+        return response_text
+
+    def _generate_model_specific_response(self, model: str, conversation_history: List[str]) -> str:
+        if model == 'claude-3-haiku-20240307':
+            return f"{' '.join(conversation_history[-1:])[:20]}..."
+        elif model == 'claude-3-sonnet-20240229':
+            return f"Based on our conversation: {' '.join(conversation_history[-2:])[:40]}..."
+        else:  # claude-3-opus-20240229 or default
+            return f"Based on our conversation: {' '.join(conversation_history[-3:])}, here's my response: [Generated response]"
+
+    def _adjust_response_length(self, response_text: str, model: str) -> str:
         original_length = len(response_text)
         if model == 'claude-3-haiku-20240307':
             response_text = response_text[:50]  # Shorter response for Haiku
@@ -170,10 +183,6 @@ class MockClaudeClient:
             self.logger.info(f"Truncated Sonnet response from {original_length} to {len(response_text)} characters")
         else:
             self.logger.info(f"Opus response length: {len(response_text)} characters")
-
-        # Apply response prefix as the final step
-        response_text = self._apply_response_prefix(response_text)
-        self.logger.debug(f"Final generated response for {model}: {response_text}")
         return response_text
 
     def _generate_shakespearean_response(self, prompt: str) -> str:
