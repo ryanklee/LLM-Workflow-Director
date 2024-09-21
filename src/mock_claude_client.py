@@ -1178,6 +1178,10 @@ class MockClaudeClient:
                     "_ensure_shakespearean_prefix": self._ensure_shakespearean_prefix.__code__.co_code,
                     "_generate_shakespearean_response": self._generate_shakespearean_response.__code__.co_code,
                     "_apply_response_prefix": self._apply_response_prefix.__code__.co_code
+                },
+                "shakespearean_prefix_stats": {
+                    "total_calls": getattr(self, '_ensure_shakespearean_prefix_calls', 0),
+                    "prefixes_added": getattr(self, '_ensure_shakespearean_prefix_added', 0)
                 }
             }
             self.logger.debug(f"Debug dump state: {state}")
