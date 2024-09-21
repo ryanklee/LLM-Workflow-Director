@@ -46,6 +46,7 @@ class MockClaudeClient:
         self.rate_limit_threshold = 10
         self.rate_limit_reset_time = 60
         self.is_shakespearean = False
+        self.context = {}
         
         # Add file handler for persistent logging
         file_handler = logging.FileHandler('mock_claude_client.log')
