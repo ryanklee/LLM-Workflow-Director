@@ -71,7 +71,13 @@ class ClaudeManager:
 
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
-        return await self.client.generate_response(prompt, model)
+        try:
+            response = await self.client.generate_response(prompt, model)
+            self.logger.debug(f"Generated response: {response[:50]}...")
+            return response
+        except Exception as e:
+            self.logger.error(f"Error generating response: {str(e)}")
+            raise
 
     async def count_tokens(self, text: str) -> int:
         return await self.client.count_tokens(text)

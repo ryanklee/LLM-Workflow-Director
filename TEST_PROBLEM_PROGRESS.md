@@ -1583,85 +1583,80 @@ The `_ensure_shakespearean_prefix` method is missing from the `MockClaudeClient`
 # Test Problem Analysis and Progress
 
 ## Problem Description
-Seven tests in `tests/contract/test_claude_api_contract.py` are failing:
+Five tests in `tests/test_claude_structured_outputs.py` are failing:
 
-1. `test_create_message`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
-2. `test_rate_limit_handling`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
-3. `test_context_window`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
-4. `test_streaming_response`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
-5. `test_model_selection`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
-6. `test_multi_turn_conversation`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
-7. `test_system_message`: AttributeError: 'MockClaudeClient' object has no attribute '_ensure_shakespearean_prefix'
+1. `test_generate_json_output`: TypeError: the JSON object must be str, bytes or bytearray, not coroutine
+2. `test_generate_xml_output`: TypeError: a bytes-like object is required, not 'coroutine'
+3. `test_generate_yaml_output`: AttributeError: 'coroutine' object has no attribute 'read'
+4. `test_complex_nested_structure`: TypeError: the JSON object must be str, bytes or bytearray, not coroutine
+5. `test_dynamic_input_structured_output`: TypeError: a bytes-like object is required, not 'coroutine'
 
 ## Learnings from Test Failures
-- The `_ensure_shakespearean_prefix` method is being called but hasn't been implemented in the MockClaudeClient class.
-- This error is consistent across all failing tests, indicating a systemic issue in the MockClaudeClient implementation.
-- The error occurs in the `_generate_response` method, suggesting that the Shakespearean prefix functionality is part of the response generation process.
+- The `generate_response` method in the `ClaudeManager` class is likely returning a coroutine object instead of the actual response string.
+- This issue is consistent across all failing tests, indicating a systemic problem in how the `generate_response` method is being called or implemented.
+- The error occurs when trying to parse the response as JSON, XML, or YAML, suggesting that the response is not being properly awaited.
 
 ## Hypotheses (Ranked by Likelihood)
 
-1. Missing Method Implementation (Highest Likelihood)
-   - The `_ensure_shakespearean_prefix` method was not implemented or was accidentally removed.
-   - Validation: Check the MockClaudeClient class for the presence of this method and implement it if missing.
+1. Incorrect Coroutine Handling (Highest Likelihood)
+   - The `generate_response` method is defined as an async method but is not being awaited properly in the test cases.
+   - Validation: Check the test cases to ensure that `await` is used when calling `generate_response`.
    - Status: To be implemented and tested.
 
-2. Method Renaming Without Updating All References (Medium Likelihood)
-   - The method may have been renamed without updating all calls to it.
-   - Validation: Search for similar method names or functionality and update references if found.
-   - Status: To be investigated if Hypothesis 1 doesn't resolve the issue.
+2. ClaudeManager Implementation Issue (High Likelihood)
+   - The `generate_response` method in ClaudeManager might be incorrectly implemented, returning a coroutine instead of the actual response.
+   - Validation: Review the `generate_response` method in ClaudeManager to ensure it's properly awaiting any async calls within it.
+   - Status: To be investigated if Hypothesis 1 doesn't fully resolve the issue.
 
-3. Incorrect Method Call (Low Likelihood)
-   - The `_ensure_shakespearean_prefix` method might be called in the wrong place or context.
-   - Validation: Review the call stack and ensure the method is being called appropriately.
+3. Test Fixture Configuration Problem (Medium Likelihood)
+   - The `claude_manager` fixture might not be correctly set up for async usage.
+   - Validation: Check the `claude_manager` fixture in the test file and ensure it's compatible with async tests.
    - Status: To be investigated if Hypotheses 1 and 2 don't resolve the issue.
 
-4. Inconsistent Shakespearean Mode Tracking (Low Likelihood)
-   - The issue might be related to inconsistent tracking of Shakespearean mode.
-   - Validation: Review the Shakespearean mode setting and checking throughout the class.
+4. Incorrect Test Function Signatures (Low Likelihood)
+   - The test functions might not be correctly defined as async functions.
+   - Validation: Ensure all test functions that use async methods are defined with the `async def` syntax.
    - Status: To be investigated if other hypotheses don't fully resolve the issue.
 
 ## Implementation Plan
 
-1. Implement Missing Method:
-   - Add the `_ensure_shakespearean_prefix` method to the MockClaudeClient class.
-   - Implement logic to ensure Shakespearean responses always start with "Hark!".
-   - Add appropriate logging within the method.
+1. Update Test Cases:
+   - Modify all test functions to use `async def` syntax.
+   - Ensure `await` is used when calling `generate_response` in all test cases.
+   - Add appropriate error handling for async operations.
 
-2. Update Response Generation Process:
-   - Modify the `_generate_response` method to use the new `_ensure_shakespearean_prefix` method.
-   - Ensure proper handling of Shakespearean mode throughout the response generation.
+2. Review ClaudeManager Implementation:
+   - Check the `generate_response` method in ClaudeManager to ensure it's correctly implemented as an async method.
+   - Verify that any async calls within `generate_response` are properly awaited.
 
 3. Enhance Logging:
-   - Add detailed logging in the `_generate_response` method and the new `_ensure_shakespearean_prefix` method.
-   - Log the state of `self.is_shakespearean` and the response text before and after applying the prefix.
+   - Add detailed logging in the `generate_response` method to track the flow of execution.
+   - Implement logging for async operations to help diagnose any issues with coroutine handling.
 
-4. Update Debug Information:
-   - Modify the `debug_dump` method to include information about the Shakespearean mode and related methods.
+4. Update Test Fixtures:
+   - Review and update the `claude_manager` fixture to ensure it's compatible with async tests.
+   - Consider implementing an async fixture if necessary.
 
 ## Next Steps
 
-1. Implement the `_ensure_shakespearean_prefix` method in the MockClaudeClient class.
-2. Update the `_generate_response` method to use the new `_ensure_shakespearean_prefix` method.
-3. Add comprehensive logging to track the Shakespearean mode and response generation process.
-4. Update the `debug_dump` method with new debugging information.
-5. Re-run the tests to verify if the implemented changes resolve the issue.
-6. If the issue persists, investigate the Method Renaming and Incorrect Method Call hypotheses.
+1. Implement the changes to make test functions async and properly await `generate_response` calls.
+2. Review and update the ClaudeManager implementation if necessary.
+3. Enhance logging in both test cases and ClaudeManager for better debugging.
+4. Update test fixtures to support async operations if needed.
+5. Re-run the tests to verify if the implemented changes resolve the issues.
+6. If issues persist, investigate the ClaudeManager Implementation and Test Fixture Configuration hypotheses.
 
 ## Test Results Tracking
 
 | Test Run | Date       | Failing Tests | Notes                                    |
 |----------|------------|---------------|------------------------------------------|
-| 1-10     | 2024-09-19 to 2024-09-28 | 1 | test_system_message failing consistently |
-| 11       | 2024-09-29 | 7             | AttributeError: '_ensure_shakespearean_prefix' |
-| 12       | 2024-09-30 | 7             | AttributeError: '_ensure_shakespearean_prefix' |
+| 1        | 2024-09-30 | 5             | All tests failing due to coroutine issues |
 
 ## Response Content Tracking
 
 | Test Run | Response Content |
 |----------|------------------|
-| 4-9      | "Hello! Based on our conversation: Tell me about the weather., here's my response: [Generated response]" |
-| 10       | "Hello! The weather, thou doth inquire? Verily, 'tis a matter most changeable and capricious." |
-| 11-12    | N/A - AttributeError occurred before response generation |
+| 1        | N/A - Coroutine object returned instead of actual response |
 
 We will update this file with the results of the next test run after implementing the current changes.
 # Test Problem Analysis and Progress

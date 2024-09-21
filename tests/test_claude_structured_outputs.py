@@ -6,12 +6,13 @@ from src.claude_manager import ClaudeManager
 from src.mock_claude_client import MockClaudeClient
 
 @pytest.fixture
-def claude_manager():
+async def claude_manager():
     return ClaudeManager(client=MockClaudeClient())
 
-def test_generate_json_output(claude_manager):
+@pytest.mark.asyncio
+async def test_generate_json_output(claude_manager):
     prompt = "Generate a JSON object representing a person with name, age, and list of hobbies."
-    response = claude_manager.generate_response(prompt)
+    response = await claude_manager.generate_response(prompt)
     
     # Parse the JSON from the response
     json_output = json.loads(response)
@@ -22,9 +23,10 @@ def test_generate_json_output(claude_manager):
     assert "hobbies" in json_output
     assert isinstance(json_output["hobbies"], list)
 
-def test_generate_xml_output(claude_manager):
+@pytest.mark.asyncio
+async def test_generate_xml_output(claude_manager):
     prompt = "Generate an XML document representing a book with title, author, and publication year."
-    response = claude_manager.generate_response(prompt)
+    response = await claude_manager.generate_response(prompt)
     
     # Parse the XML from the response
     root = ET.fromstring(response)
@@ -34,9 +36,10 @@ def test_generate_xml_output(claude_manager):
     assert root.find("author") is not None
     assert root.find("year") is not None
 
-def test_generate_yaml_output(claude_manager):
+@pytest.mark.asyncio
+async def test_generate_yaml_output(claude_manager):
     prompt = "Generate a YAML document representing a simple configuration with database settings."
-    response = claude_manager.generate_response(prompt)
+    response = await claude_manager.generate_response(prompt)
     
     # Parse the YAML from the response
     yaml_output = yaml.safe_load(response)
@@ -47,9 +50,10 @@ def test_generate_yaml_output(claude_manager):
     assert "port" in yaml_output["database"]
     assert "username" in yaml_output["database"]
 
-def test_complex_nested_structure(claude_manager):
+@pytest.mark.asyncio
+async def test_complex_nested_structure(claude_manager):
     prompt = "Generate a JSON object representing a company with name, founded year, and a list of employees. Each employee should have a name, position, and a list of skills."
-    response = claude_manager.generate_response(prompt)
+    response = await claude_manager.generate_response(prompt)
     
     json_output = json.loads(response)
     
@@ -65,14 +69,15 @@ def test_complex_nested_structure(claude_manager):
         assert "skills" in employee
         assert isinstance(employee["skills"], list)
 
-def test_dynamic_input_structured_output(claude_manager):
+@pytest.mark.asyncio
+async def test_dynamic_input_structured_output(claude_manager):
     input_data = {
         "product_name": "Smartphone",
         "features": ["5G", "Dual Camera", "Water Resistant"],
         "price": 799.99
     }
     prompt = f"Generate an XML document for a product listing based on this data: {json.dumps(input_data)}"
-    response = claude_manager.generate_response(prompt)
+    response = await claude_manager.generate_response(prompt)
     
     root = ET.fromstring(response)
     
