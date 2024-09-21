@@ -41,6 +41,20 @@ class ClaudeManager:
         self.messages = getattr(self.client, 'messages', self.client)
         self.logger.info("ClaudeManager initialization complete")
 
+    async def create_message(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+        self.logger.debug(f"Creating message with model: {model}, max_tokens: {max_tokens}")
+        try:
+            response = await self.messages.create(
+                model=model,
+                max_tokens=max_tokens,
+                messages=messages
+            )
+            self.logger.debug(f"Message created successfully: {response}")
+            return response
+        except Exception as e:
+            self.logger.error(f"Error creating message: {str(e)}")
+            raise
+
     async def generate_response(self, prompt: str, model: str = "claude-3-opus-20240229") -> str:
         self.logger.debug(f"Generating response for prompt: {prompt[:50]}...")
         return await self.client.generate_response(prompt, model)
