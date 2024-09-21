@@ -3,6 +3,7 @@ import time
 import logging
 import uuid
 import random
+import aiohttp
 from typing import Dict, Any, List, AsyncGenerator
 from unittest.mock import MagicMock
 from anthropic import APIStatusError
