@@ -160,8 +160,7 @@ class MockClaudeClient:
         # Adjust response length based on the model
         response_text = self._adjust_response_length(response_text, model)
 
-        # Apply response prefix and ensure Shakespearean prefix if necessary
-        response_text = self._apply_response_prefix(response_text)
+        # Ensure Shakespearean prefix if necessary
         response_text = self._ensure_shakespearean_prefix(response_text)
         self.logger.debug(f"Final generated response for {model}: {response_text}")
         self.last_response = response_text  # Store the last response for debugging
