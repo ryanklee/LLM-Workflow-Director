@@ -599,8 +599,8 @@ Throughout the implementation process, maintain regular communication with stake
     26.5. Implement tests for error recovery and fallback strategies [COMPLETED]
     26.6. Add tests for system messages and their impact on Claude's behavior [COMPLETED]
     26.7. Implement tests for Claude's ability to follow complex instructions [COMPLETED]
-    26.8. Create tests for Claude's consistency across multiple interactions [IN PROGRESS]
-    26.9. Implement tests for Claude's ability to generate structured outputs (e.g., XML, JSON) [TODO]
+    26.8. Create tests for Claude's consistency across multiple interactions [COMPLETED]
+    26.9. Implement tests for Claude's ability to generate structured outputs (e.g., XML, JSON) [IN PROGRESS]
     26.10. Add tests for Claude's performance on domain-specific tasks [TODO]
 
 27. Integration with CI/CD Pipeline (High)
