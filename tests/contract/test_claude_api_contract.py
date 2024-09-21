@@ -643,3 +643,58 @@ async def test_system_message(pact_context, claude_client):
     assert 'usage' in result
     assert state['is_shakespearean'], "Shakespearean mode was not set correctly"
     logger.info("test_system_message completed successfully")
+import pytest
+from pact import Consumer, Provider
+from src.claude_manager import ClaudeManager
+
+@pytest.fixture(scope='session')
+def pact():
+    return Consumer('LLMWorkflowDirector').has_pact_with(Provider('ClaudeAPI'))
+
+@pytest.fixture
+async def claude_manager():
+    return ClaudeManager()
+
+def test_create_message(pact, claude_manager):
+    pact.given(
+        'A request for message creation'
+    ).upon_receiving(
+        'A valid message creation request'
+    ).with_request(
+        'POST', '/v1/messages',
+        headers={'X-API-Key': 'sk-ant-api03-valid-key'},
+        body={
+            'model': 'claude-3-opus-20240229',
+            'max_tokens': 100,
+            'messages': [{'role': 'user', 'content': 'Hello, Claude!'}]
+        }
+    ).will_respond_with(200, body={
+        'id': 'msg_123abc',
+        'type': 'message',
+        'role': 'assistant',
+        'content': [
+            {
+                'type': 'text',
+                'text': 'Hello! How can I assist you today?'
+            }
+        ],
+        'model': 'claude-3-opus-20240229',
+        'stop_reason': 'end_turn',
+        'stop_sequence': None,
+        'usage': {
+            'input_tokens': 5,
+            'output_tokens': 9
+        }
+    })
+
+    with pact:
+        result = await claude_manager.create_message(
+            model='claude-3-opus-20240229',
+            max_tokens=100,
+            messages=[{'role': 'user', 'content': 'Hello, Claude!'}]
+        )
+        assert result['content'][0]['text'].startswith('Hello!')
+        assert result['model'] == 'claude-3-opus-20240229'
+        assert result['type'] == 'message'
+        assert result['role'] == 'assistant'
+        assert 'usage' in result
