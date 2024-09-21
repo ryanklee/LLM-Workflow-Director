@@ -1107,10 +1107,19 @@ class MockClaudeClient:
             self.logger.error(f"Error in debug_dump: {str(e)}", exc_info=True)
             raise
 
-    async def set_response(self, prompt: str, response: str):
-        self.logger.debug(f"Setting custom response for prompt: {prompt[:50]}...")
-        self.responses[prompt] = response
-        self.logger.debug(f"Custom response set successfully for prompt: {prompt[:50]}...")
+    def _ensure_shakespearean_prefix(self, response_text: str) -> str:
+        self.logger.debug(f"Ensuring Shakespearean prefix. Current Shakespearean mode: {self.is_shakespearean}")
+        self.logger.debug(f"Original response: {response_text[:50]}...")
+        
+        if self.is_shakespearean and not response_text.startswith("Hark!"):
+            response_text = f"Hark! {response_text.lstrip('Hello! ')}"
+            self.logger.info(f"Ensured Shakespearean prefix: {response_text[:50]}...")
+        elif not self.is_shakespearean and not response_text.startswith("Hello!"):
+            response_text = f"Hello! {response_text.lstrip('Hark! ')}"
+            self.logger.info(f"Ensured non-Shakespearean prefix: {response_text[:50]}...")
+        
+        self.logger.debug(f"Final response after ensuring prefix: {response_text[:50]}...")
+        return response_text
 
     async def set_rate_limit(self, limit: int):
         self.logger.debug(f"Setting rate limit to: {limit}")
