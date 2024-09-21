@@ -49,4 +49,4 @@ For detailed descriptions of each process, including sequence diagrams and flow 
 
 This domain model reflects the direct integration with the Claude API, emphasizing Claude's specific features and capabilities, such as the tiered model approach (Haiku, Sonnet, Opus), vision capabilities, and the 200k token context window. The model also incorporates caching mechanisms and rate limiting to optimize API usage and costs.
 
-Last Updated: 2024-09-14
+Last Updated: 2024-09-21
