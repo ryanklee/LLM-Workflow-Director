@@ -2,7 +2,7 @@ import asyncio
 import time
 import logging
 import uuid
-import aiohttp
+import random
 from typing import Dict, Any, List, AsyncGenerator
 from unittest.mock import MagicMock
 from anthropic import APIStatusError
@@ -15,45 +15,36 @@ class MockClaudeClient:
     class Messages:
         def __init__(self, client):
             self.client = client
+            self.client.logger.debug("Initialized Messages class")
 
         async def create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any] | AsyncGenerator[Dict[str, Any], None]:
+            self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}, stream: {stream}")
             return await self.client._create(model, max_tokens, messages, stream)
 
-    def __init__(self, api_key: str = "mock_api_key", base_url: str = "https://api.anthropic.com"):
+    def __init__(self, api_key: str = "mock_api_key", rate_limit: int = 10, reset_time: int = 60):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
-        self.logger.debug(f"Initializing MockClaudeClient {id(self)} with api_key: {api_key[:5]}, base_url: {base_url}")
+        self.logger.debug(f"Initializing MockClaudeClient {id(self)} with api_key: {api_key[:5]}, rate_limit: {rate_limit}, reset_time: {reset_time}")
         
         self.api_key = api_key
-        self.base_url = base_url
-        self.messages = self.Messages(self)
+        self.rate_limit = rate_limit
+        self.reset_time = reset_time
         self.calls = 0
-        self.last_reset = asyncio.get_event_loop().time()
+        self.last_reset = time.time()
         self.error_mode = False
-        self.latency = 0.1
+        self.latency = 0
         self.responses = {}
         self.max_test_tokens = 1000
         self.call_count = 0
         self.error_count = 0
         self.max_errors = 3
-        self.max_context_length = 200000
-        self.last_reset_time = time.time()
-        self.lock = asyncio.Lock()
-        self.rate_limit_threshold = 10
-        self.rate_limit_reset_time = 60
+        self.messages = self.Messages(self)
+        self.context = []
         self.is_shakespearean = False
-        self.context = {}
-        
-        # Add file handler for persistent logging
-        file_handler = logging.FileHandler('mock_claude_client.log')
-        file_handler.setLevel(logging.DEBUG)
-        file_handler.setFormatter(formatter)
-        self.logger.addHandler(file_handler)
-        
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
 
     async def set_rate_limit(self, limit: int):
