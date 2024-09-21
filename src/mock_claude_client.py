@@ -132,6 +132,7 @@ class MockClaudeClient:
             self.is_shakespearean = False
         self.logger.debug(f"Final Shakespearean mode after processing: {self.is_shakespearean}")
         self.logger.debug(f"System message content: {system_message}")
+        self.last_system_message = system_message  # Store the last system message for debugging
 
     def _generate_response(self, prompt: str, model: str, messages: List[Dict[str, str]]) -> str:
         self.logger.info(f"Generating response for prompt: {prompt[:50]}... using model: {model}")
@@ -190,12 +191,18 @@ class MockClaudeClient:
         self.logger.debug(f"Ensuring Shakespearean prefix. Current Shakespearean mode: {self.is_shakespearean}")
         self.logger.debug(f"Original response: {response_text[:50]}...")
         
-        if self.is_shakespearean and not response_text.startswith("Hark!"):
-            response_text = f"Hark! {response_text.lstrip('Hello! ')}"
-            self.logger.info(f"Ensured Shakespearean prefix: {response_text[:50]}...")
-        elif not self.is_shakespearean and not response_text.startswith("Hello!"):
-            response_text = f"Hello! {response_text.lstrip('Hark! ')}"
-            self.logger.info(f"Ensured non-Shakespearean prefix: {response_text[:50]}...")
+        if self.is_shakespearean:
+            if not response_text.startswith("Hark!"):
+                response_text = f"Hark! {response_text.lstrip('Hello! ')}"
+                self.logger.info(f"Added Shakespearean prefix: {response_text[:50]}...")
+            else:
+                self.logger.info("Shakespearean prefix already present")
+        else:
+            if not response_text.startswith("Hello!"):
+                response_text = f"Hello! {response_text.lstrip('Hark! ')}"
+                self.logger.info(f"Added non-Shakespearean prefix: {response_text[:50]}...")
+            else:
+                self.logger.info("Non-Shakespearean prefix already present")
         
         self.logger.debug(f"Final response after ensuring prefix: {response_text[:50]}...")
         return response_text
@@ -1538,7 +1545,17 @@ class MockClaudeClient:
                 "method_implementations": {
                     "_ensure_shakespearean_prefix": self._ensure_shakespearean_prefix.__code__.co_code,
                     "_generate_shakespearean_response": self._generate_shakespearean_response.__code__.co_code,
-                    "_apply_response_prefix": self._apply_response_prefix.__code__.co_code
+                    "_apply_response_prefix": self._apply_response_prefix.__code__.co_code if hasattr(self, '_apply_response_prefix') else None
+                },
+                "shakespearean_prefix_stats": {
+                    "total_calls": getattr(self, '_ensure_shakespearean_prefix_calls', 0),
+                    "prefixes_added": getattr(self, '_ensure_shakespearean_prefix_added', 0)
+                },
+                "response_generation_flow": {
+                    "system_message_processed": getattr(self, 'system_message_processed', False),
+                    "shakespearean_mode_set": getattr(self, 'shakespearean_mode_set', False),
+                    "response_generated": getattr(self, 'response_generated', False),
+                    "prefix_ensured": getattr(self, 'prefix_ensured', False)
                 }
             }
             self.logger.debug(f"Debug dump state: {state}")
