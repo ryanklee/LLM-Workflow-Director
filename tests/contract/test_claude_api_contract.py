@@ -642,7 +642,8 @@ def pact():
 async def claude_manager():
     return ClaudeManager()
 
-def test_create_message(pact, claude_manager):
+@pytest.mark.asyncio
+async def test_create_message(pact, claude_manager):
     pact.given(
         'A request for message creation'
     ).upon_receiving(
