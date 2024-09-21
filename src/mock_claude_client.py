@@ -997,6 +997,20 @@ class MockClaudeClient:
         return response_text
 
     def _ensure_shakespearean_prefix(self, response_text: str) -> str:
+        self.logger.debug(f"Ensuring Shakespearean prefix. Current Shakespearean mode: {self.is_shakespearean}")
+        self.logger.debug(f"Original response: {response_text[:50]}...")
+        
+        if self.is_shakespearean and not response_text.startswith("Hark!"):
+            response_text = f"Hark! {response_text.lstrip('Hello! ')}"
+            self.logger.info(f"Ensured Shakespearean prefix: {response_text[:50]}...")
+        elif not self.is_shakespearean and not response_text.startswith("Hello!"):
+            response_text = f"Hello! {response_text.lstrip('Hark! ')}"
+            self.logger.info(f"Ensured non-Shakespearean prefix: {response_text[:50]}...")
+        
+        self.logger.debug(f"Final response after ensuring prefix: {response_text[:50]}...")
+        return response_text
+
+    def _ensure_shakespearean_prefix(self, response_text: str) -> str:
         self.logger.debug(f"Ensuring Shakespearean prefix. Mode: {self.is_shakespearean}")
         if self.is_shakespearean and not response_text.startswith("Hark!"):
             response_text = f"Hark! {response_text.lstrip('Hello! ')}"
