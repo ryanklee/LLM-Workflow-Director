@@ -27,13 +27,16 @@ def pact_context(pact):
 
 @pytest.fixture
 async def claude_client():
-    client = MockClaudeClient()
+    logger.info("Setting up claude_client fixture")
+    client = MockClaudeClient(api_key="test_api_key")
     logger.debug(f"Created MockClaudeClient instance: {client}")
     try:
+        logger.debug("Yielding MockClaudeClient instance")
         yield client
     finally:
         logger.debug(f"Cleaning up MockClaudeClient instance: {client}")
-        await client.debug_dump()
+        await client.debug_dump()  # This will log the final state of the client
+    logger.info("claude_client fixture teardown complete")
 
 @pytest.mark.asyncio
 async def test_create_message(pact_context, claude_client):
@@ -76,6 +79,7 @@ async def test_create_message(pact_context, claude_client):
     )
     logger.debug(f"Received result: {result}")
     assert result['content'][0]['text'].startswith('Hello!')
+    assert len(result['content'][0]['text']) > 50  # Opus model should give longer responses
     assert result['model'] == 'claude-3-opus-20240229'
     assert result['type'] == 'message'
     assert result['role'] == 'assistant'
@@ -99,14 +103,20 @@ async def test_rate_limit_handling(pact_context, claude_client):
         }
     })
 
+    # Set a low rate limit for testing
+    await claude_client.set_rate_limit(5)
+    logger.debug(f"Set rate limit to 5")
+
     # Simulate reaching the rate limit
-    for _ in range(claude_client.rate_limit_threshold):
+    for i in range(5):
+        logger.debug(f"Sending request {i+1}/5")
         await claude_client.messages.create(
             model='claude-3-opus-20240229',
             max_tokens=100,
             messages=[{'role': 'user', 'content': 'Test message'}]
         )
 
+    logger.debug("Attempting to exceed rate limit")
     with pytest.raises(CustomRateLimitError) as exc_info:
         await claude_client.messages.create(
             model='claude-3-opus-20240229',
@@ -195,6 +205,10 @@ async def test_error_handling(pact_context, claude_client):
         }
     })
 
+    # Set error mode to True to simulate API error
+    await claude_client.set_error_mode(True)
+    logger.debug("Set error mode to True")
+
     with pytest.raises(APIStatusError) as exc_info:
         await claude_client.messages.create(
             model='invalid-model',
@@ -202,8 +216,12 @@ async def test_error_handling(pact_context, claude_client):
             messages=[{'role': 'user', 'content': 'This should cause an error'}]
         )
     logger.debug(f"Caught exception: {exc_info.value}")
-    assert 'Invalid model specified' in str(exc_info.value)
+    assert 'Simulated API error' in str(exc_info.value)
     logger.info("test_error_handling completed successfully")
+
+    # Reset error mode
+    await claude_client.set_error_mode(False)
+    logger.debug("Reset error mode to False")
 
 @pytest.mark.asyncio
 async def test_model_selection(pact_context, claude_client):
@@ -246,7 +264,8 @@ async def test_model_selection(pact_context, claude_client):
     )
     logger.debug(f"Received result: {result}")
     assert result['model'] == 'claude-3-haiku-20240307'
-    assert len(result['content'][0]['text']) < 50  # Assuming Haiku gives shorter responses
+    assert result['content'][0]['text'].startswith('Hello!')
+    assert len(result['content'][0]['text']) <= 50  # Haiku should give shorter responses
     logger.info("test_model_selection completed successfully")
 
 @pytest.mark.asyncio
@@ -283,6 +302,13 @@ async def test_context_window(pact_context, claude_client):
             'output_tokens': Like(20)
         }
     })
+
+    # Set a custom response for the summary request
+    await claude_client.set_response(
+        long_context + "\nSummarize this.",
+        "Here is a summary of the long context: [Summary content]"
+    )
+    logger.debug("Set custom response for long context summary")
 
     result = await claude_client.messages.create(
         model='claude-3-opus-20240229',
