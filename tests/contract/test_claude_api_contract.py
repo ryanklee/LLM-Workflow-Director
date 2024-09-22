@@ -1,4 +1,5 @@
 import pytest
+import pytest_asyncio
 import logging
 import socket
 from pact import Consumer, Provider, Like
