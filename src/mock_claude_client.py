@@ -65,6 +65,7 @@ class MockClaudeClient:
         self.call_count = 0
         self.error_count = 0
         self.max_errors = 3
+        self.max_errors = 3
         self.messages = self.Messages(self)
         self.context = []
         self.is_shakespearean = False
