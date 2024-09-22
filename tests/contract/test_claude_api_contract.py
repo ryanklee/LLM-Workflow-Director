@@ -1,30 +1,17 @@
 import pytest
 import pytest_asyncio
 import logging
-import socket
-from pact import Consumer, Provider, Like
+from pact import Consumer, Provider
 from src.mock_claude_client import MockClaudeClient
 from src.exceptions import CustomRateLimitError
 from anthropic import APIStatusError
 
-# Set up logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-def find_free_port():
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('', 0))
-        return s.getsockname()[1]
-
 @pytest.fixture(scope='session')
 def pact():
-    port = find_free_port()
-    logger.info(f"Starting Pact mock server on port {port}")
-    pact = Consumer('LLMWorkflowDirector').has_pact_with(
-        Provider('ClaudeAPI'),
-        port=port,
-        host_name='localhost'
-    )
+    pact = Consumer('LLMWorkflowDirector').has_pact_with(Provider('ClaudeAPI'))
     try:
         pact.start_service()
         logger.info("Pact mock server started successfully")
@@ -36,77 +23,47 @@ def pact():
         logger.info("Stopping Pact mock server")
         pact.stop_service()
 
-@pytest.fixture
-def pact_context(pact):
-    logger.info("Entering Pact context")
-    try:
-        with pact:
-            yield pact
-    except Exception as e:
-        logger.error(f"Error in Pact context: {e}")
-        raise
-    finally:
-        logger.info("Exiting Pact context")
-
 @pytest_asyncio.fixture
-async def claude_client(pact):
-    logger.info("Setting up claude_client fixture")
+async def claude_client():
     client = MockClaudeClient(api_key="test_api_key")
     logger.debug(f"Created MockClaudeClient instance: {client}")
     try:
-        logger.debug("Yielding MockClaudeClient instance")
         yield client
-    except Exception as e:
-        logger.error(f"Error in claude_client fixture: {e}")
-        raise
     finally:
-        logger.debug(f"Cleaning up MockClaudeClient instance: {client}")
-        try:
-            debug_info = await client.debug_dump()
-            logger.debug(f"Client debug dump: {debug_info}")
-        except Exception as e:
-            logger.error(f"Error during client debug dump: {e}")
-    logger.info("claude_client fixture teardown complete")
-
-@pytest.fixture(autouse=True)
-async def reset_mock_claude_client(claude_client):
-    await claude_client.set_rate_limit(10)
-    await claude_client.set_error_mode(False)
-    yield
-    await claude_client.set_rate_limit(10)
-    await claude_client.set_error_mode(False)
+        await client.reset()
+        logger.debug(f"Reset MockClaudeClient instance: {client}")
 
 @pytest.mark.asyncio
-async def test_create_message(pact_context, claude_client):
+async def test_create_message(pact, claude_client):
     logger.info("Starting test_create_message")
-    pact_context.given(
+    pact.given(
         'A request for message creation'
     ).upon_receiving(
         'A valid message creation request'
     ).with_request(
         'POST', '/v1/messages',
-        headers={'X-API-Key': Like('sk-ant-api03-valid-key')},
+        headers={'X-API-Key': 'sk-ant-api03-valid-key'},
         body={
             'model': 'claude-3-opus-20240229',
             'max_tokens': 100,
             'messages': [{'role': 'user', 'content': 'Hello, Claude!'}]
         }
     ).will_respond_with(200, body={
-        'id': Like('msg_123abc'),
+        'id': 'msg_123abc',
         'type': 'message',
         'role': 'assistant',
         'content': [
             {
                 'type': 'text',
-                'text': Like('Hello! How can I assist you today?')
+                'text': 'Hello! How can I assist you today?'
             }
         ],
         'model': 'claude-3-opus-20240229',
         'stop_reason': 'end_turn',
         'stop_sequence': None,
         'usage': {
-            'input_tokens': Like(5),
-            'output_tokens': Like(9)
+            'input_tokens': 5,
+            'output_tokens': 9
         }
     })
 
@@ -122,6 +79,8 @@ async def test_create_message(pact_context, claude_client):
     assert result['role'] == 'assistant'
     assert 'usage' in result
     logger.info("test_create_message completed successfully")
+
+# Add more tests here...
 
 @pytest.mark.asyncio
 async def test_rate_limit_handling(pact_context, claude_client):
