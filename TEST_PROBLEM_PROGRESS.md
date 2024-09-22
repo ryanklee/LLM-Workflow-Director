@@ -1746,87 +1746,84 @@ We will update this file with the results of the next test run after implementin
 # Test Problem Analysis and Progress
 
 ## Problem Description
-After implementing the initial fixes, we are now facing one test failure in `tests/contract/test_claude_api_contract.py`:
+Multiple tests are failing across various components of the system. The main issues can be categorized as follows:
 
-1. `test_system_message`: Assertion error, response doesn't start with 'Hark!'
-
-## Updated Understanding
-
-Based on the official Claude API documentation, we've gained new insights into system message handling:
-
-1. System messages are used to set the context or assign roles to Claude.
-2. The Messages API is the recommended way to interact with Claude, including for system messages.
-3. System messages should be included as the first message in the conversation, with a role of "system".
+1. MockClaudeClient Implementation: There are still issues with the MockClaudeClient, particularly with its initialization and behavior.
+2. Response Content Mismatch: Some tests are failing due to unexpected response content from the MockClaudeClient.
+3. Asynchronous Code Handling: Many tests are failing due to improper handling of coroutines and async functions.
 
 ## Hypotheses (Ranked by Likelihood)
 
-1. Incorrect System Message Implementation (Highest Likelihood)
-   - The `MockClaudeClient` may not be correctly implementing the system message as per the Claude API specifications.
-   - Validation: Review and update the system message handling in the `_generate_response` method of `MockClaudeClient` to align with the official API behavior.
-   - Status: To be implemented based on new information.
+1. Incomplete MockClaudeClient Implementation (Highest Likelihood)
+   - The `MockClaudeClient` class is missing some required methods or has incorrect implementations.
+   - Validation: Review and update the `MockClaudeClient` implementation in `src/mock_claude_client.py`.
+   - Status: To be investigated and implemented.
 
-2. Inconsistent Shakespearean Response Generation (High Likelihood)
-   - The `_generate_response` method is not consistently applying the Shakespearean style when a system message is present.
-   - Validation: Update the logic to ensure Shakespearean responses are always generated when appropriate, starting with "Hark!".
-   - Status: Needs refinement based on official API behavior.
+2. Incorrect Response Generation (High Likelihood)
+   - The `MockClaudeClient` is not generating responses that match the expected format or content.
+   - Validation: Review the response generation logic in `MockClaudeClient` and update it to match expected Claude API behavior.
+   - Status: To be investigated and implemented.
 
-3. Pact Contract Test Mismatch (Medium Likelihood)
-   - The Pact contract test for system messages might not accurately represent the expected Claude API behavior.
-   - Validation: Review and update the Pact contract test to ensure it aligns with the official Claude API documentation.
-   - Status: To be investigated and potentially updated.
+3. Asynchronous Code Mishandling (High Likelihood)
+   - Some test failures may be due to improper use of async/await in the test cases or the MockClaudeClient implementation.
+   - Validation: Review all test files and the MockClaudeClient to ensure proper use of async/await.
+   - Status: To be investigated and implemented.
 
-4. Logging Inadequacy (Low Likelihood)
-   - The current logging might not provide enough information to diagnose the issue with system message handling.
-   - Validation: Enhance logging in MockClaudeClient, particularly for system message processing and response generation.
-   - Status: To be improved if needed after implementing primary fixes.
+4. Test Case Mismatch (Medium Likelihood)
+   - Some test cases might not be aligned with the current MockClaudeClient implementation or expected Claude API behavior.
+   - Validation: Review and update test cases to match the expected behavior of the MockClaudeClient and Claude API.
+   - Status: To be investigated if Hypotheses 1-3 don't fully resolve the issue.
+
+5. Fixture Setup Issue (Low Likelihood)
+   - The `claude_client` fixture might not be correctly set up or might be inconsistent across different test files.
+   - Validation: Review the fixture setup in all test files and ensure consistency.
+   - Status: To be investigated if other hypotheses don't fully resolve the issue.
 
 ## Implementation Plan
 
-1. Update System Message Handling
-   - Modify the `MockClaudeClient` to correctly process system messages as per the Claude API documentation.
-   - Ensure system messages are treated as the first message in the conversation with a role of "system".
+1. MockClaudeClient Implementation Update:
+   - Review and implement missing methods in MockClaudeClient (e.g., `set_rate_limit`, `set_error_mode`, `set_response`).
+   - Ensure all methods are properly implemented as coroutines (async methods).
+   - Implement proper error handling and logging in MockClaudeClient.
 
-2. Refine Shakespearean Response Generation
-   - Update the `_generate_response` method to consistently generate Shakespearean responses when a Shakespearean system message is present.
-   - Ensure that Shakespearean responses always start with "Hark!" regardless of the model used.
+2. Response Generation Improvement:
+   - Update the response generation logic in MockClaudeClient to more accurately simulate Claude API responses.
+   - Implement context-aware responses for multi-turn conversations and system messages.
 
-3. Review and Update Pact Contract Test
-   - Examine the current Pact contract test for system messages.
-   - Update the test to accurately represent the expected Claude API behavior, including the correct structure for system messages.
+3. Asynchronous Code Review:
+   - Systematically review all test files and the MockClaudeClient to ensure proper use of async/await.
+   - Update any synchronous code to properly handle asynchronous operations.
 
-4. Enhance Logging
-   - Add more detailed logging for the system message processing and response generation in `MockClaudeClient`.
-   - Log the content of system messages, the detected language style, and the resulting response style chosen.
+4. Test Case Alignment:
+   - Review all test cases and update them to match the expected behavior of the Claude API and MockClaudeClient.
+   - Ensure test cases are using the correct methods and assertions for asynchronous code.
 
-5. Implement Solution
-   - Update the `_generate_response` method in `src/mock_claude_client.py` to address the identified issues.
-   - Ensure the implementation aligns with the official Claude API behavior.
+5. Fixture Consistency Check:
+   - Review the `claude_client` fixture across all test files and ensure it's consistently implemented and used.
+
+6. Logging Enhancement:
+   - Implement more detailed logging throughout the MockClaudeClient and test files to aid in debugging.
 
 ## Next Steps
 
-1. Implement the system message handling improvements and Shakespearean response generation refinements.
-2. Add comprehensive logging to track the system message processing and response generation.
-3. Review and update the Pact contract test for system messages if necessary.
-4. Re-run the tests to verify if the implemented changes resolve the remaining issue.
-5. If the issue persists, investigate the Pact Contract Test Mismatch hypothesis.
+1. Implement the MockClaudeClient updates, focusing on missing methods and proper async implementation.
+2. Update the response generation logic in MockClaudeClient.
+3. Review and update asynchronous code handling in tests and MockClaudeClient.
+4. Re-run the tests to verify if the implemented changes resolve the issues.
+5. If issues persist, investigate the Test Case Mismatch and Fixture Setup hypotheses.
 
 ## Test Results Tracking
 
 | Test Run | Date       | Failing Tests | Notes                                    |
 |----------|------------|---------------|------------------------------------------|
-| 1-10     | 2024-09-19 to 2024-09-28 | 1 | test_system_message failing consistently |
-| 11       | 2024-09-29 | 7             | AttributeError: '_ensure_shakespearean_prefix' |
-| 12       | 2024-09-30 | 1             | test_system_message: response doesn't start with 'Hark!' |
-| 13       | 2024-10-01 | 0             | All tests passing                        |
+| 1-13     | 2024-09-19 to 2024-10-01 | 0 | All tests passing                        |
+| 14       | 2024-10-02 | Multiple      | Multiple failures across various components |
 
 ## Response Content Tracking
 
 | Test Run | Response Content |
 |----------|------------------|
-| 4-9      | "Hello! Based on our conversation: Tell me about the weather., here's my response: [Generated response]" |
-| 10       | "Hello! The weather, thou doth inquire? Verily, 'tis a matter most changeable and capricious." |
-| 11       | N/A - AttributeError occurred before response generation |
-| 12       | "Hello! The weather, thou doth inquire? Verily, 'tis a matter most changeable and capricious." |
 | 13       | "Hark! The weather, thou doth inquire? Verily, 'tis a matter most changeable and capricious." |
+| 14       | Various unexpected responses or errors |
 
-The implemented changes have resolved the issue, and all tests are now passing. The Shakespearean mode is being correctly activated, and the "Hark!" prefix is consistently applied to the responses.
+We will update this file with the results of the next test run after implementing the current changes.
