@@ -681,3 +681,109 @@ async def test_create_message(pact, claude_manager):
         assert result['type'] == 'message'
         assert result['role'] == 'assistant'
         assert 'usage' in result
+import pytest
+import logging
+from pact import Consumer, Provider, Like
+from src.mock_claude_client import MockClaudeClient
+from src.exceptions import CustomRateLimitError
+from anthropic import APIStatusError
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+@pytest.fixture(scope='session')
+def pact():
+    pact = Consumer('LLMWorkflowDirector').has_pact_with(Provider('ClaudeAPI'))
+    try:
+        pact.start_service()
+        logger.info("Pact mock server started successfully")
+        yield pact
+    except Exception as e:
+        logger.error(f"Failed to start Pact mock server: {e}")
+        raise
+    finally:
+        logger.info("Stopping Pact mock server")
+        pact.stop_service()
+
+@pytest.fixture
+async def claude_client():
+    client = MockClaudeClient(api_key="test_api_key")
+    logger.debug(f"Created MockClaudeClient instance: {client}")
+    try:
+        yield client
+    finally:
+        await client.reset()
+        logger.debug(f"Reset MockClaudeClient instance: {client}")
+
+@pytest.mark.asyncio
+async def test_create_message(pact, claude_client):
+    logger.info("Starting test_create_message")
+    pact.given(
+        'A request for message creation'
+    ).upon_receiving(
+        'A valid message creation request'
+    ).with_request(
+        'POST', '/v1/messages',
+        headers={'X-API-Key': 'sk-ant-api03-valid-key'},
+        body={
+            'model': 'claude-3-opus-20240229',
+            'max_tokens': 100,
+            'messages': [{'role': 'user', 'content': 'Hello, Claude!'}]
+        }
+    ).will_respond_with(200, body={
+        'id': 'msg_123abc',
+        'type': 'message',
+        'role': 'assistant',
+        'content': [
+            {
+                'type': 'text',
+                'text': 'Hello! How can I assist you today?'
+            }
+        ],
+        'model': 'claude-3-opus-20240229',
+        'stop_reason': 'end_turn',
+        'stop_sequence': None,
+        'usage': {
+            'input_tokens': 5,
+            'output_tokens': 9
+        }
+    })
+
+    with pact:
+        result = await claude_client.messages.create(
+            model='claude-3-opus-20240229',
+            max_tokens=100,
+            messages=[{'role': 'user', 'content': 'Hello, Claude!'}]
+        )
+        logger.debug(f"Received result: {result}")
+        assert result['content'][0]['text'].startswith('Hello!')
+        assert result['model'] == 'claude-3-opus-20240229'
+        assert result['type'] == 'message'
+        assert result['role'] == 'assistant'
+        assert 'usage' in result
+    logger.info("test_create_message completed successfully")
+
+@pytest.mark.asyncio
+async def test_count_tokens(pact, claude_client):
+    logger.info("Starting test_count_tokens")
+    pact.given(
+        'A request to count tokens'
+    ).upon_receiving(
+        'A valid token counting request'
+    ).with_request(
+        'POST', '/v1/tokenize',
+        headers={'X-API-Key': 'sk-ant-api03-valid-key'},
+        body={
+            'model': 'claude-3-opus-20240229',
+            'prompt': 'Hello, world!'
+        }
+    ).will_respond_with(200, body={
+        'token_count': Like(3)
+    })
+
+    with pact:
+        result = await claude_client.count_tokens('Hello, world!')
+        logger.debug(f"Token count result: {result}")
+        assert isinstance(result, int)
+        assert result > 0
+    logger.info("test_count_tokens completed successfully")

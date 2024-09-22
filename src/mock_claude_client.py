@@ -71,6 +71,26 @@ class MockClaudeClient:
         self.lock = asyncio.Lock()
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
 
+    async def count_tokens(self, text: str) -> int:
+        self.logger.debug(f"Counting tokens for text: {text[:50]}...")
+        # Simplified token counting for mock purposes
+        token_count = len(text.split())
+        self.logger.debug(f"Token count: {token_count}")
+        return token_count
+
+    async def reset(self):
+        self.logger.debug(f"Resetting MockClaudeClient {id(self)}")
+        self.calls = 0
+        self.last_reset = time.time()
+        self.error_mode = False
+        self.latency = 0
+        self.responses = {}
+        self.call_count = 0
+        self.error_count = 0
+        self.context = []
+        self.is_shakespearean = False
+        self.logger.debug(f"Finished resetting MockClaudeClient {id(self)}")
+
     async def set_rate_limit(self, limit: int):
         self.logger.info(f"Setting rate limit to: {limit}")
         self.rate_limit = limit
