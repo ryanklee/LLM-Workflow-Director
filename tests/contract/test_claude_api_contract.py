@@ -24,14 +24,14 @@ def pact():
         pact.stop_service()
 
 @pytest_asyncio.fixture
-async def claude_client():
-    client = MockClaudeClient(api_key="test_api_key", rate_limit=10, reset_time=60, cache_ttl=5, cache_maxsize=10)
-    logger.debug(f"Created MockClaudeClient instance: {client}")
+async def claude_client(request):
+    client = MockClaudeClient(api_key=f"test_api_key_{request.node.name}", rate_limit=10, reset_time=60, cache_ttl=5, cache_maxsize=10)
+    logger.debug(f"Created MockClaudeClient instance for test {request.node.name}: {client}")
     try:
         yield client
     finally:
         await client.reset()
-        logger.debug(f"Reset MockClaudeClient instance: {client}")
+        logger.debug(f"Reset MockClaudeClient instance for test {request.node.name}: {client}")
 
 @pytest.mark.asyncio
 async def test_create_message(pact, claude_client):
