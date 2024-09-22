@@ -691,6 +691,11 @@ from anthropic import APIStatusError
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "serial: mark test to run in serial (not parallel)"
+    )
+
 @pytest.fixture(scope='session')
 def pact():
     pact = Consumer('LLMWorkflowDirector').has_pact_with(Provider('ClaudeAPI'))

@@ -652,6 +652,7 @@ from unittest.mock import MagicMock
 from anthropic import APIStatusError
 from src.exceptions import CustomRateLimitError
 from cachetools import TTLCache
+from threading import Lock
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -1970,7 +1971,8 @@ class MockClaudeClient:
         self.api_key = api_key
         self._messages = []
         self.lock = asyncio.Lock()
-        self.logger = logging.getLogger(__name__)
+        self.thread_lock = Lock()
+        self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}.{api_key}")
         self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
@@ -1989,7 +1991,7 @@ class MockClaudeClient:
         self.logger.info(f"MockClaudeClient initialized with rate_limit_threshold: {self.rate_limit_threshold}, rate_limit_reset_time: {self.rate_limit_reset_time}, cache_ttl: {cache_ttl}, cache_maxsize: {cache_maxsize}")
         
         # Add a file handler for persistent logging
-        file_handler = logging.FileHandler('mock_claude_client.log')
+        file_handler = logging.FileHandler(f'mock_claude_client_{api_key}.log')
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
@@ -2161,63 +2163,64 @@ class MockClaudeClient:
     async def create_message(self, prompt: str, max_tokens: int = 1000, model: str = 'claude-3-opus-20240229', stream: bool = False) -> Dict[str, Any]:
         self.logger.info(f"Creating message with prompt: {prompt[:50]}..., stream: {stream}, model: {model}, max_tokens: {max_tokens}")
         async with self.lock:
-            current_time = time.time()
-            if current_time - self.last_reset_time >= self.rate_limit_reset_time:
-                self.logger.info(f"Resetting rate limit. Old count: {self.call_count}")
-                self.call_count = 0
-                self.last_reset_time = current_time
+            with self.thread_lock:
+                current_time = time.time()
+                if current_time - self.last_reset_time >= self.rate_limit_reset_time:
+                    self.logger.info(f"Resetting rate limit. Old count: {self.call_count}")
+                    self.call_count = 0
+                    self.last_reset_time = current_time
 
-            self.call_count += 1
-            self.logger.debug(f"Current call count: {self.call_count}")
-            if self.call_count > self.rate_limit_threshold:
-                self.logger.warning(f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}")
-                raise CustomRateLimitError("Rate limit exceeded")
+                self.call_count += 1
+                self.logger.debug(f"Current call count: {self.call_count}")
+                if self.call_count > self.rate_limit_threshold:
+                    self.logger.warning(f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}")
+                    raise CustomRateLimitError("Rate limit exceeded")
 
-            if self.error_mode:
-                self.logger.warning("Error mode is active. Raising APIStatusError.")
-                raise APIStatusError("Simulated API error", response=MagicMock(), body={})
+                if self.error_mode:
+                    self.logger.warning("Error mode is active. Raising APIStatusError.")
+                    raise APIStatusError("Simulated API error", response=MagicMock(), body={})
 
-            self.logger.debug(f"Message creation successful. Call count: {self.call_count}")
+                self.logger.debug(f"Message creation successful. Call count: {self.call_count}")
 
-            message_id = f"msg_{uuid.uuid4()}"
-            system_message = next((m['content'] for m in self.context if m['role'] == 'system'), None)
-            self.logger.info(f"System message: {system_message[:50] if system_message else 'None'}")
-            
-            response_text = self._generate_response(prompt, model, self.context + [{'role': 'user', 'content': prompt}])
-            mock_response = {
-                'id': message_id,
-                'type': 'message',
-                'role': 'assistant',
-                'content': [
-                    {
-                        'type': 'text',
-                        'text': response_text
+                message_id = f"msg_{uuid.uuid4()}"
+                system_message = next((m['content'] for m in self.context if m['role'] == 'system'), None)
+                self.logger.info(f"System message: {system_message[:50] if system_message else 'None'}")
+                
+                response_text = self._generate_response(prompt, model, self.context + [{'role': 'user', 'content': prompt}])
+                mock_response = {
+                    'id': message_id,
+                    'type': 'message',
+                    'role': 'assistant',
+                    'content': [
+                        {
+                            'type': 'text',
+                            'text': response_text
+                        }
+                    ],
+                    'model': model,
+                    'stop_reason': 'end_turn',
+                    'stop_sequence': None,
+                    'usage': {
+                        'input_tokens': len(prompt.split()),
+                        'output_tokens': len(response_text.split())
                     }
-                ],
-                'model': model,
-                'stop_reason': 'end_turn',
-                'stop_sequence': None,
-                'usage': {
-                    'input_tokens': len(prompt.split()),
-                    'output_tokens': len(response_text.split())
                 }
-            }
-            self._messages.append(mock_response)
-            self.context.append({'role': 'user', 'content': prompt})
-            self.context.append({'role': 'assistant', 'content': response_text})
-            self.logger.debug(f"Created message with ID: {message_id}")
-            self.logger.info(f"Response text: {response_text[:100]}...")
-            
-            if stream:
-                async def response_generator():
-                    for word in response_text.split():
-                        yield {'type': 'content_block_delta', 'delta': {'type': 'text', 'text': word + ' '}}
-                    yield {'type': 'message_delta', 'delta': {'stop_reason': 'end_turn'}}
-                self.logger.debug("Returning streaming response")
-                return response_generator()
-            else:
-                self.logger.debug("Returning non-streaming response")
-                return mock_response
+                self._messages.append(mock_response)
+                self.context.append({'role': 'user', 'content': prompt})
+                self.context.append({'role': 'assistant', 'content': response_text})
+                self.logger.debug(f"Created message with ID: {message_id}")
+                self.logger.info(f"Response text: {response_text[:100]}...")
+                
+                if stream:
+                    async def response_generator():
+                        for word in response_text.split():
+                            yield {'type': 'content_block_delta', 'delta': {'type': 'text', 'text': word + ' '}}
+                        yield {'type': 'message_delta', 'delta': {'stop_reason': 'end_turn'}}
+                    self.logger.debug("Returning streaming response")
+                    return response_generator()
+                else:
+                    self.logger.debug("Returning non-streaming response")
+                    return mock_response
 
     async def count_tokens(self, text: str) -> int:
         token_count = len(text.split())
