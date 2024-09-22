@@ -22,14 +22,16 @@ class MockClaudeClient:
             self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}, stream: {stream}")
             return await self.client._create(model, max_tokens, messages, stream)
 
-    def __init__(self, api_key: str = "mock_api_key", rate_limit: int = 10, reset_time: int = 60):
+    def __init__(self, api_key: str = "mock_api_key", base_url: str = "http://localhost:8000", rate_limit: int = 10, reset_time: int = 60):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s:%(lineno)d')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
-        self.logger.debug(f"Initializing MockClaudeClient {id(self)} with api_key: {api_key[:5]}, rate_limit: {rate_limit}, reset_time: {reset_time}")
+        self.logger.debug(f"Initializing MockClaudeClient {id(self)} with api_key: {api_key[:5]}, base_url: {base_url}, rate_limit: {rate_limit}, reset_time: {reset_time}")
+        
+        self.base_url = base_url
         
         self.api_key = api_key
         self.rate_limit = rate_limit
