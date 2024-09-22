@@ -395,6 +395,47 @@ async def test_claude_manager_generate_response(claude_manager, mock_claude_clie
     response = await claude_manager.generate_response("Hello, Claude!", model="claude-3-opus-20240229")
     assert response == "Hello! How can I assist you today?"
 
+@pytest.mark.asyncio
+async def test_backoff_and_retry_mechanism(claude_manager, mock_claude_client_with_rate_limit):
+    rate_limit = 5
+    await mock_claude_client_with_rate_limit(rate_limit)
+
+    # Make requests up to the rate limit
+    for _ in range(rate_limit):
+        await claude_manager.generate_response("Test prompt")
+
+    # The next request should trigger the backoff and retry mechanism
+    start_time = time.time()
+    response = await claude_manager.generate_response("Test prompt")
+    end_time = time.time()
+
+    # Check that the response was eventually successful
+    assert response is not None
+
+    # Check that the total time taken is consistent with our backoff strategy
+    expected_min_time = sum(claude_manager.retry_delay * (2 ** i) for i in range(claude_manager.max_retries))
+    assert end_time - start_time >= expected_min_time
+
+@pytest.mark.asyncio
+async def test_max_retries_exceeded(claude_manager, mock_claude_client_with_rate_limit):
+    rate_limit = 5
+    await mock_claude_client_with_rate_limit(rate_limit)
+    claude_manager.max_retries = 3
+
+    # Make requests up to the rate limit
+    for _ in range(rate_limit):
+        await claude_manager.generate_response("Test prompt")
+
+    # Set the reset time to a very large value to ensure rate limit errors persist
+    await claude_manager.client.set_rate_limit_reset_time(1000000)
+
+    # The next request should raise a CustomRateLimitError after max_retries attempts
+    with pytest.raises(CustomRateLimitError):
+        await claude_manager.generate_response("Test prompt")
+
+    # Check that the number of attempts matches max_retries
+    assert await claude_manager.client.get_call_count() == rate_limit + claude_manager.max_retries
+
 @pytest.fixture(autouse=True)
 async def reset_mock_claude_client(mock_claude_client):
     await mock_claude_client.reset()
