@@ -1,5 +1,6 @@
 import pytest
 import logging
+import asyncio
 from pact import Consumer, Provider, Like
 from src.mock_claude_client import MockClaudeClient
 from src.exceptions import CustomRateLimitError
