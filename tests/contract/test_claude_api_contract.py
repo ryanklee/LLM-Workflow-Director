@@ -1,7 +1,7 @@
 import pytest
 import pytest_asyncio
 import logging
-from pact import Consumer, Provider
+from pact import Consumer, Provider, Like
 from src.mock_claude_client import MockClaudeClient
 from src.exceptions import CustomRateLimitError
 from anthropic import APIStatusError
