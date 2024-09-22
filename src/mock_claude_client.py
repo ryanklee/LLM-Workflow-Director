@@ -7,9 +7,29 @@ from typing import Dict, Any, List, AsyncGenerator
 from unittest.mock import MagicMock
 from anthropic import APIStatusError
 from src.exceptions import CustomRateLimitError
+from functools import lru_cache, wraps
+from datetime import datetime, timedelta
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+def timed_lru_cache(seconds: int, maxsize: int = 128):
+    def wrapper_cache(func):
+        func = lru_cache(maxsize=maxsize)(func)
+        func.lifetime = timedelta(seconds=seconds)
+        func.expiration = datetime.utcnow() + func.lifetime
+
+        @wraps(func)
+        def wrapped_func(*args, **kwargs):
+            if datetime.utcnow() >= func.expiration:
+                func.cache_clear()
+                func.expiration = datetime.utcnow() + func.lifetime
+
+            return func(*args, **kwargs)
+
+        return wrapped_func
+
+    return wrapper_cache
 
 class MockClaudeClient:
     class Messages:
@@ -21,7 +41,7 @@ class MockClaudeClient:
             self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}, stream: {stream}")
             return await self.client._create(model, max_tokens, messages, stream)
 
-    def __init__(self, api_key: str = "mock_api_key", base_url: str = "http://localhost:8000", rate_limit: int = 10, reset_time: int = 60):
+    def __init__(self, api_key: str = "mock_api_key", base_url: str = "http://localhost:8000", rate_limit: int = 10, reset_time: int = 60, cache_ttl: int = 300):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
@@ -81,6 +101,30 @@ class MockClaudeClient:
         self.context = []
         self.logger.debug(f"Finished resetting MockClaudeClient {id(self)}")
 
+    @timed_lru_cache(seconds=300)
+    async def _cached_create_message(self, model: str, max_tokens: int, messages: tuple) -> Dict[str, Any]:
+        self.logger.debug(f"Cache miss. Generating response for model: {model}, max_tokens: {max_tokens}")
+        prompt = messages[-1]['content']
+        response = self._generate_response(prompt, model, list(messages))
+        if len(response) > max_tokens:
+            self.logger.warning(f"Response exceeds max tokens. Truncating. Original length: {len(response)}")
+            response = response[:max_tokens] + "..."
+        
+        wrapped_response = self._apply_response_prefix(response)
+        return {
+            "id": f"msg_{uuid.uuid4()}",
+            "type": "message",
+            "role": "assistant",
+            "content": [{"type": "text", "text": wrapped_response}],
+            "model": model,
+            "stop_reason": "end_turn",
+            "stop_sequence": None,
+            "usage": {
+                "input_tokens": sum(len(m["content"]) for m in messages),
+                "output_tokens": len(response)
+            }
+        }
+
     async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) ->  Dict[str, Any] | AsyncGenerator[Dict[str, Any], None]:
         self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}, stream: {stream}")
         async with self.lock:
@@ -89,8 +133,6 @@ class MockClaudeClient:
             
             self._process_system_message(messages)
             
-            prompt = messages[-1]['content']
-            self.logger.debug(f"Received prompt: {prompt[:50]}...")
             if sum(len(m['content']) for m in messages) > self.max_context_length:
                 self.logger.warning(f"Total message length exceeds max context length")
                 raise ValueError(f"Total message length exceeds maximum context length ({self.max_context_length})")
@@ -101,17 +143,12 @@ class MockClaudeClient:
                     self.logger.error("Simulated API error")
                     raise APIStatusError("Simulated API error", response=MagicMock(), body={})
             
-            response = self._generate_response(prompt, model, messages)
-            if len(response) > max_tokens:
-                self.logger.warning(f"Response exceeds max tokens. Truncating. Original length: {len(response)}")
-                response = response[:max_tokens] + "..."
-            
             self.call_count += 1
-            wrapped_response = self._apply_response_prefix(response)
-            self.logger.debug(f"Returning response: {wrapped_response[:50]}...")
-
+            
             if stream:
                 async def response_generator():
+                    response = await self._cached_create_message(model, max_tokens, tuple(messages))
+                    wrapped_response = response['content'][0]['text']
                     for chunk in wrapped_response.split():
                         yield {
                             "type": "content_block_delta",
@@ -123,19 +160,7 @@ class MockClaudeClient:
                     yield {"type": "message_delta", "delta": {"stop_reason": "end_turn"}}
                 return response_generator()
             else:
-                return {
-                    "id": f"msg_{uuid.uuid4()}",
-                    "type": "message",
-                    "role": "assistant",
-                    "content": [{"type": "text", "text": wrapped_response}],
-                    "model": model,
-                    "stop_reason": "end_turn",
-                    "stop_sequence": None,
-                    "usage": {
-                        "input_tokens": sum(len(m["content"]) for m in messages),
-                        "output_tokens": len(response)
-                    }
-                }
+                return await self._cached_create_message(model, max_tokens, tuple(messages))
 
     def _process_system_message(self, messages: List[Dict[str, str]]) -> None:
         self.logger.info("Processing system message")
@@ -395,9 +420,12 @@ class MockClaudeClient:
             self.logger.warning(f"Rate limit exceeded. Count: {self.call_count}, Threshold: {self.rate_limit_threshold}")
             raise CustomRateLimitError("Rate limit exceeded")
 
+    @timed_lru_cache(seconds=300)
     async def count_tokens(self, text: str) -> int:
         # Simplified token counting for mock purposes
-        return len(text.split())
+        token_count = len(text.split())
+        self.logger.debug(f"Counted {token_count} tokens for text: {text[:50]}...")
+        return token_count
 
     async def set_response(self, prompt: str, response: str):
         self.logger.debug(f"Setting response for prompt: {prompt[:50]}...")
