@@ -67,30 +67,39 @@ def test_partial_match(cache):
     cache.set("goodbye_world", "value2")
     result = cache.get("hello_earth", partial_match=True)
     logger.info(f"Partial match result: {result}")
+    logger.info(f"Cache state: {cache.dump_state()}")
     assert result == ("value1", 0.8181818181818182)
     assert cache.get("hello_mars", partial_match=True) is None
 
 def test_partial_match_threshold():
     cache_high_threshold = AdvancedCache(similarity_threshold=0.9)
     cache_high_threshold.set("hello_world", "value1")
-    assert cache_high_threshold.get("hello_earth", partial_match=True) is None
+    result_high = cache_high_threshold.get("hello_earth", partial_match=True)
+    logger.info(f"High threshold result: {result_high}")
+    logger.info(f"High threshold cache state: {cache_high_threshold.dump_state()}")
+    assert result_high is None
     
     cache_low_threshold = AdvancedCache(similarity_threshold=0.7)
     cache_low_threshold.set("hello_world", "value1")
-    result = cache_low_threshold.get("hello_earth", partial_match=True)
-    logger.info(f"Partial match result with low threshold: {result}")
-    assert result == ("value1", 0.8181818181818182)
+    result_low = cache_low_threshold.get("hello_earth", partial_match=True)
+    logger.info(f"Low threshold result: {result_low}")
+    logger.info(f"Low threshold cache state: {cache_low_threshold.dump_state()}")
+    assert result_low == ("value1", 0.8181818181818182)
 
 def test_partial_match_edge_cases(cache):
     cache.set("hello_world", "value1")
+    logger.info(f"Cache state before edge cases: {cache.dump_state()}")
     assert cache.get("hello", partial_match=True) is None  # Too short
     assert cache.get("completely_different", partial_match=True) is None  # No similarity
-    assert cache.get("hello_world_extra_long", partial_match=True) == ("value1", 0.8571428571428571)  # Longer but similar
+    result = cache.get("hello_world_extra_long", partial_match=True)
+    logger.info(f"Edge case result: {result}")
+    assert result == ("value1", 0.8571428571428571)  # Longer but similar
 
 def test_partial_match_multiple_similar_keys(cache):
     cache.set("hello_world", "value1")
     cache.set("hello_earth", "value2")
     cache.set("hello_mars", "value3")
+    logger.info(f"Cache state with multiple keys: {cache.dump_state()}")
     result = cache.get("hello_planet", partial_match=True)
     logger.info(f"Partial match result with multiple similar keys: {result}")
     assert result[0] in ["value1", "value2", "value3"]  # Should match one of these

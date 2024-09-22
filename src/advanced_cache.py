@@ -30,6 +30,7 @@ class AdvancedCache:
 
     def get(self, key: str, partial_match: bool = False) -> Optional[Tuple[Any, float]]:
         logger.debug(f"Attempting to get key '{key}' with partial_match={partial_match}")
+        logger.debug(f"Current cache state: {self.cache}")
         
         if key in self.cache:
             item = self.cache[key]
@@ -46,7 +47,7 @@ class AdvancedCache:
             best_ratio = 0
             for cache_key in self.cache:
                 ratio = SequenceMatcher(None, key, cache_key).ratio()
-                logger.debug(f"Partial match check: key='{key}', cache_key='{cache_key}', ratio={ratio}")
+                logger.debug(f"Partial match check: key='{key}', cache_key='{cache_key}', ratio={ratio}, threshold={self.similarity_threshold}")
                 if ratio > best_ratio and ratio >= self.similarity_threshold:
                     best_match = cache_key
                     best_ratio = ratio
@@ -60,6 +61,8 @@ class AdvancedCache:
                 else:
                     del self.cache[best_match]
                     logger.debug(f"Partial match found for key '{key}', but matched key '{best_match}' was expired")
+            else:
+                logger.debug(f"No partial match found above threshold {self.similarity_threshold}")
         
         logger.debug(f"No match found for key '{key}'")
         return None
