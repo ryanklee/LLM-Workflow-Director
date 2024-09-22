@@ -5,6 +5,7 @@ import uuid
 import random
 import json
 import xml.etree.ElementTree as ET
+import aiohttp
 from typing import Dict, Any, List, AsyncGenerator
 from unittest.mock import MagicMock
 from anthropic import APIStatusError
