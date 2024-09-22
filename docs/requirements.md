@@ -557,6 +557,13 @@ This structure provides a more comprehensive and organized set of requirements f
     11.10. The system shall implement concurrent processing of LLM requests where applicable to improve overall system performance.
     11.11. The system shall support streaming responses from the LLM CLI for long-running tasks.
     11.12. The system shall implement performance benchmarks to measure and optimize system performance.
+    11.13. The system shall implement time-based cache expiration for cached items.
+    11.14. The system shall provide a configurable default expiration time for cached items.
+    11.15. The system shall implement a maximum size limit for the cache with a least-recently-used (LRU) eviction policy.
+    11.16. The system shall make the cache size limit configurable.
+    11.17. The system shall implement partial cache matches using a similarity matching algorithm.
+    11.18. The system shall provide a configurable similarity threshold for partial cache matches.
+    11.19. The system shall return partial cache matches with a confidence score.
 
 12. Security
     12.1. The system shall not store or transmit sensitive project information outside the local environment.
