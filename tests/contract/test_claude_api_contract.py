@@ -641,6 +641,12 @@ async def test_system_message(pact_context, claude_client):
         }
     })
 
+    # Set a custom response for the Shakespearean weather request
+    await claude_client.set_response(
+        "Tell me about the weather.",
+        "Hark! The weather, thou doth inquire? Verily, 'tis a matter most changeable and capricious."
+    )
+
     result = await claude_client.messages.create(
         model='claude-3-opus-20240229',
         max_tokens=100,
