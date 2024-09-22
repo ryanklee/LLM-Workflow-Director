@@ -1583,80 +1583,76 @@ The `_ensure_shakespearean_prefix` method is missing from the `MockClaudeClient`
 # Test Problem Analysis and Progress
 
 ## Problem Description
-Five tests in `tests/test_claude_structured_outputs.py` are failing:
+Two tests in `tests/test_advanced_cache.py` are failing:
 
-1. `test_generate_json_output`: TypeError: the JSON object must be str, bytes or bytearray, not coroutine
-2. `test_generate_xml_output`: TypeError: a bytes-like object is required, not 'coroutine'
-3. `test_generate_yaml_output`: AttributeError: 'coroutine' object has no attribute 'read'
-4. `test_complex_nested_structure`: TypeError: the JSON object must be str, bytes or bytearray, not coroutine
-5. `test_dynamic_input_structured_output`: TypeError: a bytes-like object is required, not 'coroutine'
+1. `test_partial_match`: AssertionError: assert None == ('value1', 0.8181818181818182)
+2. `test_partial_match_threshold`: AssertionError: assert None == ('value1', 0.8181818181818182)
 
 ## Learnings from Test Failures
-- The `generate_response` method in the `ClaudeManager` class is likely returning a coroutine object instead of the actual response string.
-- This issue is consistent across all failing tests, indicating a systemic problem in how the `generate_response` method is being called or implemented.
-- The error occurs when trying to parse the response as JSON, XML, or YAML, suggesting that the response is not being properly awaited.
+- The `get` method with `partial_match=True` is not returning the expected result for similar keys.
+- The similarity threshold doesn't seem to be working as expected.
+- The implementation of partial matching in the AdvancedCache class may be incorrect or incomplete.
 
 ## Hypotheses (Ranked by Likelihood)
 
-1. Incorrect Coroutine Handling (Highest Likelihood)
-   - The `generate_response` method is defined as an async method but is not being awaited properly in the test cases.
-   - Validation: Check the test cases to ensure that `await` is used when calling `generate_response`.
-   - Status: To be implemented and tested.
+1. Incorrect Partial Match Implementation (Highest Likelihood)
+   - The `get` method in AdvancedCache may not be correctly implementing the partial match functionality.
+   - Validation: Review the `get` method implementation, focusing on the partial match logic.
+   - Status: To be investigated and implemented.
 
-2. ClaudeManager Implementation Issue (High Likelihood)
-   - The `generate_response` method in ClaudeManager might be incorrectly implemented, returning a coroutine instead of the actual response.
-   - Validation: Review the `generate_response` method in ClaudeManager to ensure it's properly awaiting any async calls within it.
+2. Similarity Calculation Issue (High Likelihood)
+   - The similarity calculation between keys may be incorrect or not properly thresholded.
+   - Validation: Check the similarity calculation logic and how it's applied in the `get` method.
    - Status: To be investigated if Hypothesis 1 doesn't fully resolve the issue.
 
-3. Test Fixture Configuration Problem (Medium Likelihood)
-   - The `claude_manager` fixture might not be correctly set up for async usage.
-   - Validation: Check the `claude_manager` fixture in the test file and ensure it's compatible with async tests.
+3. Cache State Inconsistency (Medium Likelihood)
+   - The cache may not be in the expected state when the partial match is attempted.
+   - Validation: Add logging to track cache state and verify it before partial match attempts.
    - Status: To be investigated if Hypotheses 1 and 2 don't resolve the issue.
 
-4. Incorrect Test Function Signatures (Low Likelihood)
-   - The test functions might not be correctly defined as async functions.
-   - Validation: Ensure all test functions that use async methods are defined with the `async def` syntax.
+4. Test Case Setup Issue (Low Likelihood)
+   - The test cases might not be correctly setting up the cache state for partial matching.
+   - Validation: Review test case setup to ensure the cache is in the expected state before assertions.
    - Status: To be investigated if other hypotheses don't fully resolve the issue.
 
 ## Implementation Plan
 
-1. Update Test Cases:
-   - Modify all test functions to use `async def` syntax.
-   - Ensure `await` is used when calling `generate_response` in all test cases.
-   - Add appropriate error handling for async operations.
+1. Review and Update AdvancedCache Implementation:
+   - Focus on the `get` method, particularly the partial match logic.
+   - Ensure similarity calculation is correct and properly thresholded.
+   - Implement proper error handling and logging for partial match attempts.
 
-2. Review ClaudeManager Implementation:
-   - Check the `generate_response` method in ClaudeManager to ensure it's correctly implemented as an async method.
-   - Verify that any async calls within `generate_response` are properly awaited.
+2. Enhance Logging:
+   - Add detailed logging in the `get` method to track partial match attempts and results.
+   - Log cache state before and after partial match operations.
 
-3. Enhance Logging:
-   - Add detailed logging in the `generate_response` method to track the flow of execution.
-   - Implement logging for async operations to help diagnose any issues with coroutine handling.
+3. Update Test Cases:
+   - Review test case setup to ensure proper cache initialization.
+   - Add more comprehensive test cases for partial matching with various similarity thresholds.
 
-4. Update Test Fixtures:
-   - Review and update the `claude_manager` fixture to ensure it's compatible with async tests.
-   - Consider implementing an async fixture if necessary.
+4. Implement Debugging Aids:
+   - Add a method to AdvancedCache to dump its current state for debugging purposes.
+   - Implement verbose logging option for detailed operation tracking.
 
 ## Next Steps
 
-1. Implement the changes to make test functions async and properly await `generate_response` calls.
-2. Review and update the ClaudeManager implementation if necessary.
-3. Enhance logging in both test cases and ClaudeManager for better debugging.
-4. Update test fixtures to support async operations if needed.
-5. Re-run the tests to verify if the implemented changes resolve the issues.
-6. If issues persist, investigate the ClaudeManager Implementation and Test Fixture Configuration hypotheses.
+1. Implement the changes to the AdvancedCache class, focusing on the `get` method and partial match logic.
+2. Enhance logging throughout the AdvancedCache class for better debugging.
+3. Update test cases to cover more partial matching scenarios.
+4. Re-run the tests to verify if the implemented changes resolve the issues.
+5. If issues persist, investigate the Similarity Calculation and Cache State Consistency hypotheses.
 
 ## Test Results Tracking
 
 | Test Run | Date       | Failing Tests | Notes                                    |
 |----------|------------|---------------|------------------------------------------|
-| 1        | 2024-09-30 | 5             | All tests failing due to coroutine issues |
+| 1        | 2024-10-02 | 2             | Partial match and threshold tests failing |
 
 ## Response Content Tracking
 
 | Test Run | Response Content |
 |----------|------------------|
-| 1        | N/A - Coroutine object returned instead of actual response |
+| 1        | None instead of expected ('value1', 0.8181818181818182) |
 
 We will update this file with the results of the next test run after implementing the current changes.
 # Test Problem Analysis and Progress
