@@ -146,3 +146,4 @@ yarl==1.9.4
 zipp==3.20.1
 pylint==2.17.5
 black==23.7.0
+pytest-parallel==0.1.1
