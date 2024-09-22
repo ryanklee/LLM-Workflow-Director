@@ -1,5 +1,6 @@
 import pytest
 import logging
+import socket
 from pact import Consumer, Provider, Like
 from src.mock_claude_client import MockClaudeClient
 from src.exceptions import CustomRateLimitError
@@ -9,33 +10,61 @@ from anthropic import APIStatusError
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+def find_free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('', 0))
+        return s.getsockname()[1]
+
 @pytest.fixture(scope='session')
 def pact():
+    port = find_free_port()
+    logger.info(f"Starting Pact mock server on port {port}")
     pact = Consumer('LLMWorkflowDirector').has_pact_with(
         Provider('ClaudeAPI'),
-        port=1234,
+        port=port,
         host_name='localhost'
     )
-    pact.start_service()
-    yield pact
-    pact.stop_service()
+    try:
+        pact.start_service()
+        logger.info("Pact mock server started successfully")
+        yield pact
+    except Exception as e:
+        logger.error(f"Failed to start Pact mock server: {e}")
+        raise
+    finally:
+        logger.info("Stopping Pact mock server")
+        pact.stop_service()
 
 @pytest.fixture
 def pact_context(pact):
-    with pact:
-        yield pact
+    logger.info("Entering Pact context")
+    try:
+        with pact:
+            yield pact
+    except Exception as e:
+        logger.error(f"Error in Pact context: {e}")
+        raise
+    finally:
+        logger.info("Exiting Pact context")
 
 @pytest.fixture
-async def claude_client():
+async def claude_client(pact):
     logger.info("Setting up claude_client fixture")
-    client = MockClaudeClient(api_key="test_api_key")
+    client = MockClaudeClient(api_key="test_api_key", base_url=f"http://localhost:{pact.port}")
     logger.debug(f"Created MockClaudeClient instance: {client}")
     try:
         logger.debug("Yielding MockClaudeClient instance")
         yield client
+    except Exception as e:
+        logger.error(f"Error in claude_client fixture: {e}")
+        raise
     finally:
         logger.debug(f"Cleaning up MockClaudeClient instance: {client}")
-        await client.debug_dump()  # This will log the final state of the client
+        try:
+            debug_info = await client.debug_dump()
+            logger.debug(f"Client debug dump: {debug_info}")
+        except Exception as e:
+            logger.error(f"Error during client debug dump: {e}")
     logger.info("claude_client fixture teardown complete")
 
 @pytest.fixture(autouse=True)
