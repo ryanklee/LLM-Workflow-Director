@@ -47,10 +47,10 @@ def pact_context(pact):
     finally:
         logger.info("Exiting Pact context")
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def claude_client(pact):
     logger.info("Setting up claude_client fixture")
-    client = MockClaudeClient(api_key="test_api_key", base_url=f"http://localhost:{pact.port}")
+    client = MockClaudeClient(api_key="test_api_key")
     logger.debug(f"Created MockClaudeClient instance: {client}")
     try:
         logger.debug("Yielding MockClaudeClient instance")
