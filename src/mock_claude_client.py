@@ -3,7 +3,8 @@ import time
 import logging
 import uuid
 import random
-import aiohttp
+import json
+import xml.etree.ElementTree as ET
 from typing import Dict, Any, List, AsyncGenerator
 from unittest.mock import MagicMock
 from anthropic import APIStatusError
@@ -32,7 +33,6 @@ class MockClaudeClient:
         self.logger.debug(f"Initializing MockClaudeClient {id(self)} with api_key: {api_key[:5]}, base_url: {base_url}, rate_limit: {rate_limit}, reset_time: {reset_time}")
         
         self.base_url = base_url
-        
         self.api_key = api_key
         self.rate_limit = rate_limit
         self.reset_time = reset_time
