@@ -38,6 +38,7 @@ For detailed usage instructions, configuration options, and advanced features, p
 - Extensible architecture for custom plugins
 - Tiered Claude model approach (Haiku, Sonnet, Opus)
 - Comprehensive project state reporting and visualization
+- Domain-specific task testing and performance benchmarking
 
 ## Project Status
 
@@ -46,8 +47,36 @@ The LLM-Workflow Director is making significant progress towards its goals:
 - **Approaching Dog-food Ready**: The project is advancing towards a state where it can be used to manage its own development process. We have defined clear criteria for "dog-food ready" status and are actively working towards meeting these benchmarks.
 - **Core Functionality Implementation**: We have implemented key components such as workflow management, Claude API integration, and basic LLM-driven evaluations.
 - **Advanced Features Development**: We are currently in the process of implementing and refining advanced features such as multi-modal input support, external tool integration, adaptive learning for Claude usage, and enhanced prompt engineering techniques.
+- **Domain-Specific Task Testing**: We have implemented comprehensive tests for various domain-specific tasks, including code generation, code review, architecture suggestions, and more.
+- **Performance Benchmarking**: We have added performance benchmarks for all domain-specific tasks to analyze Claude's performance across different types of tasks.
 
 For a detailed list of criteria for "dog-food ready" status, please refer to the [Dog-food Ready Criteria](docs/dogfood_ready_criteria.md) document.
+
+## Testing
+
+Run the full test suite:
+```
+pytest
+```
+
+To run domain-specific task tests:
+```
+pytest tests/test_domain_specific_tasks.py
+```
+
+To run performance benchmarks:
+```
+pytest tests/test_domain_specific_tasks.py --benchmark-only
+```
+
+## Documentation
+
+For detailed documentation, please refer to the `docs/` directory. Key documents include:
+- [Getting Started Guide](docs/getting_started.md)
+- [Workflow Configuration](docs/workflow_configuration.md)
+- [Claude Integration Guide](docs/claude_integration.md)
+- [Testing Guidelines](docs/TESTING.md)
+- [Domain-Specific Task Testing](docs/domain_specific_testing.md)
 
 ## Contributing
 
@@ -64,4 +93,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For more detailed information, please refer to the [full documentation](docs/index.md).
 
-Last Updated: 2024-09-14
+Last Updated: 2024-09-21
