@@ -28,7 +28,7 @@ def pact_context(pact):
 @pytest.fixture
 async def claude_client():
     logger.info("Setting up claude_client fixture")
-    client = MockClaudeClient(api_key="test_api_key")
+    client = MockClaudeClient(api_key="test_api_key", cache_ttl=5, cache_maxsize=10)
     logger.debug(f"Created MockClaudeClient instance: {client}")
     try:
         logger.debug("Yielding MockClaudeClient instance")
@@ -37,6 +37,30 @@ async def claude_client():
         logger.debug(f"Cleaning up MockClaudeClient instance: {client}")
         await client.debug_dump()  # This will log the final state of the client
     logger.info("claude_client fixture teardown complete")
+
+@pytest.mark.asyncio
+async def test_caching(claude_client):
+    messages = [{"role": "user", "content": "Hello, Claude!"}]
+    response1 = await claude_client.messages.create("claude-3-opus-20240229", 100, messages)
+    response2 = await claude_client.messages.create("claude-3-opus-20240229", 100, messages)
+    assert response1 == response2
+    assert claude_client.call_count == 1
+
+@pytest.mark.asyncio
+async def test_cache_expiration(claude_client):
+    messages = [{"role": "user", "content": "Hello, Claude!"}]
+    await claude_client.messages.create("claude-3-opus-20240229", 100, messages)
+    await asyncio.sleep(6)  # Wait for cache to expire
+    await claude_client.messages.create("claude-3-opus-20240229", 100, messages)
+    assert claude_client.call_count == 2
+
+@pytest.mark.asyncio
+async def test_cache_bypass(claude_client):
+    messages = [{"role": "user", "content": "Hello, Claude!"}]
+    await claude_client.messages.create("claude-3-opus-20240229", 100, messages)
+    claude_client.bypass_cache()
+    await claude_client.messages.create("claude-3-opus-20240229", 100, messages)
+    assert claude_client.call_count == 2
 
 @pytest.mark.asyncio
 async def test_create_message(pact_context, claude_client):

@@ -143,6 +143,12 @@ class MockClaudeClient:
                     self.logger.error("Simulated API error")
                     raise APIStatusError("Simulated API error", response=MagicMock(), body={})
             
+            cache_key = self._generate_cache_key(model, max_tokens, messages)
+            cached_response = self.cache.get(cache_key)
+            if cached_response:
+                self.logger.debug(f"Cache hit for key: {cache_key}")
+                return cached_response
+            
             self.call_count += 1
             
             if stream:
@@ -160,7 +166,12 @@ class MockClaudeClient:
                     yield {"type": "message_delta", "delta": {"stop_reason": "end_turn"}}
                 return response_generator()
             else:
-                return await self._cached_create_message(model, max_tokens, tuple(messages))
+                response = await self._cached_create_message(model, max_tokens, tuple(messages))
+                self.cache[cache_key] = response
+                return response
+
+    def _generate_cache_key(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> str:
+        return f"{model}:{max_tokens}:{hash(tuple(sorted(message.items())) for message in messages)}"
 
     def _process_system_message(self, messages: List[Dict[str, str]]) -> None:
         self.logger.info("Processing system message")
@@ -366,6 +377,11 @@ class MockClaudeClient:
                     "shakespearean_mode_set": getattr(self, 'shakespearean_mode_set', False),
                     "response_generated": getattr(self, 'response_generated', False),
                     "prefix_ensured": getattr(self, 'prefix_ensured', False)
+                },
+                "cache_info": {
+                    "currsize": len(self.cache),
+                    "maxsize": self.cache.maxsize,
+                    "ttl": self.cache.ttl
                 }
             }
             self.logger.debug(f"Debug dump state: {state}")
@@ -373,6 +389,10 @@ class MockClaudeClient:
         except Exception as e:
             self.logger.error(f"Error in debug_dump: {str(e)}", exc_info=True)
             raise
+
+    def bypass_cache(self):
+        self.cache.clear()
+        self.logger.info("Cache bypassed and cleared")
 
     async def debug_dump(self):
         self.logger.debug("Starting debug_dump method")
@@ -609,6 +629,7 @@ from typing import Dict, Any, List, AsyncGenerator
 from unittest.mock import MagicMock
 from anthropic import APIStatusError
 from src.exceptions import CustomRateLimitError
+from cachetools import TTLCache
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -623,7 +644,7 @@ class MockClaudeClient:
             self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}, stream: {stream}")
             return await self.client._create(model, max_tokens, messages, stream)
 
-    def __init__(self, api_key: str = "mock_api_key", rate_limit: int = 10, reset_time: int = 60):
+    def __init__(self, api_key: str = "mock_api_key", rate_limit: int = 10, reset_time: int = 60, cache_ttl: int = 300, cache_maxsize: int = 100):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
@@ -648,6 +669,7 @@ class MockClaudeClient:
         self.context = []
         self.is_shakespearean = False
         self.lock = asyncio.Lock()
+        self.cache = TTLCache(maxsize=cache_maxsize, ttl=cache_ttl)
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
 
     async def set_rate_limit(self, limit: int):
