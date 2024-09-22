@@ -25,7 +25,7 @@ def pact():
 
 @pytest_asyncio.fixture
 async def claude_client():
-    client = MockClaudeClient(api_key="test_api_key")
+    client = MockClaudeClient(api_key="test_api_key", rate_limit=10, reset_time=60, cache_ttl=5, cache_maxsize=10)
     logger.debug(f"Created MockClaudeClient instance: {client}")
     try:
         yield client

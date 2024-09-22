@@ -1946,7 +1946,7 @@ class MockClaudeClient:
             self.client.logger.debug(f"Messages.create called with model: {model}, max_tokens: {max_tokens}")
             return await self.client._create(model, max_tokens, messages)
 
-    def __init__(self, api_key: str = "mock_api_key"):
+    def __init__(self, api_key: str = "mock_api_key", rate_limit: int = 10, reset_time: int = 60, cache_ttl: int = 300, cache_maxsize: int = 100):
         self.api_key = api_key
         self._messages = []
         self.lock = asyncio.Lock()
@@ -1957,15 +1957,16 @@ class MockClaudeClient:
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
         self.logger.debug(f"MockClaudeClient initialized with API key: {api_key[:5]}...")
-        self.rate_limit_threshold = 10
-        self.rate_limit_reset_time = 60
+        self.rate_limit_threshold = rate_limit
+        self.rate_limit_reset_time = reset_time
         self.call_count = 0
         self.last_reset_time = time.time()
         self.error_mode = False
         self.responses = {}
         self.context = []
         self.is_shakespearean = False
-        self.logger.info(f"MockClaudeClient initialized with rate_limit_threshold: {self.rate_limit_threshold}, rate_limit_reset_time: {self.rate_limit_reset_time}")
+        self.cache = TTLCache(maxsize=cache_maxsize, ttl=cache_ttl)
+        self.logger.info(f"MockClaudeClient initialized with rate_limit_threshold: {self.rate_limit_threshold}, rate_limit_reset_time: {self.rate_limit_reset_time}, cache_ttl: {cache_ttl}, cache_maxsize: {cache_maxsize}")
         
         # Add a file handler for persistent logging
         file_handler = logging.FileHandler('mock_claude_client.log')
