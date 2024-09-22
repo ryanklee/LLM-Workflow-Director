@@ -897,6 +897,7 @@ class MockClaudeClient:
         self.messages = self.Messages(self)
         self.context = []
         self.is_shakespearean = False
+        self.lock = asyncio.Lock()
         self.logger.debug(f"Finished initialization of MockClaudeClient {id(self)}")
 
     async def set_rate_limit(self, limit: int):
@@ -1067,7 +1068,7 @@ class MockClaudeClient:
             self.logger.warning(f"Rate limit reached. Calls: {self.calls}, Limit: {self.rate_limit}")
 
     async def reset(self):
-        self.logger.debug("Resetting MockClaudeClient")
+        self.logger.debug(f"Resetting MockClaudeClient {id(self)}")
         self.calls = 0
         self.last_reset = time.time()
         self.error_mode = False
@@ -1076,7 +1077,8 @@ class MockClaudeClient:
         self.call_count = 0
         self.error_count = 0
         self.context = []
-        self.logger.debug("MockClaudeClient reset complete")
+        self.is_shakespearean = False
+        self.logger.debug(f"Finished resetting MockClaudeClient {id(self)}")
 
     async def count_tokens(self, text: str) -> int:
         # Simplified token counting for mock purposes
