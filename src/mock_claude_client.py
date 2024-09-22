@@ -1620,6 +1620,13 @@ class MockClaudeClient:
 
     async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) -> Dict[str, Any] | AsyncGenerator[Dict[str, Any], None]:
         self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}, stream: {stream}")
+        
+        cache_key = self._generate_cache_key(model, max_tokens, messages)
+        cached_response = self.cache.get(cache_key)
+        if cached_response:
+            self.logger.debug(f"Cache hit for key: {cache_key}")
+            return cached_response
+
         try:
             await self._check_rate_limit()
         except CustomRateLimitError as e:
@@ -1652,6 +1659,22 @@ class MockClaudeClient:
         self.call_count += 1
         self.logger.debug(f"Returning response: {response[:50]}...")
 
+        result = {
+            "id": f"msg_{uuid.uuid4()}",
+            "type": "message",
+            "role": "assistant",
+            "content": [{"type": "text", "text": response}],
+            "model": model,
+            "stop_reason": "end_turn",
+            "stop_sequence": None,
+            "usage": {
+                "input_tokens": sum(len(m["content"]) for m in messages),
+                "output_tokens": len(response)
+            }
+        }
+
+        self.cache[cache_key] = result
+        
         if stream:
             async def response_generator():
                 for chunk in response.split():
@@ -1659,19 +1682,14 @@ class MockClaudeClient:
                 yield {"type": "message_delta", "delta": {"stop_reason": "end_turn"}}
             return response_generator()
         else:
-            return {
-                "id": f"msg_{uuid.uuid4()}",
-                "type": "message",
-                "role": "assistant",
-                "content": [{"type": "text", "text": response}],
-                "model": model,
-                "stop_reason": "end_turn",
-                "stop_sequence": None,
-                "usage": {
-                    "input_tokens": sum(len(m["content"]) for m in messages),
-                    "output_tokens": len(response)
-                }
-            }
+            return result
+
+    def _generate_cache_key(self, model: str, max_tokens: int, messages: List[Dict[str, str]]) -> str:
+        return f"{model}:{max_tokens}:{hash(tuple(sorted(message.items())) for message in messages)}"
+
+    def bypass_cache(self):
+        self.cache.clear()
+        self.logger.info("Cache bypassed and cleared")
 
     async def _check_rate_limit(self):
         current_time = time.time()
