@@ -53,12 +53,35 @@ class MockClaudeClient:
 
     async def set_rate_limit(self, limit: int):
         self.logger.info(f"Setting rate limit to: {limit}")
-        self.rate_limit_threshold = limit
-        self.logger.debug(f"Rate limit updated. New threshold: {self.rate_limit_threshold}")
+        self.rate_limit = limit
+        self.logger.debug(f"Rate limit updated. New threshold: {self.rate_limit}")
 
     async def set_error_mode(self, mode: bool):
         self.logger.debug(f"Setting error mode to: {mode}")
         self.error_mode = mode
+
+    async def _check_rate_limit(self):
+        current_time = time.time()
+        if current_time - self.last_reset >= self.reset_time:
+            self.logger.info(f"Resetting call count. Old count: {self.calls}")
+            self.calls = 0
+            self.last_reset = current_time
+        self.calls += 1
+        if self.calls > self.rate_limit:
+            self.logger.warning(f"Rate limit exceeded. Count: {self.calls}, Threshold: {self.rate_limit}")
+            raise CustomRateLimitError("Rate limit exceeded")
+
+    async def reset(self):
+        self.logger.debug(f"Resetting MockClaudeClient {id(self)}")
+        self.calls = 0
+        self.last_reset = time.time()
+        self.error_mode = False
+        self.latency = 0
+        self.responses = {}
+        self.call_count = 0
+        self.error_count = 0
+        self.context = []
+        self.logger.debug(f"Finished resetting MockClaudeClient {id(self)}")
 
     async def _create(self, model: str, max_tokens: int, messages: List[Dict[str, str]], stream: bool = False) ->  Dict[str, Any] | AsyncGenerator[Dict[str, Any], None]:
         self.logger.debug(f"Creating response for model: {model}, max_tokens: {max_tokens}, stream: {stream}")
